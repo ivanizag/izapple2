@@ -9,6 +9,16 @@ const (
 	regPC = 6 // 2 bytes
 )
 
+const (
+	flagN uint8 = 1 << 7
+	flagV uint8 = 1 << 6
+	flagB uint8 = 1 << 4
+	flagD uint8 = 1 << 3
+	flagI uint8 = 1 << 2
+	flagZ uint8 = 1 << 1
+	flagC uint8 = 1 << 0
+)
+
 type registers struct {
 	data [8]uint8
 }
@@ -37,4 +47,29 @@ func (r *registers) getPC() uint16 {
 func (r *registers) setPC(v uint16) {
 	r.data[regPC] = uint8(v >> 8)
 	r.data[regPC+1] = uint8(v)
+}
+
+func (r *registers) getFlag(i uint8) bool {
+	return (r.data[regP] & i ) != 0
+}
+
+func (r *registers) setFlag(i uint8) {
+	r.data[regP] |= i
+}
+
+func (r *registers) clearFlag(i uint8) {
+	r.data[regP] &^= i
+}
+
+func (r *registers) updateFlag(i uint8, v bool) {
+	if v {
+		r.setFlag(i)
+	} else {
+		r.clearFlag(i)
+	}
+}
+
+func (r *registers) updateFlagZN(t uint8) {
+	r.updateFlag(flagZ, t == 0)
+	r.updateFlag(flagN, t >= (1<<7))
 }

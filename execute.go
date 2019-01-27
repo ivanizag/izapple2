@@ -21,7 +21,7 @@ const modeIndexedIndirectX = 7
 const modeIndirectIndexedY = 8
 
 // https://www.masswerk.at/6502/6502_instruction_set.html
-
+// http://www.emulator101.com/reference/6502-reference.html
 func getWordInLine(line []uint8) uint16 {
 	return uint16(line[1]) + 0x100*uint16(line[2])
 }
@@ -41,20 +41,22 @@ func buildOPTransfer(regSrc int, regDst int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
 		value := s.registers.getRegister(regSrc)
 		s.registers.setRegister(regDst, value)
-		// TODO: Update flags (N, Z)
+		if regDst != regSP {
+			s.registers.updateFlagZN(value)
+		}
 	}
 }
 
 func buildOpIncDecRegister(reg int, inc bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value := s.registers.getRegister(reg) + 1
+		value := s.registers.getRegister(reg)
 		if inc {
 			value++
 		} else {
 			value--
 		}
 		s.registers.setRegister(reg, value)
-		// TODO: Update flags (N, Z) for all but TXS
+		s.registers.updateFlagZN(value)
 	}
 }
 
@@ -93,8 +95,7 @@ func buildOpLoad(addressMode int, regDst int) opFunc {
 		}
 
 		s.registers.setRegister(regDst, value)
-
-		// TODO: Update flags (N, Z)
+		s.registers.updateFlagZN(value)
 	}
 }
 

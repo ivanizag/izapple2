@@ -12,6 +12,16 @@ func TestLoad(t *testing.T) {
 		t.Error("Error in LDA #")
 	}
 
+	executeLine(&s, []uint8{0xA9, 0x00})
+	if s.registers.getP() != flagZ {
+		t.Error("Error in flags for LDA $0")
+	}
+
+	executeLine(&s, []uint8{0xA9, 0xF0})
+	if s.registers.getP() != flagN {
+		t.Error("Error in flags for LDA $F0")
+	}
+
 	executeLine(&s, []uint8{0xA0, 0xFE})
 	if s.registers.getY() != 0xFE {
 		t.Error("Error in LDY #")
@@ -84,6 +94,9 @@ func TestTransfer(t *testing.T) {
 	if s.registers.getX() != 0xB0 {
 		t.Error("Error in TAX")
 	}
+	if s.registers.getP() != flagN {
+		t.Error("Error in TAX flags")
+	}
 
 	s.registers.setA(0xB1)
 	executeLine(&s, []uint8{0xA8})
@@ -113,4 +126,24 @@ func TestTransfer(t *testing.T) {
 	if s.registers.getA() != 0xB5 {
 		t.Error("Error in TYA")
 	}
+}
+
+func TestIncDec(t * testing.T) {
+	var s state
+
+	s.registers.setX(0x7E)
+	executeLine(&s, []uint8{0xE8})
+	if s.registers.getX() != 0x7F {
+		t.Errorf("Error in INX %v", s.registers.getX())
+	}
+
+	s.registers.setY(0xFC)
+	executeLine(&s, []uint8{0x88})
+	if s.registers.getY() != 0xFB {
+		t.Error("Error in DEY")
+	}
+	if s.registers.getP() != flagN {
+		t.Error("Error in DEY flags")
+	}
+
 }
