@@ -49,6 +49,14 @@ func (r *registers) setPC(v uint16) {
 	r.data[regPC+1] = uint8(v)
 }
 
+func (r *registers) getFlagBit(i uint8) uint8 {
+	if r.getFlag(i) {
+		return 1
+	} else {
+		return 0
+	}
+}
+
 func (r *registers) getFlag(i uint8) bool {
 	return (r.data[regP] & i ) != 0
 }

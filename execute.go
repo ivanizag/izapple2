@@ -19,9 +19,12 @@ const modeAbsoluteX = 4
 const modeAbsoluteY = 5
 const modeIndexedIndirectX = 7
 const modeIndirectIndexedY = 8
+const modeAccumulator = 9
 
 // https://www.masswerk.at/6502/6502_instruction_set.html
 // http://www.emulator101.com/reference/6502-reference.html
+// https://www.csh.rit.edu/~moffitt/docs/6502.html#FLAGS
+
 func getWordInLine(line []uint8) uint16 {
 	return uint16(line[1]) + 0x100*uint16(line[2])
 }
@@ -60,46 +63,77 @@ func buildOpIncDecRegister(reg int, inc bool) opFunc {
 	}
 }
 
+func resolveWithAddressMode(s *state, line []uint8, addressMode int) (value uint8, hasAddress bool, address uint16) {
+	hasAddress = true
+	switch addressMode {
+	case modeAccumulator:
+		value = s.registers.getA()
+	case modeImmediate:
+		value = line[1]
+		hasAddress = false
+	case modeZeroPage:
+		address = uint16(line[1])
+	case modeZeroPageX:
+		address = uint16(line[1] + s.registers.getX())
+	case modeZeroPageY:
+		address = uint16(line[1] + s.registers.getY())
+	case modeAbsolute:
+		address = getWordInLine(line)
+	case modeAbsoluteX:
+		address = getWordInLine(line) + uint16(s.registers.getX())
+	case modeAbsoluteY:
+		address = getWordInLine(line) + uint16(s.registers.getY())
+	case modeIndexedIndirectX:
+		addressAddress := uint8(line[1] + s.registers.getX())
+		address = s.memory.getZeroPageWord(addressAddress)
+	case modeIndirectIndexedY:
+		address = s.memory.getZeroPageWord(line[1]) +
+			uint16(s.registers.getY())
+	}
+
+	if hasAddress {
+		value = s.memory[address]
+	}
+	return
+}
+
+func buildRotateLeft(addressMode int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value, hasAddress, address := resolveWithAddressMode(s, line, addressMode)
+
+		carry := value >= (7<<1)
+		value <<= 1
+		value += s.registers.getFlagBit(flagC)
+		s.registers.updateFlag(flagC, carry)
+		s.registers.updateFlagZN(value)
+		
+		if hasAddress {
+			s.memory[address] = value
+		} else {
+			s.registers.setA(value)
+		}
+	}
+}
+
 func buildOpLoad(addressMode int, regDst int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		var value uint8
-		switch addressMode {
-		case modeImmediate:
-			value = line[1]
-		case modeZeroPage:
-			address := line[1]
-			value = s.memory[address]
-		case modeZeroPageX:
-			address := line[1] + s.registers.getX()
-			value = s.memory[address]
-		case modeZeroPageY:
-			address := line[1] + s.registers.getY()
-			value = s.memory[address]
-		case modeAbsolute:
-			address := getWordInLine(line)
-			value = s.memory[address]
-		case modeAbsoluteX:
-			address := getWordInLine(line) + uint16(s.registers.getX())
-			value = s.memory[address]
-		case modeAbsoluteY:
-			address := getWordInLine(line) + uint16(s.registers.getY())
-			value = s.memory[address]
-		case modeIndexedIndirectX:
-			addressAddress := uint8(line[1] + s.registers.getX())
-			address := s.memory.getZeroPageWord(addressAddress)
-			value = s.memory[address]
-		case modeIndirectIndexedY:
-			address := s.memory.getZeroPageWord(line[1]) +
-				uint16(s.registers.getY())
-			value = s.memory[address]
-		}
-
+		value, _, _ := resolveWithAddressMode(s, line, addressMode)
 		s.registers.setRegister(regDst, value)
 		s.registers.updateFlagZN(value)
 	}
 }
 
 var opcodes = [256]opcode{
+	0x26: opcode{"ROL", 2, 5, buildRotateLeft(modeZeroPage)},
+
+	0x2A: opcode{"ROL", 1, 2, buildRotateLeft(modeAccumulator)},
+
+	0x2E: opcode{"ROL", 3, 6, buildRotateLeft(modeAbsolute)},
+
+	0x36: opcode{"ROL", 2, 6, buildRotateLeft(modeZeroPageX)},
+
+	0x3E: opcode{"ROL", 3, 7, buildRotateLeft(modeAbsoluteX)},
+
 	0x88: opcode{"DEY", 1, 2, buildOpIncDecRegister(regY, false)},
 
 	0x8A: opcode{"TXA", 1, 2, buildOPTransfer(regX, regA)},
