@@ -39,7 +39,21 @@ func opNOP(s *state, line []uint8, opcode opcode) {}
 
 func buildOPTransfer(regSrc int, regDst int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		s.registers.setRegister(regDst, s.registers.getRegister(regSrc))
+		value := s.registers.getRegister(regSrc)
+		s.registers.setRegister(regDst, value)
+		// TODO: Update flags (N, Z)
+	}
+}
+
+func buildOpIncDecRegister(reg int, inc bool) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value := s.registers.getRegister(reg) + 1
+		if inc {
+			value++
+		} else {
+			value--
+		}
+		s.registers.setRegister(reg, value)
 		// TODO: Update flags (N, Z) for all but TXS
 	}
 }
@@ -85,24 +99,25 @@ func buildOpLoad(addressMode int, regDst int) opFunc {
 }
 
 var opcodes = [256]opcode{
-	0x00: opcode{"BRK", 1, 7, opNOP},
+	0x88: opcode{"DEY", 1, 2, buildOpIncDecRegister(regY, false)},
+
+	0x8A: opcode{"TXA", 1, 2, buildOPTransfer(regX, regA)},
+
+	0x98: opcode{"TYA", 1, 2, buildOPTransfer(regY, regA)},
+
+	0x9A: opcode{"TXS", 1, 2, buildOPTransfer(regX, regSP)},
 
 	0xA0: opcode{"LDY", 2, 2, buildOpLoad(modeImmediate, regY)},
-
 	0xA1: opcode{"LDX", 2, 6, buildOpLoad(modeIndexedIndirectX, regA)},
-
 	0xA2: opcode{"LDX", 2, 2, buildOpLoad(modeImmediate, regX)},
+
 	0xA4: opcode{"LDY", 2, 3, buildOpLoad(modeZeroPage, regY)},
 	0xA5: opcode{"LDA", 2, 3, buildOpLoad(modeZeroPage, regA)},
 	0xA6: opcode{"LDX", 2, 3, buildOpLoad(modeZeroPage, regX)},
-	0xA9: opcode{"LDA", 2, 2, buildOpLoad(modeImmediate, regA)},
 
-	0xAA: opcode{"TAX", 1, 2, buildOPTransfer(regA, regX)},
 	0xA8: opcode{"TAY", 1, 2, buildOPTransfer(regA, regY)},
-	0xBA: opcode{"TSX", 1, 2, buildOPTransfer(regSP, regX)},
-	0x8A: opcode{"TXA", 1, 2, buildOPTransfer(regX, regA)},
-	0x9A: opcode{"TXS", 1, 2, buildOPTransfer(regX, regSP)},
-	0x98: opcode{"TYA", 1, 2, buildOPTransfer(regY, regA)},
+	0xA9: opcode{"LDA", 2, 2, buildOpLoad(modeImmediate, regA)},
+	0xAA: opcode{"TAX", 1, 2, buildOPTransfer(regA, regX)},
 
 	0xAC: opcode{"LDY", 3, 4, buildOpLoad(modeAbsolute, regY)},
 	0xAD: opcode{"LDA", 3, 4, buildOpLoad(modeAbsolute, regA)},
@@ -115,9 +130,19 @@ var opcodes = [256]opcode{
 	0xB6: opcode{"LDX", 2, 4, buildOpLoad(modeZeroPageY, regX)},
 
 	0xB9: opcode{"LDA", 3, 4, buildOpLoad(modeAbsoluteY, regA)}, // Extra cycles
+	0xBA: opcode{"TSX", 1, 2, buildOPTransfer(regSP, regX)},
+
 	0xBC: opcode{"LDY", 3, 4, buildOpLoad(modeAbsoluteX, regY)}, // Extra cycles
 	0xBD: opcode{"LDA", 3, 4, buildOpLoad(modeAbsoluteX, regA)}, // Extra cycles
 	0xBE: opcode{"LDX", 3, 4, buildOpLoad(modeAbsoluteY, regX)}, // Extra cycles
+
+	0xC8: opcode{"INY", 1, 2, buildOpIncDecRegister(regY, true)},
+
+	0xCA: opcode{"DEX", 1, 2, buildOpIncDecRegister(regX, false)},
+
+	0xE8: opcode{"INX", 1, 2, buildOpIncDecRegister(regX, true)},
+
+	0xEA: opcode{"NOP", 1, 2, opNOP},
 }
 
 func executeLine(s *state, line []uint8) {
