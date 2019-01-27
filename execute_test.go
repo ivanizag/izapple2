@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestLDA(t *testing.T) {
+func TestLoad(t *testing.T) {
 	var s state
 
 	executeLine(&s, []uint8{0xA9, 0x42})
@@ -66,4 +66,51 @@ func TestLDA(t *testing.T) {
 		t.Error("Error in LDA (oper,X)")
 	}
 
+	s.memory[0x86] = 0x28
+	s.memory[0x87] = 0x40
+	s.registers.setY(0x10)
+	s.memory[0x4038] = 0x99
+	executeLine(&s, []uint8{0xB1, 0x86})
+	if s.registers.getA() != 0x99 {
+		t.Error("Error in LDA (oper),Y")
+	}
+}
+
+func TestTransfer(t *testing.T) {
+	var s state
+
+	s.registers.setA(0xB0)
+	executeLine(&s, []uint8{0xAA})
+	if s.registers.getX() != 0xB0 {
+		t.Error("Error in TAX")
+	}
+
+	s.registers.setA(0xB1)
+	executeLine(&s, []uint8{0xA8})
+	if s.registers.getY() != 0xB1 {
+		t.Error("Error in TAY")
+	}
+
+	s.registers.setSP(0xB2)
+	executeLine(&s, []uint8{0xBA})
+	if s.registers.getX() != 0xB2 {
+		t.Error("Error in TSX")
+	}
+
+	s.registers.setX(0xB3)
+	executeLine(&s, []uint8{0x8A})
+	if s.registers.getA() != 0xB3 {
+		t.Error("Error in TXA")
+	}
+
+	s.registers.setX(0xB4)
+	executeLine(&s, []uint8{0x9A})
+	if s.registers.getSP() != 0xB4 {
+		t.Error("Error in TXS")
+	}
+	s.registers.setY(0xB5)
+	executeLine(&s, []uint8{0x98})
+	if s.registers.getA() != 0xB5 {
+		t.Error("Error in TYA")
+	}
 }
