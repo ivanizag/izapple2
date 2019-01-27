@@ -57,4 +57,13 @@ func TestLDA(t *testing.T) {
 		t.Error("Error in LDA abs, Y")
 	}
 
+	s.memory[0x24] = 0x74
+	s.memory[0x25] = 0x20
+	s.registers.setX(0x04)
+	s.memory[0x2074] = 0x66
+	executeLine(&s, []uint8{0xA1, 0x20})
+	if s.registers.getA() != 0x66 {
+		t.Error("Error in LDA (oper,X)")
+	}
+
 }
