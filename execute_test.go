@@ -128,13 +128,13 @@ func TestTransfer(t *testing.T) {
 	}
 }
 
-func TestIncDec(t * testing.T) {
+func TestIncDec(t *testing.T) {
 	var s state
 
 	s.registers.setX(0x7E)
 	executeLine(&s, []uint8{0xE8})
 	if s.registers.getX() != 0x7F {
-		t.Errorf("Error in INX %v", s.registers.getX())
+		t.Errorf("Error in INX")
 	}
 
 	s.registers.setY(0xFC)
@@ -144,6 +144,29 @@ func TestIncDec(t * testing.T) {
 	}
 	if s.registers.getP() != flagN {
 		t.Error("Error in DEY flags")
+	}
+}
+
+func TestRotate(t *testing.T) {
+	var s state
+
+	s.registers.setA(0xF0)
+	executeLine(&s, []uint8{0x2A})
+	if s.registers.getA() != 0xE0 {
+		t.Errorf("Error in ROL")
+	}
+	if !s.registers.getFlag(flagC) {
+		t.Errorf("Error in ROL carry. %v", s.registers)
+	}
+
+	s.registers.setFlag(flagC)
+	s.registers.setA(0x0F)
+	executeLine(&s, []uint8{0x6A})
+	if s.registers.getA() != 0x87 {
+		t.Errorf("Error in ROR. %v", s.registers)
+	}
+	if !s.registers.getFlag(flagC) {
+		t.Errorf("Error in ROR carry")
 	}
 
 }

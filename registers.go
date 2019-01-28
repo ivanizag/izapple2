@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 const (
 	regA  = 0
 	regX  = 1
@@ -52,13 +54,12 @@ func (r *registers) setPC(v uint16) {
 func (r *registers) getFlagBit(i uint8) uint8 {
 	if r.getFlag(i) {
 		return 1
-	} else {
-		return 0
 	}
+	return 0
 }
 
 func (r *registers) getFlag(i uint8) bool {
-	return (r.data[regP] & i ) != 0
+	return (r.data[regP] & i) != 0
 }
 
 func (r *registers) setFlag(i uint8) {
@@ -80,4 +81,9 @@ func (r *registers) updateFlag(i uint8, v bool) {
 func (r *registers) updateFlagZN(t uint8) {
 	r.updateFlag(flagZ, t == 0)
 	r.updateFlag(flagN, t >= (1<<7))
+}
+
+func (r registers) String() string {
+	return fmt.Sprintf("A: %#02x, X: %#02x, Y: %#02x, SP: %#02x, PC: %#04x, P: %#02x, (NV-BDIZC): %08b",
+		r.getA(), r.getX(), r.getY(), r.getSP(), r.getPC(), r.getP(), r.getP())
 }

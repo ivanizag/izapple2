@@ -68,6 +68,7 @@ func resolveWithAddressMode(s *state, line []uint8, addressMode int) (value uint
 	switch addressMode {
 	case modeAccumulator:
 		value = s.registers.getA()
+		hasAddress = false
 	case modeImmediate:
 		value = line[1]
 		hasAddress = false
@@ -97,16 +98,24 @@ func resolveWithAddressMode(s *state, line []uint8, addressMode int) (value uint
 	return
 }
 
-func buildRotateLeft(addressMode int) opFunc {
+func buildRotate(addressMode int, isLeft bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
 		value, hasAddress, address := resolveWithAddressMode(s, line, addressMode)
 
-		carry := value >= (7<<1)
-		value <<= 1
-		value += s.registers.getFlagBit(flagC)
+		oldCarry := s.registers.getFlagBit(flagC)
+		var carry bool
+		if isLeft {
+			carry = (value & 0x80) != 0
+			value <<= 1
+			value += oldCarry
+		} else {
+			carry = (value & 0x01) != 0
+			value >>= 1
+			value += oldCarry << 7
+		}
 		s.registers.updateFlag(flagC, carry)
 		s.registers.updateFlagZN(value)
-		
+
 		if hasAddress {
 			s.memory[address] = value
 		} else {
@@ -124,11 +133,18 @@ func buildOpLoad(addressMode int, regDst int) opFunc {
 }
 
 var opcodes = [256]opcode{
-	0x26: opcode{"ROL", 2, 5, buildRotateLeft(modeZeroPage)},
-	0x2A: opcode{"ROL", 1, 2, buildRotateLeft(modeAccumulator)},
-	0x2E: opcode{"ROL", 3, 6, buildRotateLeft(modeAbsolute)},
-	0x36: opcode{"ROL", 2, 6, buildRotateLeft(modeZeroPageX)},
-	0x3E: opcode{"ROL", 3, 7, buildRotateLeft(modeAbsoluteX)},
+	0x26: opcode{"ROL", 2, 5, buildRotate(modeZeroPage, true)},
+	0x2A: opcode{"ROL", 1, 2, buildRotate(modeAccumulator, true)},
+	0x2E: opcode{"ROL", 3, 6, buildRotate(modeAbsolute, true)},
+	0x36: opcode{"ROL", 2, 6, buildRotate(modeZeroPageX, true)},
+	0x3E: opcode{"ROL", 3, 7, buildRotate(modeAbsoluteX, true)},
+
+	0x66: opcode{"ROR", 2, 5, buildRotate(modeZeroPage, false)},
+	0x6A: opcode{"ROR", 1, 2, buildRotate(modeAccumulator, false)},
+	0x6E: opcode{"ROR", 3, 6, buildRotate(modeAbsolute, false)},
+	0x76: opcode{"ROR", 2, 6, buildRotate(modeZeroPageX, false)},
+	0x7E: opcode{"ROR", 3, 7, buildRotate(modeAbsoluteX, false)},
+
 	0x88: opcode{"DEY", 1, 2, buildOpIncDecRegister(regY, false)},
 	0x8A: opcode{"TXA", 1, 2, buildOpTransfer(regX, regA)},
 	0x98: opcode{"TYA", 1, 2, buildOpTransfer(regY, regA)},
