@@ -168,5 +168,20 @@ func TestRotate(t *testing.T) {
 	if !s.registers.getFlag(flagC) {
 		t.Errorf("Error in ROR carry")
 	}
+}
+
+func TestClearSetFlag(t *testing.T) {
+	var s state
+	s.registers.setP(0x00)
+
+	executeLine(&s, []uint8{0xF8})
+	if !s.registers.getFlag(flagD) {
+		t.Errorf("Error in SED. %v", s.registers)
+	}
+
+	executeLine(&s, []uint8{0xD8})
+	if s.registers.getFlag(flagD) {
+		t.Errorf("Error in CLD. %v", s.registers)
+	}
 
 }

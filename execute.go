@@ -150,6 +150,56 @@ func buildOpLoad(addressMode int, regDst int) opFunc {
 	}
 }
 
+func buildOpUpdateFlag(flag uint8, value bool) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		s.registers.updateFlag(flag, value)
+	}
+}
+
+/*
+TODO:
+
+ADC
+SBC
+
+AND
+ORA
+
+ASL
+EOR
+LSR
+
+BIT
+CMP
+CPX
+CPY
+
+BRK
+
+BCC
+BCS
+BEQ
+BMI
+BPL
+BVC
+BVS
+
+JMP
+JSR
+RTI
+RTS
+
+PHA
+PHP
+PLA
+PLP
+
+STA
+STX
+STY
+
+*/
+
 var opcodes = [256]opcode{
 	0x2A: opcode{"ROL", 1, 2, buildRotate(modeAccumulator, true)},
 	0x26: opcode{"ROL", 2, 5, buildRotate(modeZeroPage, true)},
@@ -162,6 +212,15 @@ var opcodes = [256]opcode{
 	0x76: opcode{"ROR", 2, 6, buildRotate(modeZeroPageX, false)},
 	0x6E: opcode{"ROR", 3, 6, buildRotate(modeAbsolute, false)},
 	0x7E: opcode{"ROR", 3, 7, buildRotate(modeAbsoluteX, false)},
+
+	0x38: opcode{"SEC", 1, 2, buildOpUpdateFlag(flagC, true)},
+	0xF8: opcode{"SED", 1, 2, buildOpUpdateFlag(flagD, true)},
+	0x78: opcode{"SEI", 1, 2, buildOpUpdateFlag(flagI, true)},
+
+	0x18: opcode{"CLC", 1, 2, buildOpUpdateFlag(flagC, false)},
+	0xD8: opcode{"CLD", 1, 2, buildOpUpdateFlag(flagD, false)},
+	0x58: opcode{"CLI", 1, 2, buildOpUpdateFlag(flagI, false)},
+	0xB8: opcode{"CLV", 1, 2, buildOpUpdateFlag(flagV, false)},
 
 	0xE6: opcode{"INC", 2, 5, buildOpIncDec(modeZeroPage, true)},
 	0xF6: opcode{"INC", 2, 6, buildOpIncDec(modeZeroPageX, true)},
