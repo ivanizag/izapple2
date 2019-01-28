@@ -31,10 +31,11 @@ func getWordInLine(line []uint8) uint16 {
 	return uint16(line[1]) + 0x100*uint16(line[2])
 }
 
-func resolveWithAddressMode(s *state, line []uint8, addressMode int) (
-	value uint8, hasAddress bool, address uint16, register int) {
-	hasAddress = true
-	register = regNone
+func resolveWithAddressMode(s *state, line []uint8, addressMode int) (value uint8, setValue func(uint8)) {
+	var address uint16
+	hasAddress := true
+	register := regNone
+
 	switch addressMode {
 	case modeAccumulator:
 		value = s.registers.getA()
@@ -74,17 +75,17 @@ func resolveWithAddressMode(s *state, line []uint8, addressMode int) (
 	if hasAddress {
 		value = s.memory[address]
 	}
-	return
-}
 
-func storeWhereResolved(s *state, value uint8, hasAddress bool, address uint16, register int) {
-	if hasAddress {
-		s.memory[address] = value
-	} else if register != regNone {
-		s.registers.setRegister(register, value)
-	} else {
-		// Todo: assert impossible
+	setValue = func(value uint8) {
+		if hasAddress {
+			s.memory[address] = value
+		} else if register != regNone {
+			s.registers.setRegister(register, value)
+		} else {
+			// Todo: assert impossible
+		}
 	}
+	return
 }
 
 type opcode struct {
@@ -110,20 +111,20 @@ func buildOpTransfer(regSrc int, regDst int) opFunc {
 
 func buildOpIncDec(addressMode int, inc bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, hasAddress, address, register := resolveWithAddressMode(s, line, addressMode)
+		value, setValue := resolveWithAddressMode(s, line, addressMode)
 		if inc {
 			value++
 		} else {
 			value--
 		}
 		s.registers.updateFlagZN(value)
-		storeWhereResolved(s, value, hasAddress, address, register)
+		setValue(value)
 	}
 }
 
 func buildRotate(addressMode int, isLeft bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, hasAddress, address, register := resolveWithAddressMode(s, line, addressMode)
+		value, setValue := resolveWithAddressMode(s, line, addressMode)
 
 		oldCarry := s.registers.getFlagBit(flagC)
 		var carry bool
@@ -138,13 +139,13 @@ func buildRotate(addressMode int, isLeft bool) opFunc {
 		}
 		s.registers.updateFlag(flagC, carry)
 		s.registers.updateFlagZN(value)
-		storeWhereResolved(s, value, hasAddress, address, register)
+		setValue(value)
 	}
 }
 
 func buildOpLoad(addressMode int, regDst int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, _, _, _ := resolveWithAddressMode(s, line, addressMode)
+		value, _ := resolveWithAddressMode(s, line, addressMode)
 		s.registers.setRegister(regDst, value)
 		s.registers.updateFlagZN(value)
 	}
