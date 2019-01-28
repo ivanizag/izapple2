@@ -31,50 +31,6 @@ func getWordInLine(line []uint8) uint16 {
 	return uint16(line[1]) + 0x100*uint16(line[2])
 }
 
-type opcode struct {
-	name   string
-	bytes  int
-	cycles int
-	action opFunc
-}
-
-type opFunc func(s *state, line []uint8, opcode opcode)
-
-func opNOP(s *state, line []uint8, opcode opcode) {}
-
-func buildOpTransfer(regSrc int, regDst int) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
-		value := s.registers.getRegister(regSrc)
-		s.registers.setRegister(regDst, value)
-		if regDst != regSP {
-			s.registers.updateFlagZN(value)
-		}
-	}
-}
-
-func buildOpIncDec(addressMode int, inc bool) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
-		value, hasAddress, address, register := resolveWithAddressMode(s, line, addressMode)
-		if inc {
-			value++
-		} else {
-			value--
-		}
-		s.registers.updateFlagZN(value)
-		storeWhereNeeded(s, value, hasAddress, address, register)
-	}
-}
-
-func storeWhereNeeded(s *state, value uint8, hasAddress bool, address uint16, register int) {
-	if hasAddress {
-		s.memory[address] = value
-	} else if register != regNone {
-		s.registers.setRegister(register, value)
-	} else {
-		// Todo: assert impossible
-	}
-}
-
 func resolveWithAddressMode(s *state, line []uint8, addressMode int) (
 	value uint8, hasAddress bool, address uint16, register int) {
 	hasAddress = true
@@ -121,6 +77,50 @@ func resolveWithAddressMode(s *state, line []uint8, addressMode int) (
 	return
 }
 
+func storeWhereResolved(s *state, value uint8, hasAddress bool, address uint16, register int) {
+	if hasAddress {
+		s.memory[address] = value
+	} else if register != regNone {
+		s.registers.setRegister(register, value)
+	} else {
+		// Todo: assert impossible
+	}
+}
+
+type opcode struct {
+	name   string
+	bytes  int
+	cycles int
+	action opFunc
+}
+
+type opFunc func(s *state, line []uint8, opcode opcode)
+
+func opNOP(s *state, line []uint8, opcode opcode) {}
+
+func buildOpTransfer(regSrc int, regDst int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value := s.registers.getRegister(regSrc)
+		s.registers.setRegister(regDst, value)
+		if regDst != regSP {
+			s.registers.updateFlagZN(value)
+		}
+	}
+}
+
+func buildOpIncDec(addressMode int, inc bool) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value, hasAddress, address, register := resolveWithAddressMode(s, line, addressMode)
+		if inc {
+			value++
+		} else {
+			value--
+		}
+		s.registers.updateFlagZN(value)
+		storeWhereResolved(s, value, hasAddress, address, register)
+	}
+}
+
 func buildRotate(addressMode int, isLeft bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
 		value, hasAddress, address, register := resolveWithAddressMode(s, line, addressMode)
@@ -138,7 +138,7 @@ func buildRotate(addressMode int, isLeft bool) opFunc {
 		}
 		s.registers.updateFlag(flagC, carry)
 		s.registers.updateFlagZN(value)
-		storeWhereNeeded(s, value, hasAddress, address, register)
+		storeWhereResolved(s, value, hasAddress, address, register)
 	}
 }
 
