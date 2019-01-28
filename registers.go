@@ -3,12 +3,13 @@ package main
 import "fmt"
 
 const (
-	regA  = 0
-	regX  = 1
-	regY  = 2
-	regP  = 4
-	regSP = 5
-	regPC = 6 // 2 bytes
+	regA    = 0
+	regX    = 1
+	regY    = 2
+	regP    = 4
+	regSP   = 5
+	regPC   = 6 // 2 bytes
+	regNone = -1
 )
 
 const (
