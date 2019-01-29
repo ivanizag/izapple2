@@ -157,6 +157,16 @@ func buildOpUpdateFlag(flag uint8, value bool) opFunc {
 	}
 }
 
+func buildOpBranch(flag uint8, value bool) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		if s.registers.getFlag(flag) == value {
+			pc := s.registers.getPC()
+			pc += uint16(int8(line[1]))
+			s.registers.setPC(pc)
+		}
+	}
+}
+
 /*
 TODO:
 
@@ -176,14 +186,6 @@ CPX
 CPY
 
 BRK
-
-BCC
-BCS
-BEQ
-BMI
-BPL
-BVC
-BVS
 
 JMP
 JSR
@@ -265,6 +267,15 @@ var opcodes = [256]opcode{
 	0xB4: opcode{"LDY", 2, 4, buildOpLoad(modeZeroPageX, regY)},
 	0xAC: opcode{"LDY", 3, 4, buildOpLoad(modeAbsolute, regY)},
 	0xBC: opcode{"LDY", 3, 4, buildOpLoad(modeAbsoluteX, regY)}, // Extra cycles
+
+	0x90: opcode{"BCC", 2, 2, buildOpBranch(flagC, false)}, // Extra cycles
+	0xB0: opcode{"BCS", 2, 2, buildOpBranch(flagC, true)},  // Extra cycles
+	0xD0: opcode{"BNE", 2, 2, buildOpBranch(flagZ, false)}, // Extra cycles
+	0xF0: opcode{"BEQ", 2, 2, buildOpBranch(flagZ, true)},  // Extra cycles
+	0x10: opcode{"BPL", 2, 2, buildOpBranch(flagN, false)}, // Extra cycles
+	0x30: opcode{"BMI", 2, 2, buildOpBranch(flagN, true)},  // Extra cycles
+	0x50: opcode{"BVC", 2, 2, buildOpBranch(flagV, false)}, // Extra cycles
+	0x70: opcode{"BVS", 2, 2, buildOpBranch(flagV, true)},  // Extra cycles
 
 	0xEA: opcode{"NOP", 1, 2, opNOP},
 }

@@ -185,3 +185,25 @@ func TestClearSetFlag(t *testing.T) {
 	}
 
 }
+
+func TestBranch(t *testing.T) {
+	var s state
+	s.registers.setPC(0xC600)
+	s.registers.setFlag(flagV)
+	executeLine(&s, []uint8{0x50, 0x20})
+	if s.registers.getPC() != 0xC600 {
+		t.Errorf("Error in BVC, %v", s.registers)
+	}
+
+	executeLine(&s, []uint8{0x70, 0x20})
+	if s.registers.getPC() != 0xC620 {
+		t.Errorf("Error in BVS, %v", s.registers)
+	}
+
+	s.registers.setPC(0xD600)
+	s.registers.clearFlag(flagC)
+	executeLine(&s, []uint8{0x90, 0xA0})
+	if s.registers.getPC() != 0xD5A0 {
+		t.Errorf("Error in BCC, %v", s.registers)
+	}
+}
