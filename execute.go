@@ -26,6 +26,7 @@ const modeRegisterY = 11
 // https://www.masswerk.at/6502/6502_instruction_set.html
 // http://www.emulator101.com/reference/6502-reference.html
 // https://www.csh.rit.edu/~moffitt/docs/6502.html#FLAGS
+// https://ia800509.us.archive.org/18/items/Programming_the_6502/Programming_the_6502.pdf
 
 func getWordInLine(line []uint8) uint16 {
 	return uint16(line[1]) + 0x100*uint16(line[2])
@@ -160,6 +161,7 @@ func buildOpUpdateFlag(flag uint8, value bool) opFunc {
 func buildOpBranch(flag uint8, value bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
 		if s.registers.getFlag(flag) == value {
+			// This assumes that PC is already pointing to the next instruction
 			pc := s.registers.getPC()
 			pc += uint16(int8(line[1]))
 			s.registers.setPC(pc)
