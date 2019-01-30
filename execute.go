@@ -181,6 +181,25 @@ func buildOpBranch(flag uint8, value bool) opFunc {
 	}
 }
 
+func buildOpBit(addressMode int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value, _ := resolveWithAddressMode(s, line, addressMode)
+		acc := s.registers.getA()
+		s.registers.updateFlag(flagZ, value&acc == 0)
+		s.registers.updateFlag(flagN, value&(1<<7) != 0)
+		s.registers.updateFlag(flagV, value&(1<<6) != 0)
+	}
+}
+
+func buildOpCompare(addressMode int, reg int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value, _ := resolveWithAddressMode(s, line, addressMode)
+		reference := s.registers.getRegister(reg)
+		s.registers.updateFlagZN(reference - value)
+		s.registers.updateFlag(flagC, reference >= value)
+	}
+}
+
 /*
 TODO:
 
@@ -190,11 +209,6 @@ SBC
 AND
 ORA
 EOR
-
-BIT
-CMP
-CPX
-CPY
 
 BRK
 
@@ -211,6 +225,26 @@ PLP
 */
 
 var opcodes = [256]opcode{
+	0x24: opcode{"BIT", 2, 3, buildOpBit(modeZeroPage)},
+	0x2C: opcode{"BIT", 2, 3, buildOpBit(modeAbsolute)},
+
+	0xC9: opcode{"CMP", 2, 2, buildOpCompare(modeImmediate, regA)},
+	0xC5: opcode{"CMP", 2, 3, buildOpCompare(modeZeroPage, regA)},
+	0xD5: opcode{"CMP", 2, 4, buildOpCompare(modeZeroPageX, regA)},
+	0xCD: opcode{"CMP", 3, 4, buildOpCompare(modeAbsolute, regA)},
+	0xDD: opcode{"CMP", 3, 4, buildOpCompare(modeAbsoluteX, regA)}, // Extra cycles
+	0xD9: opcode{"CMP", 3, 4, buildOpCompare(modeAbsoluteY, regA)}, // Extra cycles
+	0xC1: opcode{"CMP", 2, 6, buildOpCompare(modeIndexedIndirectX, regA)},
+	0xD1: opcode{"CMP", 2, 5, buildOpCompare(modeIndirectIndexedY, regA)}, // Extra cycles
+
+	0xE0: opcode{"CPX", 2, 2, buildOpCompare(modeImmediate, regX)},
+	0xE4: opcode{"CPX", 2, 3, buildOpCompare(modeZeroPage, regX)},
+	0xEC: opcode{"CPX", 3, 4, buildOpCompare(modeAbsolute, regX)},
+
+	0xC0: opcode{"CPY", 2, 2, buildOpCompare(modeImmediate, regY)},
+	0xC4: opcode{"CPY", 2, 3, buildOpCompare(modeZeroPage, regY)},
+	0xCC: opcode{"CPY", 3, 4, buildOpCompare(modeAbsolute, regY)},
+
 	0x2A: opcode{"ROL", 1, 2, buildShift(modeAccumulator, true, true)},
 	0x26: opcode{"ROL", 2, 5, buildShift(modeZeroPage, true, true)},
 	0x36: opcode{"ROL", 2, 6, buildShift(modeZeroPageX, true, true)},
@@ -272,14 +306,14 @@ var opcodes = [256]opcode{
 	0xAD: opcode{"LDA", 3, 4, buildOpLoad(modeAbsolute, regA)},
 	0xBD: opcode{"LDA", 3, 4, buildOpLoad(modeAbsoluteX, regA)}, // Extra cycles
 	0xB9: opcode{"LDA", 3, 4, buildOpLoad(modeAbsoluteY, regA)}, // Extra cycles
+	0xA1: opcode{"LDA", 2, 6, buildOpLoad(modeIndexedIndirectX, regA)},
+	0xB1: opcode{"LDA", 2, 5, buildOpLoad(modeIndirectIndexedY, regA)}, // Extra cycles
 
 	0xA2: opcode{"LDX", 2, 2, buildOpLoad(modeImmediate, regX)},
 	0xA6: opcode{"LDX", 2, 3, buildOpLoad(modeZeroPage, regX)},
 	0xB6: opcode{"LDX", 2, 4, buildOpLoad(modeZeroPageY, regX)},
 	0xAE: opcode{"LDX", 3, 4, buildOpLoad(modeAbsolute, regX)},
 	0xBE: opcode{"LDX", 3, 4, buildOpLoad(modeAbsoluteY, regX)}, // Extra cycles
-	0xA1: opcode{"LDX", 2, 6, buildOpLoad(modeIndexedIndirectX, regA)},
-	0xB1: opcode{"LDX", 2, 5, buildOpLoad(modeIndirectIndexedY, regA)}, // Extra cycles
 
 	0xA0: opcode{"LDY", 2, 2, buildOpLoad(modeImmediate, regY)},
 	0xA4: opcode{"LDY", 2, 3, buildOpLoad(modeZeroPage, regY)},

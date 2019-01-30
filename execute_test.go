@@ -153,6 +153,7 @@ func TestTransfer(t *testing.T) {
 	if s.registers.getSP() != 0xB4 {
 		t.Error("Error in TXS")
 	}
+
 	s.registers.setY(0xB5)
 	executeLine(&s, []uint8{0x98})
 	if s.registers.getA() != 0xB5 {
@@ -236,6 +237,63 @@ func TestClearSetFlag(t *testing.T) {
 		t.Errorf("Error in CLD. %v", s.registers)
 	}
 
+}
+
+func TestCompare(t *testing.T) {
+	var s state
+
+	s.registers.setA(0x02)
+	executeLine(&s, []uint8{0xC9, 0x01})
+	if s.registers.getP() != 0x01 {
+		t.Errorf("Error in CMP <. %v", s.registers)
+	}
+
+	executeLine(&s, []uint8{0xC9, 0x02})
+	if s.registers.getP() != 0x03 {
+		t.Errorf("Error in CMP =. %v", s.registers)
+	}
+
+	executeLine(&s, []uint8{0xC9, 0x03})
+	if s.registers.getP() != 0x80 {
+		t.Errorf("Error in CMP >. %v", s.registers)
+	}
+
+	s.registers.setX(0x04)
+	executeLine(&s, []uint8{0xE0, 0x05})
+	if s.registers.getP() != 0x80 {
+		t.Errorf("Error in CPX >. %v", s.registers)
+	}
+
+	s.registers.setY(0x08)
+	executeLine(&s, []uint8{0xC0, 0x09})
+	if s.registers.getP() != 0x80 {
+		t.Errorf("Error in CPY >. %v", s.registers)
+	}
+
+}
+func TestBit(t *testing.T) {
+	var s state
+
+	s.registers.setA(0x0F)
+	s.memory[0x0040] = 0xF0
+	executeLine(&s, []uint8{0x24, 0x40})
+	if s.registers.getP() != 0xC2 {
+		t.Errorf("Error in BIT. %v", s.registers)
+	}
+
+	s.registers.setA(0xF0)
+	s.memory[0x0040] = 0xF0
+	executeLine(&s, []uint8{0x24, 0x40})
+	if s.registers.getP() != 0xC0 {
+		t.Errorf("Error in BIT, 2. %v", s.registers)
+	}
+
+	s.registers.setA(0xF0)
+	s.memory[0x01240] = 0x80
+	executeLine(&s, []uint8{0x2C, 0x40, 0x12})
+	if s.registers.getP() != 0x80 {
+		t.Errorf("Error in BIT, 2. %v", s.registers)
+	}
 }
 
 func TestBranch(t *testing.T) {
