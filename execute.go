@@ -152,6 +152,14 @@ func buildOpLoad(addressMode int, regDst int) opFunc {
 	}
 }
 
+func buildOpStore(addressMode int, regSrc int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		_, setValue := resolveWithAddressMode(s, line, addressMode)
+		value := s.registers.getRegister(regSrc)
+		setValue(value)
+	}
+}
+
 func buildOpUpdateFlag(flag uint8, value bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
 		s.registers.updateFlag(flag, value)
@@ -198,10 +206,6 @@ PHA
 PHP
 PLA
 PLP
-
-STA
-STX
-STY
 
 */
 
@@ -269,6 +273,22 @@ var opcodes = [256]opcode{
 	0xB4: opcode{"LDY", 2, 4, buildOpLoad(modeZeroPageX, regY)},
 	0xAC: opcode{"LDY", 3, 4, buildOpLoad(modeAbsolute, regY)},
 	0xBC: opcode{"LDY", 3, 4, buildOpLoad(modeAbsoluteX, regY)}, // Extra cycles
+
+	0x85: opcode{"STA", 2, 3, buildOpStore(modeZeroPage, regA)},
+	0x95: opcode{"STA", 2, 4, buildOpStore(modeZeroPageX, regA)},
+	0x8D: opcode{"STA", 3, 4, buildOpStore(modeAbsolute, regA)},
+	0x9D: opcode{"STA", 3, 5, buildOpStore(modeAbsoluteX, regA)},
+	0x99: opcode{"STA", 3, 5, buildOpStore(modeAbsoluteY, regA)},
+	0x81: opcode{"STA", 2, 6, buildOpStore(modeIndexedIndirectX, regA)},
+	0x91: opcode{"STA", 2, 6, buildOpStore(modeIndirectIndexedY, regA)},
+
+	0x86: opcode{"STX", 2, 3, buildOpStore(modeZeroPage, regX)},
+	0x96: opcode{"STX", 2, 4, buildOpStore(modeZeroPageY, regX)},
+	0x8E: opcode{"STX", 3, 4, buildOpStore(modeAbsolute, regX)},
+
+	0x84: opcode{"STY", 2, 3, buildOpStore(modeZeroPage, regY)},
+	0x94: opcode{"STY", 2, 4, buildOpStore(modeZeroPageX, regY)},
+	0x8C: opcode{"STY", 3, 4, buildOpStore(modeAbsolute, regY)},
 
 	0x90: opcode{"BCC", 2, 2, buildOpBranch(flagC, false)}, // Extra cycles
 	0xB0: opcode{"BCS", 2, 2, buildOpBranch(flagC, true)},  // Extra cycles

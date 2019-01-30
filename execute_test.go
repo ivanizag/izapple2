@@ -86,6 +86,38 @@ func TestLoad(t *testing.T) {
 	}
 }
 
+func TestStore(t *testing.T) {
+	var s state
+	s.registers.setA(0x10)
+	s.registers.setX(0x40)
+	s.registers.setY(0x80)
+
+	executeLine(&s, []uint8{0x85, 0x50})
+	if s.memory[0x0050] != 0x10 {
+		t.Error("Error in STA zpg")
+	}
+
+	executeLine(&s, []uint8{0x86, 0x51})
+	if s.memory[0x0051] != 0x40 {
+		t.Error("Error in STX zpg")
+	}
+
+	executeLine(&s, []uint8{0x84, 0x52})
+	if s.memory[0x0052] != 0x80 {
+		t.Error("Error in STY zpg")
+	}
+
+	executeLine(&s, []uint8{0x8D, 0x20, 0xC0})
+	if s.memory[0xC020] != 0x10 {
+		t.Error("Error in STA abs")
+	}
+
+	executeLine(&s, []uint8{0x9D, 0x08, 0x10})
+	if s.memory[0x1048] != 0x10 {
+		t.Error("Error in STA abs, X")
+	}
+}
+
 func TestTransfer(t *testing.T) {
 	var s state
 
