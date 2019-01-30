@@ -123,7 +123,7 @@ func buildOpIncDec(addressMode int, inc bool) opFunc {
 	}
 }
 
-func buildRotate(addressMode int, isLeft bool) opFunc {
+func buildShift(addressMode int, isLeft bool, isRotate bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
 		value, setValue := resolveWithAddressMode(s, line, addressMode)
 
@@ -132,11 +132,15 @@ func buildRotate(addressMode int, isLeft bool) opFunc {
 		if isLeft {
 			carry = (value & 0x80) != 0
 			value <<= 1
-			value += oldCarry
+			if isRotate {
+				value += oldCarry
+			}
 		} else {
 			carry = (value & 0x01) != 0
 			value >>= 1
-			value += oldCarry << 7
+			if isRotate {
+				value += oldCarry << 7
+			}
 		}
 		s.registers.updateFlag(flagC, carry)
 		s.registers.updateFlagZN(value)
@@ -185,10 +189,7 @@ SBC
 
 AND
 ORA
-
-ASL
 EOR
-LSR
 
 BIT
 CMP
@@ -210,17 +211,29 @@ PLP
 */
 
 var opcodes = [256]opcode{
-	0x2A: opcode{"ROL", 1, 2, buildRotate(modeAccumulator, true)},
-	0x26: opcode{"ROL", 2, 5, buildRotate(modeZeroPage, true)},
-	0x36: opcode{"ROL", 2, 6, buildRotate(modeZeroPageX, true)},
-	0x2E: opcode{"ROL", 3, 6, buildRotate(modeAbsolute, true)},
-	0x3E: opcode{"ROL", 3, 7, buildRotate(modeAbsoluteX, true)},
+	0x2A: opcode{"ROL", 1, 2, buildShift(modeAccumulator, true, true)},
+	0x26: opcode{"ROL", 2, 5, buildShift(modeZeroPage, true, true)},
+	0x36: opcode{"ROL", 2, 6, buildShift(modeZeroPageX, true, true)},
+	0x2E: opcode{"ROL", 3, 6, buildShift(modeAbsolute, true, true)},
+	0x3E: opcode{"ROL", 3, 7, buildShift(modeAbsoluteX, true, true)},
 
-	0x6A: opcode{"ROR", 1, 2, buildRotate(modeAccumulator, false)},
-	0x66: opcode{"ROR", 2, 5, buildRotate(modeZeroPage, false)},
-	0x76: opcode{"ROR", 2, 6, buildRotate(modeZeroPageX, false)},
-	0x6E: opcode{"ROR", 3, 6, buildRotate(modeAbsolute, false)},
-	0x7E: opcode{"ROR", 3, 7, buildRotate(modeAbsoluteX, false)},
+	0x6A: opcode{"ROR", 1, 2, buildShift(modeAccumulator, false, true)},
+	0x66: opcode{"ROR", 2, 5, buildShift(modeZeroPage, false, true)},
+	0x76: opcode{"ROR", 2, 6, buildShift(modeZeroPageX, false, true)},
+	0x6E: opcode{"ROR", 3, 6, buildShift(modeAbsolute, false, true)},
+	0x7E: opcode{"ROR", 3, 7, buildShift(modeAbsoluteX, false, true)},
+
+	0x0A: opcode{"ASL", 1, 2, buildShift(modeAccumulator, true, false)},
+	0x06: opcode{"ASL", 2, 5, buildShift(modeZeroPage, true, false)},
+	0x16: opcode{"ASL", 2, 6, buildShift(modeZeroPageX, true, false)},
+	0x0E: opcode{"ASL", 3, 6, buildShift(modeAbsolute, true, false)},
+	0x1E: opcode{"ASL", 3, 7, buildShift(modeAbsoluteX, true, false)},
+
+	0x4A: opcode{"LSR", 1, 2, buildShift(modeAccumulator, false, false)},
+	0x46: opcode{"LSR", 2, 5, buildShift(modeZeroPage, false, false)},
+	0x56: opcode{"LSR", 2, 6, buildShift(modeZeroPageX, false, false)},
+	0x4E: opcode{"LSR", 3, 6, buildShift(modeAbsolute, false, false)},
+	0x5E: opcode{"LSR", 3, 7, buildShift(modeAbsoluteX, false, false)},
 
 	0x38: opcode{"SEC", 1, 2, buildOpUpdateFlag(flagC, true)},
 	0xF8: opcode{"SED", 1, 2, buildOpUpdateFlag(flagD, true)},

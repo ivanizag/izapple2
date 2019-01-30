@@ -179,7 +179,7 @@ func TestIncDec(t *testing.T) {
 	}
 }
 
-func TestRotate(t *testing.T) {
+func TestShiftRotate(t *testing.T) {
 	var s state
 
 	s.registers.setA(0xF0)
@@ -199,6 +199,26 @@ func TestRotate(t *testing.T) {
 	}
 	if !s.registers.getFlag(flagC) {
 		t.Errorf("Error in ROR carry")
+	}
+
+	s.registers.setFlag(flagC)
+	s.registers.setA(0x81)
+	executeLine(&s, []uint8{0x0A})
+	if s.registers.getA() != 0x02 {
+		t.Errorf("Error in ASL. %v", s.registers)
+	}
+	if !s.registers.getFlag(flagC) {
+		t.Errorf("Error in ASL carry")
+	}
+
+	s.registers.setFlag(flagC)
+	s.registers.setA(0x02)
+	executeLine(&s, []uint8{0x4A})
+	if s.registers.getA() != 0x01 {
+		t.Errorf("Error in LSR. %v", s.registers)
+	}
+	if s.registers.getFlag(flagC) {
+		t.Errorf("Error in LSR carry")
 	}
 }
 
