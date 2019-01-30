@@ -239,6 +239,28 @@ func TestClearSetFlag(t *testing.T) {
 
 }
 
+func testLogic(t *testing.T) {
+	var s state
+
+	s.registers.setA(0xF0)
+	executeLine(&s, []uint8{0x29, 0x1C})
+	if s.registers.getA() != 0x10 {
+		t.Errorf("Error in AND <. %v", s.registers)
+	}
+
+	s.registers.setA(0xF0)
+	executeLine(&s, []uint8{0x49, 0x1C})
+	if s.registers.getA() != 0xEC {
+		t.Errorf("Error in EOR <. %v", s.registers)
+	}
+
+	s.registers.setA(0xF0)
+	executeLine(&s, []uint8{0x09, 0x0C})
+	if s.registers.getA() != 0xFC {
+		t.Errorf("Error in ORA <. %v", s.registers)
+	}
+}
+
 func TestCompare(t *testing.T) {
 	var s state
 

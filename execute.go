@@ -200,6 +200,19 @@ func buildOpCompare(addressMode int, reg int) opFunc {
 	}
 }
 
+func operationAnd(a uint8, b uint8) uint8 { return a & b }
+func operationOr(a uint8, b uint8) uint8  { return a | b }
+func operationXor(a uint8, b uint8) uint8 { return a ^ b }
+
+func buildOpLogic(addressMode int, operation func(uint8, uint8) uint8) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value, _ := resolveWithAddressMode(s, line, addressMode)
+		result := operation(value, s.registers.getA())
+		s.registers.setA(result)
+		s.registers.updateFlagZN(result)
+	}
+}
+
 /*
 TODO:
 
@@ -225,6 +238,33 @@ PLP
 */
 
 var opcodes = [256]opcode{
+	0x29: opcode{"AND", 2, 2, buildOpLogic(modeImmediate, operationAnd)},
+	0x25: opcode{"AND", 2, 3, buildOpLogic(modeZeroPage, operationAnd)},
+	0x35: opcode{"AND", 2, 4, buildOpLogic(modeZeroPageX, operationAnd)},
+	0x2D: opcode{"AND", 3, 4, buildOpLogic(modeAbsolute, operationAnd)},
+	0x3D: opcode{"AND", 3, 4, buildOpLogic(modeAbsoluteX, operationAnd)}, // Extra cycles
+	0x39: opcode{"AND", 3, 4, buildOpLogic(modeAbsoluteY, operationAnd)}, // Extra cycles
+	0x21: opcode{"AND", 2, 6, buildOpLogic(modeIndexedIndirectX, operationAnd)},
+	0x31: opcode{"AND", 2, 5, buildOpLogic(modeIndirectIndexedY, operationAnd)}, // Extra cycles
+
+	0x49: opcode{"EOR", 2, 2, buildOpLogic(modeImmediate, operationXor)},
+	0x45: opcode{"EOR", 2, 3, buildOpLogic(modeZeroPage, operationXor)},
+	0x55: opcode{"EOR", 2, 4, buildOpLogic(modeZeroPageX, operationXor)},
+	0x4D: opcode{"EOR", 3, 4, buildOpLogic(modeAbsolute, operationXor)},
+	0x5D: opcode{"EOR", 3, 4, buildOpLogic(modeAbsoluteX, operationXor)}, // Extra cycles
+	0x59: opcode{"EOR", 3, 4, buildOpLogic(modeAbsoluteY, operationXor)}, // Extra cycles
+	0x41: opcode{"EOR", 2, 6, buildOpLogic(modeIndexedIndirectX, operationXor)},
+	0x51: opcode{"EOR", 2, 5, buildOpLogic(modeIndirectIndexedY, operationXor)}, // Extra cycles
+
+	0x09: opcode{"ORA", 2, 2, buildOpLogic(modeImmediate, operationOr)},
+	0x05: opcode{"ORA", 2, 3, buildOpLogic(modeZeroPage, operationOr)},
+	0x15: opcode{"ORA", 2, 4, buildOpLogic(modeZeroPageX, operationOr)},
+	0x0D: opcode{"ORA", 3, 4, buildOpLogic(modeAbsolute, operationOr)},
+	0x1D: opcode{"ORA", 3, 4, buildOpLogic(modeAbsoluteX, operationOr)}, // Extra cycles
+	0x19: opcode{"ORA", 3, 4, buildOpLogic(modeAbsoluteY, operationOr)}, // Extra cycles
+	0x01: opcode{"ORA", 2, 6, buildOpLogic(modeIndexedIndirectX, operationOr)},
+	0x11: opcode{"ORA", 2, 5, buildOpLogic(modeIndirectIndexedY, operationOr)}, // Extra cycles
+
 	0x24: opcode{"BIT", 2, 3, buildOpBit(modeZeroPage)},
 	0x2C: opcode{"BIT", 2, 3, buildOpBit(modeAbsolute)},
 
