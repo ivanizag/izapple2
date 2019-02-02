@@ -239,7 +239,7 @@ func TestClearSetFlag(t *testing.T) {
 
 }
 
-func testLogic(t *testing.T) {
+func TestLogic(t *testing.T) {
 	var s state
 
 	s.registers.setA(0xF0)
@@ -259,6 +259,75 @@ func testLogic(t *testing.T) {
 	if s.registers.getA() != 0xFC {
 		t.Errorf("Error in ORA <. %v", s.registers)
 	}
+}
+
+func TestAdd(t *testing.T) {
+	var s state
+
+	s.registers.setA(0xA0)
+	s.registers.clearFlag(flagC)
+	executeLine(&s, []uint8{0x69, 0x0B})
+	if s.registers.getA() != 0xAB {
+		t.Errorf("Error in ADC A0 + 0B. %v", s.registers)
+	}
+	if s.registers.getFlag(flagC) {
+		t.Errorf("Error in carry ADC A0 + 0B. %v", s.registers)
+	}
+
+	s.registers.setA(0xFF)
+	s.registers.clearFlag(flagC)
+	executeLine(&s, []uint8{0x69, 0x02})
+	if s.registers.getA() != 0x01 {
+		t.Errorf("Error in ADC A0 + 0B with carry. %v", s.registers)
+	}
+	if !s.registers.getFlag(flagC) {
+		t.Errorf("Error in carry ADC A0 + 0B with carry. %v", s.registers)
+	}
+
+	s.registers.setA(0xA0)
+	s.registers.setFlag(flagC)
+	executeLine(&s, []uint8{0x69, 0x01})
+	if s.registers.getA() != 0xA2 {
+		t.Errorf("Error in ADC C + A0 + 0B with carry. %v", s.registers)
+	}
+	if s.registers.getFlag(flagC) {
+		t.Errorf("Error in carry ADC C + A0 + 0B with carry. %v", s.registers)
+	}
+}
+
+func TestSub(t *testing.T) {
+	var s state
+
+	s.registers.setA(0x09)
+	s.registers.clearFlag(flagC)
+	executeLine(&s, []uint8{0xE9, 0x05})
+	if s.registers.getA() != 0x04 {
+		t.Errorf("Error in SBC A0 + 0B. %v", s.registers)
+	}
+	if s.registers.getFlag(flagC) {
+		t.Errorf("Error in carry SBC A0 + 0B. %v", s.registers)
+	}
+
+	s.registers.setA(0x01)
+	s.registers.clearFlag(flagC)
+	executeLine(&s, []uint8{0xE9, 0x02})
+	if s.registers.getA() != 0xFF {
+		t.Errorf("Error in SBC A0 + 0B with carry. %v", s.registers)
+	}
+	if !s.registers.getFlag(flagC) {
+		t.Errorf("Error in carry SBC A0 + 0B with carry. %v", s.registers)
+	}
+
+	s.registers.setA(0x08)
+	s.registers.setFlag(flagC)
+	executeLine(&s, []uint8{0xE9, 0x02})
+	if s.registers.getA() != 0x05 {
+		t.Errorf("Error in SBC C + A0 + 0B with carry. %v", s.registers)
+	}
+	if s.registers.getFlag(flagC) {
+		t.Errorf("Error in carry SBC C + A0 + 0B with carry. %v", s.registers)
+	}
+
 }
 
 func TestCompare(t *testing.T) {

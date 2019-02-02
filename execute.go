@@ -213,15 +213,43 @@ func buildOpLogic(addressMode int, operation func(uint8, uint8) uint8) opFunc {
 	}
 }
 
+func buildOpAdd(addressMode int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value, _ := resolveWithAddressMode(s, line, addressMode)
+		if s.registers.getFlag(flagD) {
+			// TODO BCD
+		} else {
+			total := uint16(s.registers.getA()) +
+				uint16(value) +
+				uint16(s.registers.getFlagBit(flagC))
+			truncated := uint8(total)
+			s.registers.setA(truncated)
+			s.registers.updateFlagZN(truncated)
+			s.registers.updateFlag(flagC, total > 0xFF)
+		}
+	}
+}
+
+func buildOpSub(addressMode int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value, _ := resolveWithAddressMode(s, line, addressMode)
+		if s.registers.getFlag(flagD) {
+			// TODO BCD
+		} else {
+			total := 0x100 + uint16(s.registers.getA()) -
+				uint16(value) -
+				uint16(s.registers.getFlagBit(flagC))
+			truncated := uint8(total)
+			s.registers.setA(truncated)
+			s.registers.updateFlagZN(truncated)
+			s.registers.updateFlag(flagC, total <= 0xFF)
+		}
+	}
+}
+
 /*
 TODO:
-
-ADC
-SBC
-
-AND
-ORA
-EOR
+http://www.6502.org/tutorials/decimal_mode.html
 
 BRK
 
@@ -238,6 +266,15 @@ PLP
 */
 
 var opcodes = [256]opcode{
+	0x09: opcode{"ORA", 2, 2, buildOpLogic(modeImmediate, operationOr)},
+	0x05: opcode{"ORA", 2, 3, buildOpLogic(modeZeroPage, operationOr)},
+	0x15: opcode{"ORA", 2, 4, buildOpLogic(modeZeroPageX, operationOr)},
+	0x0D: opcode{"ORA", 3, 4, buildOpLogic(modeAbsolute, operationOr)},
+	0x1D: opcode{"ORA", 3, 4, buildOpLogic(modeAbsoluteX, operationOr)}, // Extra cycles
+	0x19: opcode{"ORA", 3, 4, buildOpLogic(modeAbsoluteY, operationOr)}, // Extra cycles
+	0x01: opcode{"ORA", 2, 6, buildOpLogic(modeIndexedIndirectX, operationOr)},
+	0x11: opcode{"ORA", 2, 5, buildOpLogic(modeIndirectIndexedY, operationOr)}, // Extra cycles
+
 	0x29: opcode{"AND", 2, 2, buildOpLogic(modeImmediate, operationAnd)},
 	0x25: opcode{"AND", 2, 3, buildOpLogic(modeZeroPage, operationAnd)},
 	0x35: opcode{"AND", 2, 4, buildOpLogic(modeZeroPageX, operationAnd)},
@@ -256,14 +293,23 @@ var opcodes = [256]opcode{
 	0x41: opcode{"EOR", 2, 6, buildOpLogic(modeIndexedIndirectX, operationXor)},
 	0x51: opcode{"EOR", 2, 5, buildOpLogic(modeIndirectIndexedY, operationXor)}, // Extra cycles
 
-	0x09: opcode{"ORA", 2, 2, buildOpLogic(modeImmediate, operationOr)},
-	0x05: opcode{"ORA", 2, 3, buildOpLogic(modeZeroPage, operationOr)},
-	0x15: opcode{"ORA", 2, 4, buildOpLogic(modeZeroPageX, operationOr)},
-	0x0D: opcode{"ORA", 3, 4, buildOpLogic(modeAbsolute, operationOr)},
-	0x1D: opcode{"ORA", 3, 4, buildOpLogic(modeAbsoluteX, operationOr)}, // Extra cycles
-	0x19: opcode{"ORA", 3, 4, buildOpLogic(modeAbsoluteY, operationOr)}, // Extra cycles
-	0x01: opcode{"ORA", 2, 6, buildOpLogic(modeIndexedIndirectX, operationOr)},
-	0x11: opcode{"ORA", 2, 5, buildOpLogic(modeIndirectIndexedY, operationOr)}, // Extra cycles
+	0x69: opcode{"ADC", 2, 2, buildOpAdd(modeImmediate)},
+	0x65: opcode{"ADC", 2, 3, buildOpAdd(modeZeroPage)},
+	0x75: opcode{"ADC", 2, 4, buildOpAdd(modeZeroPageX)},
+	0x6D: opcode{"ADC", 3, 4, buildOpAdd(modeAbsolute)},
+	0x7D: opcode{"ADC", 3, 4, buildOpAdd(modeAbsoluteX)}, // Extra cycles
+	0x79: opcode{"ADC", 3, 4, buildOpAdd(modeAbsoluteY)}, // Extra cycles
+	0x61: opcode{"ADC", 2, 6, buildOpAdd(modeIndexedIndirectX)},
+	0x71: opcode{"ADC", 2, 5, buildOpAdd(modeIndirectIndexedY)}, // Extra cycles
+
+	0xE9: opcode{"SBC", 2, 2, buildOpSub(modeImmediate)},
+	0xE5: opcode{"SBC", 2, 3, buildOpSub(modeZeroPage)},
+	0xF5: opcode{"SBC", 2, 4, buildOpSub(modeZeroPageX)},
+	0xED: opcode{"SBC", 3, 4, buildOpSub(modeAbsolute)},
+	0xFD: opcode{"SBC", 3, 4, buildOpSub(modeAbsoluteX)}, // Extra cycles
+	0xF9: opcode{"SBC", 3, 4, buildOpSub(modeAbsoluteY)}, // Extra cycles
+	0xE1: opcode{"SBC", 2, 6, buildOpSub(modeIndexedIndirectX)},
+	0xF1: opcode{"SBC", 2, 5, buildOpSub(modeIndirectIndexedY)}, // Extra cycles
 
 	0x24: opcode{"BIT", 2, 3, buildOpBit(modeZeroPage)},
 	0x2C: opcode{"BIT", 2, 3, buildOpBit(modeAbsolute)},
