@@ -247,6 +247,26 @@ func buildOpSub(addressMode int) opFunc {
 	}
 }
 
+const stackAddress uint16 = 0x0100
+
+func buildOpPush(reg int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		value := s.registers.getRegister(reg)
+		adresss := stackAddress + uint16(s.registers.getSP())
+		s.memory[adresss] = value
+		s.registers.setSP(s.registers.getSP() - 1)
+	}
+}
+
+func buildOpPull(reg int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		s.registers.setSP(s.registers.getSP() + 1)
+		adresss := stackAddress + uint16(s.registers.getSP())
+		value := s.memory[adresss]
+		s.registers.setRegister(reg, value)
+	}
+}
+
 /*
 TODO:
 http://www.6502.org/tutorials/decimal_mode.html
@@ -258,14 +278,14 @@ JSR
 RTI
 RTS
 
-PHA
-PHP
-PLA
-PLP
-
 */
 
 var opcodes = [256]opcode{
+	0x48: opcode{"PHA", 1, 3, buildOpPush(regA)},
+	0x08: opcode{"PHP", 1, 3, buildOpPush(regP)},
+	0x68: opcode{"PLA", 1, 4, buildOpPull(regA)},
+	0x28: opcode{"PLP", 1, 4, buildOpPull(regP)},
+
 	0x09: opcode{"ORA", 2, 2, buildOpLogic(modeImmediate, operationOr)},
 	0x05: opcode{"ORA", 2, 3, buildOpLogic(modeZeroPage, operationOr)},
 	0x15: opcode{"ORA", 2, 4, buildOpLogic(modeZeroPageX, operationOr)},

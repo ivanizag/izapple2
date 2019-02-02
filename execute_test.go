@@ -408,3 +408,42 @@ func TestBranch(t *testing.T) {
 		t.Errorf("Error in BCC, %v", s.registers)
 	}
 }
+
+func TestStack(t *testing.T) {
+	var s state
+
+	s.registers.setSP(0xF0)
+	s.registers.setA(0xA0)
+	s.registers.setP(0x0A)
+	executeLine(&s, []uint8{0x48})
+	if s.registers.getSP() != 0xEF {
+		t.Errorf("Error in PHA stack pointer, %v", s.registers)
+	}
+	if s.memory[0x01F0] != 0xA0 {
+		t.Errorf("Error in PHA, %v", s.registers)
+	}
+
+	executeLine(&s, []uint8{0x08})
+	if s.registers.getSP() != 0xEE {
+		t.Errorf("Error in PHP stack pointer, %v", s.registers)
+	}
+	if s.memory[0x01EF] != 0x0A {
+		t.Errorf("Error in PHP, %v", s.registers)
+	}
+
+	executeLine(&s, []uint8{0x68})
+	if s.registers.getSP() != 0xEF {
+		t.Errorf("Error in PLA stack pointer, %v", s.registers)
+	}
+	if s.registers.getA() != 0x0A {
+		t.Errorf("Error in PLA, %v", s.registers)
+	}
+
+	executeLine(&s, []uint8{0x28})
+	if s.registers.getSP() != 0xF0 {
+		t.Errorf("Error in PLP stack pointer, %v", s.registers)
+	}
+	if s.registers.getP() != 0xA0 {
+		t.Errorf("Error in PLP, %v", s.registers)
+	}
+}
