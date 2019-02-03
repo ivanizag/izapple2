@@ -22,6 +22,7 @@ const modeIndirectIndexedY = 8
 const modeAccumulator = 9
 const modeRegisterX = 10
 const modeRegisterY = 11
+const modeIndirect = 12
 
 // https://www.masswerk.at/6502/6502_instruction_set.html
 // http://www.emulator101.com/reference/6502-reference.html
@@ -32,8 +33,7 @@ func getWordInLine(line []uint8) uint16 {
 	return uint16(line[1]) + 0x100*uint16(line[2])
 }
 
-func resolveWithAddressMode(s *state, line []uint8, addressMode int) (value uint8, setValue func(uint8)) {
-	var address uint16
+func resolveWithAddressMode(s *state, line []uint8, addressMode int) (value uint8, address uint16, setValue func(uint8)) {
 	hasAddress := true
 	register := regNone
 
@@ -68,6 +68,9 @@ func resolveWithAddressMode(s *state, line []uint8, addressMode int) (value uint
 	case modeIndexedIndirectX:
 		addressAddress := uint8(line[1] + s.registers.getX())
 		address = s.memory.getZeroPageWord(addressAddress)
+	case modeIndirect:
+		addressAddress := getWordInLine(line)
+		address = s.memory.getWord(addressAddress)
 	case modeIndirectIndexedY:
 		address = s.memory.getZeroPageWord(line[1]) +
 			uint16(s.registers.getY())
@@ -98,8 +101,6 @@ type opcode struct {
 
 type opFunc func(s *state, line []uint8, opcode opcode)
 
-func opNOP(s *state, line []uint8, opcode opcode) {}
-
 func buildOpTransfer(regSrc int, regDst int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
 		value := s.registers.getRegister(regSrc)
@@ -112,7 +113,7 @@ func buildOpTransfer(regSrc int, regDst int) opFunc {
 
 func buildOpIncDec(addressMode int, inc bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, setValue := resolveWithAddressMode(s, line, addressMode)
+		value, _, setValue := resolveWithAddressMode(s, line, addressMode)
 		if inc {
 			value++
 		} else {
@@ -125,7 +126,7 @@ func buildOpIncDec(addressMode int, inc bool) opFunc {
 
 func buildShift(addressMode int, isLeft bool, isRotate bool) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, setValue := resolveWithAddressMode(s, line, addressMode)
+		value, _, setValue := resolveWithAddressMode(s, line, addressMode)
 
 		oldCarry := s.registers.getFlagBit(flagC)
 		var carry bool
@@ -150,7 +151,7 @@ func buildShift(addressMode int, isLeft bool, isRotate bool) opFunc {
 
 func buildOpLoad(addressMode int, regDst int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, _ := resolveWithAddressMode(s, line, addressMode)
+		value, _, _ := resolveWithAddressMode(s, line, addressMode)
 		s.registers.setRegister(regDst, value)
 		s.registers.updateFlagZN(value)
 	}
@@ -158,7 +159,7 @@ func buildOpLoad(addressMode int, regDst int) opFunc {
 
 func buildOpStore(addressMode int, regSrc int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		_, setValue := resolveWithAddressMode(s, line, addressMode)
+		_, _, setValue := resolveWithAddressMode(s, line, addressMode)
 		value := s.registers.getRegister(regSrc)
 		setValue(value)
 	}
@@ -183,7 +184,7 @@ func buildOpBranch(flag uint8, value bool) opFunc {
 
 func buildOpBit(addressMode int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, _ := resolveWithAddressMode(s, line, addressMode)
+		value, _, _ := resolveWithAddressMode(s, line, addressMode)
 		acc := s.registers.getA()
 		s.registers.updateFlag(flagZ, value&acc == 0)
 		s.registers.updateFlag(flagN, value&(1<<7) != 0)
@@ -193,7 +194,7 @@ func buildOpBit(addressMode int) opFunc {
 
 func buildOpCompare(addressMode int, reg int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, _ := resolveWithAddressMode(s, line, addressMode)
+		value, _, _ := resolveWithAddressMode(s, line, addressMode)
 		reference := s.registers.getRegister(reg)
 		s.registers.updateFlagZN(reference - value)
 		s.registers.updateFlag(flagC, reference >= value)
@@ -206,7 +207,7 @@ func operationXor(a uint8, b uint8) uint8 { return a ^ b }
 
 func buildOpLogic(addressMode int, operation func(uint8, uint8) uint8) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, _ := resolveWithAddressMode(s, line, addressMode)
+		value, _, _ := resolveWithAddressMode(s, line, addressMode)
 		result := operation(value, s.registers.getA())
 		s.registers.setA(result)
 		s.registers.updateFlagZN(result)
@@ -215,9 +216,10 @@ func buildOpLogic(addressMode int, operation func(uint8, uint8) uint8) opFunc {
 
 func buildOpAdd(addressMode int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, _ := resolveWithAddressMode(s, line, addressMode)
+		value, _, _ := resolveWithAddressMode(s, line, addressMode)
 		if s.registers.getFlag(flagD) {
-			// TODO BCD
+			// TODO BCD. See http://www.6502.org/tutorials/decimal_mode.html
+
 		} else {
 			total := uint16(s.registers.getA()) +
 				uint16(value) +
@@ -232,7 +234,7 @@ func buildOpAdd(addressMode int) opFunc {
 
 func buildOpSub(addressMode int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value, _ := resolveWithAddressMode(s, line, addressMode)
+		value, _, _ := resolveWithAddressMode(s, line, addressMode)
 		if s.registers.getFlag(flagD) {
 			// TODO BCD
 		} else {
@@ -249,38 +251,79 @@ func buildOpSub(addressMode int) opFunc {
 
 const stackAddress uint16 = 0x0100
 
+func pushByte(s *state, value uint8) {
+	adresss := stackAddress + uint16(s.registers.getSP())
+	s.memory[adresss] = value
+	s.registers.setSP(s.registers.getSP() - 1)
+}
+
+func pullByte(s *state) uint8 {
+	s.registers.setSP(s.registers.getSP() + 1)
+	adresss := stackAddress + uint16(s.registers.getSP())
+	return s.memory[adresss]
+}
+
+func pushWord(s *state, value uint16) {
+	pushByte(s, uint8(value>>8))
+	pushByte(s, uint8(value))
+}
+
+func pullWord(s *state) uint16 {
+	return uint16(pullByte(s)) +
+		(uint16(pullByte(s)) << 8)
+
+}
+
 func buildOpPush(reg int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		value := s.registers.getRegister(reg)
-		adresss := stackAddress + uint16(s.registers.getSP())
-		s.memory[adresss] = value
-		s.registers.setSP(s.registers.getSP() - 1)
+		pushByte(s, s.registers.getRegister(reg))
 	}
 }
 
 func buildOpPull(reg int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
-		s.registers.setSP(s.registers.getSP() + 1)
-		adresss := stackAddress + uint16(s.registers.getSP())
-		value := s.memory[adresss]
-		s.registers.setRegister(reg, value)
+		s.registers.setRegister(reg, pullByte(s))
 	}
 }
 
-/*
-TODO:
-http://www.6502.org/tutorials/decimal_mode.html
+func buildOpJump(addressMode int) opFunc {
+	return func(s *state, line []uint8, opcode opcode) {
+		_, address, _ := resolveWithAddressMode(s, line, addressMode)
+		s.registers.setPC(address)
+	}
+}
 
-BRK
+func opNOP(s *state, line []uint8, opcode opcode) {}
 
-JMP
-JSR
-RTI
-RTS
+func opJSR(s *state, line []uint8, opcode opcode) {
+	pushWord(s, s.registers.getPC())
+	s.registers.setPC(getWordInLine(line))
+}
 
-*/
+func opRTI(s *state, line []uint8, opcode opcode) {
+	s.registers.setP(pullByte(s))
+	s.registers.setPC(pullWord(s))
+}
+
+func opRTS(s *state, line []uint8, opcode opcode) {
+	s.registers.setPC(pullWord(s) + 1) // TODO: Do we really need to add 1?
+}
+
+func opBRK(s *state, line []uint8, opcode opcode) {
+	s.registers.setFlag(flagI)
+	pushWord(s, s.registers.getPC()+1) // TODO: De we have to add 1 or 2?
+	pushByte(s, s.registers.getP())
+	s.registers.setPC(s.memory.getWord(0xFFFE))
+}
 
 var opcodes = [256]opcode{
+	0x00: opcode{"BRK", 1, 7, opBRK},
+	0x4C: opcode{"JMP", 3, 3, buildOpJump(modeAbsolute)},
+	0x6C: opcode{"JMP", 3, 3, buildOpJump(modeIndirect)},
+	0x20: opcode{"JSR", 3, 6, opJSR},
+	0x40: opcode{"RTI", 1, 6, opRTI},
+	0x60: opcode{"RTS", 1, 6, opRTS},
+
 	0x48: opcode{"PHA", 1, 3, buildOpPush(regA)},
 	0x08: opcode{"PHP", 1, 3, buildOpPush(regP)},
 	0x68: opcode{"PLA", 1, 4, buildOpPull(regA)},
