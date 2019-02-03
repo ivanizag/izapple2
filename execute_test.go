@@ -427,7 +427,7 @@ func TestStack(t *testing.T) {
 	if s.registers.getSP() != 0xEE {
 		t.Errorf("Error in PHP stack pointer, %v", s.registers)
 	}
-	if s.memory[0x01EF] != 0x0A {
+	if s.memory[0x01EF] != 0x3A {
 		t.Errorf("Error in PHP, %v", s.registers)
 	}
 
@@ -435,7 +435,7 @@ func TestStack(t *testing.T) {
 	if s.registers.getSP() != 0xEF {
 		t.Errorf("Error in PLA stack pointer, %v", s.registers)
 	}
-	if s.registers.getA() != 0x0A {
+	if s.registers.getA() != 0x3A {
 		t.Errorf("Error in PLA, %v", s.registers)
 	}
 
@@ -447,3 +447,5 @@ func TestStack(t *testing.T) {
 		t.Errorf("Error in PLP, %v", s.registers)
 	}
 }
+
+// TODO: Tests for BRK, JMP, JSR, RTI, RTS

@@ -274,16 +274,18 @@ func pullWord(s *state) uint16 {
 
 }
 
-func buildOpPush(reg int) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
-		pushByte(s, s.registers.getRegister(reg))
-	}
-}
-
 func buildOpPull(reg int) opFunc {
 	return func(s *state, line []uint8, opcode opcode) {
 		s.registers.setRegister(reg, pullByte(s))
 	}
+}
+
+func opPHA(s *state, line []uint8, opcode opcode) {
+	pushByte(s, s.registers.getA())
+}
+
+func opPHP(s *state, line []uint8, opcode opcode) {
+	pushByte(s, s.registers.getP()|(flagB+flag5))
 }
 
 func buildOpJump(addressMode int) opFunc {
@@ -312,7 +314,7 @@ func opRTS(s *state, line []uint8, opcode opcode) {
 func opBRK(s *state, line []uint8, opcode opcode) {
 	s.registers.setFlag(flagI)
 	pushWord(s, s.registers.getPC()+1) // TODO: De we have to add 1 or 2?
-	pushByte(s, s.registers.getP())
+	pushByte(s, s.registers.getP()|(flagB+flag5))
 	s.registers.setPC(s.memory.getWord(0xFFFE))
 }
 
@@ -324,8 +326,8 @@ var opcodes = [256]opcode{
 	0x40: opcode{"RTI", 1, 6, opRTI},
 	0x60: opcode{"RTS", 1, 6, opRTS},
 
-	0x48: opcode{"PHA", 1, 3, buildOpPush(regA)},
-	0x08: opcode{"PHP", 1, 3, buildOpPush(regP)},
+	0x48: opcode{"PHA", 1, 3, opPHA},
+	0x08: opcode{"PHP", 1, 3, opPHP},
 	0x68: opcode{"PLA", 1, 4, buildOpPull(regA)},
 	0x28: opcode{"PLP", 1, 4, buildOpPull(regP)},
 

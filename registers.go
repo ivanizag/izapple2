@@ -15,6 +15,7 @@ const (
 const (
 	flagN uint8 = 1 << 7
 	flagV uint8 = 1 << 6
+	flag5 uint8 = 1 << 5
 	flagB uint8 = 1 << 4
 	flagD uint8 = 1 << 3
 	flagI uint8 = 1 << 2
