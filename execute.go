@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type state struct {
 	registers registers
 	memory    memory
@@ -94,7 +96,7 @@ func resolveWithAddressMode(s *state, line []uint8, addressMode int) (value uint
 
 type opcode struct {
 	name   string
-	bytes  int
+	bytes  int8
 	cycles int
 	action opFunc
 }
@@ -228,6 +230,7 @@ func buildOpAdd(addressMode int) opFunc {
 			s.registers.setA(truncated)
 			s.registers.updateFlagZN(truncated)
 			s.registers.updateFlag(flagC, total > 0xFF)
+			// TODO: missing overflow flag
 		}
 	}
 }
@@ -245,6 +248,7 @@ func buildOpSub(addressMode int) opFunc {
 			s.registers.setA(truncated)
 			s.registers.updateFlagZN(truncated)
 			s.registers.updateFlag(flagC, total <= 0xFF)
+			// TODO: missing overflow flag
 		}
 	}
 }
@@ -274,10 +278,15 @@ func pullWord(s *state) uint16 {
 
 }
 
-func buildOpPull(reg int) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
-		s.registers.setRegister(reg, pullByte(s))
-	}
+func opPLA(s *state, line []uint8, opcode opcode) {
+	value := pullByte(s)
+	s.registers.setA(value)
+	s.registers.updateFlagZN(value)
+}
+
+func opPLP(s *state, line []uint8, opcode opcode) {
+	value := pullByte(s)
+	s.registers.setP(value)
 }
 
 func opPHA(s *state, line []uint8, opcode opcode) {
@@ -328,8 +337,8 @@ var opcodes = [256]opcode{
 
 	0x48: opcode{"PHA", 1, 3, opPHA},
 	0x08: opcode{"PHP", 1, 3, opPHP},
-	0x68: opcode{"PLA", 1, 4, buildOpPull(regA)},
-	0x28: opcode{"PLP", 1, 4, buildOpPull(regP)},
+	0x68: opcode{"PLA", 1, 4, opPLA},
+	0x28: opcode{"PLP", 1, 4, opPLP},
 
 	0x09: opcode{"ORA", 2, 2, buildOpLogic(modeImmediate, operationOr)},
 	0x05: opcode{"ORA", 2, 3, buildOpLogic(modeZeroPage, operationOr)},
@@ -503,4 +512,15 @@ var opcodes = [256]opcode{
 func executeLine(s *state, line []uint8) {
 	opcode := opcodes[line[0]]
 	opcode.action(s, line, opcode)
+}
+
+func executeInstruction(s *state) {
+	pc := s.registers.getPC()
+	opcode := opcodes[s.memory[pc]]
+	fmt.Printf("%#04x %s: ", pc, opcode.name)
+	pcNext := pc + uint16(opcode.bytes)
+	s.registers.setPC(pcNext)
+	line := s.memory[pc:pcNext]
+	opcode.action(s, line, opcode)
+	fmt.Printf("%v, %v\n", s.registers, line)
 }
