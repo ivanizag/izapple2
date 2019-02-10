@@ -11,20 +11,23 @@ func step(s *state) {
 
 }
 
-const modeNone = -1
-const modeImmediate = 0
-const modeZeroPage = 1
-const modeZeroPageX = 3
-const modeZeroPageY = 6
-const modeAbsolute = 2
-const modeAbsoluteX = 4
-const modeAbsoluteY = 5
-const modeIndexedIndirectX = 7
-const modeIndirectIndexedY = 8
-const modeAccumulator = 9
-const modeRegisterX = 10
-const modeRegisterY = 11
-const modeIndirect = 12
+const (
+	modeImplicit = iota + 1
+	modeImplicitX
+	modeImplicitY
+	modeAccumulator
+	modeImmediate
+	modeZeroPage
+	modeZeroPageX
+	modeZeroPageY
+	modeRelative
+	modeAbsolute
+	modeAbsoluteX
+	modeAbsoluteY
+	modeIndirect
+	modeIndexedIndirectX
+	modeIndirectIndexedY
+)
 
 // https://www.masswerk.at/6502/6502_instruction_set.html
 // http://www.emulator101.com/reference/6502-reference.html
@@ -44,11 +47,11 @@ func resolve(s *state, line []uint8, opcode opcode) (value uint8, address uint16
 		value = s.registers.getA()
 		hasAddress = false
 		register = regA
-	case modeRegisterX:
+	case modeImplicitX:
 		value = s.registers.getX()
 		hasAddress = false
 		register = regX
-	case modeRegisterY:
+	case modeImplicitY:
 		value = s.registers.getY()
 		hasAddress = false
 		register = regY
@@ -219,7 +222,7 @@ func opADC(s *state, line []uint8, opcode opcode) {
 	value, _, _ := resolve(s, line, opcode)
 	if s.registers.getFlag(flagD) {
 		// TODO BCD. See http://www.6502.org/tutorials/decimal_mode.html
-
+		panic("BCD not supported")
 	} else {
 		total := uint16(s.registers.getA()) +
 			uint16(value) +
@@ -236,6 +239,7 @@ func opSBC(s *state, line []uint8, opcode opcode) {
 	value, _, _ := resolve(s, line, opcode)
 	if s.registers.getFlag(flagD) {
 		// TODO BCD
+		panic("BCD not supported")
 	} else {
 		total := 0x100 + uint16(s.registers.getA()) -
 			uint16(value) -
@@ -300,8 +304,9 @@ func opJMP(s *state, line []uint8, opcode opcode) {
 func opNOP(s *state, line []uint8, opcode opcode) {}
 
 func opJSR(s *state, line []uint8, opcode opcode) {
-	pushWord(s, s.registers.getPC())
-	s.registers.setPC(getWordInLine(line))
+	pushWord(s, s.registers.getPC()-1)
+	_, address, _ := resolve(s, line, opcode)
+	s.registers.setPC(address)
 }
 
 func opRTI(s *state, line []uint8, opcode opcode) {
@@ -310,28 +315,28 @@ func opRTI(s *state, line []uint8, opcode opcode) {
 }
 
 func opRTS(s *state, line []uint8, opcode opcode) {
-	s.registers.setPC(pullWord(s) + 1) // TODO: Do we really need to add 1?
+	s.registers.setPC(pullWord(s) + 1)
 }
 
 func opBRK(s *state, line []uint8, opcode opcode) {
-	s.registers.setFlag(flagI)
-	pushWord(s, s.registers.getPC()+1) // TODO: De we have to add 1 or 2?
+	pushWord(s, s.registers.getPC()+1)
 	pushByte(s, s.registers.getP()|(flagB+flag5))
+	s.registers.setFlag(flagI)
 	s.registers.setPC(s.memory.getWord(0xFFFE))
 }
 
 var opcodes = [256]opcode{
-	0x00: opcode{"BRK", 1, 7, modeNone, opBRK},
+	0x00: opcode{"BRK", 1, 7, modeImplicit, opBRK},
 	0x4C: opcode{"JMP", 3, 3, modeAbsolute, opJMP},
 	0x6C: opcode{"JMP", 3, 3, modeIndirect, opJMP},
-	0x20: opcode{"JSR", 3, 6, modeNone, opJSR},
-	0x40: opcode{"RTI", 1, 6, modeNone, opRTI},
-	0x60: opcode{"RTS", 1, 6, modeNone, opRTS},
+	0x20: opcode{"JSR", 3, 6, modeAbsolute, opJSR},
+	0x40: opcode{"RTI", 1, 6, modeImplicit, opRTI},
+	0x60: opcode{"RTS", 1, 6, modeImplicit, opRTS},
 
-	0x48: opcode{"PHA", 1, 3, modeNone, opPHA},
-	0x08: opcode{"PHP", 1, 3, modeNone, opPHP},
-	0x68: opcode{"PLA", 1, 4, modeNone, opPLA},
-	0x28: opcode{"PLP", 1, 4, modeNone, opPLP},
+	0x48: opcode{"PHA", 1, 3, modeImplicit, opPHA},
+	0x08: opcode{"PHP", 1, 3, modeImplicit, opPHP},
+	0x68: opcode{"PLA", 1, 4, modeImplicit, opPLA},
+	0x28: opcode{"PLP", 1, 4, modeImplicit, opPLP},
 
 	0x09: opcode{"ORA", 2, 2, modeImmediate, buildOpLogic(operationOr)},
 	0x05: opcode{"ORA", 2, 3, modeZeroPage, buildOpLogic(operationOr)},
@@ -379,7 +384,7 @@ var opcodes = [256]opcode{
 	0xF1: opcode{"SBC", 2, 5, modeIndirectIndexedY, opSBC}, // Extra cycles
 
 	0x24: opcode{"BIT", 2, 3, modeZeroPage, opBIT},
-	0x2C: opcode{"BIT", 2, 3, modeAbsolute, opBIT},
+	0x2C: opcode{"BIT", 3, 3, modeAbsolute, opBIT},
 
 	0xC9: opcode{"CMP", 2, 2, modeImmediate, buildOpCompare(regA)},
 	0xC5: opcode{"CMP", 2, 3, modeZeroPage, buildOpCompare(regA)},
@@ -422,13 +427,13 @@ var opcodes = [256]opcode{
 	0x4E: opcode{"LSR", 3, 6, modeAbsolute, buildOpShift(false, false)},
 	0x5E: opcode{"LSR", 3, 7, modeAbsoluteX, buildOpShift(false, false)},
 
-	0x38: opcode{"SEC", 1, 2, modeNone, buildOpUpdateFlag(flagC, true)},
-	0xF8: opcode{"SED", 1, 2, modeNone, buildOpUpdateFlag(flagD, true)},
-	0x78: opcode{"SEI", 1, 2, modeNone, buildOpUpdateFlag(flagI, true)},
-	0x18: opcode{"CLC", 1, 2, modeNone, buildOpUpdateFlag(flagC, false)},
-	0xD8: opcode{"CLD", 1, 2, modeNone, buildOpUpdateFlag(flagD, false)},
-	0x58: opcode{"CLI", 1, 2, modeNone, buildOpUpdateFlag(flagI, false)},
-	0xB8: opcode{"CLV", 1, 2, modeNone, buildOpUpdateFlag(flagV, false)},
+	0x38: opcode{"SEC", 1, 2, modeImplicit, buildOpUpdateFlag(flagC, true)},
+	0xF8: opcode{"SED", 1, 2, modeImplicit, buildOpUpdateFlag(flagD, true)},
+	0x78: opcode{"SEI", 1, 2, modeImplicit, buildOpUpdateFlag(flagI, true)},
+	0x18: opcode{"CLC", 1, 2, modeImplicit, buildOpUpdateFlag(flagC, false)},
+	0xD8: opcode{"CLD", 1, 2, modeImplicit, buildOpUpdateFlag(flagD, false)},
+	0x58: opcode{"CLI", 1, 2, modeImplicit, buildOpUpdateFlag(flagI, false)},
+	0xB8: opcode{"CLV", 1, 2, modeImplicit, buildOpUpdateFlag(flagV, false)},
 
 	0xE6: opcode{"INC", 2, 5, modeZeroPage, buildOpIncDec(true)},
 	0xF6: opcode{"INC", 2, 6, modeZeroPageX, buildOpIncDec(true)},
@@ -438,17 +443,17 @@ var opcodes = [256]opcode{
 	0xD6: opcode{"DEC", 2, 6, modeZeroPageX, buildOpIncDec(false)},
 	0xCE: opcode{"DEC", 3, 6, modeAbsolute, buildOpIncDec(false)},
 	0xDE: opcode{"DEC", 3, 7, modeAbsoluteX, buildOpIncDec(false)},
-	0xE8: opcode{"INX", 1, 2, modeRegisterX, buildOpIncDec(true)},
-	0xC8: opcode{"INY", 1, 2, modeRegisterY, buildOpIncDec(true)},
-	0xCA: opcode{"DEX", 1, 2, modeRegisterX, buildOpIncDec(false)},
-	0x88: opcode{"DEY", 1, 2, modeRegisterY, buildOpIncDec(false)},
+	0xE8: opcode{"INX", 1, 2, modeImplicitX, buildOpIncDec(true)},
+	0xC8: opcode{"INY", 1, 2, modeImplicitY, buildOpIncDec(true)},
+	0xCA: opcode{"DEX", 1, 2, modeImplicitX, buildOpIncDec(false)},
+	0x88: opcode{"DEY", 1, 2, modeImplicitY, buildOpIncDec(false)},
 
-	0xAA: opcode{"TAX", 1, 2, modeNone, buildOpTransfer(regA, regX)},
-	0xA8: opcode{"TAY", 1, 2, modeNone, buildOpTransfer(regA, regY)},
-	0x8A: opcode{"TXA", 1, 2, modeNone, buildOpTransfer(regX, regA)},
-	0x98: opcode{"TYA", 1, 2, modeNone, buildOpTransfer(regY, regA)},
-	0x9A: opcode{"TXS", 1, 2, modeNone, buildOpTransfer(regX, regSP)},
-	0xBA: opcode{"TSX", 1, 2, modeNone, buildOpTransfer(regSP, regX)},
+	0xAA: opcode{"TAX", 1, 2, modeImplicit, buildOpTransfer(regA, regX)},
+	0xA8: opcode{"TAY", 1, 2, modeImplicit, buildOpTransfer(regA, regY)},
+	0x8A: opcode{"TXA", 1, 2, modeImplicit, buildOpTransfer(regX, regA)},
+	0x98: opcode{"TYA", 1, 2, modeImplicit, buildOpTransfer(regY, regA)},
+	0x9A: opcode{"TXS", 1, 2, modeImplicit, buildOpTransfer(regX, regSP)},
+	0xBA: opcode{"TSX", 1, 2, modeImplicit, buildOpTransfer(regSP, regX)},
 
 	0xA9: opcode{"LDA", 2, 2, modeImmediate, buildOpLoad(regA)},
 	0xA5: opcode{"LDA", 2, 3, modeZeroPage, buildOpLoad(regA)},
@@ -483,16 +488,16 @@ var opcodes = [256]opcode{
 	0x94: opcode{"STY", 2, 4, modeZeroPageX, buildOpStore(regY)},
 	0x8C: opcode{"STY", 3, 4, modeAbsolute, buildOpStore(regY)},
 
-	0x90: opcode{"BCC", 2, 2, modeNone, buildOpBranch(flagC, false)}, // Extra cycles
-	0xB0: opcode{"BCS", 2, 2, modeNone, buildOpBranch(flagC, true)},  // Extra cycles
-	0xD0: opcode{"BNE", 2, 2, modeNone, buildOpBranch(flagZ, false)}, // Extra cycles
-	0xF0: opcode{"BEQ", 2, 2, modeNone, buildOpBranch(flagZ, true)},  // Extra cycles
-	0x10: opcode{"BPL", 2, 2, modeNone, buildOpBranch(flagN, false)}, // Extra cycles
-	0x30: opcode{"BMI", 2, 2, modeNone, buildOpBranch(flagN, true)},  // Extra cycles
-	0x50: opcode{"BVC", 2, 2, modeNone, buildOpBranch(flagV, false)}, // Extra cycles
-	0x70: opcode{"BVS", 2, 2, modeNone, buildOpBranch(flagV, true)},  // Extra cycles
+	0x90: opcode{"BCC", 2, 2, modeRelative, buildOpBranch(flagC, false)}, // Extra cycles
+	0xB0: opcode{"BCS", 2, 2, modeRelative, buildOpBranch(flagC, true)},  // Extra cycles
+	0xD0: opcode{"BNE", 2, 2, modeRelative, buildOpBranch(flagZ, false)}, // Extra cycles
+	0xF0: opcode{"BEQ", 2, 2, modeRelative, buildOpBranch(flagZ, true)},  // Extra cycles
+	0x10: opcode{"BPL", 2, 2, modeRelative, buildOpBranch(flagN, false)}, // Extra cycles
+	0x30: opcode{"BMI", 2, 2, modeRelative, buildOpBranch(flagN, true)},  // Extra cycles
+	0x50: opcode{"BVC", 2, 2, modeRelative, buildOpBranch(flagV, false)}, // Extra cycles
+	0x70: opcode{"BVS", 2, 2, modeRelative, buildOpBranch(flagV, true)},  // Extra cycles
 
-	0xEA: opcode{"NOP", 1, 2, modeNone, opNOP},
+	0xEA: opcode{"NOP", 1, 2, modeImplicit, opNOP},
 }
 
 func executeLine(s *state, line []uint8) {
@@ -503,10 +508,47 @@ func executeLine(s *state, line []uint8) {
 func executeInstruction(s *state) {
 	pc := s.registers.getPC()
 	opcode := opcodes[s.memory[pc]]
-	fmt.Printf("%#04x %s: ", pc, opcode.name)
 	pcNext := pc + uint16(opcode.bytes)
 	s.registers.setPC(pcNext)
 	line := s.memory[pc:pcNext]
+	fmt.Printf("%#04x %-10s: ", pc, lineString(s, line, opcode))
 	opcode.action(s, line, opcode)
-	fmt.Printf("%v, %v\n", s.registers, line)
+	fmt.Printf("%v, %x\n", s.registers, line)
+}
+
+func lineString(s *state, line []uint8, opcode opcode) string {
+	t := opcode.name
+	switch opcode.addressMode {
+	case modeImplicit:
+	case modeImplicitX:
+	case modeImplicitY:
+		//Nothing
+	case modeAccumulator:
+		t += fmt.Sprintf(" A")
+	case modeImmediate:
+		t += fmt.Sprintf(" #%02x", line[1])
+	case modeZeroPage:
+		t += fmt.Sprintf(" $%02x", line[1])
+	case modeZeroPageX:
+		t += fmt.Sprintf(" $%02x,X", line[1])
+	case modeZeroPageY:
+		t += fmt.Sprintf(" $%02x,Y", line[1])
+	case modeRelative:
+		t += fmt.Sprintf(" *%+x", int8(line[1]))
+	case modeAbsolute:
+		t += fmt.Sprintf(" $%04x", getWordInLine(line))
+	case modeAbsoluteX:
+		t += fmt.Sprintf(" $%04x,X", getWordInLine(line))
+	case modeAbsoluteY:
+		t += fmt.Sprintf(" $%04x,X", getWordInLine(line))
+	case modeIndirect:
+		t += fmt.Sprintf(" ($%04x)", getWordInLine(line))
+	case modeIndexedIndirectX:
+		t += fmt.Sprintf(" ($%02x,X)", line[1])
+	case modeIndirectIndexedY:
+		t += fmt.Sprintf(" ($%02x),Y", line[1])
+	default:
+		t += "UNKNOWN MODE"
+	}
+	return t
 }
