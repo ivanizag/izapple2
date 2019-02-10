@@ -10,11 +10,15 @@ func main() {
 	for true {
 		for i := 0; i < 20; i++ {
 			testCase := s.memory[0x0200]
-			fmt.Printf("[ %d ] ", testCase)
+			log := testCase > 41
+			if log {
+				fmt.Printf("[ %d ] ", testCase)
+			}
 			pc := s.registers.getPC()
-			executeInstruction(&s)
+			executeInstruction(&s, log)
 			if pc == s.registers.getPC() {
-				s.memory.printPage(0x01)
+				s.memory.printPage(0x00)
+				//s.memory.printPage(0x01)
 				panic("No change in PC")
 			}
 		}

@@ -191,6 +191,7 @@ func buildOpBranch(flag uint8, value bool) opFunc {
 func opBIT(s *state, line []uint8, opcode opcode) {
 	value, _, _ := resolve(s, line, opcode)
 	acc := s.registers.getA()
+	// Future note: The immediate addressing mode (65C02 or 65816 only) does not affect V.
 	s.registers.updateFlag(flagZ, value&acc == 0)
 	s.registers.updateFlag(flagN, value&(1<<7) != 0)
 	s.registers.updateFlag(flagV, value&(1<<6) != 0)
@@ -227,11 +228,15 @@ func opADC(s *state, line []uint8, opcode opcode) {
 		total := uint16(s.registers.getA()) +
 			uint16(value) +
 			uint16(s.registers.getFlagBit(flagC))
+		signedTotal := int16(int8(s.registers.getA())) +
+			int16(int8(value)) +
+			int16(s.registers.getFlagBit(flagC))
 		truncated := uint8(total)
+
 		s.registers.setA(truncated)
 		s.registers.updateFlagZN(truncated)
 		s.registers.updateFlag(flagC, total > 0xFF)
-		// TODO: missing overflow flag
+		s.registers.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 	}
 }
 
@@ -242,13 +247,16 @@ func opSBC(s *state, line []uint8, opcode opcode) {
 		panic("BCD not supported")
 	} else {
 		total := 0x100 + uint16(s.registers.getA()) -
-			uint16(value) -
-			uint16(s.registers.getFlagBit(flagC))
+			uint16(value) +
+			uint16(s.registers.getFlagBit(flagC)) - 1
+		signedTotal := int16(int8(s.registers.getA())) -
+			int16(int8(value)) +
+			int16(s.registers.getFlagBit(flagC)) - 1
 		truncated := uint8(total)
 		s.registers.setA(truncated)
 		s.registers.updateFlagZN(truncated)
-		s.registers.updateFlag(flagC, total <= 0xFF)
-		// TODO: missing overflow flag
+		s.registers.updateFlag(flagC, total > 0xFF)
+		s.registers.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 	}
 }
 
@@ -505,15 +513,19 @@ func executeLine(s *state, line []uint8) {
 	opcode.action(s, line, opcode)
 }
 
-func executeInstruction(s *state) {
+func executeInstruction(s *state, log bool) {
 	pc := s.registers.getPC()
 	opcode := opcodes[s.memory[pc]]
 	pcNext := pc + uint16(opcode.bytes)
 	s.registers.setPC(pcNext)
 	line := s.memory[pc:pcNext]
-	fmt.Printf("%#04x %-10s: ", pc, lineString(s, line, opcode))
+	if log {
+		fmt.Printf("%#04x %-12s: ", pc, lineString(s, line, opcode))
+	}
 	opcode.action(s, line, opcode)
-	fmt.Printf("%v, %x\n", s.registers, line)
+	if log {
+		fmt.Printf("%v, %x\n", s.registers, line)
+	}
 }
 
 func lineString(s *state, line []uint8, opcode opcode) string {
