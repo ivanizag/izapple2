@@ -221,43 +221,58 @@ func buildOpLogic(operation func(uint8, uint8) uint8) opFunc {
 
 func opADC(s *state, line []uint8, opcode opcode) {
 	value, _, _ := resolve(s, line, opcode)
-	if s.registers.getFlag(flagD) {
-		// TODO BCD. See http://www.6502.org/tutorials/decimal_mode.html
-		panic("BCD not supported")
-	} else {
-		total := uint16(s.registers.getA()) +
-			uint16(value) +
-			uint16(s.registers.getFlagBit(flagC))
-		signedTotal := int16(int8(s.registers.getA())) +
-			int16(int8(value)) +
-			int16(s.registers.getFlagBit(flagC))
-		truncated := uint8(total)
+	aValue := s.registers.getA()
+	carry := s.registers.getFlagBit(flagC)
 
+	total := uint16(aValue) + uint16(value) + uint16(carry)
+	signedTotal := int16(int8(aValue)) + int16(int8(value)) + int16(carry)
+	truncated := uint8(total)
+
+	if s.registers.getFlag(flagD) {
+		totalBcdLo := int(aValue&0x0f) + int(value&0x0f) + int(carry)
+		totalBcdHi := int(aValue>>4) + int(value>>4)
+		if totalBcdLo >= 10 {
+			totalBcdHi++
+		}
+		totalBcd := (totalBcdHi%10)<<4 + (totalBcdLo % 10)
+		s.registers.setA(uint8(totalBcd))
+		s.registers.updateFlag(flagC, totalBcdHi > 9)
+	} else {
 		s.registers.setA(truncated)
-		s.registers.updateFlagZN(truncated)
 		s.registers.updateFlag(flagC, total > 0xFF)
-		s.registers.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 	}
+
+	// ZNV flags behave for BCD as if the operation was binary?
+	s.registers.updateFlagZN(truncated)
+	s.registers.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 }
 
 func opSBC(s *state, line []uint8, opcode opcode) {
 	value, _, _ := resolve(s, line, opcode)
+	aValue := s.registers.getA()
+	carry := s.registers.getFlagBit(flagC)
+
+	total := 0x100 + uint16(aValue) - uint16(value) + uint16(carry) - 1
+	signedTotal := int16(int8(aValue)) - int16(int8(value)) + int16(carry) - 1
+	truncated := uint8(total)
+
 	if s.registers.getFlag(flagD) {
-		// TODO BCD
-		panic("BCD not supported")
+		totalBcdLo := 10 + int(aValue&0x0f) - int(value&0x0f) + int(carry) - 1
+		totalBcdHi := 10 + int(aValue>>4) - int(value>>4)
+		if totalBcdLo < 10 {
+			totalBcdHi--
+		}
+		totalBcd := (totalBcdHi%10)<<4 + (totalBcdLo % 10)
+		s.registers.setA(uint8(totalBcd))
+		s.registers.updateFlag(flagC, totalBcdHi >= 10)
 	} else {
-		total := 0x100 + uint16(s.registers.getA()) -
-			uint16(value) +
-			uint16(s.registers.getFlagBit(flagC)) - 1
-		signedTotal := int16(int8(s.registers.getA())) -
-			int16(int8(value)) +
-			int16(s.registers.getFlagBit(flagC)) - 1
-		truncated := uint8(total)
 		s.registers.setA(truncated)
-		s.registers.updateFlagZN(truncated)
 		s.registers.updateFlag(flagC, total > 0xFF)
-		s.registers.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 	}
+
+	// ZNV flags behave for SBC as if the operation was binary
+	s.registers.updateFlagZN(truncated)
+	s.registers.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 }
 
 const stackAddress uint16 = 0x0100
