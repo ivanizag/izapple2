@@ -14,6 +14,7 @@ func main() {
 			pc := s.registers.getPC()
 			executeInstruction(&s)
 			if pc == s.registers.getPC() {
+				s.memory.printPage(0x01)
 				panic("No change in PC")
 			}
 		}

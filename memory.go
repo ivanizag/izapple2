@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 )
 
@@ -36,5 +37,17 @@ func (m *memory) loadBinary(filename string) {
 
 	for i, v := range bytes {
 		m[i] = uint8(v)
+	}
+}
+
+func (m *memory) printPage(page uint8) {
+	address := uint16(page) * 0x100
+	for i := 0; i < 16; i++ {
+		fmt.Printf("%#04x: ", address)
+		for j := 0; j < 16; j++ {
+			fmt.Printf("%02x ", m[address])
+			address++
+		}
+		fmt.Printf("\n")
 	}
 }
