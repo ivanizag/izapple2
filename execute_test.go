@@ -6,6 +6,7 @@ import (
 
 func TestLoad(t *testing.T) {
 	var s state
+	s.memory.initWithRam()
 
 	executeLine(&s, []uint8{0xA9, 0x42})
 	if s.registers.getA() != 0x42 {
@@ -27,59 +28,59 @@ func TestLoad(t *testing.T) {
 		t.Error("Error in LDY #")
 	}
 
-	s.memory[0x38] = 0x87
+	s.memory.poke(0x38, 0x87)
 	executeLine(&s, []uint8{0xA5, 0x38})
 	if s.registers.getA() != 0x87 {
 		t.Error("Error in LDA zpg")
 	}
 
-	s.memory[0x57] = 0x90
+	s.memory.poke(0x57, 0x90)
 	s.registers.setX(0x10)
 	executeLine(&s, []uint8{0xB5, 0x47})
 	if s.registers.getA() != 0x90 {
 		t.Error("Error in LDA zpg, X")
 	}
 
-	s.memory[0x38] = 0x12
+	s.memory.poke(0x38, 0x12)
 	s.registers.setX(0x89)
 	executeLine(&s, []uint8{0xB5, 0xAF})
 	if s.registers.getA() != 0x12 {
 		t.Error("Error in LDA zpgX with sero page overflow")
 	}
 
-	s.memory[0x1234] = 0x67
+	s.memory.poke(0x1234, 0x67)
 	executeLine(&s, []uint8{0xAD, 0x34, 0x12})
 	if s.registers.getA() != 0x67 {
 		t.Error("Error in LDA abs")
 	}
 
-	s.memory[0xC057] = 0x7E
+	s.memory.poke(0xC057, 0x7E)
 	s.registers.setX(0x57)
 	executeLine(&s, []uint8{0xBD, 0x00, 0xC0})
 	if s.registers.getA() != 0x7E {
 		t.Error("Error in LDA abs, X")
 	}
 
-	s.memory[0xD059] = 0x7A
+	s.memory.poke(0xD059, 0x7A)
 	s.registers.setY(0x59)
 	executeLine(&s, []uint8{0xB9, 0x00, 0xD0})
 	if s.registers.getA() != 0x7A {
 		t.Error("Error in LDA abs, Y")
 	}
 
-	s.memory[0x24] = 0x74
-	s.memory[0x25] = 0x20
+	s.memory.poke(0x24, 0x74)
+	s.memory.poke(0x25, 0x20)
 	s.registers.setX(0x04)
-	s.memory[0x2074] = 0x66
+	s.memory.poke(0x2074, 0x66)
 	executeLine(&s, []uint8{0xA1, 0x20})
 	if s.registers.getA() != 0x66 {
 		t.Error("Error in LDA (oper,X)")
 	}
 
-	s.memory[0x86] = 0x28
-	s.memory[0x87] = 0x40
+	s.memory.poke(0x86, 0x28)
+	s.memory.poke(0x87, 0x40)
 	s.registers.setY(0x10)
-	s.memory[0x4038] = 0x99
+	s.memory.poke(0x4038, 0x99)
 	executeLine(&s, []uint8{0xB1, 0x86})
 	if s.registers.getA() != 0x99 {
 		t.Error("Error in LDA (oper),Y")
@@ -88,32 +89,33 @@ func TestLoad(t *testing.T) {
 
 func TestStore(t *testing.T) {
 	var s state
+	s.memory.initWithRam()
 	s.registers.setA(0x10)
 	s.registers.setX(0x40)
 	s.registers.setY(0x80)
 
 	executeLine(&s, []uint8{0x85, 0x50})
-	if s.memory[0x0050] != 0x10 {
+	if s.memory.peek(0x0050) != 0x10 {
 		t.Error("Error in STA zpg")
 	}
 
 	executeLine(&s, []uint8{0x86, 0x51})
-	if s.memory[0x0051] != 0x40 {
+	if s.memory.peek(0x0051) != 0x40 {
 		t.Error("Error in STX zpg")
 	}
 
 	executeLine(&s, []uint8{0x84, 0x52})
-	if s.memory[0x0052] != 0x80 {
+	if s.memory.peek(0x0052) != 0x80 {
 		t.Error("Error in STY zpg")
 	}
 
 	executeLine(&s, []uint8{0x8D, 0x20, 0xC0})
-	if s.memory[0xC020] != 0x10 {
+	if s.memory.peek(0xC020) != 0x10 {
 		t.Error("Error in STA abs")
 	}
 
 	executeLine(&s, []uint8{0x9D, 0x08, 0x10})
-	if s.memory[0x1048] != 0x10 {
+	if s.memory.peek(0x1048) != 0x10 {
 		t.Error("Error in STA abs, X")
 	}
 }
@@ -399,23 +401,24 @@ func TestCompare(t *testing.T) {
 }
 func TestBit(t *testing.T) {
 	var s state
+	s.memory.initWithRam()
 
 	s.registers.setA(0x0F)
-	s.memory[0x0040] = 0xF0
+	s.memory.poke(0x0040, 0xF0)
 	executeLine(&s, []uint8{0x24, 0x40})
 	if s.registers.getP() != 0xC2 {
 		t.Errorf("Error in BIT. %v", s.registers)
 	}
 
 	s.registers.setA(0xF0)
-	s.memory[0x0040] = 0xF0
+	s.memory.poke(0x0040, 0xF0)
 	executeLine(&s, []uint8{0x24, 0x40})
 	if s.registers.getP() != 0xC0 {
 		t.Errorf("Error in BIT, 2. %v", s.registers)
 	}
 
 	s.registers.setA(0xF0)
-	s.memory[0x01240] = 0x80
+	s.memory.poke(0x01240, 0x80)
 	executeLine(&s, []uint8{0x2C, 0x40, 0x12})
 	if s.registers.getP() != 0x80 {
 		t.Errorf("Error in BIT, 2. %v", s.registers)
@@ -424,6 +427,7 @@ func TestBit(t *testing.T) {
 
 func TestBranch(t *testing.T) {
 	var s state
+
 	s.registers.setPC(0xC600)
 	s.registers.setFlag(flagV)
 	executeLine(&s, []uint8{0x50, 0x20})
@@ -446,6 +450,7 @@ func TestBranch(t *testing.T) {
 
 func TestStack(t *testing.T) {
 	var s state
+	s.memory.initWithRam()
 
 	s.registers.setSP(0xF0)
 	s.registers.setA(0xA0)
@@ -454,7 +459,7 @@ func TestStack(t *testing.T) {
 	if s.registers.getSP() != 0xEF {
 		t.Errorf("Error in PHA stack pointer, %v", s.registers)
 	}
-	if s.memory[0x01F0] != 0xA0 {
+	if s.memory.peek(0x01F0) != 0xA0 {
 		t.Errorf("Error in PHA, %v", s.registers)
 	}
 
@@ -462,7 +467,7 @@ func TestStack(t *testing.T) {
 	if s.registers.getSP() != 0xEE {
 		t.Errorf("Error in PHP stack pointer, %v", s.registers)
 	}
-	if s.memory[0x01EF] != 0x3A {
+	if s.memory.peek(0x01EF) != 0x3A {
 		t.Errorf("Error in PHP, %v", s.registers)
 	}
 

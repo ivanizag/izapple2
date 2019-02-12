@@ -7,11 +7,12 @@ import (
 
 func TestFunctional(t *testing.T) {
 	var s state
+	// Test suite from https://github.com/Klaus2m5/6502_65C02_functional_tests
 	s.memory.loadBinary("tests/6502_functional_test.bin")
 
 	s.registers.setPC(0x0400)
 	for true {
-		testCase := s.memory[0x0200]
+		testCase := s.memory.peek(0x0200)
 		if testCase >= 240 {
 			break
 		}

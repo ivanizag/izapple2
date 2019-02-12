@@ -6,18 +6,62 @@ import (
 	"os"
 )
 
-type memory [65536]uint8
+type memoryPage interface {
+	peek(uint8) uint8
+	poke(uint8, uint8)
+}
+
+type ramPage [256]uint8
+type romPage [256]uint8
+
+type memory [256]memoryPage
+
+func (p *ramPage) peek(address uint8) uint8 {
+	return p[address]
+}
+
+func (p *ramPage) poke(address uint8, value uint8) {
+	p[address] = value
+}
+
+func (p *romPage) peek(address uint8) uint8 {
+	return p[address]
+}
+
+func (p *romPage) poke(address uint8, value uint8) {
+	// Do nothing
+}
+
+func (m *memory) peek(address uint16) uint8 {
+	hi := uint8(address >> 8)
+	lo := uint8(address)
+	return m[hi].peek(lo)
+}
+
+func (m *memory) poke(address uint16, value uint8) {
+	hi := uint8(address >> 8)
+	lo := uint8(address)
+	//fmt.Println(hi)
+	m[hi].poke(lo, value)
+}
 
 func (m *memory) getWord(address uint16) uint16 {
-	return uint16(m[address]) + 0x100*uint16(m[address+1])
+	return uint16(m.peek(address)) + 0x100*uint16(m.peek(address+1))
 }
 
 func (m *memory) getZeroPageWord(address uint8) uint16 {
-	return uint16(m[address]) + 0x100*uint16(m[address+1])
-	// TODO: Does address + 1 wraps around the zero page?
+	return uint16(m.peek(uint16(address))) + 0x100*uint16(m.peek(uint16(address+1)))
+}
+
+func (m *memory) initWithRam() {
+	var ramPages [256]ramPage
+	for i := 0; i < 256; i++ {
+		m[i] = &ramPages[i]
+	}
 }
 
 func (m *memory) loadBinary(filename string) {
+	// Load file
 	f, err := os.Open(filename)
 	if err != nil {
 		panic(err)
@@ -35,8 +79,9 @@ func (m *memory) loadBinary(filename string) {
 	buf := bufio.NewReader(f)
 	buf.Read(bytes)
 
+	m.initWithRam()
 	for i, v := range bytes {
-		m[i] = uint8(v)
+		m.poke(uint16(i), uint8(v))
 	}
 }
 

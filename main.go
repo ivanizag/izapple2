@@ -8,7 +8,7 @@ func main() {
 
 	s.registers.setPC(0x0400)
 	for true {
-		testCase := s.memory[0x0200]
+		testCase := s.memory.peek(0x0200)
 		if testCase >= 240 {
 			break
 		}

@@ -82,12 +82,12 @@ func resolve(s *state, line []uint8, opcode opcode) (value uint8, address uint16
 	}
 
 	if hasAddress {
-		value = s.memory[address]
+		value = s.memory.peek(address)
 	}
 
 	setValue = func(value uint8) {
 		if hasAddress {
-			s.memory[address] = value
+			s.memory.poke(address, value)
 		} else if register != regNone {
 			s.registers.setRegister(register, value)
 		} else {
@@ -99,7 +99,7 @@ func resolve(s *state, line []uint8, opcode opcode) (value uint8, address uint16
 
 type opcode struct {
 	name        string
-	bytes       int8
+	bytes       uint8
 	cycles      int
 	addressMode int
 	action      opFunc
@@ -279,14 +279,14 @@ const stackAddress uint16 = 0x0100
 
 func pushByte(s *state, value uint8) {
 	adresss := stackAddress + uint16(s.registers.getSP())
-	s.memory[adresss] = value
+	s.memory.poke(adresss, value)
 	s.registers.setSP(s.registers.getSP() - 1)
 }
 
 func pullByte(s *state) uint8 {
 	s.registers.setSP(s.registers.getSP() + 1)
 	adresss := stackAddress + uint16(s.registers.getSP())
-	return s.memory[adresss]
+	return s.memory.peek(adresss)
 }
 
 func pushWord(s *state, value uint16) {
@@ -530,10 +530,15 @@ func executeLine(s *state, line []uint8) {
 
 func executeInstruction(s *state, log bool) {
 	pc := s.registers.getPC()
-	opcode := opcodes[s.memory[pc]]
-	pcNext := pc + uint16(opcode.bytes)
-	s.registers.setPC(pcNext)
-	line := s.memory[pc:pcNext]
+	opcode := opcodes[s.memory.peek(pc)]
+
+	line := make([]uint8, opcode.bytes)
+	for i := uint8(0); i < opcode.bytes; i++ {
+		line[i] = s.memory.peek(pc)
+		pc++
+	}
+	s.registers.setPC(pc)
+
 	if log {
 		fmt.Printf("%#04x %-12s: ", pc, lineString(s, line, opcode))
 	}
