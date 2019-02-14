@@ -3,13 +3,12 @@ package main
 import "fmt"
 
 type textPages struct {
-	dirty bool
-	pages *[4]textPage
+	pages [4]textPage
 }
 
 type textPage struct {
-	textPages *textPages
-	data      [256]uint8
+	dirty bool
+	data  [256]uint8
 }
 
 func (p *textPage) peek(address uint8) uint8 {
@@ -19,40 +18,64 @@ func (p *textPage) peek(address uint8) uint8 {
 func (p *textPage) poke(address uint8, value uint8) {
 	p.data[address] = value
 	// Note: we could avoid setting dirty on the 16 blocks of 8 hidden bytes
-	p.textPages.dirty = true
+	p.dirty = true
+}
+
+func (p *textPage) getData() *[256]uint8 {
+	return &p.data
 }
 
 func textMemoryByteToString(value uint8) string {
+	value = value & 0x7F
+	if value < ' ' {
+		return " "
+	}
+
 	return string(value)
+}
+
+func textMemoryByteToStringHex(value uint8) string {
+	return fmt.Sprintf("%02x ", value)
 }
 
 func (tp *textPages) dump() {
 	// See "Understand the Apple II", page 5-10
 	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
 
+	fmt.Println("------------------------------------------")
+
 	var i, j, h uint8
 	// Top, middle and botton screen
-	for i = 0; i < 128; i = i + 40 {
+	for i = 0; i < 120; i = i + 40 {
 		// Memory pages
 		for _, p := range tp.pages {
 			// The two half pages
 			for _, h = range []uint8{0, 128} {
-				line := ""
+				line := "|"
 				for j = i + h; j < i+h+40; j++ {
-					line += string(p.peek(j))
+					line += textMemoryByteToString(p.peek(j))
 				}
-				fmt.Println(line)
+				fmt.Println(line + "|")
 			}
 		}
 	}
+
+	fmt.Println("------------------------------------------")
+
 }
 
 func (tp *textPages) dumpIfDirty() {
-	if !tp.dirty {
-		return
+	dirty := false
+	for i := 0; i < 4; i++ {
+		if tp.pages[i].dirty {
+			dirty = true
+			tp.pages[i].dirty = false
+		}
 	}
 
-	tp.dirty = false
+	if !dirty {
+		return
+	}
 	tp.dump()
 }
 

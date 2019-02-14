@@ -1,21 +1,14 @@
 package main
 
-import "fmt"
-
 func main() {
 	var s state
-	s.memory.loadBinary("6502_65C02_functional_tests/bin_files/6502_functional_test.bin")
+	var t textPages
 
-	s.registers.setPC(0x0400)
+	s.memory.initWithRomAndText("../roms/APPLE2.ROM", &t)
+	startAddress := s.memory.getWord(0xfffc)
+	s.registers.setPC(startAddress)
 	for true {
-		testCase := s.memory.peek(0x0200)
-		if testCase >= 240 {
-			break
-		}
-		log := testCase > 43
-		if log {
-			fmt.Printf("[ %d ] ", testCase)
-		}
+		log := true
 		pc := s.registers.getPC()
 		executeInstruction(&s, log)
 		if pc == s.registers.getPC() {
@@ -23,7 +16,6 @@ func main() {
 			//s.memory.printPage(0x01)
 			panic("No change in PC")
 		}
+		t.dumpIfDirty()
 	}
-
-	fmt.Printf("Test completed\n")
 }
