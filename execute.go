@@ -544,7 +544,8 @@ func executeInstruction(s *state, log bool) {
 	}
 	opcode.action(s, line, opcode)
 	if log {
-		fmt.Printf("%v, %x\n", s.registers, line)
+		value, address, _ := resolve(s, line, opcode)
+		fmt.Printf("%v, [%04x:%02x], [%02x]\n", s.registers, address, value, line)
 	}
 }
 
@@ -572,7 +573,7 @@ func lineString(s *state, line []uint8, opcode opcode) string {
 	case modeAbsoluteX:
 		t += fmt.Sprintf(" $%04x,X", getWordInLine(line))
 	case modeAbsoluteY:
-		t += fmt.Sprintf(" $%04x,X", getWordInLine(line))
+		t += fmt.Sprintf(" $%04x,Y", getWordInLine(line))
 	case modeIndirect:
 		t += fmt.Sprintf(" ($%04x)", getWordInLine(line))
 	case modeIndexedIndirectX:

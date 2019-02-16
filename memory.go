@@ -69,7 +69,7 @@ func (m *memory) getZeroPageWord(address uint8) uint16 {
 	return uint16(m.peek(uint16(address))) + 0x100*uint16(m.peek(uint16(address+1)))
 }
 
-func (m *memory) initWithRam() {
+func (m *memory) initWithRAM() {
 	var ramPages [256]ramPage
 	for i := 0; i < 256; i++ {
 		m.data[i] = &ramPages[i]
@@ -99,17 +99,15 @@ func (m *memory) initWithRomAndText(filename string, textPages *textPages) {
 	}
 
 	size := stats.Size()
-	if size != 20480 {
-		panic("Invalid ROM file size. It must be 20480 bytes")
-	}
 	bytes := make([]byte, size)
 
 	buf := bufio.NewReader(f)
 	buf.Read(bytes)
 
-	m.initWithRam()
+	m.initWithRAM()
+	romStart := uint16(0xFFFF - size + 1)
 	for i, v := range bytes {
-		m.poke(uint16(i)+0xB000, uint8(v))
+		m.poke(uint16(i)+romStart, uint8(v))
 	}
 
 	var i uint8
@@ -118,7 +116,7 @@ func (m *memory) initWithRomAndText(filename string, textPages *textPages) {
 	}
 
 	for j := 0; j < 4; j++ {
-		m.data[4+i] = &textPages.pages[i]
+		m.data[4+j] = &(textPages.pages[j])
 	}
 }
 
@@ -141,7 +139,7 @@ func (m *memory) loadBinary(filename string) {
 	buf := bufio.NewReader(f)
 	buf.Read(bytes)
 
-	m.initWithRam()
+	m.initWithRAM()
 	for i, v := range bytes {
 		m.poke(uint16(i), uint8(v))
 	}

@@ -28,7 +28,7 @@ func (p *textPage) getData() *[256]uint8 {
 func textMemoryByteToString(value uint8) string {
 	value = value & 0x7F
 	if value < ' ' {
-		return " "
+		return "@"
 	}
 
 	return string(value)
@@ -51,11 +51,11 @@ func (tp *textPages) dump() {
 		for _, p := range tp.pages {
 			// The two half pages
 			for _, h = range []uint8{0, 128} {
-				line := "|"
+				line := ""
 				for j = i + h; j < i+h+40; j++ {
 					line += textMemoryByteToString(p.peek(j))
 				}
-				fmt.Println(line + "|")
+				fmt.Printf("| %v |\n", line)
 			}
 		}
 	}
@@ -80,7 +80,7 @@ func (tp *textPages) dumpIfDirty() {
 }
 
 func (tp *textPages) charAddress(column uint8, line uint8) (page uint8, address uint8) {
-	page = (line / 3) % 4
+	page = (line % 8) / 2
 	address = column + (line/8)*40 + (line%2)*128
 	return
 }
