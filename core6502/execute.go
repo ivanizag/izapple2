@@ -1,14 +1,11 @@
-package main
+package core6502
 
 import "fmt"
 
-type state struct {
-	registers registers
-	memory    memory
-}
-
-func step(s *state) {
-
+// State represents the state of the simulated device
+type State struct {
+	Reg Registers
+	Mem Memory
 }
 
 const (
@@ -38,21 +35,21 @@ func getWordInLine(line []uint8) uint16 {
 	return uint16(line[1]) + 0x100*uint16(line[2])
 }
 
-func resolve(s *state, line []uint8, opcode opcode) (value uint8, address uint16, setValue func(uint8)) {
+func resolve(s *State, line []uint8, opcode opcode) (value uint8, address uint16, setValue func(uint8)) {
 	hasAddress := true
 	register := regNone
 
 	switch opcode.addressMode {
 	case modeAccumulator:
-		value = s.registers.getA()
+		value = s.Reg.getA()
 		hasAddress = false
 		register = regA
 	case modeImplicitX:
-		value = s.registers.getX()
+		value = s.Reg.getX()
 		hasAddress = false
 		register = regX
 	case modeImplicitY:
-		value = s.registers.getY()
+		value = s.Reg.getY()
 		hasAddress = false
 		register = regY
 	case modeImmediate:
@@ -61,35 +58,35 @@ func resolve(s *state, line []uint8, opcode opcode) (value uint8, address uint16
 	case modeZeroPage:
 		address = uint16(line[1])
 	case modeZeroPageX:
-		address = uint16(line[1] + s.registers.getX())
+		address = uint16(line[1] + s.Reg.getX())
 	case modeZeroPageY:
-		address = uint16(line[1] + s.registers.getY())
+		address = uint16(line[1] + s.Reg.getY())
 	case modeAbsolute:
 		address = getWordInLine(line)
 	case modeAbsoluteX:
-		address = getWordInLine(line) + uint16(s.registers.getX())
+		address = getWordInLine(line) + uint16(s.Reg.getX())
 	case modeAbsoluteY:
-		address = getWordInLine(line) + uint16(s.registers.getY())
+		address = getWordInLine(line) + uint16(s.Reg.getY())
 	case modeIndexedIndirectX:
-		addressAddress := uint8(line[1] + s.registers.getX())
-		address = s.memory.getZeroPageWord(addressAddress)
+		addressAddress := uint8(line[1] + s.Reg.getX())
+		address = s.Mem.getZeroPageWord(addressAddress)
 	case modeIndirect:
 		addressAddress := getWordInLine(line)
-		address = s.memory.getWord(addressAddress)
+		address = s.Mem.getWord(addressAddress)
 	case modeIndirectIndexedY:
-		address = s.memory.getZeroPageWord(line[1]) +
-			uint16(s.registers.getY())
+		address = s.Mem.getZeroPageWord(line[1]) +
+			uint16(s.Reg.getY())
 	}
 
 	if hasAddress {
-		value = s.memory.peek(address)
+		value = s.Mem.Peek(address)
 	}
 
 	setValue = func(value uint8) {
 		if hasAddress {
-			s.memory.poke(address, value)
+			s.Mem.Poke(address, value)
 		} else if register != regNone {
-			s.registers.setRegister(register, value)
+			s.Reg.setRegister(register, value)
 		} else {
 			// Todo: assert impossible
 		}
@@ -105,36 +102,36 @@ type opcode struct {
 	action      opFunc
 }
 
-type opFunc func(s *state, line []uint8, opcode opcode)
+type opFunc func(s *State, line []uint8, opcode opcode)
 
 func buildOpTransfer(regSrc int, regDst int) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
-		value := s.registers.getRegister(regSrc)
-		s.registers.setRegister(regDst, value)
+	return func(s *State, line []uint8, opcode opcode) {
+		value := s.Reg.getRegister(regSrc)
+		s.Reg.setRegister(regDst, value)
 		if regDst != regSP {
-			s.registers.updateFlagZN(value)
+			s.Reg.updateFlagZN(value)
 		}
 	}
 }
 
 func buildOpIncDec(inc bool) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
+	return func(s *State, line []uint8, opcode opcode) {
 		value, _, setValue := resolve(s, line, opcode)
 		if inc {
 			value++
 		} else {
 			value--
 		}
-		s.registers.updateFlagZN(value)
+		s.Reg.updateFlagZN(value)
 		setValue(value)
 	}
 }
 
 func buildOpShift(isLeft bool, isRotate bool) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
+	return func(s *State, line []uint8, opcode opcode) {
 		value, _, setValue := resolve(s, line, opcode)
 
-		oldCarry := s.registers.getFlagBit(flagC)
+		oldCarry := s.Reg.getFlagBit(flagC)
 		var carry bool
 		if isLeft {
 			carry = (value & 0x80) != 0
@@ -149,60 +146,60 @@ func buildOpShift(isLeft bool, isRotate bool) opFunc {
 				value += oldCarry << 7
 			}
 		}
-		s.registers.updateFlag(flagC, carry)
-		s.registers.updateFlagZN(value)
+		s.Reg.updateFlag(flagC, carry)
+		s.Reg.updateFlagZN(value)
 		setValue(value)
 	}
 }
 
 func buildOpLoad(regDst int) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
+	return func(s *State, line []uint8, opcode opcode) {
 		value, _, _ := resolve(s, line, opcode)
-		s.registers.setRegister(regDst, value)
-		s.registers.updateFlagZN(value)
+		s.Reg.setRegister(regDst, value)
+		s.Reg.updateFlagZN(value)
 	}
 }
 
 func buildOpStore(regSrc int) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
+	return func(s *State, line []uint8, opcode opcode) {
 		_, _, setValue := resolve(s, line, opcode)
-		value := s.registers.getRegister(regSrc)
+		value := s.Reg.getRegister(regSrc)
 		setValue(value)
 	}
 }
 
 func buildOpUpdateFlag(flag uint8, value bool) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
-		s.registers.updateFlag(flag, value)
+	return func(s *State, line []uint8, opcode opcode) {
+		s.Reg.updateFlag(flag, value)
 	}
 }
 
 func buildOpBranch(flag uint8, value bool) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
-		if s.registers.getFlag(flag) == value {
+	return func(s *State, line []uint8, opcode opcode) {
+		if s.Reg.getFlag(flag) == value {
 			// This assumes that PC is already pointing to the next instruction
-			pc := s.registers.getPC()
+			pc := s.Reg.getPC()
 			pc += uint16(int8(line[1]))
-			s.registers.setPC(pc)
+			s.Reg.setPC(pc)
 		}
 	}
 }
 
-func opBIT(s *state, line []uint8, opcode opcode) {
+func opBIT(s *State, line []uint8, opcode opcode) {
 	value, _, _ := resolve(s, line, opcode)
-	acc := s.registers.getA()
+	acc := s.Reg.getA()
 	// Future note: The immediate addressing mode (65C02 or 65816 only) does not affect V.
-	s.registers.updateFlag(flagZ, value&acc == 0)
-	s.registers.updateFlag(flagN, value&(1<<7) != 0)
-	s.registers.updateFlag(flagV, value&(1<<6) != 0)
+	s.Reg.updateFlag(flagZ, value&acc == 0)
+	s.Reg.updateFlag(flagN, value&(1<<7) != 0)
+	s.Reg.updateFlag(flagV, value&(1<<6) != 0)
 }
 
 func buildOpCompare(reg int) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
+	return func(s *State, line []uint8, opcode opcode) {
 		value, _, _ := resolve(s, line, opcode)
-		reference := s.registers.getRegister(reg)
-		s.registers.updateFlagZN(reference - value)
-		s.registers.updateFlag(flagC, reference >= value)
+		reference := s.Reg.getRegister(reg)
+		s.Reg.updateFlagZN(reference - value)
+		s.Reg.updateFlag(flagC, reference >= value)
 	}
 }
 
@@ -211,141 +208,141 @@ func operationOr(a uint8, b uint8) uint8  { return a | b }
 func operationXor(a uint8, b uint8) uint8 { return a ^ b }
 
 func buildOpLogic(operation func(uint8, uint8) uint8) opFunc {
-	return func(s *state, line []uint8, opcode opcode) {
+	return func(s *State, line []uint8, opcode opcode) {
 		value, _, _ := resolve(s, line, opcode)
-		result := operation(value, s.registers.getA())
-		s.registers.setA(result)
-		s.registers.updateFlagZN(result)
+		result := operation(value, s.Reg.getA())
+		s.Reg.setA(result)
+		s.Reg.updateFlagZN(result)
 	}
 }
 
-func opADC(s *state, line []uint8, opcode opcode) {
+func opADC(s *State, line []uint8, opcode opcode) {
 	value, _, _ := resolve(s, line, opcode)
-	aValue := s.registers.getA()
-	carry := s.registers.getFlagBit(flagC)
+	aValue := s.Reg.getA()
+	carry := s.Reg.getFlagBit(flagC)
 
 	total := uint16(aValue) + uint16(value) + uint16(carry)
 	signedTotal := int16(int8(aValue)) + int16(int8(value)) + int16(carry)
 	truncated := uint8(total)
 
-	if s.registers.getFlag(flagD) {
+	if s.Reg.getFlag(flagD) {
 		totalBcdLo := int(aValue&0x0f) + int(value&0x0f) + int(carry)
 		totalBcdHi := int(aValue>>4) + int(value>>4)
 		if totalBcdLo >= 10 {
 			totalBcdHi++
 		}
 		totalBcd := (totalBcdHi%10)<<4 + (totalBcdLo % 10)
-		s.registers.setA(uint8(totalBcd))
-		s.registers.updateFlag(flagC, totalBcdHi > 9)
+		s.Reg.setA(uint8(totalBcd))
+		s.Reg.updateFlag(flagC, totalBcdHi > 9)
 	} else {
-		s.registers.setA(truncated)
-		s.registers.updateFlag(flagC, total > 0xFF)
+		s.Reg.setA(truncated)
+		s.Reg.updateFlag(flagC, total > 0xFF)
 	}
 
 	// ZNV flags behave for BCD as if the operation was binary?
-	s.registers.updateFlagZN(truncated)
-	s.registers.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
+	s.Reg.updateFlagZN(truncated)
+	s.Reg.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 }
 
-func opSBC(s *state, line []uint8, opcode opcode) {
+func opSBC(s *State, line []uint8, opcode opcode) {
 	value, _, _ := resolve(s, line, opcode)
-	aValue := s.registers.getA()
-	carry := s.registers.getFlagBit(flagC)
+	aValue := s.Reg.getA()
+	carry := s.Reg.getFlagBit(flagC)
 
 	total := 0x100 + uint16(aValue) - uint16(value) + uint16(carry) - 1
 	signedTotal := int16(int8(aValue)) - int16(int8(value)) + int16(carry) - 1
 	truncated := uint8(total)
 
-	if s.registers.getFlag(flagD) {
+	if s.Reg.getFlag(flagD) {
 		totalBcdLo := 10 + int(aValue&0x0f) - int(value&0x0f) + int(carry) - 1
 		totalBcdHi := 10 + int(aValue>>4) - int(value>>4)
 		if totalBcdLo < 10 {
 			totalBcdHi--
 		}
 		totalBcd := (totalBcdHi%10)<<4 + (totalBcdLo % 10)
-		s.registers.setA(uint8(totalBcd))
-		s.registers.updateFlag(flagC, totalBcdHi >= 10)
+		s.Reg.setA(uint8(totalBcd))
+		s.Reg.updateFlag(flagC, totalBcdHi >= 10)
 	} else {
-		s.registers.setA(truncated)
-		s.registers.updateFlag(flagC, total > 0xFF)
+		s.Reg.setA(truncated)
+		s.Reg.updateFlag(flagC, total > 0xFF)
 	}
 
 	// ZNV flags behave for SBC as if the operation was binary
-	s.registers.updateFlagZN(truncated)
-	s.registers.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
+	s.Reg.updateFlagZN(truncated)
+	s.Reg.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 }
 
 const stackAddress uint16 = 0x0100
 
-func pushByte(s *state, value uint8) {
-	adresss := stackAddress + uint16(s.registers.getSP())
-	s.memory.poke(adresss, value)
-	s.registers.setSP(s.registers.getSP() - 1)
+func pushByte(s *State, value uint8) {
+	adresss := stackAddress + uint16(s.Reg.getSP())
+	s.Mem.Poke(adresss, value)
+	s.Reg.setSP(s.Reg.getSP() - 1)
 }
 
-func pullByte(s *state) uint8 {
-	s.registers.setSP(s.registers.getSP() + 1)
-	adresss := stackAddress + uint16(s.registers.getSP())
-	return s.memory.peek(adresss)
+func pullByte(s *State) uint8 {
+	s.Reg.setSP(s.Reg.getSP() + 1)
+	adresss := stackAddress + uint16(s.Reg.getSP())
+	return s.Mem.Peek(adresss)
 }
 
-func pushWord(s *state, value uint16) {
+func pushWord(s *State, value uint16) {
 	pushByte(s, uint8(value>>8))
 	pushByte(s, uint8(value))
 }
 
-func pullWord(s *state) uint16 {
+func pullWord(s *State) uint16 {
 	return uint16(pullByte(s)) +
 		(uint16(pullByte(s)) << 8)
 
 }
 
-func opPLA(s *state, line []uint8, opcode opcode) {
+func opPLA(s *State, line []uint8, opcode opcode) {
 	value := pullByte(s)
-	s.registers.setA(value)
-	s.registers.updateFlagZN(value)
+	s.Reg.setA(value)
+	s.Reg.updateFlagZN(value)
 }
 
-func opPLP(s *state, line []uint8, opcode opcode) {
+func opPLP(s *State, line []uint8, opcode opcode) {
 	value := pullByte(s)
-	s.registers.setP(value)
+	s.Reg.setP(value)
 }
 
-func opPHA(s *state, line []uint8, opcode opcode) {
-	pushByte(s, s.registers.getA())
+func opPHA(s *State, line []uint8, opcode opcode) {
+	pushByte(s, s.Reg.getA())
 }
 
-func opPHP(s *state, line []uint8, opcode opcode) {
-	pushByte(s, s.registers.getP()|(flagB+flag5))
+func opPHP(s *State, line []uint8, opcode opcode) {
+	pushByte(s, s.Reg.getP()|(flagB+flag5))
 }
 
-func opJMP(s *state, line []uint8, opcode opcode) {
+func opJMP(s *State, line []uint8, opcode opcode) {
 	_, address, _ := resolve(s, line, opcode)
-	s.registers.setPC(address)
+	s.Reg.setPC(address)
 }
 
-func opNOP(s *state, line []uint8, opcode opcode) {}
+func opNOP(s *State, line []uint8, opcode opcode) {}
 
-func opJSR(s *state, line []uint8, opcode opcode) {
-	pushWord(s, s.registers.getPC()-1)
+func opJSR(s *State, line []uint8, opcode opcode) {
+	pushWord(s, s.Reg.getPC()-1)
 	_, address, _ := resolve(s, line, opcode)
-	s.registers.setPC(address)
+	s.Reg.setPC(address)
 }
 
-func opRTI(s *state, line []uint8, opcode opcode) {
-	s.registers.setP(pullByte(s))
-	s.registers.setPC(pullWord(s))
+func opRTI(s *State, line []uint8, opcode opcode) {
+	s.Reg.setP(pullByte(s))
+	s.Reg.setPC(pullWord(s))
 }
 
-func opRTS(s *state, line []uint8, opcode opcode) {
-	s.registers.setPC(pullWord(s) + 1)
+func opRTS(s *State, line []uint8, opcode opcode) {
+	s.Reg.setPC(pullWord(s) + 1)
 }
 
-func opBRK(s *state, line []uint8, opcode opcode) {
-	pushWord(s, s.registers.getPC()+1)
-	pushByte(s, s.registers.getP()|(flagB+flag5))
-	s.registers.setFlag(flagI)
-	s.registers.setPC(s.memory.getWord(0xFFFE))
+func opBRK(s *State, line []uint8, opcode opcode) {
+	pushWord(s, s.Reg.getPC()+1)
+	pushByte(s, s.Reg.getP()|(flagB+flag5))
+	s.Reg.setFlag(flagI)
+	s.Reg.setPC(s.Mem.getWord(0xFFFE))
 }
 
 var opcodes = [256]opcode{
@@ -523,21 +520,22 @@ var opcodes = [256]opcode{
 	0xEA: opcode{"NOP", 1, 2, modeImplicit, opNOP},
 }
 
-func executeLine(s *state, line []uint8) {
+func executeLine(s *State, line []uint8) {
 	opcode := opcodes[line[0]]
 	opcode.action(s, line, opcode)
 }
 
-func executeInstruction(s *state, log bool) {
-	pc := s.registers.getPC()
-	opcode := opcodes[s.memory.peek(pc)]
+// ExecuteInstruction transforms the state given after a single instruction is executed.
+func ExecuteInstruction(s *State, log bool) {
+	pc := s.Reg.getPC()
+	opcode := opcodes[s.Mem.Peek(pc)]
 
 	line := make([]uint8, opcode.bytes)
 	for i := uint8(0); i < opcode.bytes; i++ {
-		line[i] = s.memory.peek(pc)
+		line[i] = s.Mem.Peek(pc)
 		pc++
 	}
-	s.registers.setPC(pc)
+	s.Reg.setPC(pc)
 
 	if log {
 		fmt.Printf("%#04x %-12s: ", pc, lineString(s, line, opcode))
@@ -545,11 +543,18 @@ func executeInstruction(s *state, log bool) {
 	opcode.action(s, line, opcode)
 	if log {
 		value, address, _ := resolve(s, line, opcode)
-		fmt.Printf("%v, [%04x:%02x], [%02x]\n", s.registers, address, value, line)
+		fmt.Printf("%v, [%04x:%02x], [%02x]\n", s.Reg, address, value, line)
 	}
 }
 
-func lineString(s *state, line []uint8, opcode opcode) string {
+// Reset resets the processor state. Moves the program counter to the vector in 0cfffc.
+func Reset(s *State) {
+	startAddress := s.Mem.getWord(0xfffc)
+	fmt.Println(startAddress)
+	s.Reg.setPC(startAddress)
+}
+
+func lineString(s *State, line []uint8, opcode opcode) string {
 	t := opcode.name
 	switch opcode.addressMode {
 	case modeImplicit:

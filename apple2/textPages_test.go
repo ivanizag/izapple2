@@ -1,4 +1,4 @@
-package main
+package apple2
 
 import "testing"
 

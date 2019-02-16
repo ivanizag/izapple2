@@ -1,4 +1,4 @@
-package main
+package apple2
 
 import "fmt"
 
@@ -51,19 +51,14 @@ var softSwitches = [256]softSwitch{
 	0x5f: softSwitch{ioFlagAnnunciator3, true, false},
 }
 
-func (p *ioC0Page) peek(address uint8) uint8 {
+func (p *ioC0Page) Peek(address uint8) uint8 {
 	//fmt.Printf("Peek on $C0%02x ", address)
 	return p.access(address, false, 0)
 }
 
-func (p *ioC0Page) poke(address uint8, value uint8) {
+func (p *ioC0Page) Poke(address uint8, value uint8) {
 	//fmt.Printf("Poke on $C0%02x with %02x ", address, value)
 	p.access(address, true, value)
-}
-
-func (p *ioC0Page) getData() *[256]uint8 {
-	var blankPage [256]uint8
-	return &blankPage
 }
 
 func (p *ioC0Page) access(address uint8, isWrite bool, value uint8) uint8 {

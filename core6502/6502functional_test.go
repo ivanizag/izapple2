@@ -1,4 +1,4 @@
-package main
+package core6502
 
 import (
 	"fmt"
@@ -7,15 +7,15 @@ import (
 
 func TestFunctional(t *testing.T) {
 
-	t.SkipNow()
+	//t.SkipNow()
 
-	var s state
+	var s State
 	// Test suite from https://github.com/Klaus2m5/6502_65C02_functional_tests
-	s.memory.loadBinary("tests/6502_functional_test.bin")
+	s.Mem.loadBinary("testdata/6502_functional_test.bin")
 
-	s.registers.setPC(0x0400)
+	s.Reg.setPC(0x0400)
 	for true {
-		testCase := s.memory.peek(0x0200)
+		testCase := s.Mem.Peek(0x0200)
 		if testCase >= 240 {
 			break
 		}
@@ -23,9 +23,9 @@ func TestFunctional(t *testing.T) {
 		if log {
 			fmt.Printf("[ %d ] ", testCase)
 		}
-		pc := s.registers.getPC()
-		executeInstruction(&s, log)
-		if pc == s.registers.getPC() {
+		pc := s.Reg.getPC()
+		ExecuteInstruction(&s, log)
+		if pc == s.Reg.getPC() {
 			//s.memory.printPage(0x00)
 			//s.memory.printPage(0x01)
 			t.Errorf("Failuse in test %v.", testCase)

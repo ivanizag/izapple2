@@ -1,4 +1,4 @@
-package main
+package core6502
 
 import (
 	"bufio"
@@ -6,86 +6,46 @@ import (
 	"os"
 )
 
-type memoryPage interface {
-	peek(uint8) uint8
-	poke(uint8, uint8)
-	getData() *[256]uint8
+// MemoryPage is a data page of 256 bytes
+type MemoryPage interface {
+	Peek(uint8) uint8
+	Poke(uint8, uint8)
 }
 
-type ramPage struct {
-	data [256]uint8
+// Memory represents the addressable space of the processor
+type Memory struct {
+	data [256]MemoryPage
 }
 
-type romPage struct {
-	data [256]uint8
-}
-
-type memory struct {
-	data [256]memoryPage
-}
-
-func (p *ramPage) peek(address uint8) uint8 {
-	return p.data[address]
-}
-
-func (p *ramPage) poke(address uint8, value uint8) {
-	p.data[address] = value
-}
-
-func (p *ramPage) getData() *[256]uint8 {
-	return &p.data
-}
-
-func (p *romPage) peek(address uint8) uint8 {
-	return p.data[address]
-}
-
-func (p *romPage) poke(address uint8, value uint8) {
-	// Do nothing
-}
-
-func (p *romPage) getData() *[256]uint8 {
-	return &p.data
-}
-
-func (m *memory) peek(address uint16) uint8 {
+// Peek returns the data on the given address
+func (m *Memory) Peek(address uint16) uint8 {
 	hi := uint8(address >> 8)
 	lo := uint8(address)
-	return m.data[hi].peek(lo)
+	return m.data[hi].Peek(lo)
 }
 
-func (m *memory) poke(address uint16, value uint8) {
+// Poke sets the data at the given address
+func (m *Memory) Poke(address uint16, value uint8) {
 	hi := uint8(address >> 8)
 	lo := uint8(address)
 	//fmt.Println(hi)
-	m.data[hi].poke(lo, value)
+	m.data[hi].Poke(lo, value)
 }
 
-func (m *memory) getWord(address uint16) uint16 {
-	return uint16(m.peek(address)) + 0x100*uint16(m.peek(address+1))
+// SetPage assigns a MemoryPage implementation on the page given
+func (m *Memory) SetPage(index uint8, page MemoryPage) {
+	m.data[index] = page
 }
 
-func (m *memory) getZeroPageWord(address uint8) uint16 {
-	return uint16(m.peek(uint16(address))) + 0x100*uint16(m.peek(uint16(address+1)))
+func (m *Memory) getWord(address uint16) uint16 {
+	return uint16(m.Peek(address)) + 0x100*uint16(m.Peek(address+1))
 }
 
-func (m *memory) initWithRAM() {
-	var ramPages [256]ramPage
-	for i := 0; i < 256; i++ {
-		m.data[i] = &ramPages[i]
-	}
+func (m *Memory) getZeroPageWord(address uint8) uint16 {
+	return uint16(m.Peek(uint16(address))) + 0x100*uint16(m.Peek(uint16(address+1)))
 }
 
-func (m *memory) transformToRom(page uint8) {
-	var romPage romPage
-	ramPage := m.data[page]
-	romPage.data = *ramPage.getData()
-	m.data[page] = &romPage
-}
-
-func (m *memory) initWithRomAndText(filename string, textPages *textPages) {
-	// Valid for ROMs with size 20480 bytes = 20 KB = 80 pages
-	// from $B000 to $F000
+func (m *Memory) loadBinary(filename string) {
 	// Load file
 	f, err := os.Open(filename)
 	if err != nil {
@@ -104,48 +64,13 @@ func (m *memory) initWithRomAndText(filename string, textPages *textPages) {
 	buf := bufio.NewReader(f)
 	buf.Read(bytes)
 
-	m.initWithRAM()
-	romStart := uint16(0xFFFF - size + 1)
+	m.InitWithRAM()
 	for i, v := range bytes {
-		m.poke(uint16(i)+romStart, uint8(v))
-	}
-
-	var i uint8
-	for i = 217; i != 0; i++ {
-		m.transformToRom(i)
-	}
-
-	for j := 0; j < 4; j++ {
-		m.data[4+j] = &(textPages.pages[j])
+		m.Poke(uint16(i), uint8(v))
 	}
 }
 
-func (m *memory) loadBinary(filename string) {
-	// Load file
-	f, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	stats, statsErr := f.Stat()
-	if statsErr != nil {
-		panic(err)
-	}
-
-	size := stats.Size()
-	bytes := make([]byte, size)
-
-	buf := bufio.NewReader(f)
-	buf.Read(bytes)
-
-	m.initWithRAM()
-	for i, v := range bytes {
-		m.poke(uint16(i), uint8(v))
-	}
-}
-
-func (m *memory) printPage(page uint8) {
+func (m *Memory) printPage(page uint8) {
 	address := uint16(page) * 0x100
 	for i := 0; i < 16; i++ {
 		fmt.Printf("%#04x: ", address)

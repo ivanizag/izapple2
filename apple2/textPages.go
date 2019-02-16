@@ -1,4 +1,4 @@
-package main
+package apple2
 
 import "fmt"
 
@@ -11,18 +11,14 @@ type textPage struct {
 	data  [256]uint8
 }
 
-func (p *textPage) peek(address uint8) uint8 {
+func (p *textPage) Peek(address uint8) uint8 {
 	return p.data[address]
 }
 
-func (p *textPage) poke(address uint8, value uint8) {
+func (p *textPage) Poke(address uint8, value uint8) {
 	p.data[address] = value
 	// Note: we could avoid setting dirty on the 16 blocks of 8 hidden bytes
 	p.dirty = true
-}
-
-func (p *textPage) getData() *[256]uint8 {
-	return &p.data
 }
 
 func textMemoryByteToString(value uint8) string {
@@ -53,7 +49,7 @@ func (tp *textPages) dump() {
 			for _, h = range []uint8{0, 128} {
 				line := ""
 				for j = i + h; j < i+h+40; j++ {
-					line += textMemoryByteToString(p.peek(j))
+					line += textMemoryByteToString(p.Peek(j))
 				}
 				fmt.Printf("| %v |\n", line)
 			}
@@ -87,10 +83,10 @@ func (tp *textPages) charAddress(column uint8, line uint8) (page uint8, address 
 
 func (tp *textPages) read(column uint8, line uint8) uint8 {
 	page, address := tp.charAddress(column, line)
-	return tp.pages[page].peek(address)
+	return tp.pages[page].Peek(address)
 }
 
 func (tp *textPages) write(column uint8, line uint8, value uint8) {
 	page, address := tp.charAddress(column, line)
-	tp.pages[page].poke(address, value)
+	tp.pages[page].Poke(address, value)
 }
