@@ -34,9 +34,15 @@ func textMemoryByteToStringHex(value uint8) string {
 	return fmt.Sprintf("%02x ", value)
 }
 
+func (tp *textPages) prepare() {
+	fmt.Printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+}
+
 func (tp *textPages) dump() {
 	// See "Understand the Apple II", page 5-10
 	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
+
+	fmt.Print("\033[26A")
 
 	fmt.Println("------------------------------------------")
 

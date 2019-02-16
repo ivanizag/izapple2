@@ -550,7 +550,6 @@ func ExecuteInstruction(s *State, log bool) {
 // Reset resets the processor state. Moves the program counter to the vector in 0cfffc.
 func Reset(s *State) {
 	startAddress := s.Mem.getWord(0xfffc)
-	fmt.Println(startAddress)
 	s.Reg.setPC(startAddress)
 }
 

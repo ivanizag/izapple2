@@ -18,6 +18,7 @@ func Run(romFile string, log bool) {
 
 	// Start the processor
 	core6502.Reset(&s)
+	t.prepare()
 	for true {
 		core6502.ExecuteInstruction(&s, log)
 		t.dumpIfDirty()
