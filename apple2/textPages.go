@@ -1,9 +1,13 @@
 package apple2
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type textPages struct {
-	pages [4]textPage
+	lastDump int64
+	pages    [4]textPage
 }
 
 type textPage struct {
@@ -35,7 +39,7 @@ func textMemoryByteToStringHex(value uint8) string {
 }
 
 func (tp *textPages) prepare() {
-	fmt.Printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+	fmt.Printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
 }
 
 func (tp *textPages) dump() {
@@ -63,10 +67,18 @@ func (tp *textPages) dump() {
 	}
 
 	fmt.Println("------------------------------------------")
+	tp.lastDump = time.Now().UnixNano()
 
 }
 
+const refreshDelayMs = 100
+
 func (tp *textPages) dumpIfDirty() {
+	if time.Now().UnixNano()-tp.lastDump < refreshDelayMs*1000*1000 {
+		// Wait more the next refresh
+		return
+	}
+
 	dirty := false
 	for i := 0; i < 4; i++ {
 		if tp.pages[i].dirty {
