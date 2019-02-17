@@ -542,6 +542,7 @@ func ExecuteInstruction(s *State, log bool) {
 	}
 	opcode.action(s, line, opcode)
 	if log {
+		// Warning: this create double accesses and can interfere on memory mapped I/O
 		value, address, _ := resolve(s, line, opcode)
 		fmt.Printf("%v, [%04x:%02x], [%02x]\n", s.Reg, address, value, line)
 	}
