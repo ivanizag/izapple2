@@ -16,6 +16,9 @@ func Run(romFile string, log bool) {
 		s.Mem.SetPage(uint8(4+j), &(t.pages[j]))
 	}
 
+	var fe ansiConsoleFrontend
+	io.setKeyboardProvider(&fe)
+
 	// Start the processor
 	core6502.Reset(&s)
 	t.prepare()

@@ -1,15 +1,17 @@
 package apple2
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 )
 
 type ioC0Page struct {
-	ioFlags    uint64
-	data       [1]uint8
-	keyChannel chan uint8
+	ioFlags  uint64
+	data     [1]uint8
+	keyboard keyboardProvider
+}
+
+type keyboardProvider interface {
+	getKey() (key uint8, ok bool)
 }
 
 // See https://www.kreativekorp.com/miscpages/a2info/iomemory.shtml
@@ -92,41 +94,21 @@ func (p *ioC0Page) access(address uint8, isWrite bool, value uint8) uint8 {
 	return 0
 }
 
-func (p *ioC0Page) initKeyboard() {
-	if p.keyChannel == nil {
-		p.keyChannel = make(chan uint8)
-		go func(c chan uint8) {
-			reader := bufio.NewReader(os.Stdin)
-			for {
-				ch, err := reader.ReadByte()
-				if err != nil {
-					panic(err)
-				}
-				c <- ch
-			}
-		}(p.keyChannel)
-	}
+func (p *ioC0Page) setKeyboardProvider(kb keyboardProvider) {
+	p.keyboard = kb
 }
 
 func (p *ioC0Page) getKey() uint8 {
-	p.initKeyboard()
 	strobed := (p.data[ioDataKeyboard] & (1 << 7)) == 0
-	if strobed {
-		select {
-		case ch := <-p.keyChannel:
-			if ch == 10 {
-				ch = 13
-			}
-			p.data[ioDataKeyboard] = ch + (1 << 7)
-		default:
-			// Nothing
+	if strobed && p.keyboard != nil {
+		if key, ok := p.keyboard.getKey(); ok {
+			p.data[ioDataKeyboard] = key + (1 << 7)
 		}
 	}
 	return p.data[ioDataKeyboard]
 }
 
 func (p *ioC0Page) strobeKeyboard() uint8 {
-	p.initKeyboard()
 	result := p.data[ioDataKeyboard]
 	p.data[ioDataKeyboard] &^= 1 << 7
 	return result
