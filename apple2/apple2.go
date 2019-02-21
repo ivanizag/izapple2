@@ -18,12 +18,11 @@ func Run(romFile string, log bool) {
 
 	var fe ansiConsoleFrontend
 	io.setKeyboardProvider(&fe)
+	go fe.textModeGoRoutine(&t)
 
 	// Start the processor
 	core6502.Reset(&s)
-	t.prepare()
 	for {
 		core6502.ExecuteInstruction(&s, log)
-		t.dumpIfDirty()
 	}
 }
