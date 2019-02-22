@@ -6,7 +6,7 @@ func main() {
 	romFile := "../roms/apple.rom"
 	//romFile := "../roms/APPLE2.ROM"
 
-	log := false
+	log := true
 
 	apple2.Run(romFile, log)
 }

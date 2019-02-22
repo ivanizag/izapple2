@@ -27,6 +27,7 @@ const (
 )
 
 const (
+	vectorNMI   uint16 = 0xfffa
 	vectorReset uint16 = 0xfffc
 	vectorBreak uint16 = 0xfffe
 )
@@ -527,13 +528,21 @@ var opcodes = [256]opcode{
 
 func executeLine(s *State, line []uint8) {
 	opcode := opcodes[line[0]]
+	if opcode.cycles == 0 {
+		panic(fmt.Sprintf("Unknown opcode 0x%02x\n", line[0]))
+	}
 	opcode.action(s, line, opcode)
 }
 
 // ExecuteInstruction transforms the state given after a single instruction is executed.
 func ExecuteInstruction(s *State, log bool) {
 	pc := s.Reg.getPC()
-	opcode := opcodes[s.Mem.Peek(pc)]
+	opcodeID := s.Mem.Peek(pc)
+	opcode := opcodes[opcodeID]
+
+	if opcode.cycles == 0 {
+		panic(fmt.Sprintf("Unknown opcode 0x%02x\n", opcodeID))
+	}
 
 	line := make([]uint8, opcode.bytes)
 	for i := uint8(0); i < opcode.bytes; i++ {
@@ -548,8 +557,9 @@ func ExecuteInstruction(s *State, log bool) {
 	opcode.action(s, line, opcode)
 	if log {
 		// Warning: this create double accesses and can interfere on memory mapped I/O
-		value, address, _ := resolve(s, line, opcode)
-		fmt.Printf("%v, [%04x:%02x], [%02x]\n", s.Reg, address, value, line)
+		//value, address, _ := resolve(s, line, opcode)
+		//fmt.Printf("%v, [%04x:%02x], [%02x]\n", s.Reg, address, value, line)
+		fmt.Printf("%v, [%02x]\n", s.Reg, line)
 	}
 }
 

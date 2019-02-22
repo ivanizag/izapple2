@@ -5,9 +5,10 @@ import (
 )
 
 type ioC0Page struct {
-	ioFlags  uint64
-	data     [1]uint8
-	keyboard keyboardProvider
+	ioFlags      uint64
+	data         [1]uint8
+	keyboard     keyboardProvider
+	addressSpace *addressSpace
 }
 
 type keyboardProvider interface {
