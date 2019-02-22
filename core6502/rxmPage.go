@@ -2,6 +2,7 @@ package core6502
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 )
 
@@ -34,14 +35,14 @@ func (p *romPage) burn(address uint8, value uint8) {
 }
 
 // InitWithRAM adds RAM memory to all the memory pages
-func (m *Memory) InitWithRAM() {
+func (m *PagedMemory) InitWithRAM() {
 	var ramPages [256]ramPage
 	for i := 0; i < 256; i++ {
 		m.SetPage(uint8(i), &ramPages[i])
 	}
 }
 
-func (m *Memory) transformToRom(page uint8) {
+func (m *PagedMemory) transformToRom(page uint8) {
 	var romPage romPage
 	address := uint16(page) << 8
 	for i := 0; i < 256; i++ {
@@ -52,7 +53,7 @@ func (m *Memory) transformToRom(page uint8) {
 }
 
 // LoadRom loads a binary file to the top of the memory and makes those pages read only.
-func (m *Memory) LoadRom(filename string) {
+func (m *PagedMemory) LoadRom(filename string) {
 	f, err := os.Open(filename)
 	if err != nil {
 		panic(err)
@@ -71,6 +72,8 @@ func (m *Memory) LoadRom(filename string) {
 	buf.Read(bytes)
 
 	romStart := uint16(0xFFFF - size + 1)
+	fmt.Printf("ROM start in in 0x%04x\n", romStart)
+
 	for i, v := range bytes {
 		m.Poke(uint16(i)+romStart, uint8(v))
 	}

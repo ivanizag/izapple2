@@ -6,7 +6,7 @@ import (
 
 func TestLoad(t *testing.T) {
 	var s State
-	s.Mem.InitWithRAM()
+	s.Mem = new(FlatMemory)
 
 	executeLine(&s, []uint8{0xA9, 0x42})
 	if s.Reg.getA() != 0x42 {
@@ -89,7 +89,7 @@ func TestLoad(t *testing.T) {
 
 func TestStore(t *testing.T) {
 	var s State
-	s.Mem.InitWithRAM()
+	s.Mem = new(FlatMemory)
 	s.Reg.setA(0x10)
 	s.Reg.setX(0x40)
 	s.Reg.setY(0x80)
@@ -401,7 +401,7 @@ func TestCompare(t *testing.T) {
 }
 func TestBit(t *testing.T) {
 	var s State
-	s.Mem.InitWithRAM()
+	s.Mem = new(FlatMemory)
 
 	s.Reg.setA(0x0F)
 	s.Mem.Poke(0x0040, 0xF0)
@@ -450,7 +450,7 @@ func TestBranch(t *testing.T) {
 
 func TestStack(t *testing.T) {
 	var s State
-	s.Mem.InitWithRAM()
+	s.Mem = new(FlatMemory)
 
 	s.Reg.setSP(0xF0)
 	s.Reg.setA(0xA0)

@@ -10,8 +10,10 @@ func TestFunctional(t *testing.T) {
 	//t.SkipNow()
 
 	var s State
+	var m FlatMemory
+	s.Mem = &m
 	// Test suite from https://github.com/Klaus2m5/6502_65C02_functional_tests
-	s.Mem.loadBinary("testdata/6502_functional_test.bin")
+	m.loadBinary("testdata/6502_functional_test.bin")
 
 	s.Reg.setPC(0x0400)
 	for true {
@@ -26,9 +28,7 @@ func TestFunctional(t *testing.T) {
 		pc := s.Reg.getPC()
 		ExecuteInstruction(&s, log)
 		if pc == s.Reg.getPC() {
-			//s.memory.printPage(0x00)
-			//s.memory.printPage(0x01)
-			t.Errorf("Failuse in test %v.", testCase)
+			t.Errorf("Failure in test %v.", testCase)
 		}
 	}
 }

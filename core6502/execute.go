@@ -26,6 +26,11 @@ const (
 	modeIndirectIndexedY
 )
 
+const (
+	vectorReset uint16 = 0xfffc
+	vectorBreak uint16 = 0xfffe
+)
+
 // https://www.masswerk.at/6502/6502_instruction_set.html
 // http://www.emulator101.com/reference/6502-reference.html
 // https://www.csh.rit.edu/~moffitt/docs/6502.html#FLAGS
@@ -69,12 +74,12 @@ func resolve(s *State, line []uint8, opcode opcode) (value uint8, address uint16
 		address = getWordInLine(line) + uint16(s.Reg.getY())
 	case modeIndexedIndirectX:
 		addressAddress := uint8(line[1] + s.Reg.getX())
-		address = s.Mem.getZeroPageWord(addressAddress)
+		address = getZeroPageWord(s.Mem, addressAddress)
 	case modeIndirect:
 		addressAddress := getWordInLine(line)
-		address = s.Mem.getWord(addressAddress)
+		address = getWord(s.Mem, addressAddress)
 	case modeIndirectIndexedY:
-		address = s.Mem.getZeroPageWord(line[1]) +
+		address = getZeroPageWord(s.Mem, line[1]) +
 			uint16(s.Reg.getY())
 	}
 
@@ -342,7 +347,7 @@ func opBRK(s *State, line []uint8, opcode opcode) {
 	pushWord(s, s.Reg.getPC()+1)
 	pushByte(s, s.Reg.getP()|(flagB+flag5))
 	s.Reg.setFlag(flagI)
-	s.Reg.setPC(s.Mem.getWord(0xFFFE))
+	s.Reg.setPC(getWord(s.Mem, vectorBreak))
 }
 
 var opcodes = [256]opcode{
@@ -550,7 +555,7 @@ func ExecuteInstruction(s *State, log bool) {
 
 // Reset resets the processor state. Moves the program counter to the vector in 0cfffc.
 func Reset(s *State) {
-	startAddress := s.Mem.getWord(0xfffc)
+	startAddress := getWord(s.Mem, vectorReset)
 	s.Reg.setPC(startAddress)
 }
 
