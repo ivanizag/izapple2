@@ -4,15 +4,17 @@ import "go6502/core6502"
 
 // Run instantiates an apple2 and start emulation
 func Run(romFile string, log bool) {
-	a := newAddressSpace()
-	a.loadRom(romFile)
+	mmu := newAddressSpace(romFile)
+	if mmu.isApple2e {
+		addApple2ESoftSwitches(mmu)
+	}
 
 	var s core6502.State
-	s.Mem = a
+	s.Mem = mmu
 
 	var fe ansiConsoleFrontend
-	a.ioPage.setKeyboardProvider(&fe)
-	go fe.textModeGoRoutine(a.textPages1)
+	mmu.ioPage.setKeyboardProvider(&fe)
+	go fe.textModeGoRoutine(mmu.textPages1)
 
 	// Start the processor
 	core6502.Reset(&s)

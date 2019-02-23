@@ -23,56 +23,56 @@ const (
 	flagC uint8 = 1 << 0
 )
 
-type Registers struct {
+type registers struct {
 	data [8]uint8
 }
 
-func (r *Registers) getRegister(i int) uint8 { return r.data[i] }
+func (r *registers) getRegister(i int) uint8 { return r.data[i] }
 
-func (r *Registers) getA() uint8  { return r.data[regA] }
-func (r *Registers) getX() uint8  { return r.data[regX] }
-func (r *Registers) getY() uint8  { return r.data[regY] }
-func (r *Registers) getP() uint8  { return r.data[regP] }
-func (r *Registers) getSP() uint8 { return r.data[regSP] }
+func (r *registers) getA() uint8  { return r.data[regA] }
+func (r *registers) getX() uint8  { return r.data[regX] }
+func (r *registers) getY() uint8  { return r.data[regY] }
+func (r *registers) getP() uint8  { return r.data[regP] }
+func (r *registers) getSP() uint8 { return r.data[regSP] }
 
-func (r *Registers) setRegister(i int, v uint8) {
+func (r *registers) setRegister(i int, v uint8) {
 	r.data[i] = v
 }
-func (r *Registers) setA(v uint8)  { r.setRegister(regA, v) }
-func (r *Registers) setX(v uint8)  { r.setRegister(regX, v) }
-func (r *Registers) setY(v uint8)  { r.setRegister(regY, v) }
-func (r *Registers) setP(v uint8)  { r.setRegister(regP, v) }
-func (r *Registers) setSP(v uint8) { r.setRegister(regSP, v) }
+func (r *registers) setA(v uint8)  { r.setRegister(regA, v) }
+func (r *registers) setX(v uint8)  { r.setRegister(regX, v) }
+func (r *registers) setY(v uint8)  { r.setRegister(regY, v) }
+func (r *registers) setP(v uint8)  { r.setRegister(regP, v) }
+func (r *registers) setSP(v uint8) { r.setRegister(regSP, v) }
 
-func (r *Registers) getPC() uint16 {
+func (r *registers) getPC() uint16 {
 	return uint16(r.data[regPC])*256 + uint16(r.data[regPC+1])
 }
 
-func (r *Registers) setPC(v uint16) {
+func (r *registers) setPC(v uint16) {
 	r.data[regPC] = uint8(v >> 8)
 	r.data[regPC+1] = uint8(v)
 }
 
-func (r *Registers) getFlagBit(i uint8) uint8 {
+func (r *registers) getFlagBit(i uint8) uint8 {
 	if r.getFlag(i) {
 		return 1
 	}
 	return 0
 }
 
-func (r *Registers) getFlag(i uint8) bool {
+func (r *registers) getFlag(i uint8) bool {
 	return (r.data[regP] & i) != 0
 }
 
-func (r *Registers) setFlag(i uint8) {
+func (r *registers) setFlag(i uint8) {
 	r.data[regP] |= i
 }
 
-func (r *Registers) clearFlag(i uint8) {
+func (r *registers) clearFlag(i uint8) {
 	r.data[regP] &^= i
 }
 
-func (r *Registers) updateFlag(i uint8, v bool) {
+func (r *registers) updateFlag(i uint8, v bool) {
 	if v {
 		r.setFlag(i)
 	} else {
@@ -80,12 +80,12 @@ func (r *Registers) updateFlag(i uint8, v bool) {
 	}
 }
 
-func (r *Registers) updateFlagZN(t uint8) {
+func (r *registers) updateFlagZN(t uint8) {
 	r.updateFlag(flagZ, t == 0)
 	r.updateFlag(flagN, t >= (1<<7))
 }
 
-func (r Registers) String() string {
+func (r registers) String() string {
 	return fmt.Sprintf("A: %#02x, X: %#02x, Y: %#02x, SP: %#02x, PC: %#04x, P: %#02x, (NV-BDIZC): %08b",
 		r.getA(), r.getX(), r.getY(), r.getSP(), r.getPC(), r.getP(), r.getP())
 }

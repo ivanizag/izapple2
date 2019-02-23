@@ -3,7 +3,7 @@ package core6502
 import "testing"
 
 func TestRegA(t *testing.T) {
-	var r Registers
+	var r registers
 	var data uint8
 	data = 200
 	r.setA(data)
@@ -12,7 +12,7 @@ func TestRegA(t *testing.T) {
 	}
 }
 func TestRegPC(t *testing.T) {
-	var r Registers
+	var r registers
 	var data uint16
 	data = 0xc600
 	r.setPC(data)
@@ -22,7 +22,7 @@ func TestRegPC(t *testing.T) {
 }
 
 func TestFlags(t *testing.T) {
-	var r Registers
+	var r registers
 	r.setP(0x23)
 	if r.getP() != 0x23 {
 		t.Error("Error storing and loading P")
@@ -51,7 +51,7 @@ func TestFlags(t *testing.T) {
 }
 
 func TestUpdateFlagZN(t *testing.T) {
-	var r Registers
+	var r registers
 	r.updateFlagZN(0)
 	if r.getP() != flagZ {
 		t.Error("Error update flags ZN with 0")

@@ -5,12 +5,15 @@ import (
 )
 
 type ioC0Page struct {
-	ioFlags      uint64
-	data         [1]uint8
-	keyboard     keyboardProvider
-	addressSpace *addressSpace
+	softSwitches     [128]softSwitch
+	softSwitchesData [128]uint8
+	keyboard         keyboardProvider
+	mmu              *memoryManager
 }
 
+type softSwitch func(io *ioC0Page, isWrite bool, value uint8) uint8
+
+// TODO: change interface to func
 type keyboardProvider interface {
 	getKey() (key uint8, ok bool)
 }
@@ -19,44 +22,52 @@ type keyboardProvider interface {
 // See https://stason.org/TULARC/pc/apple2/programmer/004-I-d-like-to-do-some-serious-Apple-II-programming-Whe.html
 
 const (
-	ioFlagNone         uint8 = 0
-	ioFlagGraphics     uint8 = 3
-	ioFlagMixed        uint8 = 8
-	ioFlagSecondPage   uint8 = 1
-	ioFlagHiRes        uint8 = 2
-	ioFlagAnnunciator0 uint8 = 4
-	ioFlagAnnunciator1 uint8 = 5
-	ioFlagAnnunciator2 uint8 = 6
-	ioFlagAnnunciator3 uint8 = 7
+	ioDataKeyboard     uint8 = 0x10
+	ioFlagGraphics     uint8 = 0x50
+	ioFlagMixed        uint8 = 0x52
+	ioFlagSecondPage   uint8 = 0x54
+	ioFlagHiRes        uint8 = 0x56
+	ioFlagAnnunciator0 uint8 = 0x58
+	ioFlagAnnunciator1 uint8 = 0x5a
+	ioFlagAnnunciator2 uint8 = 0x5c
+	ioFlagAnnunciator3 uint8 = 0x5e
 )
 
-const (
-	ioDataKeyboard uint8 = 0
-)
-
-type softSwitch struct {
-	ioFlag      uint8
-	value       bool
-	onWriteOnly bool
+func (p *ioC0Page) isSoftSwitchExtActive(ioFlag uint8) bool {
+	return (p.softSwitchesData[ioFlag] & 0x08) == 0x80
 }
 
-var softSwitches = [256]softSwitch{
-	0x50: softSwitch{ioFlagGraphics, false, false},
-	0x51: softSwitch{ioFlagGraphics, true, false},
-	0x52: softSwitch{ioFlagMixed, false, false},
-	0x53: softSwitch{ioFlagMixed, true, false},
-	0x54: softSwitch{ioFlagSecondPage, false, false},
-	0x55: softSwitch{ioFlagSecondPage, true, false},
-	0x56: softSwitch{ioFlagHiRes, false, false},
-	0x57: softSwitch{ioFlagHiRes, true, false},
-	0x58: softSwitch{ioFlagAnnunciator0, false, false},
-	0x59: softSwitch{ioFlagAnnunciator0, true, false},
-	0x5a: softSwitch{ioFlagAnnunciator1, false, false},
-	0x5b: softSwitch{ioFlagAnnunciator1, true, false},
-	0x5c: softSwitch{ioFlagAnnunciator2, false, false},
-	0x5d: softSwitch{ioFlagAnnunciator2, true, false},
-	0x5e: softSwitch{ioFlagAnnunciator3, false, false},
-	0x5f: softSwitch{ioFlagAnnunciator3, true, false},
+func newIoC0Page(mmu *memoryManager) *ioC0Page {
+	var p ioC0Page
+	p.mmu = mmu
+	ss := &p.softSwitches
+
+	ss[0x00] = getKeySoftSwitch         // Keyboard
+	ss[0x10] = strobeKeyboardSoftSwitch // Keyboard Strobe
+	ss[0x30] = notImplementedSoftSwitch // Speaker
+
+	ss[0x50] = getSoftSwitch(ioFlagGraphics, false)
+	ss[0x51] = getSoftSwitch(ioFlagGraphics, true)
+	ss[0x52] = getSoftSwitch(ioFlagMixed, false)
+	ss[0x53] = getSoftSwitch(ioFlagMixed, true)
+	ss[0x54] = getSoftSwitch(ioFlagSecondPage, false)
+	ss[0x55] = getSoftSwitch(ioFlagSecondPage, true)
+	ss[0x56] = getSoftSwitch(ioFlagHiRes, false)
+	ss[0x57] = getSoftSwitch(ioFlagHiRes, true)
+	ss[0x58] = getSoftSwitch(ioFlagAnnunciator0, false)
+	ss[0x59] = getSoftSwitch(ioFlagAnnunciator0, true)
+	ss[0x5a] = getSoftSwitch(ioFlagAnnunciator1, false)
+	ss[0x5b] = getSoftSwitch(ioFlagAnnunciator1, true)
+	ss[0x5c] = getSoftSwitch(ioFlagAnnunciator2, false)
+	ss[0x5d] = getSoftSwitch(ioFlagAnnunciator2, true)
+	ss[0x5e] = getSoftSwitch(ioFlagAnnunciator3, false)
+	ss[0x5f] = getSoftSwitch(ioFlagAnnunciator3, true)
+
+	return &p
+}
+
+func (p *ioC0Page) setKeyboardProvider(kb keyboardProvider) {
+	p.keyboard = kb
 }
 
 func (p *ioC0Page) Peek(address uint8) uint8 {
@@ -70,47 +81,47 @@ func (p *ioC0Page) Poke(address uint8, value uint8) {
 }
 
 func (p *ioC0Page) access(address uint8, isWrite bool, value uint8) uint8 {
-
-	ss := softSwitches[address]
-	if ss.ioFlag != ioFlagNone {
-		if !isWrite || !!ss.onWriteOnly {
-			if ss.value {
-				p.ioFlags |= 1 << ss.ioFlag
-			} else {
-				p.ioFlags &^= 1 << ss.ioFlag
-			}
-		}
-	} else {
-		switch address {
-		case 0x00: // keyboard (Is this the full range 0x0?)
-			return p.getKey()
-		case 0x10: // strobe (Is this the full range 0x1?)
-			return p.strobeKeyboard()
-		case 0x30: // spkr
-			// TODO: Support sound
-		default:
-			panic(fmt.Sprintf("Unknown softswitch 0xC0%02x", address))
-		}
+	// The second hals of the pages is reserved for slots
+	if address >= 0x80 {
+		// TODO reserved slots data
+		return 0
 	}
+
+	ss := p.softSwitches[address]
+	if ss == nil {
+		panic(fmt.Sprintf("Unknown softswitch 0xC0%02x", address))
+	}
+
+	return ss(p, isWrite, value)
+}
+
+func getSoftSwitch(ioFlag uint8, isSet bool) softSwitch {
+	return func(io *ioC0Page, isWrite bool, value uint8) uint8 {
+		if isSet {
+			io.softSwitchesData[ioFlag] = 0x80
+		} else {
+			io.softSwitchesData[ioFlag] = 0
+		}
+		return 0
+	}
+}
+
+func notImplementedSoftSwitch(*ioC0Page, bool, uint8) uint8 {
 	return 0
 }
 
-func (p *ioC0Page) setKeyboardProvider(kb keyboardProvider) {
-	p.keyboard = kb
-}
-
-func (p *ioC0Page) getKey() uint8 {
-	strobed := (p.data[ioDataKeyboard] & (1 << 7)) == 0
+func getKeySoftSwitch(p *ioC0Page, _ bool, _ uint8) uint8 {
+	strobed := (p.softSwitchesData[ioDataKeyboard] & (1 << 7)) == 0
 	if strobed && p.keyboard != nil {
 		if key, ok := p.keyboard.getKey(); ok {
-			p.data[ioDataKeyboard] = key + (1 << 7)
+			p.softSwitchesData[ioDataKeyboard] = key + (1 << 7)
 		}
 	}
-	return p.data[ioDataKeyboard]
+	return p.softSwitchesData[ioDataKeyboard]
 }
 
-func (p *ioC0Page) strobeKeyboard() uint8 {
-	result := p.data[ioDataKeyboard]
-	p.data[ioDataKeyboard] &^= 1 << 7
+func strobeKeyboardSoftSwitch(p *ioC0Page, _ bool, _ uint8) uint8 {
+	result := p.softSwitchesData[ioDataKeyboard]
+	p.softSwitchesData[ioDataKeyboard] &^= 1 << 7
 	return result
 }

@@ -1,6 +1,9 @@
 package apple2
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 // memoryPage is a data page of 256 bytes
 type memoryPage interface {
@@ -24,12 +27,11 @@ func (m *pagedMemory) Peek(address uint16) uint8 {
 func (m *pagedMemory) Poke(address uint16, value uint8) {
 	hi := uint8(address >> 8)
 	lo := uint8(address)
-	//fmt.Println(hi)
 	m.data[hi].Poke(lo, value)
 }
 
 // SetPage assigns a MemoryPage implementation on the page given
 func (m *pagedMemory) SetPage(index uint8, page memoryPage) {
-	fmt.Printf("Seeting page 0x%02x\n", index)
+	fmt.Printf("Assigning page 0x%02x type %s\n", index, reflect.TypeOf(page))
 	m.data[index] = page
 }

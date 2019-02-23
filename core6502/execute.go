@@ -4,7 +4,7 @@ import "fmt"
 
 // State represents the state of the simulated device
 type State struct {
-	Reg Registers
+	Reg registers
 	Mem Memory
 }
 
@@ -41,25 +41,46 @@ func getWordInLine(line []uint8) uint16 {
 	return uint16(line[1]) + 0x100*uint16(line[2])
 }
 
-func resolve(s *State, line []uint8, opcode opcode) (value uint8, address uint16, setValue func(uint8)) {
+func resolveValue(s *State, line []uint8, opcode opcode) uint8 {
+	getValue, _, _ := resolve(s, line, opcode)
+	return getValue()
+}
+
+func resolveGetSetValue(s *State, line []uint8, opcode opcode) (value uint8, setValue func(uint8)) {
+	getValue, setValue, _ := resolve(s, line, opcode)
+	value = getValue()
+	return
+}
+
+func resolveSetValue(s *State, line []uint8, opcode opcode) func(uint8) {
+	_, setValue, _ := resolve(s, line, opcode)
+	return setValue
+}
+
+func resolveAddress(s *State, line []uint8, opcode opcode) uint16 {
+	_, _, address := resolve(s, line, opcode)
+	return address
+}
+
+func resolve(s *State, line []uint8, opcode opcode) (getValue func() uint8, setValue func(uint8), address uint16) {
 	hasAddress := true
 	register := regNone
 
 	switch opcode.addressMode {
 	case modeAccumulator:
-		value = s.Reg.getA()
+		getValue = func() uint8 { return s.Reg.getA() }
 		hasAddress = false
 		register = regA
 	case modeImplicitX:
-		value = s.Reg.getX()
+		getValue = func() uint8 { return s.Reg.getX() }
 		hasAddress = false
 		register = regX
 	case modeImplicitY:
-		value = s.Reg.getY()
+		getValue = func() uint8 { return s.Reg.getY() }
 		hasAddress = false
 		register = regY
 	case modeImmediate:
-		value = line[1]
+		getValue = func() uint8 { return line[1] }
 		hasAddress = false
 	case modeZeroPage:
 		address = uint16(line[1])
@@ -85,7 +106,7 @@ func resolve(s *State, line []uint8, opcode opcode) (value uint8, address uint16
 	}
 
 	if hasAddress {
-		value = s.Mem.Peek(address)
+		getValue = func() uint8 { return s.Mem.Peek(address) }
 	}
 
 	setValue = func(value uint8) {
@@ -122,7 +143,7 @@ func buildOpTransfer(regSrc int, regDst int) opFunc {
 
 func buildOpIncDec(inc bool) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		value, _, setValue := resolve(s, line, opcode)
+		value, setValue := resolveGetSetValue(s, line, opcode)
 		if inc {
 			value++
 		} else {
@@ -135,7 +156,7 @@ func buildOpIncDec(inc bool) opFunc {
 
 func buildOpShift(isLeft bool, isRotate bool) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		value, _, setValue := resolve(s, line, opcode)
+		value, setValue := resolveGetSetValue(s, line, opcode)
 
 		oldCarry := s.Reg.getFlagBit(flagC)
 		var carry bool
@@ -160,7 +181,7 @@ func buildOpShift(isLeft bool, isRotate bool) opFunc {
 
 func buildOpLoad(regDst int) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		value, _, _ := resolve(s, line, opcode)
+		value := resolveValue(s, line, opcode)
 		s.Reg.setRegister(regDst, value)
 		s.Reg.updateFlagZN(value)
 	}
@@ -168,7 +189,7 @@ func buildOpLoad(regDst int) opFunc {
 
 func buildOpStore(regSrc int) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		_, _, setValue := resolve(s, line, opcode)
+		setValue := resolveSetValue(s, line, opcode)
 		value := s.Reg.getRegister(regSrc)
 		setValue(value)
 	}
@@ -192,7 +213,7 @@ func buildOpBranch(flag uint8, value bool) opFunc {
 }
 
 func opBIT(s *State, line []uint8, opcode opcode) {
-	value, _, _ := resolve(s, line, opcode)
+	value := resolveValue(s, line, opcode)
 	acc := s.Reg.getA()
 	// Future note: The immediate addressing mode (65C02 or 65816 only) does not affect V.
 	s.Reg.updateFlag(flagZ, value&acc == 0)
@@ -202,7 +223,7 @@ func opBIT(s *State, line []uint8, opcode opcode) {
 
 func buildOpCompare(reg int) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		value, _, _ := resolve(s, line, opcode)
+		value := resolveValue(s, line, opcode)
 		reference := s.Reg.getRegister(reg)
 		s.Reg.updateFlagZN(reference - value)
 		s.Reg.updateFlag(flagC, reference >= value)
@@ -215,7 +236,7 @@ func operationXor(a uint8, b uint8) uint8 { return a ^ b }
 
 func buildOpLogic(operation func(uint8, uint8) uint8) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		value, _, _ := resolve(s, line, opcode)
+		value := resolveValue(s, line, opcode)
 		result := operation(value, s.Reg.getA())
 		s.Reg.setA(result)
 		s.Reg.updateFlagZN(result)
@@ -223,7 +244,7 @@ func buildOpLogic(operation func(uint8, uint8) uint8) opFunc {
 }
 
 func opADC(s *State, line []uint8, opcode opcode) {
-	value, _, _ := resolve(s, line, opcode)
+	value := resolveValue(s, line, opcode)
 	aValue := s.Reg.getA()
 	carry := s.Reg.getFlagBit(flagC)
 
@@ -251,7 +272,7 @@ func opADC(s *State, line []uint8, opcode opcode) {
 }
 
 func opSBC(s *State, line []uint8, opcode opcode) {
-	value, _, _ := resolve(s, line, opcode)
+	value := resolveValue(s, line, opcode)
 	aValue := s.Reg.getA()
 	carry := s.Reg.getFlagBit(flagC)
 
@@ -323,7 +344,7 @@ func opPHP(s *State, line []uint8, opcode opcode) {
 }
 
 func opJMP(s *State, line []uint8, opcode opcode) {
-	_, address, _ := resolve(s, line, opcode)
+	address := resolveAddress(s, line, opcode)
 	s.Reg.setPC(address)
 }
 
@@ -331,7 +352,7 @@ func opNOP(s *State, line []uint8, opcode opcode) {}
 
 func opJSR(s *State, line []uint8, opcode opcode) {
 	pushWord(s, s.Reg.getPC()-1)
-	_, address, _ := resolve(s, line, opcode)
+	address := resolveAddress(s, line, opcode)
 	s.Reg.setPC(address)
 }
 
@@ -556,9 +577,6 @@ func ExecuteInstruction(s *State, log bool) {
 	}
 	opcode.action(s, line, opcode)
 	if log {
-		// Warning: this create double accesses and can interfere on memory mapped I/O
-		//value, address, _ := resolve(s, line, opcode)
-		//fmt.Printf("%v, [%04x:%02x], [%02x]\n", s.Reg, address, value, line)
 		fmt.Printf("%v, [%02x]\n", s.Reg, line)
 	}
 }
