@@ -4,45 +4,43 @@ const (
 	ioFlagIntCxRom  uint8 = 0x15
 	ioFlagSlotC3Rom uint8 = 0x17
 	ioFlag80Store   uint8 = 0x18
+	ioFlagAltChar   uint8 = 0x19
 	ioFlag80Col     uint8 = 0x1F
 )
 
 func addApple2ESoftSwitches(io *ioC0Page) {
-	ss := &io.softSwitches
 
-	ss[0x00] = getSoftSwitchExt(ioFlag80Store, ssOff, nil)
-	ss[0x01] = getSoftSwitchExt(ioFlag80Store, ssOn, nil)
-	ss[0x06] = getSoftSwitchExt(ioFlagIntCxRom, ssOff, softSwitchIntCxRomOff)
-	ss[0x07] = getSoftSwitchExt(ioFlagIntCxRom, ssOn, softSwitchIntCxRomOn)
-	ss[0x0A] = getSoftSwitchExt(ioFlagSlotC3Rom, ssOff, softSwitchSlotC3RomOff)
-	ss[0x0B] = getSoftSwitchExt(ioFlagSlotC3Rom, ssOn, softSwitchSlotC3RomOn)
-	ss[0x0C] = getSoftSwitchExt(ioFlag80Col, ssOff, nil)
-	ss[0x0D] = getSoftSwitchExt(ioFlag80Col, ssOn, nil)
+	io.addSoftSwitchW(0x00, getSoftSwitchExt(ioFlag80Store, ssOff, nil))
+	io.addSoftSwitchW(0x01, getSoftSwitchExt(ioFlag80Store, ssOn, nil))
+	io.addSoftSwitchW(0x06, getSoftSwitchExt(ioFlagIntCxRom, ssOff, softSwitchIntCxRomOff))
+	io.addSoftSwitchW(0x07, getSoftSwitchExt(ioFlagIntCxRom, ssOn, softSwitchIntCxRomOn))
+	io.addSoftSwitchW(0x0A, getSoftSwitchExt(ioFlagSlotC3Rom, ssOff, softSwitchSlotC3RomOff))
+	io.addSoftSwitchW(0x0B, getSoftSwitchExt(ioFlagSlotC3Rom, ssOn, softSwitchSlotC3RomOn))
+	io.addSoftSwitchW(0x0C, getSoftSwitchExt(ioFlag80Col, ssOff, nil))
+	io.addSoftSwitchW(0x0D, getSoftSwitchExt(ioFlag80Col, ssOn, nil))
+	io.addSoftSwitchW(0x0E, getSoftSwitchExt(ioFlagAltChar, ssOff, nil))
+	io.addSoftSwitchW(0x0F, getSoftSwitchExt(ioFlagAltChar, ssOn, nil))
+	io.softSwitchesData[ioFlagAltChar] = ssOn // Not sure about this.
 
-	ss[0x15] = getStatusSoftSwitch(ioFlagIntCxRom)
-	ss[0x17] = getStatusSoftSwitch(ioFlagSlotC3Rom)
-	ss[0x18] = getStatusSoftSwitch(ioFlag80Store)
-	ss[0x1C] = getStatusSoftSwitch(ioFlagSecondPage)
-	ss[0x1F] = getStatusSoftSwitch(ioFlag80Col)
+	io.addSoftSwitchR(0x15, getStatusSoftSwitch(ioFlagIntCxRom))
+	io.addSoftSwitchR(0x17, getStatusSoftSwitch(ioFlagSlotC3Rom))
+	io.addSoftSwitchR(0x18, getStatusSoftSwitch(ioFlag80Store))
+	io.addSoftSwitchR(0x1C, getStatusSoftSwitch(ioFlagSecondPage))
+	io.addSoftSwitchR(0x1F, getStatusSoftSwitch(ioFlag80Col))
 }
 
 type softSwitchExtAction func(io *ioC0Page)
 
-func getSoftSwitchExt(ioFlag uint8, dstValue uint8, action softSwitchExtAction) softSwitch {
-	return func(io *ioC0Page, isWrite bool, value uint8) uint8 {
-		//fmt.Printf("Softswitch 0x%02x %v %v\n", ioFlag, isWrite, dstValue)
-		if !isWrite {
-			return 0 // New Apple2e softswitches ignore reads
-		}
+func getSoftSwitchExt(ioFlag uint8, dstValue uint8, action softSwitchExtAction) softSwitchW {
+	return func(io *ioC0Page, _ uint8) {
 		currentValue := io.softSwitchesData[ioFlag]
 		if currentValue == dstValue {
-			return 0 // Already switched, ignore
+			return // Already switched, ignore
 		}
 		if action != nil {
 			action(io)
 		}
-		io.softSwitchesData[ioFlag] = value
-		return 0
+		io.softSwitchesData[ioFlag] = dstValue
 	}
 }
 

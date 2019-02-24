@@ -9,7 +9,7 @@ func Run(romFile string, log bool) {
 	var s core6502.State
 	s.Mem = mmu
 
-	var fe ansiConsoleFrontend
+	fe := newAnsiConsoleFrontend(mmu)
 	mmu.ioPage.setKeyboardProvider(&fe)
 	go fe.textModeGoRoutine(mmu.textPages1)
 

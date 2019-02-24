@@ -18,8 +18,15 @@ Those tricks do not work with the Apple2e ROM
 */
 
 type ansiConsoleFrontend struct {
+	mmu            *memoryManager
 	keyChannel     chan uint8
 	extraLineFeeds chan int
+}
+
+func newAnsiConsoleFrontend(mmu *memoryManager) ansiConsoleFrontend {
+	var fe ansiConsoleFrontend
+	fe.mmu = mmu
+	return fe
 }
 
 const refreshDelayMs = 100
@@ -82,6 +89,7 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine(tp *textPages) {
 
 			// See "Understand the Apple II", page 5-10
 			// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
+			isAltText := fe.mmu.isApple2e && fe.mmu.ioPage.isSoftSwitchExtActive(ioFlagAltChar)
 			var i, j, h uint8
 			// Top, middle and botton screen
 			for i = 0; i < 120; i = i + 40 {
@@ -91,7 +99,7 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine(tp *textPages) {
 					for _, h = range []uint8{0, 128} {
 						line := ""
 						for j = i + h; j < i+h+40; j++ {
-							line += textMemoryByteToString(p.Peek(j))
+							line += textMemoryByteToString(p.Peek(j), isAltText)
 						}
 						fmt.Printf("# %v #\n", line)
 					}
@@ -106,17 +114,32 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine(tp *textPages) {
 	}
 }
 
-func textMemoryByteToString(value uint8) string {
+func textMemoryByteToString(value uint8, isAltCharSet bool) string {
 	// See https://en.wikipedia.org/wiki/Apple_II_character_set
+	// Supports the new lowercase characters in the Apple2e
 	// Only ascii from 0x20 to 0x5F is visible
-	// Does not support the new lowercase characters in the Apple2e
 	topBits := value >> 6
 	isInverse := topBits == 0
 	isFlash := topBits == 1
+	if isFlash && isAltCharSet {
+		// On the Apple2e with lowercase chars there is not flash mode.
+		isFlash = false
+		isInverse = true
+	}
 
-	value = (value & 0x3F)
+	if isAltCharSet {
+		value = value & 0x7F
+	} else {
+		value = value & 0x3F
+	}
+
 	if value < 0x20 {
 		value += 0x40
+	}
+
+	if value == 0x7f {
+		// DEL is full box
+		value = '_'
 	}
 
 	if isFlash {
@@ -132,6 +155,6 @@ func textMemoryByteToString(value uint8) string {
 	}
 }
 
-func textMemoryByteToStringHex(value uint8) string {
+func textMemoryByteToStringHex(value uint8, _ bool) string {
 	return fmt.Sprintf("%02x ", value)
 }

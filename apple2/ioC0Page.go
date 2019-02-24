@@ -5,13 +5,15 @@ import (
 )
 
 type ioC0Page struct {
-	softSwitches     [128]softSwitch
+	softSwitchesR    [128]softSwitchR
+	softSwitchesW    [128]softSwitchW
 	softSwitchesData [128]uint8
 	keyboard         keyboardProvider
 	mmu              *memoryManager
 }
 
-type softSwitch func(io *ioC0Page, isWrite bool, value uint8) uint8
+type softSwitchR func(io *ioC0Page) uint8
+type softSwitchW func(io *ioC0Page, value uint8)
 
 type keyboardProvider interface {
 	getKey() (key uint8, ok bool)
@@ -37,6 +39,27 @@ func newIoC0Page(mmu *memoryManager) *ioC0Page {
 	return &io
 }
 
+func (p *ioC0Page) addSoftSwitchRW(address uint8, ss softSwitchR) {
+	p.addSoftSwitchR(address, ss)
+	p.addSoftSwitchW(address, func(p *ioC0Page, _ uint8) {
+		ss(p)
+	})
+}
+
+func (p *ioC0Page) addSoftSwitchR(address uint8, ss softSwitchR) {
+	if p.softSwitchesR[address] != nil {
+		fmt.Printf("Addresss 0x0c%02x is already assigned for read", address)
+	}
+	p.softSwitchesR[address] = ss
+}
+
+func (p *ioC0Page) addSoftSwitchW(address uint8, ss softSwitchW) {
+	if p.softSwitchesW[address] != nil {
+		fmt.Printf("Addresss 0x0c%02x is already assigned for write", address)
+	}
+	p.softSwitchesW[address] = ss
+}
+
 func (p *ioC0Page) isSoftSwitchExtActive(ioFlag uint8) bool {
 	return (p.softSwitchesData[ioFlag] & ssOn) == ssOn
 }
@@ -47,25 +70,19 @@ func (p *ioC0Page) setKeyboardProvider(kb keyboardProvider) {
 
 func (p *ioC0Page) Peek(address uint8) uint8 {
 	//fmt.Printf("Peek on $C0%02x ", address)
-	return p.access(address, false, 0)
+	ss := p.softSwitchesR[address]
+	if ss == nil {
+		panic(fmt.Sprintf("Unknown softswitch on read to 0xC0%02x", address))
+	}
+
+	return ss(p)
 }
 
 func (p *ioC0Page) Poke(address uint8, value uint8) {
 	//fmt.Printf("Poke on $C0%02x with %02x ", address, value)
-	p.access(address, true, value)
-}
-
-func (p *ioC0Page) access(address uint8, isWrite bool, value uint8) uint8 {
-	// The second half of the pages is reserved for slots
-	if address >= 0x90 {
-		// TODO reserved slots data
-		return 0
-	}
-
-	ss := p.softSwitches[address]
+	ss := p.softSwitchesW[address]
 	if ss == nil {
-		panic(fmt.Sprintf("Unknown softswitch 0xC0%02x", address))
+		panic(fmt.Sprintf("Unknown softswitch on write to 0xC0%02x", address))
 	}
-
-	return ss(p, isWrite, value)
+	ss(p, value)
 }
