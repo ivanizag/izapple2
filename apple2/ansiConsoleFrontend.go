@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+/*
+Uses the console standard input and output to interface with the machine.
+Input is buffered until the next CR. This avoids working in place, a line
+for input is added at the end.
+Outut is done in place using ANSI escape sequences.
+
+Those tricks do not work with the Apple2e ROM
+*/
+
 type ansiConsoleFrontend struct {
 	keyChannel     chan uint8
 	extraLineFeeds chan int
@@ -100,6 +109,7 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine(tp *textPages) {
 func textMemoryByteToString(value uint8) string {
 	// See https://en.wikipedia.org/wiki/Apple_II_character_set
 	// Only ascii from 0x20 to 0x5F is visible
+	// Does not support the new lowercase characters in the Apple2e
 	topBits := value >> 6
 	isInverse := topBits == 0
 	isFlash := topBits == 1

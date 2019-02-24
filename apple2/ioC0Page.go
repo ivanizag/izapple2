@@ -22,7 +22,13 @@ type keyboardProvider interface {
 // See https://stason.org/TULARC/pc/apple2/programmer/004-I-d-like-to-do-some-serious-Apple-II-programming-Whe.html
 
 const (
-	ioDataKeyboard     uint8 = 0x10
+	ssOn  uint8 = 0x80
+	ssOff uint8 = 0x00
+)
+
+const (
+	ioDataKeyboard uint8 = 0x10
+
 	ioFlagGraphics     uint8 = 0x50
 	ioFlagMixed        uint8 = 0x52
 	ioFlagSecondPage   uint8 = 0x54
@@ -31,10 +37,19 @@ const (
 	ioFlagAnnunciator1 uint8 = 0x5a
 	ioFlagAnnunciator2 uint8 = 0x5c
 	ioFlagAnnunciator3 uint8 = 0x5e
+
+	ioDataCassette uint8 = 0x60
+	ioFlagButton0  uint8 = 0x61
+	ioFlagButton1  uint8 = 0x62
+	ioFlagButton2  uint8 = 0x63
+	ioDataPaddle0  uint8 = 0x64
+	ioDataPaddle1  uint8 = 0x65
+	ioDataPaddle2  uint8 = 0x66
+	ioDataPaddle3  uint8 = 0x67
 )
 
 func (p *ioC0Page) isSoftSwitchExtActive(ioFlag uint8) bool {
-	return (p.softSwitchesData[ioFlag] & 0x08) == 0x80
+	return (p.softSwitchesData[ioFlag] & ssOn) == ssOn
 }
 
 func newIoC0Page(mmu *memoryManager) *ioC0Page {
@@ -44,7 +59,12 @@ func newIoC0Page(mmu *memoryManager) *ioC0Page {
 
 	ss[0x00] = getKeySoftSwitch         // Keyboard
 	ss[0x10] = strobeKeyboardSoftSwitch // Keyboard Strobe
+	ss[0x20] = notImplementedSoftSwitch // Cassette Output
 	ss[0x30] = notImplementedSoftSwitch // Speaker
+	ss[0x40] = notImplementedSoftSwitch // Game connector Strobe
+	// Note: Some sources indicate that all these cover 16 positions
+	// for read and write. But the Apple2e take over some of them, with
+	// the prevention on acting only on writes.
 
 	ss[0x50] = getSoftSwitch(ioFlagGraphics, false)
 	ss[0x51] = getSoftSwitch(ioFlagGraphics, true)
@@ -62,6 +82,24 @@ func newIoC0Page(mmu *memoryManager) *ioC0Page {
 	ss[0x5d] = getSoftSwitch(ioFlagAnnunciator2, true)
 	ss[0x5e] = getSoftSwitch(ioFlagAnnunciator3, false)
 	ss[0x5f] = getSoftSwitch(ioFlagAnnunciator3, true)
+
+	ss[0x60] = notImplementedSoftSwitch // Cassetter Input
+	ss[0x61] = getStatusSoftSwitch(ioFlagButton0)
+	ss[0x62] = getStatusSoftSwitch(ioFlagButton1)
+	ss[0x63] = getStatusSoftSwitch(ioFlagButton2)
+	ss[0x64] = getStatusSoftSwitch(ioDataPaddle0)
+	ss[0x65] = getStatusSoftSwitch(ioDataPaddle1)
+	ss[0x66] = getStatusSoftSwitch(ioDataPaddle2)
+	ss[0x67] = getStatusSoftSwitch(ioDataPaddle3)
+	ss[0x68] = ss[0x60]
+	ss[0x69] = ss[0x61]
+	ss[0x6A] = ss[0x62]
+	ss[0x6B] = ss[0x63]
+	ss[0x6C] = ss[0x64]
+	ss[0x6D] = ss[0x65]
+	ss[0x6E] = ss[0x66]
+	ss[0x6F] = ss[0x67]
+	ss[0x70] = notImplementedSoftSwitch // Game controllers reset
 
 	return &p
 }
@@ -81,8 +119,8 @@ func (p *ioC0Page) Poke(address uint8, value uint8) {
 }
 
 func (p *ioC0Page) access(address uint8, isWrite bool, value uint8) uint8 {
-	// The second hals of the pages is reserved for slots
-	if address >= 0x80 {
+	// The second half of the pages is reserved for slots
+	if address >= 0x90 {
 		// TODO reserved slots data
 		return 0
 	}
@@ -95,12 +133,18 @@ func (p *ioC0Page) access(address uint8, isWrite bool, value uint8) uint8 {
 	return ss(p, isWrite, value)
 }
 
+func getStatusSoftSwitch(ioFlag uint8) softSwitch {
+	return func(io *ioC0Page, isWrite bool, value uint8) uint8 {
+		return io.softSwitchesData[ioFlag]
+	}
+}
+
 func getSoftSwitch(ioFlag uint8, isSet bool) softSwitch {
 	return func(io *ioC0Page, isWrite bool, value uint8) uint8 {
 		if isSet {
-			io.softSwitchesData[ioFlag] = 0x80
+			io.softSwitchesData[ioFlag] = ssOn
 		} else {
-			io.softSwitchesData[ioFlag] = 0
+			io.softSwitchesData[ioFlag] = ssOff
 		}
 		return 0
 	}
