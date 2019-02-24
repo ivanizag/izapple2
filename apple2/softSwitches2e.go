@@ -7,8 +7,8 @@ const (
 	ioFlag80Col     uint8 = 0x1F
 )
 
-func addApple2ESoftSwitches(mmu *memoryManager) {
-	ss := &mmu.ioPage.softSwitches
+func addApple2ESoftSwitches(io *ioC0Page) {
+	ss := &io.softSwitches
 
 	ss[0x00] = getSoftSwitchExt(ioFlag80Store, ssOff, nil)
 	ss[0x01] = getSoftSwitchExt(ioFlag80Store, ssOn, nil)

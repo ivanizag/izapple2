@@ -5,9 +5,6 @@ import "go6502/core6502"
 // Run instantiates an apple2 and start emulation
 func Run(romFile string, log bool) {
 	mmu := newAddressSpace(romFile)
-	if mmu.isApple2e {
-		addApple2ESoftSwitches(mmu)
-	}
 
 	var s core6502.State
 	s.Mem = mmu
