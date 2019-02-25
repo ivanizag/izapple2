@@ -10,8 +10,8 @@ func Run(romFile string, log bool) {
 	s.Mem = mmu
 
 	fe := newAnsiConsoleFrontend(mmu)
-	mmu.ioPage.setKeyboardProvider(&fe)
-	go fe.textModeGoRoutine(mmu.textPages1)
+	mmu.ioPage.setKeyboardProvider(fe)
+	go fe.textModeGoRoutine()
 
 	// Start the processor
 	core6502.Reset(&s)

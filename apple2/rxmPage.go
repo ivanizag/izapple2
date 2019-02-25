@@ -1,23 +1,36 @@
 package apple2
 
+type rxmPage struct {
+	data     [256]uint8
+	observer func(address uint8, isWrite bool)
+}
+
 type ramPage struct {
-	data [256]uint8
+	rxmPage
 }
 
 type romPage struct {
-	data [256]uint8
+	rxmPage
 }
 
-func (p *ramPage) Peek(address uint8) uint8 {
+func (p *rxmPage) Peek(address uint8) uint8 {
+	p.touch(address, false)
 	return p.data[address]
 }
 
-func (p *ramPage) Poke(address uint8, value uint8) {
+func (p *rxmPage) internalPeek(address uint8) uint8 {
+	return p.data[address]
+}
+
+func (p *rxmPage) Poke(address uint8, value uint8) {
+	p.touch(address, true)
 	p.data[address] = value
 }
 
-func (p *romPage) Peek(address uint8) uint8 {
-	return p.data[address]
+func (p *rxmPage) touch(address uint8, isWrite bool) {
+	if p.observer != nil {
+		p.observer(address, isWrite)
+	}
 }
 
 func (p *romPage) Poke(address uint8, value uint8) {

@@ -18,8 +18,7 @@ type memoryManager struct {
 	unassignedExpansionROM []unassignedPage // 0xc000 to 0xcfff
 	ioPage                 *ioC0Page        // 0xc000 to 0xc080
 	isApple2e              bool
-	textPages1             *textPages // 0x0400 to 0x07ff
-	activeSlow             int        // Slot that has the addressing 0xc800 to 0ccfff
+	activeSlot             int // Slot that has the addressing 0xc800 to 0ccfff
 }
 
 const (
@@ -85,14 +84,6 @@ func newAddressSpace(romImage string) *memoryManager {
 		p := &mmu.unassignedExpansionROM[i]
 		p.page = page
 		m.SetPage(page, p)
-	}
-
-	// Replace RAM in the TEXT1 area.
-	// TODO: treat as normal ram. Add is dirty in all RAM pages
-	var t textPages
-	mmu.textPages1 = &t
-	for i := 0; i < 4; i++ {
-		m.SetPage(uint8(4+i), &(t.pages[i]))
 	}
 
 	return &mmu

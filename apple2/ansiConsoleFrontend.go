@@ -21,12 +21,23 @@ type ansiConsoleFrontend struct {
 	mmu            *memoryManager
 	keyChannel     chan uint8
 	extraLineFeeds chan int
+	textUpdated    bool
 }
 
-func newAnsiConsoleFrontend(mmu *memoryManager) ansiConsoleFrontend {
+func newAnsiConsoleFrontend(mmu *memoryManager) *ansiConsoleFrontend {
 	var fe ansiConsoleFrontend
 	fe.mmu = mmu
-	return fe
+	fe.subscribeToTextPages()
+	return &fe
+}
+
+func (fe *ansiConsoleFrontend) subscribeToTextPages() {
+	observer := func(_ uint8, _ bool) {
+		fe.textUpdated = true
+	}
+	for i := 0x04; i < 0x08; i++ {
+		fe.mmu.physicalMainRAM[i].observer = observer
+	}
 }
 
 const refreshDelayMs = 100
@@ -37,7 +48,8 @@ func (fe *ansiConsoleFrontend) getKey() (key uint8, ok bool) {
 		for {
 			byte, err := reader.ReadByte()
 			if err != nil {
-				panic(err)
+				fmt.Println(err)
+				return
 			}
 			c <- byte
 		}
@@ -67,12 +79,13 @@ func ansiCursorUp(steps int) {
 	fmt.Printf("\033[%vA", steps)
 }
 
-func (fe *ansiConsoleFrontend) textModeGoRoutine(tp *textPages) {
+func (fe *ansiConsoleFrontend) textModeGoRoutine() {
 	fe.extraLineFeeds = make(chan int, 100)
 
 	fmt.Printf(strings.Repeat("\n", 26))
 	for {
-		if tp.strobe() {
+		if fe.textUpdated {
+			fe.textUpdated = false
 			// Go up
 			ansiCursorUp(26)
 			done := false
@@ -90,16 +103,17 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine(tp *textPages) {
 			// See "Understand the Apple II", page 5-10
 			// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
 			isAltText := fe.mmu.isApple2e && fe.mmu.ioPage.isSoftSwitchExtActive(ioFlagAltChar)
-			var i, j, h uint8
+			var i, j, h, c uint8
 			// Top, middle and botton screen
 			for i = 0; i < 120; i = i + 40 {
 				// Memory pages
-				for _, p := range tp.pages {
+				for j = 0x04; j < 0x08; j++ {
+					p := fe.mmu.physicalMainRAM[j]
 					// The two half pages
 					for _, h = range []uint8{0, 128} {
 						line := ""
-						for j = i + h; j < i+h+40; j++ {
-							line += textMemoryByteToString(p.Peek(j), isAltText)
+						for c = i + h; c < i+h+40; c++ {
+							line += textMemoryByteToString(p.internalPeek(c), isAltText)
 						}
 						fmt.Printf("# %v #\n", line)
 					}
