@@ -6,12 +6,14 @@ import (
 	"os"
 )
 
+// Apple2 represents all the components and state of the emulated machine
 type Apple2 struct {
 	cpu        *core6502.State
 	mmu        *memoryManager
+	io         *ioC0Page
+	cards      []cardBase
 	isApple2e  bool
-	ioPage     *ioC0Page // 0xc000 to 0xc080
-	activeSlot int       // Slot that has the addressing 0xc800 to 0ccfff
+	activeSlot int // Slot that has the addressing 0xc800 to 0ccfff
 }
 
 // NewApple2 instantiates an apple2
@@ -23,17 +25,26 @@ func NewApple2(romFile string) *Apple2 {
 	a.mmu.resetPaging()
 
 	// Set the io in 0xc000
-	a.ioPage = newIoC0Page(&a)
-	a.mmu.setPage(0xc0, a.ioPage)
+	a.io = newIoC0Page(&a)
+	a.mmu.setPage(0xc0, a.io)
 
 	return &a
 }
 
+// AddDisk2 insterts a DiskII controller on slot 6
+func (a *Apple2) AddDisk2(diskRomFile string) {
+	d := newCardDisk2(diskRomFile)
+	d.cardBase.insert(a, 6)
+}
+
+// Run starts the Apple2 emulation
 func (a *Apple2) Run(log bool) {
 	// Init frontend
 	fe := newAnsiConsoleFrontend(a)
-	a.ioPage.setKeyboardProvider(fe)
-	go fe.textModeGoRoutine()
+	a.io.setKeyboardProvider(fe)
+	if !log {
+		go fe.textModeGoRoutine()
+	}
 
 	// Start the processor
 	a.cpu.Reset()

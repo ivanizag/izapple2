@@ -102,7 +102,7 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine() {
 
 			// See "Understand the Apple II", page 5-10
 			// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
-			isAltText := fe.apple2.isApple2e && fe.apple2.ioPage.isSoftSwitchExtActive(ioFlagAltChar)
+			isAltText := fe.apple2.isApple2e && fe.apple2.io.isSoftSwitchExtActive(ioFlagAltChar)
 			var i, j, h, c uint8
 			// Top, middle and botton screen
 			for i = 0; i < 120; i = i + 40 {

@@ -55,7 +55,7 @@ func (mmu *memoryManager) setPage(index uint8, page memoryPage) {
 
 // When 0xcfff is accessed the card expansion rom is unassigned
 func (mmu *memoryManager) resetSlotExpansionRoms() {
-	if mmu.apple2.ioPage.isSoftSwitchExtActive(ioFlagIntCxRom) {
+	if mmu.apple2.io.isSoftSwitchExtActive(ioFlagIntCxRom) {
 		// Ignore if the Apple2 shadow ROM is active
 		return
 	}

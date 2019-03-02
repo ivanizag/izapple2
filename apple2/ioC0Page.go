@@ -5,8 +5,8 @@ import (
 )
 
 type ioC0Page struct {
-	softSwitchesR    [128]softSwitchR
-	softSwitchesW    [128]softSwitchW
+	softSwitchesR    [256]softSwitchR
+	softSwitchesW    [256]softSwitchW
 	softSwitchesData [128]uint8
 	keyboard         keyboardProvider
 	apple2           *Apple2
