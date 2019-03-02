@@ -8,5 +8,6 @@ func main() {
 	//romFile := "apple2/romdumps/Apple2e.rom"
 
 	log := false
-	apple2.Run(romFile, log)
+	a := apple2.NewApple2(romFile)
+	a.Run(log)
 }

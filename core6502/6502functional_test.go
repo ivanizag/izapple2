@@ -29,5 +29,4 @@ func TestFunctional(t *testing.T) {
 		}
 	}
 
-	t.Errorf("Tests complited in %v megacycles.\n", s.cycles/1000000)
 }

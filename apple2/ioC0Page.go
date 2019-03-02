@@ -9,7 +9,7 @@ type ioC0Page struct {
 	softSwitchesW    [128]softSwitchW
 	softSwitchesData [128]uint8
 	keyboard         keyboardProvider
-	mmu              *memoryManager
+	apple2           *Apple2
 }
 
 type softSwitchR func(io *ioC0Page) uint8
@@ -27,12 +27,12 @@ const (
 	ssOff uint8 = 0x00
 )
 
-func newIoC0Page(mmu *memoryManager) *ioC0Page {
+func newIoC0Page(a *Apple2) *ioC0Page {
 	var io ioC0Page
-	io.mmu = mmu
+	io.apple2 = a
 
 	addApple2SoftSwitches(&io)
-	if mmu.isApple2e {
+	if a.isApple2e {
 		addApple2ESoftSwitches(&io)
 	}
 

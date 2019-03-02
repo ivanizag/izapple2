@@ -18,15 +18,15 @@ Those tricks do not work with the Apple2e ROM
 */
 
 type ansiConsoleFrontend struct {
-	mmu            *memoryManager
+	apple2         *Apple2
 	keyChannel     chan uint8
 	extraLineFeeds chan int
 	textUpdated    bool
 }
 
-func newAnsiConsoleFrontend(mmu *memoryManager) *ansiConsoleFrontend {
+func newAnsiConsoleFrontend(a *Apple2) *ansiConsoleFrontend {
 	var fe ansiConsoleFrontend
-	fe.mmu = mmu
+	fe.apple2 = a
 	fe.subscribeToTextPages()
 	return &fe
 }
@@ -36,7 +36,7 @@ func (fe *ansiConsoleFrontend) subscribeToTextPages() {
 		fe.textUpdated = true
 	}
 	for i := 0x04; i < 0x08; i++ {
-		fe.mmu.physicalMainRAM[i].observer = observer
+		fe.apple2.mmu.physicalMainRAM[i].observer = observer
 	}
 }
 
@@ -102,13 +102,13 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine() {
 
 			// See "Understand the Apple II", page 5-10
 			// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
-			isAltText := fe.mmu.isApple2e && fe.mmu.ioPage.isSoftSwitchExtActive(ioFlagAltChar)
+			isAltText := fe.apple2.isApple2e && fe.apple2.ioPage.isSoftSwitchExtActive(ioFlagAltChar)
 			var i, j, h, c uint8
 			// Top, middle and botton screen
 			for i = 0; i < 120; i = i + 40 {
 				// Memory pages
 				for j = 0x04; j < 0x08; j++ {
-					p := fe.mmu.physicalMainRAM[j]
+					p := fe.apple2.mmu.physicalMainRAM[j]
 					// The two half pages
 					for _, h = range []uint8{0, 128} {
 						line := ""
