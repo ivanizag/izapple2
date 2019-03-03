@@ -14,9 +14,10 @@ http://yesterbits.com/media/pubs/AppleOrchard/articles/disk-ii-part-1-1983-apr.p
 
 type cardDisk2 struct {
 	cardBase
-	phases   [4]bool
-	power    [2]bool
-	selected int // Only 0 and 1 supported
+	phases    [4]bool
+	power     [2]bool
+	selected  int // Only 0 and 1 supported
+	writeMode bool
 }
 
 // type softSwitchR func(io *ioC0Page) uint8
@@ -59,6 +60,38 @@ func newCardDisk2(filename string) *cardDisk2 {
 		return 0
 	}
 
+	var i uint8
+	// Q6L
+	c.ssr[0xC] = func(_ *ioC0Page) uint8 {
+		fmt.Printf("DISKII: Reading\n")
+		i++
+		return i
+	}
+
+	c.ssw[0xC] = func(_ *ioC0Page, value uint8) {
+		fmt.Printf("DISKII: Writing the value 0x%02x\n", value)
+	}
+
+	// Q6H
+	c.ssr[0xD] = func(_ *ioC0Page) uint8 {
+		c.writeMode = false
+		fmt.Printf("DISKII: Sense write protection\n")
+		return 0
+	}
+
+	// Q7L
+	c.ssr[0xE] = func(_ *ioC0Page) uint8 {
+		c.writeMode = false
+		fmt.Printf("DISKII: Set read mode\n")
+		return 0
+	}
+
+	// Q7H
+	c.ssr[0xF] = func(_ *ioC0Page) uint8 {
+		c.writeMode = true
+		fmt.Printf("DISKII: Set write mode\n")
+		return 0
+	}
 	// TODO: missing C, D, E, and F
 
 	return &c
