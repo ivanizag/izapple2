@@ -32,9 +32,13 @@ func NewApple2(romFile string) *Apple2 {
 }
 
 // AddDisk2 insterts a DiskII controller on slot 6
-func (a *Apple2) AddDisk2(diskRomFile string) {
+func (a *Apple2) AddDisk2(diskRomFile string, diskImage string) {
 	d := newCardDisk2(diskRomFile)
 	d.cardBase.insert(a, 6)
+
+	if diskImage != "" {
+		d.drive[0].loadDisk(diskImage)
+	}
 }
 
 // Run starts the Apple2 emulation

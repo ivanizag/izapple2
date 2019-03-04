@@ -72,7 +72,8 @@ func (p *ioC0Page) Peek(address uint8) uint8 {
 	//fmt.Printf("Peek on $C0%02x ", address)
 	ss := p.softSwitchesR[address]
 	if ss == nil {
-		panic(fmt.Sprintf("Unknown softswitch on read to 0xC0%02x", address))
+		//panic(fmt.Sprintf("Unknown softswitch on read to 0xC0%02x", address))
+		return 0
 	}
 
 	return ss(p)
@@ -82,7 +83,8 @@ func (p *ioC0Page) Poke(address uint8, value uint8) {
 	//fmt.Printf("Poke on $C0%02x with %02x ", address, value)
 	ss := p.softSwitchesW[address]
 	if ss == nil {
-		panic(fmt.Sprintf("Unknown softswitch on write to 0xC0%02x", address))
+		//panic(fmt.Sprintf("Unknown softswitch on write to 0xC0%02x", address))
+		return
 	}
 	ss(p, value)
 }
