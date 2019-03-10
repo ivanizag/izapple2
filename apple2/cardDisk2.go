@@ -15,8 +15,6 @@ NIB: 35 tracks 6656 bytes, 232960 bytes
 
 */
 const maxHalfTrack = 68
-const bytesPerTrack = 6656
-const nibImageSize = 35 * bytesPerTrack
 
 type cardDisk2 struct {
 	cardBase
@@ -25,13 +23,12 @@ type cardDisk2 struct {
 }
 
 type cardDisk2Drive struct {
-	isLoaded     bool
+	diskette     *diskette16sector
 	currentPhase int
 	power        bool
 	writeMode    bool
 	halfTrack    int
 	position     int
-	data         *[]uint8
 }
 
 // type softSwitchR func(io *ioC0Page) uint8
@@ -102,16 +99,14 @@ func newCardDisk2(filename string) *cardDisk2 {
 	c.ssr[0xC] = func(_ *ioC0Page) uint8 {
 		//fmt.Printf("DISKII: Reading\n")
 		drive := &c.drive[c.selected]
-		if drive.isLoaded {
-			track := drive.halfTrack / 2
-			data := *drive.data
-			value := data[track*bytesPerTrack+drive.position]
-			//fmt.Printf("DISKII: Reading value 0x%02v from track %v, position %v\n", value, track, drive.position)
-			drive.position = (drive.position + 1) % bytesPerTrack
-			return value
-		} else {
-			return 0
+		if drive.diskette == nil {
+			return 0xff
 		}
+		track := drive.halfTrack / 2
+		value, newPosition := drive.diskette.read(track, drive.position)
+		drive.position = newPosition
+		//fmt.Printf("DISKII: Reading value 0x%02v from track %v, position %v\n", value, track, drive.position)
+		return value
 	}
 
 	c.ssw[0xC] = func(_ *ioC0Page, value uint8) {
@@ -176,27 +171,6 @@ func loadCardRom(filename string) []memoryPage {
 	return memPages
 }
 
-func (d *cardDisk2Drive) loadDisk(filename string) {
-	f, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	stats, statsErr := f.Stat()
-	if statsErr != nil {
-		panic(err)
-	}
-
-	size := stats.Size()
-	if size != nibImageSize {
-		panic("Disk size with nib format has to be 232960 bytes")
-	}
-
-	bytes := make([]uint8, size)
-	buf := bufio.NewReader(f)
-	buf.Read(bytes)
-
-	d.data = &bytes
-	d.isLoaded = true
+func (d *cardDisk2Drive) insertDiskette(dt *diskette16sector) {
+	d.diskette = dt
 }

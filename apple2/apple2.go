@@ -37,7 +37,9 @@ func (a *Apple2) AddDisk2(diskRomFile string, diskImage string) {
 	d.cardBase.insert(a, 6)
 
 	if diskImage != "" {
-		d.drive[0].loadDisk(diskImage)
+		diskette := loadDisquette(diskImage)
+		//diskette.saveNib(diskImage + "bak")
+		d.drive[0].insertDiskette(diskette)
 	}
 }
 
