@@ -7,7 +7,7 @@ func main() {
 	romFile := "apple2/romdumps/Apple2_Plus.rom"
 	//romFile := "apple2/romdumps/Apple2e.rom"
 	disk2RomFile := "apple2/romdumps/DISK2.rom"
-	diskImage := "../dos33.nib"
+	diskImage := "../dos33.dsk"
 
 	log := false
 	a := apple2.NewApple2(romFile)

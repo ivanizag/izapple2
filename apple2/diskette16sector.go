@@ -172,15 +172,15 @@ func nibEncodeTrack(data []byte, volume byte, track byte) []byte {
 		b = append(b, 0xd5, 0xaa, 0xad) // Data prolog
 		prevV := byte(0)
 		for _, v := range secondaryBuffer {
-			b = append(b, sixAndTwoTranslateTable[v|prevV])
+			b = append(b, sixAndTwoTranslateTable[v^prevV])
 			prevV = v
 		}
 		for _, v := range primaryBuffer {
-			b = append(b, sixAndTwoTranslateTable[v|prevV])
+			b = append(b, sixAndTwoTranslateTable[v^prevV])
 			prevV = v
 		}
-		b = append(b, prevV)            // Checksum
-		b = append(b, 0xd5, 0xaa, 0xeb) // Data epilog
+		b = append(b, sixAndTwoTranslateTable[prevV]) // Checksum
+		b = append(b, 0xde, 0xaa, 0xeb)               // Data epilog
 	}
 
 	return b
