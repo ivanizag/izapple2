@@ -8,15 +8,15 @@ type ioC0Page struct {
 	softSwitchesR    [256]softSwitchR
 	softSwitchesW    [256]softSwitchW
 	softSwitchesData [128]uint8
-	keyboard         keyboardProvider
+	keyboard         KeyboardProvider
 	apple2           *Apple2
 }
 
 type softSwitchR func(io *ioC0Page) uint8
 type softSwitchW func(io *ioC0Page, value uint8)
 
-type keyboardProvider interface {
-	getKey() (key uint8, ok bool)
+type KeyboardProvider interface {
+	GetKey() (key uint8, ok bool)
 }
 
 // See https://www.kreativekorp.com/miscpages/a2info/iomemory.shtml
@@ -64,7 +64,7 @@ func (p *ioC0Page) isSoftSwitchExtActive(ioFlag uint8) bool {
 	return (p.softSwitchesData[ioFlag] & ssOn) == ssOn
 }
 
-func (p *ioC0Page) setKeyboardProvider(kb keyboardProvider) {
+func (p *ioC0Page) setKeyboardProvider(kb KeyboardProvider) {
 	p.keyboard = kb
 }
 

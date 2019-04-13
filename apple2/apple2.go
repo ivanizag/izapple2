@@ -44,10 +44,12 @@ func (a *Apple2) AddDisk2(diskRomFile string, diskImage string) {
 }
 
 // Run starts the Apple2 emulation
-func (a *Apple2) Run(log bool) {
+func (a *Apple2) Run(log bool, consoleKeyboard bool) {
 	// Init frontend
 	fe := newAnsiConsoleFrontend(a)
-	a.io.setKeyboardProvider(fe)
+	if consoleKeyboard {
+		a.io.setKeyboardProvider(fe)
+	}
 	if !log {
 		go fe.textModeGoRoutine()
 	}
@@ -57,6 +59,11 @@ func (a *Apple2) Run(log bool) {
 	for {
 		a.cpu.ExecuteInstruction(log)
 	}
+}
+
+// SetKeyboardProvider attaches an external keyboard provider
+func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
+	a.io.setKeyboardProvider(kb)
 }
 
 // LoadRom loads a binary file to the top of the memory.

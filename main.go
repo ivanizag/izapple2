@@ -1,6 +1,9 @@
 package main
 
-import "go6502/apple2"
+import (
+	"go6502/apple2"
+	"go6502/apple2sdl"
+)
 
 func main() {
 	//romFile := "apple2/romdumps/Apple2.rom"
@@ -10,7 +13,12 @@ func main() {
 	diskImage := "../dos33.dsk"
 
 	log := false
+	sdl := true
 	a := apple2.NewApple2(romFile)
 	a.AddDisk2(disk2RomFile, diskImage)
-	a.Run(log)
+	if sdl {
+		apple2sdl.SDLRun(a)
+	} else {
+		a.Run(log, true)
+	}
 }

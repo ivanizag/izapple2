@@ -42,7 +42,7 @@ func (fe *ansiConsoleFrontend) subscribeToTextPages() {
 
 const refreshDelayMs = 100
 
-func (fe *ansiConsoleFrontend) getKey() (key uint8, ok bool) {
+func (fe *ansiConsoleFrontend) GetKey() (key uint8, ok bool) {
 	stdinReader := func(c chan uint8) {
 		reader := bufio.NewReader(os.Stdin)
 		for {
