@@ -44,10 +44,10 @@ func (a *Apple2) AddDisk2(diskRomFile string, diskImage string) {
 }
 
 // Run starts the Apple2 emulation
-func (a *Apple2) Run(log bool, consoleKeyboard bool) {
+func (a *Apple2) Run(log bool, stdinKeyboard bool) {
 	// Init frontend
-	fe := newAnsiConsoleFrontend(a)
-	if consoleKeyboard {
+	fe := newAnsiConsoleFrontend(a, stdinKeyboard)
+	if stdinKeyboard {
 		a.io.setKeyboardProvider(fe)
 	}
 	if !log {

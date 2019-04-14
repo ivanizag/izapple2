@@ -22,11 +22,13 @@ type ansiConsoleFrontend struct {
 	keyChannel     chan uint8
 	extraLineFeeds chan int
 	textUpdated    bool
+	stdinKeyboard  bool
 }
 
-func newAnsiConsoleFrontend(a *Apple2) *ansiConsoleFrontend {
+func newAnsiConsoleFrontend(a *Apple2, stdinKeyboard bool) *ansiConsoleFrontend {
 	var fe ansiConsoleFrontend
 	fe.apple2 = a
+	fe.stdinKeyboard = stdinKeyboard
 	fe.subscribeToTextPages()
 	return &fe
 }
@@ -121,8 +123,9 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine() {
 			}
 
 			fmt.Println(strings.Repeat("#", 44))
-			fmt.Print("\033[KLine: ")
-
+			if fe.stdinKeyboard {
+				fmt.Print("\033[KLine: ")
+			}
 		}
 		time.Sleep(refreshDelayMs * time.Millisecond)
 	}
