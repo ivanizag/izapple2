@@ -35,9 +35,8 @@ func (k *sdlKeyboard) putText(textEvent *sdl.TextInputEvent) {
 func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	/* To get keys as understood by the Apple2 hardware run:
 	10 A=PEEK(49152)
-	20 B = A - 128
-	30 PRINT A, B
-	40 GOTO 10
+	20 PRINT A, A - 128
+	30 GOTO 10
 	*/
 	if keyEvent.Type != sdl.KEYDOWN {
 		// Process only key pushes
