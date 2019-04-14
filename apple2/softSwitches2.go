@@ -93,8 +93,9 @@ func getSoftSwitch(ioFlag uint8, isSet bool) softSwitchR {
 }
 
 func getKeySoftSwitch(io *ioC0Page) uint8 {
+	strobed := (io.softSwitchesData[ioDataKeyboard] & (1 << 7)) == 0
 	if io.keyboard != nil {
-		if key, ok := io.keyboard.GetKey(); ok {
+		if key, ok := io.keyboard.GetKey(strobed); ok {
 			io.softSwitchesData[ioDataKeyboard] = key + (1 << 7)
 		}
 	}

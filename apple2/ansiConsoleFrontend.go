@@ -44,22 +44,30 @@ func (fe *ansiConsoleFrontend) subscribeToTextPages() {
 
 const refreshDelayMs = 100
 
-func (fe *ansiConsoleFrontend) GetKey() (key uint8, ok bool) {
-	stdinReader := func(c chan uint8) {
-		reader := bufio.NewReader(os.Stdin)
-		for {
-			byte, err := reader.ReadByte()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			c <- byte
-		}
-	}
+func (fe *ansiConsoleFrontend) GetKey(strobed bool) (key uint8, ok bool) {
 
+	// Init the first time
 	if fe.keyChannel == nil {
+		stdinReader := func(c chan uint8) {
+			reader := bufio.NewReader(os.Stdin)
+			for {
+				byte, err := reader.ReadByte()
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				c <- byte
+			}
+		}
+
 		fe.keyChannel = make(chan uint8, 100)
 		go stdinReader(fe.keyChannel)
+	}
+
+	if !strobed {
+		// We must use the strobe to control the flow from stdin
+		ok = false
+		return
 	}
 
 	select {

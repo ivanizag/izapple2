@@ -16,7 +16,7 @@ type softSwitchR func(io *ioC0Page) uint8
 type softSwitchW func(io *ioC0Page, value uint8)
 
 type KeyboardProvider interface {
-	GetKey() (key uint8, ok bool)
+	GetKey(strobe bool) (key uint8, ok bool)
 }
 
 // See https://www.kreativekorp.com/miscpages/a2info/iomemory.shtml

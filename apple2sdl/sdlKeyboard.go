@@ -93,7 +93,7 @@ func (k *sdlKeyboard) putChar(ch uint8) {
 	k.keyChannel <- ch
 }
 
-func (k *sdlKeyboard) GetKey() (key uint8, ok bool) {
+func (k *sdlKeyboard) GetKey(_ bool) (key uint8, ok bool) {
 	select {
 	case key = <-k.keyChannel:
 		ok = true
