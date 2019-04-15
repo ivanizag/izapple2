@@ -13,16 +13,18 @@ type Apple2 struct {
 	io         *ioC0Page
 	cards      []cardBase
 	isApple2e  bool
+	panicSS    bool
 	activeSlot int // Slot that has the addressing 0xc800 to 0ccfff
 }
 
 // NewApple2 instantiates an apple2
-func NewApple2(romFile string) *Apple2 {
+func NewApple2(romFile string, panicSS bool) *Apple2 {
 	var a Apple2
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
 	a.loadRom(romFile)
 	a.mmu.resetPaging()
+	a.panicSS = panicSS
 
 	// Set the io in 0xc000
 	a.io = newIoC0Page(&a)
