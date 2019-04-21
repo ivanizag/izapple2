@@ -19,6 +19,7 @@ type memoryManager struct {
 type memoryPage interface {
 	Peek(uint8) uint8
 	Poke(uint8, uint8)
+	internalPeek(uint8) uint8
 }
 
 const (
@@ -34,6 +35,12 @@ func (mmu *memoryManager) Peek(address uint16) uint8 {
 	hi := uint8(address >> 8)
 	lo := uint8(address)
 	return mmu.activeMemory[hi].Peek(lo)
+}
+
+func (mmu *memoryManager) internalPeek(address uint16) uint8 {
+	hi := uint8(address >> 8)
+	lo := uint8(address)
+	return mmu.activeMemory[hi].internalPeek(lo)
 }
 
 // Poke sets the data at the given address
@@ -55,7 +62,7 @@ func (mmu *memoryManager) setPage(index uint8, page memoryPage) {
 
 // When 0xcfff is accessed the card expansion rom is unassigned
 func (mmu *memoryManager) resetSlotExpansionRoms() {
-	if mmu.apple2.io.isSoftSwitchExtActive(ioFlagIntCxRom) {
+	if mmu.apple2.io.isSoftSwitchActive(ioFlagIntCxRom) {
 		// Ignore if the Apple2 shadow ROM is active
 		return
 	}

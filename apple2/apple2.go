@@ -11,6 +11,7 @@ type Apple2 struct {
 	cpu        *core6502.State
 	mmu        *memoryManager
 	io         *ioC0Page
+	cg         *CharacterGenerator
 	cards      []cardBase
 	isApple2e  bool
 	panicSS    bool
@@ -18,11 +19,14 @@ type Apple2 struct {
 }
 
 // NewApple2 instantiates an apple2
-func NewApple2(romFile string, panicSS bool) *Apple2 {
+func NewApple2(romFile string, charRomFile string, panicSS bool) *Apple2 {
 	var a Apple2
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
 	a.loadRom(romFile)
+	if charRomFile != "" {
+		a.cg = NewCharacterGenerator(charRomFile)
+	}
 	a.mmu.resetPaging()
 	a.panicSS = panicSS
 

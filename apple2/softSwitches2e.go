@@ -60,7 +60,7 @@ func softSwitchIntCxRomOff(io *ioC0Page) {
 }
 
 func softSwitchSlotC3RomOn(io *ioC0Page) {
-	if io.isSoftSwitchExtActive(ioFlagIntCxRom) {
+	if io.isSoftSwitchActive(ioFlagIntCxRom) {
 		return // Ignore if allt the Apple2 shadow ROM is active
 	}
 	// TODO restore the slot 3 ROM
@@ -69,7 +69,7 @@ func softSwitchSlotC3RomOn(io *ioC0Page) {
 }
 
 func softSwitchSlotC3RomOff(io *ioC0Page) {
-	if io.isSoftSwitchExtActive(ioFlagIntCxRom) {
+	if io.isSoftSwitchActive(ioFlagIntCxRom) {
 		return // Ignore if allt the Apple2 shadow ROM is active
 	}
 	mmu := io.apple2.mmu

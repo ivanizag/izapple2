@@ -89,7 +89,7 @@ func ansiCursorUp(steps int) {
 	fmt.Printf("\033[%vA", steps)
 }
 
-func (fe *ansiConsoleFrontend) textModeGoRoutine() {
+func (fe *ansiConsoleFrontend) textModeGoRoutineFast() {
 	fe.extraLineFeeds = make(chan int, 100)
 
 	fmt.Printf(strings.Repeat("\n", 26))
@@ -112,7 +112,7 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine() {
 
 			// See "Understand the Apple II", page 5-10
 			// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
-			isAltText := fe.apple2.isApple2e && fe.apple2.io.isSoftSwitchExtActive(ioFlagAltChar)
+			isAltText := fe.apple2.isApple2e && fe.apple2.io.isSoftSwitchActive(ioFlagAltChar)
 			var i, j, h, c uint8
 			// Top, middle and botton screen
 			for i = 0; i < 120; i = i + 40 {
@@ -134,6 +134,52 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine() {
 			if fe.stdinKeyboard {
 				fmt.Print("\033[KLine: ")
 			}
+		}
+		time.Sleep(refreshDelayMs * time.Millisecond)
+	}
+}
+
+func (fe *ansiConsoleFrontend) textModeGoRoutine() {
+	fe.extraLineFeeds = make(chan int, 100)
+
+	fmt.Printf(strings.Repeat("\n", 26))
+	for {
+		if fe.textUpdated {
+			fe.textUpdated = false
+			// Go up
+			ansiCursorUp(26)
+			done := false
+			for !done {
+				select {
+				case lineFeeds := <-fe.extraLineFeeds:
+					ansiCursorUp(lineFeeds)
+				default:
+					done = true
+				}
+			}
+
+			pageIndex := 0
+			if fe.apple2.io.isSoftSwitchActive(ioFlagSecondPage) {
+				pageIndex = 1
+			}
+			isAltText := fe.apple2.isApple2e && fe.apple2.io.isSoftSwitchActive(ioFlagAltChar)
+
+			fmt.Println(strings.Repeat("#", 44))
+			for line := 0; line < 24; line++ {
+				text := ""
+				for col := 0; col < 40; col++ {
+					value := getTextChar(fe.apple2, col, line, pageIndex)
+					text += textMemoryByteToString(value, isAltText)
+				}
+				fmt.Printf("# %v #\n", text)
+			}
+
+			fmt.Println(strings.Repeat("#", 44))
+			if fe.stdinKeyboard {
+				fmt.Print("\033[KLine: ")
+			}
+
+			saveSnapshot(fe.apple2)
 		}
 		time.Sleep(refreshDelayMs * time.Millisecond)
 	}

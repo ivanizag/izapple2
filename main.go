@@ -53,7 +53,7 @@ func main() {
 	}
 
 	log := false
-	a := apple2.NewApple2(*romFile, *panicSS)
+	a := apple2.NewApple2(*romFile, *charRomFile, *panicSS)
 	a.AddDisk2(*disk2RomFile, *diskImage)
 	if *useSdl {
 		apple2sdl.SDLRun(a)

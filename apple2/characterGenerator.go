@@ -48,7 +48,13 @@ func (cg *CharacterGenerator) load(filename string) {
 	buf.Read(cg.data)
 }
 
-func (cg *CharacterGenerator) dumpChar(char uint8) {
+func (cg *CharacterGenerator) getPixel(char uint8, row int, column int) bool {
+	bits := cg.data[int(char)*8+row]
+	bit := bits >> (uint(6 - column)) & 1
+	return bit == 1
+}
+
+func (cg *CharacterGenerator) dumpCharFast(char uint8) {
 	base := int(char) * 8
 	fmt.Printf("Char: %v\n---------\n", char)
 	for i := 0; i < 8; i++ {
@@ -66,6 +72,23 @@ func (cg *CharacterGenerator) dumpChar(char uint8) {
 	fmt.Println("---------")
 }
 
+func (cg *CharacterGenerator) dumpChar(char uint8) {
+	fmt.Printf("Char: %v\n---------\n", char)
+	for row := 0; row < 8; row++ {
+		fmt.Print("|")
+		for col := 0; col < 7; col++ {
+			if cg.getPixel(char, row, col) {
+				fmt.Print("#")
+			} else {
+				fmt.Print(" ")
+			}
+		}
+		fmt.Println("|")
+	}
+	fmt.Println("---------")
+}
+
+// Dump to sdtout all the character maps
 func (cg *CharacterGenerator) Dump() {
 	for i := 0; i < 256; i++ {
 		cg.dumpChar(uint8(i))

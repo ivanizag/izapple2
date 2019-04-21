@@ -15,7 +15,7 @@ type ioC0Page struct {
 type softSwitchR func(io *ioC0Page) uint8
 type softSwitchW func(io *ioC0Page, value uint8)
 
-// KeyboardProvider declares the keyboard implementation requitements
+// KeyboardProvider declares the keyboard implementation requirements
 type KeyboardProvider interface {
 	GetKey(strobe bool) (key uint8, ok bool)
 }
@@ -61,7 +61,7 @@ func (p *ioC0Page) addSoftSwitchW(address uint8, ss softSwitchW) {
 	p.softSwitchesW[address] = ss
 }
 
-func (p *ioC0Page) isSoftSwitchExtActive(ioFlag uint8) bool {
+func (p *ioC0Page) isSoftSwitchActive(ioFlag uint8) bool {
 	return (p.softSwitchesData[ioFlag] & ssOn) == ssOn
 }
 
@@ -79,6 +79,10 @@ func (p *ioC0Page) Peek(address uint8) uint8 {
 		return 0
 	}
 	return ss(p)
+}
+
+func (p *ioC0Page) internalPeek(address uint8) uint8 {
+	return 0
 }
 
 func (p *ioC0Page) Poke(address uint8, value uint8) {
