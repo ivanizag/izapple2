@@ -19,6 +19,10 @@ func main() {
 		"disk",
 		"../dos33.dsk",
 		"file to load on the first disk drive")
+	charRomFile := flag.String(
+		"charRom",
+		"apple2/romdumps/Apple2rev7CharGen.rom",
+		"rom file for the disk drive controller")
 	useSdl := flag.Bool(
 		"sdl",
 		true,
@@ -27,6 +31,11 @@ func main() {
 		"panicss",
 		false,
 		"panic if a not implemented softwtich is used")
+	dumpChars := flag.Bool(
+		"dumpChars",
+		false,
+		"shows the character map",
+	)
 	flag.Parse()
 
 	//romFile := "apple2/romdumps/Apple2.rom"
@@ -36,6 +45,12 @@ func main() {
 	//diskImage := "../dos33.dsk"
 	//diskImage := "../Apex II - Apple II Diagnostic (v4.7-1986).DSK"
 	//diskImage := "../A2Diag.v4.1.SDK"
+
+	if *dumpChars {
+		cg := apple2.NewCharacterGenerator(*charRomFile)
+		cg.Dump()
+		return
+	}
 
 	log := false
 	a := apple2.NewApple2(*romFile, *panicSS)

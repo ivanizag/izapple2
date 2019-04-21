@@ -15,6 +15,7 @@ type ioC0Page struct {
 type softSwitchR func(io *ioC0Page) uint8
 type softSwitchW func(io *ioC0Page, value uint8)
 
+// KeyboardProvider declares the keyboard implementation requitements
 type KeyboardProvider interface {
 	GetKey(strobe bool) (key uint8, ok bool)
 }

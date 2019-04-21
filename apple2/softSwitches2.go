@@ -7,7 +7,7 @@ const (
 	ioFlagMixed        uint8 = 0x52
 	ioFlagSecondPage   uint8 = 0x54
 	ioFlagHiRes        uint8 = 0x56
-	ioFlagAnnunciator0 uint8 = 0x58
+	ioFlagAnnunciator0 uint8 = 0x58 // On Copam Electronics Base-64A this is used to bank swith the ROM
 	ioFlagAnnunciator1 uint8 = 0x5a
 	ioFlagAnnunciator2 uint8 = 0x5c
 	ioFlagAnnunciator3 uint8 = 0x5e
