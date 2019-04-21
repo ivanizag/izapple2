@@ -179,7 +179,7 @@ func (fe *ansiConsoleFrontend) textModeGoRoutine() {
 				fmt.Print("\033[KLine: ")
 			}
 
-			saveSnapshot(fe.apple2)
+			//saveSnapshot(fe.apple2)
 		}
 		time.Sleep(refreshDelayMs * time.Millisecond)
 	}

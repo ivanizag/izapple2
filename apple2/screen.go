@@ -8,7 +8,8 @@ import (
 	"os"
 )
 
-func snapshot(a *Apple2) image.Image {
+// Snapshot the currently visible screen
+func Snapshot(a *Apple2) *image.RGBA {
 	isTextMode := a.io.isSoftSwitchActive(ioFlagGraphics)
 	is80ColMode := a.io.isSoftSwitchActive(ioFlag80Col)
 	pageIndex := 0
@@ -26,7 +27,7 @@ func snapshot(a *Apple2) image.Image {
 }
 
 func saveSnapshot(a *Apple2) {
-	img := snapshot(a)
+	img := Snapshot(a)
 	if img == nil {
 		return
 	}
@@ -65,29 +66,26 @@ func getTextChar(a *Apple2, col int, line int, page int) uint8 {
 	return a.mmu.internalPeek(address)
 }
 
-func snapshotTextMode(a *Apple2, page int) image.Image {
+func snapshotTextMode(a *Apple2, page int) *image.RGBA {
 	width := textColumns * charWidth
 	height := textLines * charHeight
 	size := image.Rect(0, 0, width, height)
-	bwPalette := []color.Color{color.Black, color.White}
-	img := image.NewPaletted(size, bwPalette)
+	img := image.NewRGBA(size)
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
-			//yRev := height - y
 			line := y / charHeight
 			col := x / charWidth
 			rowInChar := y % charHeight
 			colInChar := x % charWidth
 			char := getTextChar(a, col, line, page)
 			pixel := a.cg.getPixel(char, rowInChar, colInChar)
-			color := uint8(0)
+			colour := color.Black
 			if pixel {
-				color = 1
+				colour = color.White
 			}
-			img.SetColorIndex(x, y, color)
+			img.Set(x, y, colour)
 		}
-
 	}
 
 	return img
