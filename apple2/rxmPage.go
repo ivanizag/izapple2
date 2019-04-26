@@ -22,6 +22,10 @@ func (p *rxmPage) internalPeek(address uint8) uint8 {
 	return p.data[address]
 }
 
+func (p *rxmPage) all() []uint8 {
+	return p.data[:]
+}
+
 func (p *rxmPage) Poke(address uint8, value uint8) {
 	p.touch(address, true)
 	p.data[address] = value

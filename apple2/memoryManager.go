@@ -20,6 +20,7 @@ type memoryPage interface {
 	Peek(uint8) uint8
 	Poke(uint8, uint8)
 	internalPeek(uint8) uint8
+	all() []uint8
 }
 
 const (
@@ -41,6 +42,10 @@ func (mmu *memoryManager) internalPeek(address uint16) uint8 {
 	hi := uint8(address >> 8)
 	lo := uint8(address)
 	return mmu.activeMemory[hi].internalPeek(lo)
+}
+
+func (mmu *memoryManager) internalPage(hi uint8) []uint8 {
+	return mmu.activeMemory[hi].all()
 }
 
 // Poke sets the data at the given address

@@ -3,7 +3,7 @@ package apple2
 const (
 	ioDataKeyboard uint8 = 0x10
 
-	ioFlagGraphics     uint8 = 0x50
+	ioFlagText         uint8 = 0x50
 	ioFlagMixed        uint8 = 0x52
 	ioFlagSecondPage   uint8 = 0x54
 	ioFlagHiRes        uint8 = 0x56
@@ -33,8 +33,8 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	// for read and write. But the Apple2e take over some of them, with
 	// the prevention on acting only on writes.
 
-	io.addSoftSwitchRW(0x50, getSoftSwitch(ioFlagGraphics, false))
-	io.addSoftSwitchRW(0x51, getSoftSwitch(ioFlagGraphics, true))
+	io.addSoftSwitchRW(0x50, getSoftSwitch(ioFlagText, false))
+	io.addSoftSwitchRW(0x51, getSoftSwitch(ioFlagText, true))
 	io.addSoftSwitchRW(0x52, getSoftSwitch(ioFlagMixed, false))
 	io.addSoftSwitchRW(0x53, getSoftSwitch(ioFlagMixed, true))
 	io.addSoftSwitchRW(0x54, getSoftSwitch(ioFlagSecondPage, false))

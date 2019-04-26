@@ -85,6 +85,10 @@ func (p *ioC0Page) internalPeek(address uint8) uint8 {
 	return 0
 }
 
+func (p *ioC0Page) all() []uint8 {
+	return nil
+}
+
 func (p *ioC0Page) Poke(address uint8, value uint8) {
 	//fmt.Printf("Poke on $C0%02x with %02x ", address, value)
 	ss := p.softSwitchesW[address]

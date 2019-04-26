@@ -42,26 +42,27 @@ func SDLRun(a *apple2.Apple2) {
 			}
 		}
 
-		img := *apple2.Snapshot(a)
-		surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]), 40*7, 24*8, 32, 40*7*4,
-			0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff)
-		if err != nil {
-			panic(err)
+		img := apple2.Snapshot(a)
+		if img != nil {
+			surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]), 40*7, 24*8, 32, 40*7*4,
+				0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff)
+			if err != nil {
+				panic(err)
+			}
+
+			texture, err := renderer.CreateTextureFromSurface(surface)
+			if err != nil {
+				panic(err)
+			}
+
+			renderer.Clear()
+			w, h := window.GetSize()
+			renderer.Copy(texture, nil, &sdl.Rect{X: 0, Y: 0, W: w, H: h})
+			renderer.Present()
+
+			surface.Free()
+			texture.Destroy()
 		}
-
-		texture, err := renderer.CreateTextureFromSurface(surface)
-		if err != nil {
-			panic(err)
-		}
-
-		renderer.Clear()
-		w, h := window.GetSize()
-		renderer.Copy(texture, nil, &sdl.Rect{X: 0, Y: 0, W: w, H: h})
-		renderer.Present()
-
-		surface.Free()
-		texture.Destroy()
-
 		sdl.Delay(1000 / 60)
 	}
 
