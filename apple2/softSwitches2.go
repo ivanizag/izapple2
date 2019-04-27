@@ -41,6 +41,7 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	io.addSoftSwitchRW(0x55, getSoftSwitch(ioFlagSecondPage, true))
 	io.addSoftSwitchRW(0x56, getSoftSwitch(ioFlagHiRes, false))
 	io.addSoftSwitchRW(0x57, getSoftSwitch(ioFlagHiRes, true))
+
 	io.addSoftSwitchRW(0x58, getSoftSwitch(ioFlagAnnunciator0, false))
 	io.addSoftSwitchRW(0x59, getSoftSwitch(ioFlagAnnunciator0, true))
 	io.addSoftSwitchRW(0x5a, getSoftSwitch(ioFlagAnnunciator1, false))

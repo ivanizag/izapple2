@@ -10,7 +10,7 @@ import (
 
 // SDLRun starts the Apple2 emulator on SDL
 func SDLRun(a *apple2.Apple2) {
-	window, renderer, err := sdl.CreateWindowAndRenderer(800, 600,
+	window, renderer, err := sdl.CreateWindowAndRenderer(4*40*7, 4*24*8,
 		sdl.WINDOW_SHOWN)
 	if err != nil {
 		panic("Failed to create window")
@@ -45,7 +45,10 @@ func SDLRun(a *apple2.Apple2) {
 		img := apple2.Snapshot(a)
 		if img != nil {
 			surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]), 40*7, 24*8, 32, 40*7*4,
-				0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff)
+				0x0000ff, 0x0000ff00, 0x00ff0000, 0xff000000)
+			// Valid for little endian. Should we reverse for big endian?
+			// 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff)
+
 			if err != nil {
 				panic(err)
 			}

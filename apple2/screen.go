@@ -11,28 +11,26 @@ import (
 // Snapshot the currently visible screen
 func Snapshot(a *Apple2) *image.RGBA {
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
-	is80ColMode := a.io.isSoftSwitchActive(ioFlag80Col)
 	isHiResMode := a.io.isSoftSwitchActive(ioFlagHiRes)
+	// Todo: isMixMode
 	pageIndex := 0
 	if a.io.isSoftSwitchActive(ioFlagSecondPage) {
 		pageIndex = 1
 	}
 
 	if isTextMode {
-		if is80ColMode {
-			// Not supported
-		} else {
-			return snapshotTextMode(a, pageIndex)
-		}
+		return snapshotTextMode(a, pageIndex)
 	} else {
 		if isHiResMode {
-			return snapshotGraphMode(a, pageIndex)
+			//return snapshotHiResModeReferenceMono(a, pageIndex)
+			return snapshotHiResModeReferenceColor(a, pageIndex)
+			//return snapshotHiResModeReferenceColorSolid(a, pageIndex)
 		} else {
-			// Not supported
+			// Lo res mode not supported
 		}
 	}
 
-	//fmt.Printf("g: %v, 8: %v, h: %v\n", isTextMode, is80ColMode, isHiResMode)
+	//fmt.Printf("g: %v, h: %v\n", isTextMode, isHiResMode)
 	return nil
 	//panic("Screen mode not supported")
 }
@@ -137,7 +135,8 @@ func getGraphLine(a *Apple2, line int, page int) []uint8 {
 	return memPage[lo : lo+40]
 }
 
-func snapshotGraphMode(a *Apple2, page int) *image.RGBA {
+func snapshotHiResModeReferenceMono(a *Apple2, page int) *image.RGBA {
+	// As defined on "Apple II Reference Manual", page 19
 	size := image.Rect(0, 0, graphWidth, graphHeight)
 	img := image.NewRGBA(size)
 
@@ -152,6 +151,109 @@ func snapshotGraphMode(a *Apple2, page int) *image.RGBA {
 					colour = color.White
 				}
 				img.Set(x, y, colour)
+				x++
+			}
+		}
+	}
+
+	return img
+}
+
+func snapshotHiResModeReferenceColor(a *Apple2, page int) *image.RGBA {
+	// As defined on "Apple II Reference Manual", page 19
+	size := image.Rect(0, 0, graphWidth, graphHeight)
+	img := image.NewRGBA(size)
+
+	// RGB values from https://mrob.com/pub/xapple2/colors.html
+	black := color.RGBA{0, 0, 0, 255}
+	violet := color.RGBA{255, 68, 253, 255}
+	red := color.RGBA{255, 106, 60, 255}
+	green := color.RGBA{20, 246, 60, 255}
+	blue := color.RGBA{20, 207, 253, 255}
+	white := color.RGBA{255, 255, 255, 255}
+	colorMap := [][][]color.Color{
+		{
+			/* 00 */ {black, black},
+			/* 01 */ {black, green},
+			/* 10 */ {violet, black},
+			/* 11 */ {white, white},
+		},
+		{
+			/* 00 */ {black, black},
+			/* 01 */ {black, red},
+			/* 10 */ {blue, black},
+			/* 11 */ {white, white},
+		},
+	}
+
+	for y := 0; y < graphHeight; y++ {
+		bytes := getGraphLine(a, y, page)
+		x := 0
+		previous := uint8(0)
+		for _, b := range bytes {
+			shift := b >> 7
+			for j := uint(0); j < 7; j++ {
+				bit := (b >> j) & 1
+				even := x%2 == 0
+				if even {
+					previous = bit
+				} else {
+					pair := colorMap[shift][(previous<<1)+bit]
+					img.Set(x-1, y, pair[0])
+					img.Set(x, y, pair[1])
+				}
+				x++
+			}
+		}
+	}
+
+	return img
+}
+
+func snapshotHiResModeReferenceColorSolid(a *Apple2, page int) *image.RGBA {
+	// As defined on "Apple II Reference Manual", page 19
+	// but with more solid colors
+	size := image.Rect(0, 0, graphWidth, graphHeight)
+	img := image.NewRGBA(size)
+
+	// RGB values from https://mrob.com/pub/xapple2/colors.html
+	black := color.RGBA{0, 0, 0, 255}
+	violet := color.RGBA{255, 68, 253, 255}
+	red := color.RGBA{255, 106, 60, 255}
+	green := color.RGBA{20, 246, 60, 255}
+	blue := color.RGBA{20, 207, 253, 255}
+	white := color.RGBA{255, 255, 255, 255}
+	colorMap := [][]color.Color{
+		{
+			/* 00 */ black,
+			/* 01 */ green,
+			/* 10 */ violet,
+			/* 11 */ white,
+		},
+		{
+			/* 00 */ black,
+			/* 01 */ red,
+			/* 10 */ blue,
+			/* 11 */ white,
+		},
+	}
+
+	for y := 0; y < graphHeight; y++ {
+		bytes := getGraphLine(a, y, page)
+		x := 0
+		previous := uint8(0)
+		for _, b := range bytes {
+			shift := b >> 7
+			for j := uint(0); j < 7; j++ {
+				bit := (b >> j) & 1
+				even := x%2 == 0
+				if even {
+					previous = bit
+				} else {
+					colour := colorMap[shift][(previous<<1)+bit]
+					img.Set(x-1, y, colour)
+					img.Set(x, y, colour)
+				}
 				x++
 			}
 		}
