@@ -19,7 +19,8 @@ func Snapshot(a *Apple2) *image.RGBA {
 	}
 
 	if isTextMode {
-		return snapshotTextMode(a, pageIndex)
+		//return snapshotTextMode(a, pageIndex)
+		return linesSeparatedFilter(snapshotTextMode(a, pageIndex))
 	} else {
 		if isHiResMode {
 			//return snapshotHiResModeReferenceMono(a, pageIndex)
@@ -50,6 +51,22 @@ func saveSnapshot(a *Apple2) {
 	fmt.Println("Saving snapshot")
 
 	png.Encode(f, img)
+}
+
+func linesSeparatedFilter(in *image.RGBA) *image.RGBA {
+	b := in.Bounds()
+	size := image.Rect(0, 0, b.Dx(), 4*b.Dy())
+	out := image.NewRGBA(size)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c := in.At(x, y)
+			out.Set(x, 4*y, c)
+			out.Set(x, 4*y+1, c)
+			out.Set(x, 4*y+2, c)
+			out.Set(x, 4*y+3, color.Black)
+		}
+	}
+	return out
 }
 
 const (
@@ -86,6 +103,10 @@ func getTextChar(a *Apple2, col int, line int, page int) uint8 {
 func snapshotTextMode(a *Apple2, page int) *image.RGBA {
 	// TODO: Missing inverse and flash modes
 
+	// Color for typical Apple ][ period green phosphor monitors
+	// See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
+	p1GreenPhosphorColor := color.RGBA{65, 255, 0, 255}
+
 	width := textColumns * charWidth
 	height := textLines * charHeight
 	size := image.Rect(0, 0, width, height)
@@ -99,9 +120,11 @@ func snapshotTextMode(a *Apple2, page int) *image.RGBA {
 			colInChar := x % charWidth
 			char := getTextChar(a, col, line, page)
 			pixel := a.cg.getPixel(char, rowInChar, colInChar)
-			colour := color.Black
+			var colour color.Color
 			if pixel {
-				colour = color.White
+				colour = p1GreenPhosphorColor
+			} else {
+				colour = color.Black
 			}
 			img.Set(x, y, colour)
 		}
