@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"image/png"
 	"os"
+	"time"
 )
 
 // Snapshot the currently visible screen
@@ -101,11 +102,12 @@ func getTextChar(a *Apple2, col int, line int, page int) uint8 {
 }
 
 func snapshotTextMode(a *Apple2, page int) *image.RGBA {
-	// TODO: Missing inverse and flash modes
-
 	// Color for typical Apple ][ period green phosphor monitors
 	// See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
 	p1GreenPhosphorColor := color.RGBA{65, 255, 0, 255}
+
+	// Flash mode is 2Hz
+	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
 
 	width := textColumns * charWidth
 	height := textLines * charHeight
@@ -119,7 +121,12 @@ func snapshotTextMode(a *Apple2, page int) *image.RGBA {
 			rowInChar := y % charHeight
 			colInChar := x % charWidth
 			char := getTextChar(a, col, line, page)
+			topBits := char >> 6
+			isInverse := topBits == 0
+			isFlash := topBits == 1
+
 			pixel := a.cg.getPixel(char, rowInChar, colInChar)
+			pixel = pixel != (isInverse || (isFlash && isFlashedFrame))
 			var colour color.Color
 			if pixel {
 				colour = p1GreenPhosphorColor
