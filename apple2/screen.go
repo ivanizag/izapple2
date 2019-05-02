@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+/*
+References:
+ - "Understanding the Apple II", http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
+ - "Apple II Reference Manual"
+ - "More Colors for your Apple", https://archive.org/details/byte-magazine-1979-06/page/n61
+*/
+
 // Snapshot the currently visible screen
 func Snapshot(a *Apple2) *image.RGBA {
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
@@ -25,7 +32,8 @@ func Snapshot(a *Apple2) *image.RGBA {
 	} else {
 		if isHiResMode {
 			//return snapshotHiResModeReferenceMono(a, pageIndex)
-			return snapshotHiResModeReferenceColor(a, pageIndex)
+			return linesSeparatedFilter(snapshotHiResModeMonoShift(a, pageIndex))
+			//return snapshotHiResModeReferenceColor(a, pageIndex)
 			//return snapshotHiResModeReferenceColorSolid(a, pageIndex)
 		} else {
 			// Lo res mode not supported
@@ -85,7 +93,7 @@ const (
 
 func getTextCharOffset(col int, line int) uint16 {
 
-	// See "Understand the Apple II", page 5-10
+	// See "Understanding the Apple II", page 5-10
 	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
 	section := line / 8 // Top, middle and bottom
 	eigth := line % 8
@@ -142,7 +150,7 @@ func snapshotTextMode(a *Apple2, page int) *image.RGBA {
 
 func getGraphLineOffset(line int) uint16 {
 
-	// See "Understand the Apple II", page 5-14
+	// See "Understanding the Apple II", page 5-14
 	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
 	section := line >> 6 // Top, middle and bottom
 	outerEigth := (line >> 3) & 0x07
@@ -161,7 +169,6 @@ func getGraphLine(a *Apple2, line int, page int) []uint8 {
 	lo := uint8(address)
 
 	memPage := a.mmu.internalPage(hi)
-	//fmt.Printf("line: %v, lo: %x\n", line, lo)
 	return memPage[lo : lo+40]
 }
 
@@ -186,6 +193,38 @@ func snapshotHiResModeReferenceMono(a *Apple2, page int) *image.RGBA {
 		}
 	}
 
+	return img
+}
+
+func snapshotHiResModeMonoShift(a *Apple2, page int) *image.RGBA {
+	// As described in "Undertanding the Apple II", with half pixel shifts
+	size := image.Rect(0, 0, 2*graphWidth, graphHeight)
+	img := image.NewRGBA(size)
+
+	for y := 0; y < graphHeight; y++ {
+		bytes := getGraphLine(a, y, page)
+		x := 0
+		previousColour := color.Black
+		for _, b := range bytes {
+			shifted := b>>7 != 1
+			for j := uint(0); j < 7; j++ {
+				bit := (b >> j) & 1
+				colour := color.Black
+				if bit == 1 {
+					colour = color.White
+				}
+
+				if shifted {
+					img.Set(x, y, previousColour)
+				} else {
+					img.Set(x, y, colour)
+				}
+				img.Set(x+1, y, colour)
+				previousColour = colour
+				x += 2
+			}
+		}
+	}
 	return img
 }
 

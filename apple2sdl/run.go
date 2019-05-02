@@ -45,7 +45,8 @@ func SDLRun(a *apple2.Apple2) {
 		img := apple2.Snapshot(a)
 		if img != nil {
 			surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]),
-				int32(img.Bounds().Dx()), int32(img.Bounds().Dy()), 32, 40*7*4,
+				int32(img.Bounds().Dx()), int32(img.Bounds().Dy()),
+				32, 4*img.Bounds().Dx(),
 				0x0000ff, 0x0000ff00, 0x00ff0000, 0xff000000)
 			// Valid for little endian. Should we reverse for big endian?
 			// 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff)
