@@ -27,10 +27,14 @@ func main() {
 		"sdl",
 		true,
 		"use SDL")
+	stdoutScreen := flag.Bool(
+		"stdout",
+		false,
+		"show the text screen on the standard output")
 	panicSS := flag.Bool(
 		"panicss",
 		false,
-		"panic if a not implemented softwtich is used")
+		"panic if a not implemented softswitch is used")
 	dumpChars := flag.Bool(
 		"dumpChars",
 		false,
@@ -56,8 +60,10 @@ func main() {
 	a := apple2.NewApple2(*romFile, *charRomFile, *panicSS)
 	a.AddDisk2(*disk2RomFile, *diskImage)
 	if *useSdl {
+		a.ConfigureStdConsole(false, *stdoutScreen)
 		apple2sdl.SDLRun(a)
 	} else {
-		a.Run(log, true)
+		a.ConfigureStdConsole(true, true)
+		a.Run(log)
 	}
 }

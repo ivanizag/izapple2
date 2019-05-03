@@ -23,7 +23,7 @@ func SDLRun(a *apple2.Apple2) {
 
 	kp := newSDLKeyBoard()
 	a.SetKeyboardProvider(&kp)
-	go a.Run(false, false)
+	go a.Run(false)
 
 	running := true
 	for running {

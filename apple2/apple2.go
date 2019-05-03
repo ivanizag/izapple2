@@ -49,17 +49,24 @@ func (a *Apple2) AddDisk2(diskRomFile string, diskImage string) {
 	}
 }
 
-// Run starts the Apple2 emulation
-func (a *Apple2) Run(log bool, stdinKeyboard bool) {
+// ConfigureStdConsole uses stdin and stdout to interface with the Apple2
+func (a *Apple2) ConfigureStdConsole(stdinKeyboard bool, stdoutScreen bool) {
+	if !stdinKeyboard && !stdoutScreen {
+		return
+	}
+
 	// Init frontend
 	fe := newAnsiConsoleFrontend(a, stdinKeyboard)
 	if stdinKeyboard {
 		a.io.setKeyboardProvider(fe)
 	}
-	if !log {
+	if stdoutScreen {
 		go fe.textModeGoRoutine()
 	}
+}
 
+// Run starts the Apple2 emulation
+func (a *Apple2) Run(log bool) {
 	// Start the processor
 	a.cpu.Reset()
 	for {
