@@ -19,32 +19,75 @@ References:
 func Snapshot(a *Apple2) *image.RGBA {
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
 	isHiResMode := a.io.isSoftSwitchActive(ioFlagHiRes)
+	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
 	// Todo: isMixMode
 	pageIndex := 0
 	if a.io.isSoftSwitchActive(ioFlagSecondPage) {
 		pageIndex = 1
 	}
 
+	var snap *image.RGBA
 	if isTextMode {
-		//return snapshotTextMode(a, pageIndex)
-		return linesSeparatedFilter(snapshotTextMode(a, pageIndex))
+		// Color for typical Apple ][ period green phosphor monitors
+		// See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
+		p1GreenPhosphorColor := color.RGBA{65, 255, 0, 255}
+
+		snap = snapshotTextMode(a, pageIndex, false, p1GreenPhosphorColor)
+		snap = linesSeparatedFilter(snap)
 	} else {
 		if isHiResMode {
-			//return snapshotHiResModeReferenceMono(a, pageIndex)
-			//return linesSeparatedFilter(snapshotHiResModeMonoShift(a, pageIndex))
-			return linesSeparatedFilter(filterNTSCColorMoving(false, snapshotHiResModeMonoShift(a, pageIndex)))
-			//return linesSeparatedFilter(filterNTSCColorStatic(snapshotHiResModeMonoShift(a, pageIndex)))
-
-			//return snapshotHiResModeReferenceColor(a, pageIndex)
-			//return snapshotHiResModeReferenceColorSolid(a, pageIndex)
+			//snap = snapshotHiResModeReferenceMono(a, pageIndex, isMixMode)
+			//snap = snapshotHiResModeReferenceColor(a, pageIndex, isMixMode)
+			//snap = snapshotHiResModeReferenceColorSolid(a, pageIndex, isMixMode)
+			snap = snapshotHiResModeMonoShift(a, pageIndex, isMixMode)
 		} else {
 			// Lo res mode not supported
+			return nil
+		}
+		if isMixMode {
+			snapText := snapshotTextMode(a, pageIndex, isHiResMode, color.White)
+			snap = mixSnapshots(snap, snapText)
+		}
+		//snap = filterNTSCColorStatic(snap)
+		snap = filterNTSCColorMoving(false /*blacker*/, snap)
+		snap = linesSeparatedFilter(snap)
+	}
+	return snap
+}
+
+func mixSnapshots(top, bottom *image.RGBA) *image.RGBA {
+	topBounds := top.Bounds()
+	topWidth := topBounds.Dx()
+	topHeight := topBounds.Dy()
+
+	bottomBounds := bottom.Bounds()
+	bottomWidth := bottomBounds.Dx()
+	bottomHeight := bottomBounds.Dy()
+
+	factor := topWidth / bottomWidth
+
+	size := image.Rect(0, 0, topWidth, topHeight+bottomHeight)
+	out := image.NewRGBA(size)
+
+	// Copy top
+	for y := topBounds.Min.Y; y < topBounds.Max.Y; y++ {
+		for x := topBounds.Min.X; x < topBounds.Max.X; x++ {
+			c := top.At(x, y)
+			out.Set(x, y, c)
 		}
 	}
 
-	//fmt.Printf("g: %v, h: %v\n", isTextMode, isHiResMode)
-	return nil
-	//panic("Screen mode not supported")
+	// Copy bottom, applyng the factor
+	for y := bottomBounds.Min.Y; y < bottomBounds.Max.Y; y++ {
+		for x := bottomBounds.Min.X; x < bottomBounds.Max.X; x++ {
+			c := bottom.At(x, y)
+			for f := 0; f < factor; f++ {
+				out.Set(x*factor+f, topHeight+y, c)
+			}
+		}
+	}
+
+	return out
 }
 
 func saveSnapshot(a *Apple2) {

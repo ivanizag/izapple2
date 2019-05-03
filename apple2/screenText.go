@@ -7,16 +7,13 @@ import (
 )
 
 const (
-	charWidth         = 7
-	charHeight        = 8
-	textColumns       = 40
-	textLines         = 24
-	textPage1Address  = uint16(0x0400)
-	textPage2Address  = uint16(0x0800)
-	graphWidth        = 280
-	graphHeight       = 192
-	graphPage1Address = uint16(0x2000)
-	graphPage2Address = uint16(0x4000)
+	charWidth        = 7
+	charHeight       = 8
+	textColumns      = 40
+	textLines        = 24
+	textLinesMix     = 4
+	textPage1Address = uint16(0x0400)
+	textPage2Address = uint16(0x0800)
 )
 
 func getTextCharOffset(col int, line int) uint16 {
@@ -37,22 +34,23 @@ func getTextChar(a *Apple2, col int, line int, page int) uint8 {
 	return a.mmu.internalPeek(address)
 }
 
-func snapshotTextMode(a *Apple2, page int) *image.RGBA {
-	// Color for typical Apple ][ period green phosphor monitors
-	// See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
-	p1GreenPhosphorColor := color.RGBA{65, 255, 0, 255}
-
+func snapshotTextMode(a *Apple2, page int, mixMode bool, light color.Color) *image.RGBA {
 	// Flash mode is 2Hz
 	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
 
+	lineStart := 0
+	if mixMode {
+		lineStart = textLines - textLinesMix
+	}
+
 	width := textColumns * charWidth
-	height := textLines * charHeight
+	height := (textLines - lineStart) * charHeight
 	size := image.Rect(0, 0, width, height)
 	img := image.NewRGBA(size)
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
-			line := y / charHeight
+			line := y/charHeight + lineStart
 			col := x / charWidth
 			rowInChar := y % charHeight
 			colInChar := x % charWidth
@@ -65,7 +63,7 @@ func snapshotTextMode(a *Apple2, page int) *image.RGBA {
 			pixel = pixel != (isInverse || (isFlash && isFlashedFrame))
 			var colour color.Color
 			if pixel {
-				colour = p1GreenPhosphorColor
+				colour = light
 			} else {
 				colour = color.Black
 			}
