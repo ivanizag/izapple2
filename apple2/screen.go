@@ -33,7 +33,8 @@ func Snapshot(a *Apple2) *image.RGBA {
 		if isHiResMode {
 			//return snapshotHiResModeReferenceMono(a, pageIndex)
 			//return linesSeparatedFilter(snapshotHiResModeMonoShift(a, pageIndex))
-			return linesSeparatedFilter(filterNTSCColor(snapshotHiResModeMonoShift(a, pageIndex)))
+			return linesSeparatedFilter(filterNTSCColorMoving(false, snapshotHiResModeMonoShift(a, pageIndex)))
+			//return linesSeparatedFilter(filterNTSCColorStatic(snapshotHiResModeMonoShift(a, pageIndex)))
 
 			//return snapshotHiResModeReferenceColor(a, pageIndex)
 			//return snapshotHiResModeReferenceColorSolid(a, pageIndex)
@@ -80,7 +81,7 @@ func linesSeparatedFilter(in *image.RGBA) *image.RGBA {
 	return out
 }
 
-func filterNTSCColor(in *image.RGBA) *image.RGBA {
+func getNTSCColorMap() []color.Color {
 	// RGB values from https://mrob.com/pub/xapple2/colors.html
 	black := color.RGBA{0, 0, 0, 255} /*COLOR=0 */ /*  0   0    0*/
 
@@ -125,6 +126,11 @@ func filterNTSCColor(in *image.RGBA) *image.RGBA {
 		/* 1110 */ ltBlue,
 		/* 1111 */ white,
 	}
+	return colorMap
+}
+
+func filterNTSCColorStatic(in *image.RGBA) *image.RGBA {
+	colorMap := getNTSCColorMap()
 
 	b := in.Bounds()
 	size := image.Rect(0, 0, b.Dx()/4, b.Dy())
@@ -145,7 +151,47 @@ func filterNTSCColor(in *image.RGBA) *image.RGBA {
 		}
 	}
 	return out
+}
 
+func filterNTSCColorMoving(blacker bool, in *image.RGBA) *image.RGBA {
+	colorMap := getNTSCColorMap()
+
+	b := in.Bounds()
+	size := image.Rect(0, 0, b.Dx()+3, b.Dy())
+	out := image.NewRGBA(size)
+
+	// We store the last four bits. We start will 0000
+	v := 0
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Dx(); x++ {
+			cIn := in.At(x, y)
+			r, _, _, _ := cIn.RGBA()
+
+			pos := 1 << (3 - uint(x%4))
+			var cOut color.Color
+			if r != 0 {
+				v |= pos
+				cOut = colorMap[v]
+			} else {
+				v &^= pos
+				if blacker {
+					// If there is no luminance, let's have black anyway
+					cOut = colorMap[0]
+				} else {
+					cOut = colorMap[v]
+				}
+			}
+			out.Set(x, y, cOut)
+		}
+
+		// We fade for the last three positions
+		for x := b.Dx(); x < b.Max.X; x++ {
+			v = (v << 1) & 0xF
+			cOut := colorMap[v]
+			out.Set(x, y, cOut)
+		}
+	}
+	return out
 }
 
 const (
