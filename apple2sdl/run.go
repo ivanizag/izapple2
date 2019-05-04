@@ -68,7 +68,7 @@ func SDLRun(a *apple2.Apple2) {
 			surface.Free()
 			texture.Destroy()
 		}
-		sdl.Delay(1000 / 60)
+		sdl.Delay(1000 / 30)
 	}
 
 }

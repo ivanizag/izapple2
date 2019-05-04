@@ -19,6 +19,10 @@ func main() {
 		"disk",
 		"../dos33.dsk",
 		"file to load on the first disk drive")
+	cpuClock := flag.Float64(
+		"mhz",
+		apple2.CpuClockMhz,
+		"cpu speed in Mhz, use 0 for full speed")
 	charRomFile := flag.String(
 		"charRom",
 		"apple2/romdumps/Apple2rev7CharGen.rom",
@@ -42,14 +46,6 @@ func main() {
 	)
 	flag.Parse()
 
-	//romFile := "apple2/romdumps/Apple2.rom"
-	//romFile := "apple2/romdumps/Apple2_Plus.rom"
-	//romFile := "apple2/romdumps/Apple2e.rom"
-	//disk2RomFile := "apple2/romdumps/DISK2.rom"
-	//diskImage := "../dos33.dsk"
-	//diskImage := "../Apex II - Apple II Diagnostic (v4.7-1986).DSK"
-	//diskImage := "../A2Diag.v4.1.SDK"
-
 	if *dumpChars {
 		cg := apple2.NewCharacterGenerator(*charRomFile)
 		cg.Dump()
@@ -57,7 +53,7 @@ func main() {
 	}
 
 	log := false
-	a := apple2.NewApple2(*romFile, *charRomFile, *panicSS)
+	a := apple2.NewApple2(*romFile, *charRomFile, *cpuClock, *panicSS)
 	a.AddDisk2(*disk2RomFile, *diskImage)
 	if *useSdl {
 		a.ConfigureStdConsole(false, *stdoutScreen)

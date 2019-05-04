@@ -51,12 +51,12 @@ func (fe *ansiConsoleFrontend) GetKey(strobed bool) (key uint8, ok bool) {
 		stdinReader := func(c chan uint8) {
 			reader := bufio.NewReader(os.Stdin)
 			for {
-				byte, err := reader.ReadByte()
+				key, err := reader.ReadByte()
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
-				c <- byte
+				c <- key
 			}
 		}
 

@@ -4,22 +4,31 @@ import (
 	"bufio"
 	"go6502/core6502"
 	"os"
+	"time"
 )
 
 // Apple2 represents all the components and state of the emulated machine
 type Apple2 struct {
-	cpu        *core6502.State
-	mmu        *memoryManager
-	io         *ioC0Page
-	cg         *CharacterGenerator
-	cards      []cardBase
-	isApple2e  bool
-	panicSS    bool
-	activeSlot int // Slot that has the addressing 0xc800 to 0ccfff
+	cpu             *core6502.State
+	mmu             *memoryManager
+	io              *ioC0Page
+	cg              *CharacterGenerator
+	cards           []cardBase
+	isApple2e       bool
+	panicSS         bool
+	activeSlot      int // Slot that has the addressing 0xc800 to 0ccfff
+	commandChannel  chan int
+	cycleDurationNs float64 // Inverse of the cpu clock in Ghz
 }
 
+const (
+	// CpuClockMhz is the actual Apple II clock speed
+	CpuClockMhz     = 14.318 / 14
+	cpuClockEuroMhz = 14.238 / 14
+)
+
 // NewApple2 instantiates an apple2
-func NewApple2(romFile string, charRomFile string, panicSS bool) *Apple2 {
+func NewApple2(romFile string, charRomFile string, clockMhz float64, panicSS bool) *Apple2 {
 	var a Apple2
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
@@ -27,8 +36,16 @@ func NewApple2(romFile string, charRomFile string, panicSS bool) *Apple2 {
 	if charRomFile != "" {
 		a.cg = NewCharacterGenerator(charRomFile)
 	}
-	a.mmu.resetPaging()
+	a.mmu.resetRomPaging()
+	a.commandChannel = make(chan int, 100)
 	a.panicSS = panicSS
+
+	if clockMhz <= 0 {
+		// Full speed
+		a.cycleDurationNs = 0
+	} else {
+		a.cycleDurationNs = 1000.0 / clockMhz
+	}
 
 	// Set the io in 0xc000
 	a.io = newIoC0Page(&a)
@@ -65,18 +82,50 @@ func (a *Apple2) ConfigureStdConsole(stdinKeyboard bool, stdoutScreen bool) {
 	}
 }
 
+// SetKeyboardProvider attaches an external keyboard provider
+func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
+	a.io.setKeyboardProvider(kb)
+}
+
+// SendCommand enqueues a command to the emulator thread
+func (a *Apple2) SendCommand(command int) {
+	a.commandChannel <- command
+}
+
+func (a *Apple2) executeCommand(command int) {
+	//TODO
+}
+
 // Run starts the Apple2 emulation
 func (a *Apple2) Run(log bool) {
 	// Start the processor
 	a.cpu.Reset()
+	startTime := time.Now()
 	for {
+		// Run a 6502 step
 		a.cpu.ExecuteInstruction(log)
-	}
-}
 
-// SetKeyboardProvider attaches an external keyboard provider
-func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
-	a.io.setKeyboardProvider(kb)
+		// Execute meta commands
+		commandsPending := true
+		for commandsPending {
+			select {
+			case command := <-a.commandChannel:
+				a.executeCommand(command)
+			default:
+				commandsPending = false
+			}
+		}
+
+		if a.cycleDurationNs != 0 {
+			// Wait until next 6502 step has to run
+			clockDuration := time.Since(startTime)
+			simulatedDurationNs := time.Duration(float64(a.cpu.GetCycles()) * a.cycleDurationNs)
+			waitDuration := simulatedDurationNs - clockDuration
+			if waitDuration > 0 {
+				time.Sleep(waitDuration)
+			}
+		}
+	}
 }
 
 // LoadRom loads a binary file to the top of the memory.

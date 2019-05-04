@@ -69,7 +69,13 @@ func (s *State) ExecuteInstruction(log bool) {
 // Reset resets the processor state. Moves the program counter to the vector in 0cfffc.
 func (s *State) Reset() {
 	startAddress := getWord(s.mem, vectorReset)
+	s.cycles = 0
 	s.reg.setPC(startAddress)
+}
+
+// GetCycles returns the count of CPU cycles since last reset.
+func (s *State) GetCycles() int64 {
+	return s.cycles
 }
 
 func lineString(line []uint8, opcode opcode) string {

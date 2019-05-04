@@ -98,7 +98,7 @@ func newMemoryManager(a *Apple2) *memoryManager {
 	return &mmu
 }
 
-func (mmu *memoryManager) resetPaging() {
+func (mmu *memoryManager) resetRomPaging() {
 	// Assign the first 12kb of ROM from 0xd000 to 0xfff
 	for i := 0xd0; i <= 0xff; i++ {
 		mmu.setPage(uint8(i), &(mmu.physicalROM[i-0xd0]))
