@@ -91,6 +91,8 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	// Control of the emulator
 	case sdl.K_F5:
 		k.a.SendCommand(apple2.CommandToggleSpeed)
+	case sdl.K_F6:
+		k.a.SendCommand(apple2.CommandToggleColor)
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_

@@ -22,7 +22,7 @@ func main() {
 	cpuClock := flag.Float64(
 		"mhz",
 		apple2.CpuClockMhz,
-		"cpu speed in Mhz, use 0 for full speed")
+		"cpu speed in Mhz, use 0 for full speed. Use F5 to toggle.")
 	charRomFile := flag.String(
 		"charRom",
 		"apple2/romdumps/Apple2rev7CharGen.rom",
@@ -35,6 +35,11 @@ func main() {
 		"stdout",
 		false,
 		"show the text screen on the standard output")
+	mono := flag.Bool(
+		"mono",
+		false,
+		"emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.",
+	)
 	panicSS := flag.Bool(
 		"panicss",
 		false,
@@ -53,7 +58,7 @@ func main() {
 	}
 
 	log := false
-	a := apple2.NewApple2(*romFile, *charRomFile, *cpuClock, *panicSS)
+	a := apple2.NewApple2(*romFile, *charRomFile, *cpuClock, !*mono, *panicSS)
 	a.AddDisk2(*disk2RomFile, *diskImage)
 	if *useSdl {
 		a.ConfigureStdConsole(false, *stdoutScreen)

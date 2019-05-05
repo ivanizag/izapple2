@@ -53,31 +53,7 @@ func getNTSCColorMap() []color.Color {
 	return colorMap
 }
 
-func filterNTSCColorStatic(in *image.RGBA) *image.RGBA {
-	colorMap := getNTSCColorMap()
-
-	b := in.Bounds()
-	size := image.Rect(0, 0, b.Dx()/4, b.Dy())
-	out := image.NewRGBA(size)
-	for y := b.Min.Y; y < b.Max.Y; y++ {
-		for x := b.Min.X; x < b.Max.X; x += 4 {
-			v := 0
-			for i := 0; i < 4; i++ {
-				cIn := in.At(x+i, y)
-				r, _, _, _ := cIn.RGBA()
-				v = v << 1
-				if r != 0 {
-					v++
-				}
-			}
-			cOut := colorMap[v]
-			out.Set(x/4, y, cOut)
-		}
-	}
-	return out
-}
-
-func filterNTSCColorMoving(blacker bool, in *image.RGBA) *image.RGBA {
+func filterNTSCColor(blacker bool, in *image.RGBA) *image.RGBA {
 	colorMap := getNTSCColorMap()
 
 	b := in.Bounds()

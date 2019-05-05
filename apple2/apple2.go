@@ -20,6 +20,7 @@ type Apple2 struct {
 	activeSlot      int // Slot that has the addressing 0xc800 to 0ccfff
 	commandChannel  chan int
 	cycleDurationNs float64 // Inverse of the cpu clock in Ghz
+	isColor         bool
 }
 
 const (
@@ -29,7 +30,7 @@ const (
 )
 
 // NewApple2 instantiates an apple2
-func NewApple2(romFile string, charRomFile string, clockMhz float64, panicSS bool) *Apple2 {
+func NewApple2(romFile string, charRomFile string, clockMhz float64, isColor bool, panicSS bool) *Apple2 {
 	var a Apple2
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
@@ -39,6 +40,7 @@ func NewApple2(romFile string, charRomFile string, clockMhz float64, panicSS boo
 	}
 	a.mmu.resetRomPaging()
 	a.commandChannel = make(chan int, 100)
+	a.isColor = isColor
 	a.panicSS = panicSS
 
 	if clockMhz <= 0 {
@@ -91,6 +93,8 @@ func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
 const (
 	// CommandToggleSpeed toggles cpu speed between full speed and actual Apple II speed
 	CommandToggleSpeed = iota + 1
+	// CommandToggleColor toggles between NTSC color TV and Green phospor monitor
+	CommandToggleColor
 )
 
 // SendCommand enqueues a command to the emulator thread
@@ -108,6 +112,8 @@ func (a *Apple2) executeCommand(command int) {
 			fmt.Println("Fast")
 			a.cycleDurationNs = 0
 		}
+	case CommandToggleColor:
+		a.isColor = !a.isColor
 	}
 }
 

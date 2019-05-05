@@ -17,6 +17,7 @@ References:
 
 // Snapshot the currently visible screen
 func Snapshot(a *Apple2) *image.RGBA {
+	isColor := a.isColor
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
 	isHiResMode := a.io.isSoftSwitchActive(ioFlagHiRes)
 	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
@@ -26,32 +27,36 @@ func Snapshot(a *Apple2) *image.RGBA {
 		pageIndex = 1
 	}
 
+	var lightColor color.Color
+	if isColor {
+		lightColor = color.White
+	} else {
+		// Color for typical Apple ][ period green P1 phosphor monitors
+		// See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
+		lightColor = color.RGBA{65, 255, 0, 255}
+
+	}
+
 	var snap *image.RGBA
 	if isTextMode {
-		// Color for typical Apple ][ period green phosphor monitors
-		// See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
-		p1GreenPhosphorColor := color.RGBA{65, 255, 0, 255}
-
-		snap = snapshotTextMode(a, pageIndex, false, p1GreenPhosphorColor)
-		snap = linesSeparatedFilter(snap)
+		snap = snapshotTextMode(a, pageIndex, false, lightColor)
 	} else {
 		if isHiResMode {
-			//snap = snapshotHiResModeReferenceMono(a, pageIndex, isMixMode)
-			//snap = snapshotHiResModeReferenceColor(a, pageIndex, isMixMode)
-			//snap = snapshotHiResModeReferenceColorSolid(a, pageIndex, isMixMode)
-			snap = snapshotHiResModeMonoShift(a, pageIndex, isMixMode)
+			snap = snapshotHiResModeMonoShift(a, pageIndex, isMixMode, lightColor)
 		} else {
 			// Lo res mode not supported
 			return nil
 		}
 		if isMixMode {
-			snapText := snapshotTextMode(a, pageIndex, isHiResMode, color.White)
+			snapText := snapshotTextMode(a, pageIndex, isHiResMode, lightColor)
 			snap = mixSnapshots(snap, snapText)
 		}
-		//snap = filterNTSCColorStatic(snap)
-		snap = filterNTSCColorMoving(false /*blacker*/, snap)
-		snap = linesSeparatedFilter(snap)
+		if isColor {
+			snap = filterNTSCColor(false /*blacker*/, snap)
+		}
 	}
+
+	snap = linesSeparatedFilter(snap)
 	return snap
 }
 

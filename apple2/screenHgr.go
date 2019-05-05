@@ -37,37 +37,7 @@ func getGraphLine(a *Apple2, line int, page int) []uint8 {
 	return memPage[lo : lo+40]
 }
 
-func snapshotHiResModeReferenceMono(a *Apple2, page int, mixedMode bool) *image.RGBA {
-	// As defined on "Apple II Reference Manual", page 19
-
-	height := graphHeight
-	if mixedMode {
-		height = graphHeightMixed
-	}
-
-	size := image.Rect(0, 0, graphWidth, height)
-	img := image.NewRGBA(size)
-
-	for y := 0; y < height; y++ {
-		bytes := getGraphLine(a, y, page)
-		x := 0
-		for _, b := range bytes {
-			for j := uint(0); j < 7; j++ {
-				bit := (b >> j) & 1
-				colour := color.Black
-				if bit == 1 {
-					colour = color.White
-				}
-				img.Set(x, y, colour)
-				x++
-			}
-		}
-	}
-
-	return img
-}
-
-func snapshotHiResModeMonoShift(a *Apple2, page int, mixedMode bool) *image.RGBA {
+func snapshotHiResModeMonoShift(a *Apple2, page int, mixedMode bool, light color.Color) *image.RGBA {
 	// As described in "Undertanding the Apple II", with half pixel shifts
 
 	height := graphHeight
@@ -81,14 +51,14 @@ func snapshotHiResModeMonoShift(a *Apple2, page int, mixedMode bool) *image.RGBA
 	for y := 0; y < height; y++ {
 		bytes := getGraphLine(a, y, page)
 		x := 0
-		previousColour := color.Black
+		var previousColour color.Color = color.Black
 		for _, b := range bytes {
 			shifted := b>>7 == 1
 			for j := uint(0); j < 7; j++ {
 				bit := (b >> j) & 1
-				colour := color.Black
-				if bit == 1 {
-					colour = color.White
+				colour := light
+				if bit == 0 {
+					colour = color.Black
 				}
 
 				if shifted {
