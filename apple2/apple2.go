@@ -2,6 +2,7 @@ package apple2
 
 import (
 	"bufio"
+	"fmt"
 	"go6502/core6502"
 	"os"
 	"time"
@@ -87,20 +88,34 @@ func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
 	a.io.setKeyboardProvider(kb)
 }
 
+const (
+	// CommandToggleSpeed toggles cpu speed between full speed and actual Apple II speed
+	CommandToggleSpeed = iota + 1
+)
+
 // SendCommand enqueues a command to the emulator thread
 func (a *Apple2) SendCommand(command int) {
 	a.commandChannel <- command
 }
 
 func (a *Apple2) executeCommand(command int) {
-	//TODO
+	switch command {
+	case CommandToggleSpeed:
+		if a.cycleDurationNs == 0 {
+			fmt.Println("Slow")
+			a.cycleDurationNs = 1000.0 / CpuClockMhz
+		} else {
+			fmt.Println("Fast")
+			a.cycleDurationNs = 0
+		}
+	}
 }
 
 // Run starts the Apple2 emulation
 func (a *Apple2) Run(log bool) {
 	// Start the processor
 	a.cpu.Reset()
-	startTime := time.Now()
+	referenceTime := time.Now()
 	for {
 		// Run a 6502 step
 		a.cpu.ExecuteInstruction(log)
@@ -118,9 +133,14 @@ func (a *Apple2) Run(log bool) {
 
 		if a.cycleDurationNs != 0 {
 			// Wait until next 6502 step has to run
-			clockDuration := time.Since(startTime)
-			simulatedDurationNs := time.Duration(float64(a.cpu.GetCycles()) * a.cycleDurationNs)
-			waitDuration := simulatedDurationNs - clockDuration
+			clockDuration := time.Since(referenceTime)
+			simulatedDuration := time.Duration(float64(a.cpu.GetCycles()) * a.cycleDurationNs)
+			waitDuration := simulatedDuration - clockDuration
+			if waitDuration > 1*time.Second {
+				// We have to wait too long. Let's fast forward
+				referenceTime = referenceTime.Add(-waitDuration)
+				waitDuration = 0
+			}
 			if waitDuration > 0 {
 				time.Sleep(waitDuration)
 			}

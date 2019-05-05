@@ -21,7 +21,7 @@ func SDLRun(a *apple2.Apple2) {
 	defer renderer.Destroy()
 	window.SetTitle("Apple2")
 
-	kp := newSDLKeyBoard()
+	kp := newSDLKeyBoard(a)
 	a.SetKeyboardProvider(&kp)
 	go a.Run(false)
 

@@ -1,6 +1,7 @@
 package apple2sdl
 
 import (
+	"go6502/apple2"
 	"unicode/utf8"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -8,11 +9,13 @@ import (
 
 type sdlKeyboard struct {
 	keyChannel chan uint8
+	a          *apple2.Apple2
 }
 
-func newSDLKeyBoard() sdlKeyboard {
+func newSDLKeyBoard(a *apple2.Apple2) sdlKeyboard {
 	var k sdlKeyboard
 	k.keyChannel = make(chan uint8, 100)
+	k.a = a
 	return k
 }
 
@@ -84,6 +87,10 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		result = 31
 	case sdl.K_DOWN:
 		result = 10
+
+	// Control of the emulator
+	case sdl.K_F5:
+		k.a.SendCommand(apple2.CommandToggleSpeed)
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_
