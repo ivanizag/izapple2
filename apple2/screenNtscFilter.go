@@ -84,9 +84,9 @@ func filterNTSCColorMoving(blacker bool, in *image.RGBA) *image.RGBA {
 	size := image.Rect(0, 0, b.Dx()+3, b.Dy())
 	out := image.NewRGBA(size)
 
-	// We store the last four bits. We start will 0000
-	v := 0
 	for y := b.Min.Y; y < b.Max.Y; y++ {
+		// We store the last four bits. We start will 0000
+		v := 0
 		for x := b.Min.X; x < b.Dx(); x++ {
 			cIn := in.At(x, y)
 			r, _, _, _ := cIn.RGBA()
