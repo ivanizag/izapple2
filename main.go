@@ -15,6 +15,10 @@ func main() {
 		"diskRom",
 		"apple2/romdumps/DISK2.rom",
 		"rom file for the disk drive controller")
+	disk2Slot := flag.Int(
+		"disk2Slot",
+		6,
+		"slot for the disk driver. 0 for none.")
 	diskImage := flag.String(
 		"disk",
 		"../dos33.dsk",
@@ -59,7 +63,9 @@ func main() {
 
 	log := false
 	a := apple2.NewApple2(*romFile, *charRomFile, *cpuClock, !*mono, *panicSS)
-	a.AddDisk2(*disk2RomFile, *diskImage)
+	if *disk2Slot > 0 {
+		a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
+	}
 	if *useSdl {
 		a.ConfigureStdConsole(false, *stdoutScreen)
 		apple2sdl.SDLRun(a)

@@ -9,6 +9,7 @@ type ioC0Page struct {
 	softSwitchesW    [256]softSwitchW
 	softSwitchesData [128]uint8
 	keyboard         KeyboardProvider
+	speaker          SpeakerProvider
 	apple2           *Apple2
 }
 
@@ -18,6 +19,12 @@ type softSwitchW func(io *ioC0Page, value uint8)
 // KeyboardProvider declares the keyboard implementation requirements
 type KeyboardProvider interface {
 	GetKey(strobe bool) (key uint8, ok bool)
+}
+
+// SpeakerProvider declares the speaker implementation requirements
+type SpeakerProvider interface {
+	// Click receives a speaker click. The argument is the CPU cycle when it is generated
+	Click(cycle uint64)
 }
 
 // See https://www.kreativekorp.com/miscpages/a2info/iomemory.shtml
@@ -67,6 +74,10 @@ func (p *ioC0Page) isSoftSwitchActive(ioFlag uint8) bool {
 
 func (p *ioC0Page) setKeyboardProvider(kb KeyboardProvider) {
 	p.keyboard = kb
+}
+
+func (p *ioC0Page) setSpeakerProvider(s SpeakerProvider) {
+	p.speaker = s
 }
 
 func (p *ioC0Page) Peek(address uint8) uint8 {

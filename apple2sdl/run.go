@@ -10,6 +10,9 @@ import (
 
 // SDLRun starts the Apple2 emulator on SDL
 func SDLRun(a *apple2.Apple2) {
+	s := newSdlSpeaker()
+	s.start()
+
 	window, renderer, err := sdl.CreateWindowAndRenderer(4*40*7, 4*24*8,
 		sdl.WINDOW_SHOWN)
 	if err != nil {
@@ -22,7 +25,8 @@ func SDLRun(a *apple2.Apple2) {
 	window.SetTitle("Apple2")
 
 	kp := newSDLKeyBoard(a)
-	a.SetKeyboardProvider(&kp)
+	a.SetKeyboardProvider(kp)
+	a.SetSpeakerProvider(s)
 	go a.Run(false)
 
 	running := true

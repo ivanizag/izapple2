@@ -27,7 +27,7 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	io.addSoftSwitchRW(0x00, getKeySoftSwitch)         // Keyboard
 	io.addSoftSwitchRW(0x10, strobeKeyboardSoftSwitch) // Keyboard Strobe
 	io.addSoftSwitchR(0x20, notImplementedSoftSwitchR) // Cassette Output
-	io.addSoftSwitchR(0x30, notImplementedSoftSwitchR) // Speaker
+	io.addSoftSwitchR(0x30, getSpeakerSoftSwitch)      // Speaker
 	io.addSoftSwitchR(0x40, notImplementedSoftSwitchR) // Game connector Strobe
 	// Note: Some sources indicate that all these cover 16 positions
 	// for read and write. But the Apple2e take over some of them, with
@@ -91,6 +91,13 @@ func getSoftSwitch(ioFlag uint8, isSet bool) softSwitchR {
 		}
 		return 0
 	}
+}
+
+func getSpeakerSoftSwitch(io *ioC0Page) uint8 {
+	if io.speaker != nil {
+		io.speaker.Click(io.apple2.cpu.GetCycles())
+	}
+	return 0
 }
 
 func getKeySoftSwitch(io *ioC0Page) uint8 {

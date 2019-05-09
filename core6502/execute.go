@@ -11,7 +11,7 @@ import "fmt"
 type State struct {
 	reg     registers
 	mem     Memory
-	cycles  int64
+	cycles  uint64
 	opcodes *[256]opcode
 }
 
@@ -60,7 +60,7 @@ func (s *State) ExecuteInstruction(log bool) {
 		fmt.Printf("%#04x %-12s: ", pc, lineString(line, opcode))
 	}
 	opcode.action(s, line, opcode)
-	s.cycles += int64(opcode.cycles)
+	s.cycles += uint64(opcode.cycles)
 	if log {
 		fmt.Printf("%v, [%02x]\n", s.reg, line)
 	}
@@ -74,7 +74,7 @@ func (s *State) Reset() {
 }
 
 // GetCycles returns the count of CPU cycles since last reset.
-func (s *State) GetCycles() int64 {
+func (s *State) GetCycles() uint64 {
 	return s.cycles
 }
 

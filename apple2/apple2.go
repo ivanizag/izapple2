@@ -57,10 +57,10 @@ func NewApple2(romFile string, charRomFile string, clockMhz float64, isColor boo
 	return &a
 }
 
-// AddDisk2 insterts a DiskII controller on slot 6
-func (a *Apple2) AddDisk2(diskRomFile string, diskImage string) {
+// AddDisk2 insterts a DiskII controller
+func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) {
 	d := newCardDisk2(diskRomFile)
-	d.cardBase.insert(a, 6)
+	d.cardBase.insert(a, slot)
 
 	if diskImage != "" {
 		diskette := loadDisquette(diskImage)
@@ -88,6 +88,11 @@ func (a *Apple2) ConfigureStdConsole(stdinKeyboard bool, stdoutScreen bool) {
 // SetKeyboardProvider attaches an external keyboard provider
 func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
 	a.io.setKeyboardProvider(kb)
+}
+
+// SetSpeakerProvider attaches an external keyboard provider
+func (a *Apple2) SetSpeakerProvider(s SpeakerProvider) {
+	a.io.setSpeakerProvider(s)
 }
 
 const (

@@ -12,11 +12,11 @@ type sdlKeyboard struct {
 	a          *apple2.Apple2
 }
 
-func newSDLKeyBoard(a *apple2.Apple2) sdlKeyboard {
+func newSDLKeyBoard(a *apple2.Apple2) *sdlKeyboard {
 	var k sdlKeyboard
 	k.keyChannel = make(chan uint8, 100)
 	k.a = a
-	return k
+	return &k
 }
 
 func (k *sdlKeyboard) putText(textEvent *sdl.TextInputEvent) {
