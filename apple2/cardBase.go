@@ -1,6 +1,7 @@
 package apple2
 
 type cardBase struct {
+	a    *Apple2
 	rom  []memoryPage
 	slot int
 	ssr  [16]softSwitchR
@@ -8,6 +9,7 @@ type cardBase struct {
 }
 
 func (c *cardBase) insert(a *Apple2, slot int) {
+	c.a = a
 	c.slot = slot
 	if slot != 0 && c.rom[0] != nil {
 		a.mmu.setPage(uint8(0xC0+slot), c.rom[0])

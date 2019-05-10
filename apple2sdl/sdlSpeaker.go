@@ -6,8 +6,8 @@ void SpeakerCallback(void *userdata, Uint8 *stream, int len);
 */
 import "C"
 import (
+	"fmt"
 	"go6502/apple2"
-	"log"
 	"reflect"
 	"unsafe"
 
@@ -135,7 +135,7 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 func (s *sdlSpeaker) start() {
 	err := sdl.Init(sdl.INIT_AUDIO)
 	if err != nil {
-		log.Printf("Error starting SDL audio: %v.\n", err)
+		fmt.Printf("Error starting SDL audio: %v.\n", err)
 		return
 	}
 
@@ -148,7 +148,7 @@ func (s *sdlSpeaker) start() {
 	}
 
 	if err := sdl.OpenAudio(spec, nil); err != nil {
-		log.Printf("Error opening the SDL audio channel: %v.\n", err)
+		fmt.Printf("Error opening the SDL audio channel: %v.\n", err)
 		return
 	}
 	sdl.PauseAudio(false)

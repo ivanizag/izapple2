@@ -10,17 +10,19 @@ import (
 
 // Apple2 represents all the components and state of the emulated machine
 type Apple2 struct {
-	cpu             *core6502.State
-	mmu             *memoryManager
-	io              *ioC0Page
-	cg              *CharacterGenerator
-	cards           []cardBase
-	isApple2e       bool
-	panicSS         bool
-	activeSlot      int // Slot that has the addressing 0xc800 to 0ccfff
-	commandChannel  chan int
-	cycleDurationNs float64 // Inverse of the cpu clock in Ghz
-	isColor         bool
+	cpu                 *core6502.State
+	mmu                 *memoryManager
+	io                  *ioC0Page
+	cg                  *CharacterGenerator
+	cards               []cardBase
+	isApple2e           bool
+	panicSS             bool
+	activeSlot          int // Slot that has the addressing 0xc800 to 0ccfff
+	commandChannel      chan int
+	cycleDurationNs     float64 // Inverse of the cpu clock in Ghz
+	isColor             bool
+	fastMode            bool
+	fastRequestsCounter int
 }
 
 const (
@@ -30,7 +32,8 @@ const (
 )
 
 // NewApple2 instantiates an apple2
-func NewApple2(romFile string, charRomFile string, clockMhz float64, isColor bool, panicSS bool) *Apple2 {
+func NewApple2(romFile string, charRomFile string, clockMhz float64,
+	isColor bool, fastMode bool, panicSS bool) *Apple2 {
 	var a Apple2
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
@@ -41,6 +44,7 @@ func NewApple2(romFile string, charRomFile string, clockMhz float64, isColor boo
 	a.mmu.resetRomPaging()
 	a.commandChannel = make(chan int, 100)
 	a.isColor = isColor
+	a.fastMode = fastMode
 	a.panicSS = panicSS
 
 	if clockMhz <= 0 {
@@ -122,6 +126,8 @@ func (a *Apple2) executeCommand(command int) {
 	}
 }
 
+const maxWaitDuration = 100 * time.Millisecond
+
 // Run starts the Apple2 emulation
 func (a *Apple2) Run(log bool) {
 	// Start the processor
@@ -142,12 +148,12 @@ func (a *Apple2) Run(log bool) {
 			}
 		}
 
-		if a.cycleDurationNs != 0 {
+		if a.cycleDurationNs != 0 && a.fastRequestsCounter <= 0 {
 			// Wait until next 6502 step has to run
 			clockDuration := time.Since(referenceTime)
 			simulatedDuration := time.Duration(float64(a.cpu.GetCycles()) * a.cycleDurationNs)
 			waitDuration := simulatedDuration - clockDuration
-			if waitDuration > 1*time.Second {
+			if waitDuration > maxWaitDuration {
 				// We have to wait too long. Let's fast forward
 				referenceTime = referenceTime.Add(-waitDuration)
 				waitDuration = 0
@@ -164,6 +170,19 @@ const (
 	apple2RomSize  = 12 * 1024
 	apple2eRomSize = 16 * 1024
 )
+
+func (a *Apple2) requestFastMode() {
+	// Note: if the fastMode is shorter than maxWaitDuration, there won't be any gain.
+	if a.fastMode {
+		a.fastRequestsCounter++
+	}
+}
+
+func (a *Apple2) releaseFastMode() {
+	if a.fastMode {
+		a.fastRequestsCounter--
+	}
+}
 
 func (a *Apple2) loadRom(filename string) {
 	f, err := os.Open(filename)

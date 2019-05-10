@@ -44,6 +44,12 @@ func main() {
 		false,
 		"emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.",
 	)
+	fastDisk := flag.Bool(
+		"fastDisk",
+		true,
+		"set fast mode when the disks are spinning",
+	)
+
 	panicSS := flag.Bool(
 		"panicss",
 		false,
@@ -62,7 +68,7 @@ func main() {
 	}
 
 	log := false
-	a := apple2.NewApple2(*romFile, *charRomFile, *cpuClock, !*mono, *panicSS)
+	a := apple2.NewApple2(*romFile, *charRomFile, *cpuClock, !*mono, *fastDisk, *panicSS)
 	if *disk2Slot > 0 {
 		a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
 	}

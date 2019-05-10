@@ -31,8 +31,6 @@ type cardDisk2Drive struct {
 	position     int
 }
 
-// type softSwitchR func(io *ioC0Page) uint8
-
 func newCardDisk2(filename string) *cardDisk2 {
 	var c cardDisk2
 	c.rom = loadCardRom(filename)
@@ -75,13 +73,19 @@ func newCardDisk2(filename string) *cardDisk2 {
 
 	// Other soft switches
 	c.ssr[0x8] = func(_ *ioC0Page) uint8 {
-		c.drive[c.selected].power = false
-		//fmt.Printf("DISKII: Disk %v is off\n", c.selected)
+		if c.drive[c.selected].power {
+			c.drive[c.selected].power = false
+			c.a.releaseFastMode()
+			//fmt.Printf("DISKII: Disk %v is off for %v\n", c.selected, x)
+		}
 		return 0
 	}
 	c.ssr[0x9] = func(_ *ioC0Page) uint8 {
-		c.drive[c.selected].power = true
-		//fmt.Printf("DISKII: Disk %v is on\n", c.selected)
+		if !c.drive[c.selected].power {
+			c.drive[c.selected].power = true
+			c.a.requestFastMode()
+			//fmt.Printf("DISKII: Disk %v is on\n", c.selected)
+		}
 		return 0
 	}
 	c.ssr[0xA] = func(_ *ioC0Page) uint8 {
