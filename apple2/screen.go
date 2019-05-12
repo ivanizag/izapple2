@@ -44,12 +44,11 @@ func Snapshot(a *Apple2) *image.RGBA {
 		if isHiResMode {
 			snap = snapshotHiResModeMonoShift(a, pageIndex, isMixMode, lightColor)
 		} else {
-			snap = snapshotLoResModeReferenceColor(a, pageIndex, isMixMode)
-			isColor = false
-			isMixMode = false
+			snap = snapshotLoResModeMonoShift(a, pageIndex, isMixMode, lightColor)
 		}
+
 		if isMixMode {
-			snapText := snapshotTextMode(a, pageIndex, isHiResMode, lightColor)
+			snapText := snapshotTextMode(a, pageIndex, isMixMode, lightColor)
 			snap = mixSnapshots(snap, snapText)
 		}
 		if isColor {
