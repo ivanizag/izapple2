@@ -6,14 +6,14 @@ import (
 )
 
 const (
-	graphWidth        = 280
-	graphHeight       = 192
-	graphHeightMixed  = 160
-	graphPage1Address = uint16(0x2000)
-	graphPage2Address = uint16(0x4000)
+	hiResWidth        = 280
+	hiResHeight       = 192
+	hiResHeightMixed  = 160
+	hiResPage1Address = uint16(0x2000)
+	hiResPage2Address = uint16(0x4000)
 )
 
-func getGraphLineOffset(line int) uint16 {
+func getHiResLineOffset(line int) uint16 {
 
 	// See "Understanding the Apple II", page 5-14
 	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
@@ -23,13 +23,13 @@ func getGraphLineOffset(line int) uint16 {
 	return uint16(section*40 + outerEigth*0x80 + innerEigth*0x400)
 }
 
-func getGraphLine(a *Apple2, line int, page int) []uint8 {
-	address := graphPage1Address
+func getHiResLine(a *Apple2, line int, page int) []uint8 {
+	address := hiResPage1Address
 	if page == 1 {
-		address = graphPage2Address
+		address = hiResPage2Address
 	}
 
-	address += getGraphLineOffset(line)
+	address += getHiResLineOffset(line)
 	hi := uint8(address >> 8)
 	lo := uint8(address)
 
@@ -40,16 +40,16 @@ func getGraphLine(a *Apple2, line int, page int) []uint8 {
 func snapshotHiResModeMonoShift(a *Apple2, page int, mixedMode bool, light color.Color) *image.RGBA {
 	// As described in "Undertanding the Apple II", with half pixel shifts
 
-	height := graphHeight
+	height := hiResHeight
 	if mixedMode {
-		height = graphHeightMixed
+		height = hiResHeightMixed
 	}
 
-	size := image.Rect(0, 0, 2*graphWidth, height)
+	size := image.Rect(0, 0, 2*hiResWidth, height)
 	img := image.NewRGBA(size)
 
 	for y := 0; y < height; y++ {
-		bytes := getGraphLine(a, y, page)
+		bytes := getHiResLine(a, y, page)
 		x := 0
 		var previousColour color.Color = color.Black
 		for _, b := range bytes {
@@ -78,12 +78,12 @@ func snapshotHiResModeMonoShift(a *Apple2, page int, mixedMode bool, light color
 func snapshotHiResModeReferenceColor(a *Apple2, page int, mixedMode bool) *image.RGBA {
 	// As defined on "Apple II Reference Manual", page 19
 
-	height := graphHeight
+	height := hiResHeight
 	if mixedMode {
-		height = graphHeightMixed
+		height = hiResHeightMixed
 	}
 
-	size := image.Rect(0, 0, graphWidth, height)
+	size := image.Rect(0, 0, hiResWidth, height)
 	img := image.NewRGBA(size)
 
 	// RGB values from https://mrob.com/pub/xapple2/colors.html
@@ -109,7 +109,7 @@ func snapshotHiResModeReferenceColor(a *Apple2, page int, mixedMode bool) *image
 	}
 
 	for y := 0; y < height; y++ {
-		bytes := getGraphLine(a, y, page)
+		bytes := getHiResLine(a, y, page)
 		x := 0
 		previous := uint8(0)
 		for _, b := range bytes {
@@ -136,12 +136,12 @@ func snapshotHiResModeReferenceColorSolid(a *Apple2, page int, mixedMode bool) *
 	// As defined on "Apple II Reference Manual", page 19
 	// but with more solid colors and half the resolution
 
-	height := graphHeight
+	height := hiResHeight
 	if mixedMode {
-		height = graphHeightMixed
+		height = hiResHeightMixed
 	}
 
-	size := image.Rect(0, 0, graphWidth/2, height)
+	size := image.Rect(0, 0, hiResWidth/2, height)
 	img := image.NewRGBA(size)
 
 	// RGB values from https://mrob.com/pub/xapple2/colors.html
@@ -167,7 +167,7 @@ func snapshotHiResModeReferenceColorSolid(a *Apple2, page int, mixedMode bool) *
 	}
 
 	for y := 0; y < height; y++ {
-		bytes := getGraphLine(a, y, page)
+		bytes := getHiResLine(a, y, page)
 		x := 0
 		previous := uint8(0)
 		for _, b := range bytes {

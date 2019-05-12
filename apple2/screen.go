@@ -21,7 +21,7 @@ func Snapshot(a *Apple2) *image.RGBA {
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
 	isHiResMode := a.io.isSoftSwitchActive(ioFlagHiRes)
 	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
-	// Todo: isMixMode
+
 	pageIndex := 0
 	if a.io.isSoftSwitchActive(ioFlagSecondPage) {
 		pageIndex = 1
@@ -44,8 +44,9 @@ func Snapshot(a *Apple2) *image.RGBA {
 		if isHiResMode {
 			snap = snapshotHiResModeMonoShift(a, pageIndex, isMixMode, lightColor)
 		} else {
-			// Lo res mode not supported
-			return nil
+			snap = snapshotLoResModeReferenceColor(a, pageIndex, isMixMode)
+			isColor = false
+			isMixMode = false
 		}
 		if isMixMode {
 			snapText := snapshotTextMode(a, pageIndex, isHiResMode, lightColor)

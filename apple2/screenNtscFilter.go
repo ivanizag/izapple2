@@ -50,6 +50,7 @@ func getNTSCColorMap() []color.Color {
 		/* 1110 */ ltBlue,
 		/* 1111 */ white,
 	}
+
 	return colorMap
 }
 
