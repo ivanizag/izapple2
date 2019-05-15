@@ -1,10 +1,9 @@
 package apple2
 
 import (
-	"bufio"
 	"fmt"
 	"go6502/core6502"
-	"os"
+	"io/ioutil"
 	"time"
 )
 
@@ -185,24 +184,14 @@ func (a *Apple2) releaseFastMode() {
 }
 
 func (a *Apple2) loadRom(filename string) {
-	f, err := os.Open(filename)
+	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
-
-	stats, statsErr := f.Stat()
-	if statsErr != nil {
-		panic(err)
-	}
-
-	size := stats.Size()
+	size := len(bytes)
 	if size != apple2RomSize && size != apple2eRomSize {
 		panic("Rom size not supported")
 	}
-	bytes := make([]byte, size)
-	buf := bufio.NewReader(f)
-	buf.Read(bytes)
 
 	romStart := 0
 	if size == apple2eRomSize {

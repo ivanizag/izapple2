@@ -1,9 +1,8 @@
 package apple2
 
 import (
-	"bufio"
 	"fmt"
-	"os"
+	"io/ioutil"
 )
 
 /*
@@ -28,24 +27,15 @@ func NewCharacterGenerator(filename string) *CharacterGenerator {
 }
 
 func (cg *CharacterGenerator) load(filename string) {
-	f, err := os.Open(filename)
+	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
-
-	stats, statsErr := f.Stat()
-	if statsErr != nil {
-		panic(err)
-	}
-
-	size := stats.Size()
+	size := len(bytes)
 	if size != rev7CharGenSize {
 		panic("Character ROM size not supported")
 	}
-	cg.data = make([]uint8, size)
-	buf := bufio.NewReader(f)
-	buf.Read(cg.data)
+	cg.data = bytes
 }
 
 func (cg *CharacterGenerator) getPixel(char uint8, row int, column int) bool {

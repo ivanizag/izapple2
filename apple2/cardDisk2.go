@@ -1,9 +1,6 @@
 package apple2
 
-import (
-	"bufio"
-	"os"
-)
+import "io/ioutil"
 
 /*
 https://applesaucefdc.com/woz/reference2/
@@ -141,29 +138,19 @@ func newCardDisk2(filename string) *cardDisk2 {
 }
 
 func loadCardRom(filename string) []memoryPage {
-	f, err := os.Open(filename)
+	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
 
-	stats, statsErr := f.Stat()
-	if statsErr != nil {
-		panic(err)
-	}
-
-	size := stats.Size()
-	bytes := make([]byte, size)
-	buf := bufio.NewReader(f)
-	buf.Read(bytes)
-
+	size := len(bytes)
 	pages := size / 256
 	if (size % 256) > 0 {
 		pages++
 	}
 
 	rom := make([]romPage, pages)
-	for i := int64(0); i < size; i++ {
+	for i := 0; i < size; i++ {
 		rom[i>>8].burn(uint8(i), bytes[i])
 	}
 
