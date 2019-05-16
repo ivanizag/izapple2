@@ -1,6 +1,7 @@
 package apple2
 
 import (
+	"io/ioutil"
 	"os"
 )
 
@@ -33,41 +34,25 @@ func (d *diskette16sector) read(track int, position int) (value uint8, newPositi
 func loadDisquette(filename string) *diskette16sector {
 	var d diskette16sector
 
-	f, err := os.Open(filename)
+	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	size := len(data)
 
-	stats, statsErr := f.Stat()
-	if statsErr != nil {
-		panic(err)
-	}
-
-	size := stats.Size()
 	if size == nibImageSize {
 		// Load file already in nib format
 		for i := 0; i < numberOfTracks; i++ {
-			d.track[i] = make([]byte, nibBytesPerTrack)
-			n, err := f.Read(d.track[i])
-			if err != nil || n != nibBytesPerTrack {
-				panic("Error loading file")
-			}
+			d.track[i] = data[nibBytesPerTrack*i : nibBytesPerTrack*(i+1)]
 		}
 	} else if size == dskImageSize {
-		// Load file in dsk format
-		data := make([]byte, dskImageSize)
-		n, err := f.Read(data)
-		if err != nil || n != dskImageSize {
-			panic("Error loading file")
-		}
 		// Convert to nib
 		for i := 0; i < numberOfTracks; i++ {
 			trackData := data[i*bytesPerTrack : (i+1)*bytesPerTrack]
 			d.track[i] = nibEncodeTrack(trackData, defaultVolumeTag, byte(i))
 		}
 	} else {
-		panic("Disk size with nib format has to be 232960 bytes")
+		panic("Invalid disk size")
 	}
 
 	return &d

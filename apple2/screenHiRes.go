@@ -30,11 +30,7 @@ func getHiResLine(a *Apple2, line int, page int) []uint8 {
 	}
 
 	address += getHiResLineOffset(line)
-	hi := uint8(address >> 8)
-	lo := uint8(address)
-
-	memPage := a.mmu.internalPage(hi)
-	return memPage[lo : lo+40]
+	return a.mmu.physicalMainRAM.subRange(address, address+40)
 }
 
 func snapshotHiResModeMonoShift(a *Apple2, page int, mixedMode bool, light color.Color) *image.RGBA {

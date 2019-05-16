@@ -21,25 +21,15 @@ type ansiConsoleFrontend struct {
 	apple2         *Apple2
 	keyChannel     chan uint8
 	extraLineFeeds chan int
-	textUpdated    bool
 	stdinKeyboard  bool
+	lastContent    string
 }
 
 func newAnsiConsoleFrontend(a *Apple2, stdinKeyboard bool) *ansiConsoleFrontend {
 	var fe ansiConsoleFrontend
 	fe.apple2 = a
 	fe.stdinKeyboard = stdinKeyboard
-	fe.subscribeToTextPages()
 	return &fe
-}
-
-func (fe *ansiConsoleFrontend) subscribeToTextPages() {
-	observer := func(_ uint8, _ bool) {
-		fe.textUpdated = true
-	}
-	for i := 0x04; i < 0x08; i++ {
-		fe.apple2.mmu.physicalMainRAM[i].observer = observer
-	}
 }
 
 const refreshDelayMs = 100
@@ -85,101 +75,53 @@ func (fe *ansiConsoleFrontend) GetKey(strobed bool) (key uint8, ok bool) {
 	return
 }
 
-func ansiCursorUp(steps int) {
-	fmt.Printf("\033[%vA", steps)
-}
-
-func (fe *ansiConsoleFrontend) textModeGoRoutineFast() {
-	fe.extraLineFeeds = make(chan int, 100)
-
-	fmt.Printf(strings.Repeat("\n", 26))
-	for {
-		if fe.textUpdated {
-			fe.textUpdated = false
-			// Go up
-			ansiCursorUp(26)
-			done := false
-			for !done {
-				select {
-				case lineFeeds := <-fe.extraLineFeeds:
-					ansiCursorUp(lineFeeds)
-				default:
-					done = true
-				}
-			}
-
-			fmt.Println(strings.Repeat("#", 44))
-
-			// See "Understand the Apple II", page 5-10
-			// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
-			isAltText := fe.apple2.isApple2e && fe.apple2.io.isSoftSwitchActive(ioFlagAltChar)
-			var i, j, h, c uint8
-			// Top, middle and botton screen
-			for i = 0; i < 120; i = i + 40 {
-				// Memory pages
-				for j = 0x04; j < 0x08; j++ {
-					p := fe.apple2.mmu.physicalMainRAM[j]
-					// The two half pages
-					for _, h = range []uint8{0, 128} {
-						line := ""
-						for c = i + h; c < i+h+40; c++ {
-							line += textMemoryByteToString(p.internalPeek(c), isAltText)
-						}
-						fmt.Printf("# %v #\n", line)
-					}
-				}
-			}
-
-			fmt.Println(strings.Repeat("#", 44))
-			if fe.stdinKeyboard {
-				fmt.Print("\033[KLine: ")
-			}
-		}
-		time.Sleep(refreshDelayMs * time.Millisecond)
-	}
+func ansiCursorUp(steps int) string {
+	return fmt.Sprintf("\033[%vA", steps)
 }
 
 func (fe *ansiConsoleFrontend) textModeGoRoutine() {
 	fe.extraLineFeeds = make(chan int, 100)
 
-	fmt.Printf(strings.Repeat("\n", 26))
+	fmt.Printf(strings.Repeat("\n", textLines+3))
 	for {
-		if fe.textUpdated {
-			fe.textUpdated = false
-			// Go up
-			ansiCursorUp(26)
-			done := false
-			for !done {
-				select {
-				case lineFeeds := <-fe.extraLineFeeds:
-					ansiCursorUp(lineFeeds)
-				default:
-					done = true
-				}
+		// Go up
+		content := ansiCursorUp(textLines + 3)
+		done := false
+		for !done {
+			select {
+			case lineFeeds := <-fe.extraLineFeeds:
+				content += ansiCursorUp(lineFeeds)
+			default:
+				done = true
 			}
+		}
 
-			pageIndex := 0
-			if fe.apple2.io.isSoftSwitchActive(ioFlagSecondPage) {
-				pageIndex = 1
+		content += "\n"
+		content += fmt.Sprintln(strings.Repeat("#", textColumns+4))
+
+		pageIndex := 0
+		if fe.apple2.io.isSoftSwitchActive(ioFlagSecondPage) {
+			pageIndex = 1
+		}
+		isAltText := fe.apple2.isApple2e && fe.apple2.io.isSoftSwitchActive(ioFlagAltChar)
+
+		for l := 0; l < textLines; l++ {
+			line := ""
+			for c := 0; c < textColumns; c++ {
+				char := getTextChar(fe.apple2, c, l, pageIndex)
+				line += textMemoryByteToString(char, isAltText)
 			}
-			isAltText := fe.apple2.isApple2e && fe.apple2.io.isSoftSwitchActive(ioFlagAltChar)
+			content += fmt.Sprintf("# %v #\n", line)
+		}
 
-			fmt.Println(strings.Repeat("#", 44))
-			for line := 0; line < 24; line++ {
-				text := ""
-				for col := 0; col < 40; col++ {
-					value := getTextChar(fe.apple2, col, line, pageIndex)
-					text += textMemoryByteToString(value, isAltText)
-				}
-				fmt.Printf("# %v #\n", text)
-			}
+		content += fmt.Sprintln(strings.Repeat("#", textColumns+4))
+		if fe.stdinKeyboard {
+			content += "\033[KLine: "
+		}
 
-			fmt.Println(strings.Repeat("#", 44))
-			if fe.stdinKeyboard {
-				fmt.Print("\033[KLine: ")
-			}
-
-			//saveSnapshot(fe.apple2)
+		if content != fe.lastContent {
+			fmt.Print(content)
+			fe.lastContent = content
 		}
 		time.Sleep(refreshDelayMs * time.Millisecond)
 	}

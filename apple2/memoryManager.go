@@ -1,26 +1,25 @@
 package apple2
 
+import "io/ioutil"
+
 // See https://fabiensanglard.net/fd_proxy/prince_of_persia/Inside%20the%20Apple%20IIe.pdf
 // See https://i.stack.imgur.com/yn21s.gif
 
 type memoryManager struct {
 	apple2 *Apple2
 	// Map of assigned pages
-	activeMemory [256]memoryPage
+	activeMemoryRead  [256]memoryHandler
+	activeMemoryWrite [256]memoryHandler
 
 	// Pages prepared to be paged in and out
-	physicalMainRAM        []ramPage        // 0x0000 to 0xbfff, Up to 48 Kb
-	physicalROM            []romPage        // 0xd000 to 0xffff, 12 Kb
-	physicalROMe           []romPage        // 0xc000 to 0xcfff, Zero or 4bk in the Apple2e
-	unassignedExpansionROM []unassignedPage // 0xc000 to 0xcfff
+	physicalMainRAM *memoryRange // 0x0000 to 0xbfff, Up to 48 Kb
+	physicalROM     *memoryRange // 0xd000 to 0xffff, 12 Kb
+	physicalROMe    *memoryRange // 0xc000 to 0xcfff, Zero or 4bk in the Apple2e
 }
 
-// memoryPage is a data page of 256 bytes
-type memoryPage interface {
-	Peek(uint8) uint8
-	Poke(uint8, uint8)
-	internalPeek(uint8) uint8
-	all() []uint8
+type memoryHandler interface {
+	peek(uint16) uint8
+	poke(uint16, uint8)
 }
 
 const (
@@ -34,18 +33,11 @@ func (mmu *memoryManager) Peek(address uint16) uint8 {
 	}
 
 	hi := uint8(address >> 8)
-	lo := uint8(address)
-	return mmu.activeMemory[hi].Peek(lo)
-}
-
-func (mmu *memoryManager) internalPeek(address uint16) uint8 {
-	hi := uint8(address >> 8)
-	lo := uint8(address)
-	return mmu.activeMemory[hi].internalPeek(lo)
-}
-
-func (mmu *memoryManager) internalPage(hi uint8) []uint8 {
-	return mmu.activeMemory[hi].all()
+	mh := mmu.activeMemoryRead[hi]
+	if mh == nil {
+		return 0xf4 // Or some random number
+	}
+	return mh.peek(address)
 }
 
 // Poke sets the data at the given address
@@ -54,15 +46,24 @@ func (mmu *memoryManager) Poke(address uint16, value uint8) {
 		mmu.resetSlotExpansionRoms()
 	}
 	hi := uint8(address >> 8)
-	lo := uint8(address)
-	mmu.activeMemory[hi].Poke(lo, value)
+	mh := mmu.activeMemoryWrite[hi]
+	if mh == nil {
+		return
+	}
+	mh.poke(address, value)
 }
 
-// SetPage assigns a MemoryPage implementation on the page given
-func (mmu *memoryManager) setPage(index uint8, page memoryPage) {
-	//fmt.Printf("Assigning page 0x%02x type %s\n", index, reflect.TypeOf(page))
-	mmu.activeMemory[index] = page
+func (mmu *memoryManager) setPage(index uint8, mh memoryHandler) {
+	mmu.setPageRead(index, mh)
+	mmu.setPageWrite(index, mh)
+}
 
+func (mmu *memoryManager) setPageRead(index uint8, mh memoryHandler) {
+	mmu.activeMemoryRead[index] = mh
+}
+
+func (mmu *memoryManager) setPageWrite(index uint8, mh memoryHandler) {
+	mmu.activeMemoryWrite[index] = mh
 }
 
 // When 0xcfff is accessed the card expansion rom is unassigned
@@ -71,9 +72,8 @@ func (mmu *memoryManager) resetSlotExpansionRoms() {
 		// Ignore if the Apple2 shadow ROM is active
 		return
 	}
-	for i := 8; i < 16; i++ {
-		p := mmu.unassignedExpansionROM[i]
-		mmu.setPage(uint8(i+0xc0), &p)
+	for i := uint8(0xc8); i < 0xd0; i++ {
+		mmu.setPage(i, nil)
 	}
 }
 
@@ -82,25 +82,43 @@ func newMemoryManager(a *Apple2) *memoryManager {
 	mmu.apple2 = a
 
 	// Assign RAM from 0x0000 to 0xbfff, 48kb
-	mmu.physicalMainRAM = make([]ramPage, 0xc0)
-	for i := 0; i <= 0xbf; i++ {
-		mmu.setPage(uint8(i), &(mmu.physicalMainRAM[i]))
+	ram := make([]uint8, 0xc000)
+	mmu.physicalMainRAM = newMemoryRange(0, ram)
+	for i := 0; i < 0xc000; i = i + 0x100 {
+		mmu.setPage(uint8(i>>8), mmu.physicalMainRAM)
 	}
 
-	// Set the 0xc100 to 0xcfff as unasigned, 4kb. It wil be taken by slot cards.
-	mmu.unassignedExpansionROM = make([]unassignedPage, 0x10)
-	for i := 1; i < 0x10; i++ {
-		page := uint8(i + 0xc0)
-		p := &mmu.unassignedExpansionROM[i]
-		p.page = page
-		mmu.setPage(page, p)
-	}
 	return &mmu
+}
+
+func (mmu *memoryManager) loadRom(filename string) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	size := len(data)
+	if size != apple2RomSize && size != apple2eRomSize {
+		panic("Rom size not supported")
+	}
+
+	a := mmu.apple2
+	romStart := 0
+	if size == apple2eRomSize {
+		// The extra 4kb ROM is first in the rom file.
+		// It starts with 256 unused bytes not mapped to 0xc000.
+		a.isApple2e = true
+		extraRomSize := apple2eRomSize - apple2RomSize
+		a.mmu.physicalROMe = newMemoryRange(0xc000, data[0:extraRomSize])
+		romStart = extraRomSize
+	}
+
+	a.mmu.physicalROM = newMemoryRange(0xd000, data[romStart:])
+	mmu.resetRomPaging()
 }
 
 func (mmu *memoryManager) resetRomPaging() {
 	// Assign the first 12kb of ROM from 0xd000 to 0xfff
-	for i := 0xd0; i <= 0xff; i++ {
-		mmu.setPage(uint8(i), &(mmu.physicalROM[i-0xd0]))
+	for i := 0x0000; i < 0x3000; i = i + 0x100 {
+		mmu.setPageRead(uint8(0xd0+(i>>8)), mmu.physicalROM)
 	}
 }

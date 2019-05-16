@@ -80,32 +80,26 @@ func (p *ioC0Page) setSpeakerProvider(s SpeakerProvider) {
 	p.speaker = s
 }
 
-func (p *ioC0Page) Peek(address uint8) uint8 {
+func (p *ioC0Page) peek(address uint16) uint8 {
 	//fmt.Printf("Peek on $C0%02x ", address)
-	ss := p.softSwitchesR[address]
+	pageAddress := uint8(address)
+	ss := p.softSwitchesR[pageAddress]
 	if ss == nil {
 		if p.apple2.panicSS {
-			panic(fmt.Sprintf("Unknown softswitch on read to 0xC0%02x", address))
+			panic(fmt.Sprintf("Unknown softswitch on read to 0xC0%02x", pageAddress))
 		}
 		return 0
 	}
 	return ss(p)
 }
 
-func (p *ioC0Page) internalPeek(address uint8) uint8 {
-	return 0
-}
-
-func (p *ioC0Page) all() []uint8 {
-	return nil
-}
-
-func (p *ioC0Page) Poke(address uint8, value uint8) {
+func (p *ioC0Page) poke(address uint16, value uint8) {
 	//fmt.Printf("Poke on $C0%02x with %02x ", address, value)
-	ss := p.softSwitchesW[address]
+	pageAddress := uint8(address)
+	ss := p.softSwitchesW[pageAddress]
 	if ss == nil {
 		if p.apple2.panicSS {
-			panic(fmt.Sprintf("Unknown softswitch on write to 0xC0%02x", address))
+			panic(fmt.Sprintf("Unknown softswitch on write to 0xC0%02x", pageAddress))
 		}
 		return
 	}

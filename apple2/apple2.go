@@ -3,7 +3,6 @@ package apple2
 import (
 	"fmt"
 	"go6502/core6502"
-	"io/ioutil"
 	"time"
 )
 
@@ -36,11 +35,10 @@ func NewApple2(romFile string, charRomFile string, clockMhz float64,
 	var a Apple2
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
-	a.loadRom(romFile)
+	a.mmu.loadRom(romFile)
 	if charRomFile != "" {
 		a.cg = NewCharacterGenerator(charRomFile)
 	}
-	a.mmu.resetRomPaging()
 	a.commandChannel = make(chan int, 100)
 	a.isColor = isColor
 	a.fastMode = fastMode
@@ -180,34 +178,5 @@ func (a *Apple2) requestFastMode() {
 func (a *Apple2) releaseFastMode() {
 	if a.fastMode {
 		a.fastRequestsCounter--
-	}
-}
-
-func (a *Apple2) loadRom(filename string) {
-	bytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	size := len(bytes)
-	if size != apple2RomSize && size != apple2eRomSize {
-		panic("Rom size not supported")
-	}
-
-	romStart := 0
-	if size == apple2eRomSize {
-		// The extra 4kb ROM is first in the rom file.
-		// It starts with 256 unused bytes not mapped to 0xc000.
-		a.isApple2e = true
-		extraRomSize := apple2eRomSize - apple2RomSize
-		a.mmu.physicalROMe = make([]romPage, extraRomSize>>8)
-		for i := 0; i < extraRomSize; i++ {
-			a.mmu.physicalROMe[i>>8].burn(uint8(i), bytes[i])
-		}
-		romStart = extraRomSize
-	}
-
-	a.mmu.physicalROM = make([]romPage, apple2RomSize>>8)
-	for i := 0; i < apple2RomSize; i++ {
-		a.mmu.physicalROM[i>>8].burn(uint8(i), bytes[i+romStart])
 	}
 }

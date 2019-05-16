@@ -30,7 +30,7 @@ type cardDisk2Drive struct {
 
 func newCardDisk2(filename string) *cardDisk2 {
 	var c cardDisk2
-	c.rom = loadCardRom(filename)
+	c.rom = newMemoryRange(0, loadCardRom(filename))
 
 	// Phase control soft switches
 	// Lazy emulation. It only checks for phases on and move the head
@@ -137,29 +137,12 @@ func newCardDisk2(filename string) *cardDisk2 {
 	return &c
 }
 
-func loadCardRom(filename string) []memoryPage {
-	bytes, err := ioutil.ReadFile(filename)
+func loadCardRom(filename string) []uint8 {
+	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
 	}
-
-	size := len(bytes)
-	pages := size / 256
-	if (size % 256) > 0 {
-		pages++
-	}
-
-	rom := make([]romPage, pages)
-	for i := 0; i < size; i++ {
-		rom[i>>8].burn(uint8(i), bytes[i])
-	}
-
-	memPages := make([]memoryPage, pages)
-	for i := range rom {
-		memPages[i] = &rom[i]
-	}
-
-	return memPages
+	return data
 }
 
 func (d *cardDisk2Drive) insertDiskette(dt *diskette16sector) {

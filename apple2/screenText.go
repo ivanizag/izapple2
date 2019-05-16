@@ -31,7 +31,7 @@ func getTextChar(a *Apple2, col int, line int, page int) uint8 {
 		address = textPage2Address
 	}
 	address += getTextCharOffset(col, line)
-	return a.mmu.internalPeek(address)
+	return a.mmu.physicalMainRAM.subRange(address, address+1)[0]
 }
 
 func snapshotTextMode(a *Apple2, page int, mixMode bool, light color.Color) *image.RGBA {
