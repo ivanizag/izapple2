@@ -53,7 +53,7 @@ func NewApple2(romFile string, charRomFile string, clockMhz float64,
 
 	// Set the io in 0xc000
 	a.io = newIoC0Page(&a)
-	a.mmu.setPage(0xc0, a.io)
+	a.mmu.setPages(0xc0, 0xc0, a.io)
 
 	return &a
 }
@@ -68,6 +68,13 @@ func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) {
 		//diskette.saveNib(diskImage + "bak")
 		d.drive[0].insertDiskette(diskette)
 	}
+}
+
+// AddLanguageCard inserts a 16Kb card
+func (a *Apple2) AddLanguageCard(slot int) {
+	d := newCardLanguage()
+	d.cardBase.insert(a, slot)
+	d.applyState()
 }
 
 // ConfigureStdConsole uses stdin and stdout to interface with the Apple2

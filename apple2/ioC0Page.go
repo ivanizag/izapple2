@@ -81,7 +81,7 @@ func (p *ioC0Page) setSpeakerProvider(s SpeakerProvider) {
 }
 
 func (p *ioC0Page) peek(address uint16) uint8 {
-	//fmt.Printf("Peek on $C0%02x ", address)
+	//fmt.Printf("Peek on $%02x\n", address)
 	pageAddress := uint8(address)
 	ss := p.softSwitchesR[pageAddress]
 	if ss == nil {
@@ -94,7 +94,7 @@ func (p *ioC0Page) peek(address uint16) uint8 {
 }
 
 func (p *ioC0Page) poke(address uint16, value uint8) {
-	//fmt.Printf("Poke on $C0%02x with %02x ", address, value)
+	//fmt.Printf("Poke on $%02x with %02x\n", address, value)
 	pageAddress := uint8(address)
 	ss := p.softSwitchesW[pageAddress]
 	if ss == nil {

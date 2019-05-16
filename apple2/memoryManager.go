@@ -1,6 +1,8 @@
 package apple2
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+)
 
 // See https://fabiensanglard.net/fd_proxy/prince_of_persia/Inside%20the%20Apple%20IIe.pdf
 // See https://i.stack.imgur.com/yn21s.gif
@@ -53,17 +55,31 @@ func (mmu *memoryManager) Poke(address uint16, value uint8) {
 	mh.poke(address, value)
 }
 
-func (mmu *memoryManager) setPage(index uint8, mh memoryHandler) {
-	mmu.setPageRead(index, mh)
-	mmu.setPageWrite(index, mh)
+func (mmu *memoryManager) setPages(begin uint8, end uint8, mh memoryHandler) {
+	mmu.setPagesRead(begin, end, mh)
+	mmu.setPagesWrite(begin, end, mh)
 }
 
-func (mmu *memoryManager) setPageRead(index uint8, mh memoryHandler) {
-	mmu.activeMemoryRead[index] = mh
+func (mmu *memoryManager) setPagesRead(begin uint8, end uint8, mh memoryHandler) {
+	i := begin
+	for {
+		mmu.activeMemoryRead[i] = mh
+		if i == end {
+			break
+		}
+		i++
+	}
 }
 
-func (mmu *memoryManager) setPageWrite(index uint8, mh memoryHandler) {
-	mmu.activeMemoryWrite[index] = mh
+func (mmu *memoryManager) setPagesWrite(begin uint8, end uint8, mh memoryHandler) {
+	i := begin
+	for {
+		mmu.activeMemoryWrite[i] = mh
+		if i == end {
+			break
+		}
+		i++
+	}
 }
 
 // When 0xcfff is accessed the card expansion rom is unassigned
@@ -72,9 +88,7 @@ func (mmu *memoryManager) resetSlotExpansionRoms() {
 		// Ignore if the Apple2 shadow ROM is active
 		return
 	}
-	for i := uint8(0xc8); i < 0xd0; i++ {
-		mmu.setPage(i, nil)
-	}
+	mmu.setPagesRead(0xc8, 0xcf, nil)
 }
 
 func newMemoryManager(a *Apple2) *memoryManager {
@@ -84,9 +98,7 @@ func newMemoryManager(a *Apple2) *memoryManager {
 	// Assign RAM from 0x0000 to 0xbfff, 48kb
 	ram := make([]uint8, 0xc000)
 	mmu.physicalMainRAM = newMemoryRange(0, ram)
-	for i := 0; i < 0xc000; i = i + 0x100 {
-		mmu.setPage(uint8(i>>8), mmu.physicalMainRAM)
-	}
+	mmu.setPages(0x00, 0xc0, mmu.physicalMainRAM)
 
 	return &mmu
 }
@@ -119,6 +131,6 @@ func (mmu *memoryManager) loadRom(filename string) {
 func (mmu *memoryManager) resetRomPaging() {
 	// Assign the first 12kb of ROM from 0xd000 to 0xfff
 	for i := 0x0000; i < 0x3000; i = i + 0x100 {
-		mmu.setPageRead(uint8(0xd0+(i>>8)), mmu.physicalROM)
+		mmu.setPagesRead(0xd0, 0xff, mmu.physicalROM)
 	}
 }

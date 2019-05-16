@@ -45,33 +45,19 @@ func getSoftSwitchExt(ioFlag uint8, dstValue uint8, action softSwitchExtAction) 
 }
 
 func softSwitchIntCxRomOn(io *ioC0Page) {
-	mmu := io.apple2.mmu
-	for i := 0x100; i < 0x1000; i = i + 0x100 {
-		mmu.setPage(uint8(i>>8), mmu.physicalROMe)
-	}
+	io.apple2.mmu.setPagesRead(0xc1, 0xcf, io.apple2.mmu.physicalROMe)
 }
 
 func softSwitchIntCxRomOff(io *ioC0Page) {
-	// TODO restore all the ROM from the slot for 0xc1 to 0xc7
-	mmu := io.apple2.mmu
-	for i := 1; i < 16; i++ {
-		mmu.setPage(uint8(0xc0+i), nil)
-	}
+	// TODO restore all the ROM from the slots for 0xc1 to 0xc7
+	io.apple2.mmu.setPages(0xc1, 0xc7, nil)
 }
 
 func softSwitchSlotC3RomOn(io *ioC0Page) {
-	if io.isSoftSwitchActive(ioFlagIntCxRom) {
-		return // Ignore if allt the Apple2 shadow ROM is active
-	}
 	// TODO restore the slot 3 ROM
-	mmu := io.apple2.mmu
-	mmu.setPage(0xC3, nil)
+	io.apple2.mmu.setPages(0xc3, 0xc3, nil)
 }
 
 func softSwitchSlotC3RomOff(io *ioC0Page) {
-	if io.isSoftSwitchActive(ioFlagIntCxRom) {
-		return // Ignore if alt the Apple2 shadow ROM is active
-	}
-	mmu := io.apple2.mmu
-	mmu.setPageRead(0xC3, mmu.physicalROMe)
+	io.apple2.mmu.setPagesRead(0xc3, 0xc3, io.apple2.mmu.physicalROMe)
 }

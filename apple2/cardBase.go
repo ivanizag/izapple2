@@ -12,8 +12,8 @@ func (c *cardBase) insert(a *Apple2, slot int) {
 	c.a = a
 	c.slot = slot
 	if slot != 0 && c.rom != nil {
-		c.rom.base = uint16(0xC000 + slot*0x100)
-		a.mmu.setPage(uint8(0xC0+slot), c.rom)
+		c.rom.base = uint16(0xc000 + slot*0x100)
+		a.mmu.setPagesRead(uint8(0xc0+slot), uint8(0xc0+slot), c.rom)
 	}
 
 	for i := 0; i < 0x10; i++ {
