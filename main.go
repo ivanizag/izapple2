@@ -69,7 +69,8 @@ func main() {
 
 	log := false
 	a := apple2.NewApple2(*romFile, *charRomFile, *cpuClock, !*mono, *fastDisk, *panicSS)
-	a.AddLanguageCard(0)
+	//a.AddLanguageCard(0)
+	a.AddSaturnCard(0)
 	if *disk2Slot > 0 {
 		a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
 	}

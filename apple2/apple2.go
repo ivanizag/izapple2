@@ -77,6 +77,13 @@ func (a *Apple2) AddLanguageCard(slot int) {
 	d.applyState()
 }
 
+// AddSaturnCard inserts a 128Kb card
+func (a *Apple2) AddSaturnCard(slot int) {
+	d := newCardSaturn()
+	d.cardBase.insert(a, slot)
+	d.applyState()
+}
+
 // ConfigureStdConsole uses stdin and stdout to interface with the Apple2
 func (a *Apple2) ConfigureStdConsole(stdinKeyboard bool, stdoutScreen bool) {
 	if !stdinKeyboard && !stdoutScreen {
