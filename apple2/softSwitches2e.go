@@ -61,3 +61,5 @@ func softSwitchSlotC3RomOn(io *ioC0Page) {
 func softSwitchSlotC3RomOff(io *ioC0Page) {
 	io.apple2.mmu.setPagesRead(0xc3, 0xc3, io.apple2.mmu.physicalROMe)
 }
+
+// TODO: apply state after persistance load

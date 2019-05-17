@@ -93,6 +93,10 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		k.a.SendCommand(apple2.CommandToggleSpeed)
 	case sdl.K_F6:
 		k.a.SendCommand(apple2.CommandToggleColor)
+	case sdl.K_F7:
+		k.a.SendCommand(apple2.CommandSaveState)
+	case sdl.K_F8:
+		k.a.SendCommand(apple2.CommandLoadState)
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_

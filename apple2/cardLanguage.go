@@ -1,5 +1,10 @@
 package apple2
 
+import (
+	"encoding/binary"
+	"io"
+)
+
 /*
 Language card with 16 extra kb for the Apple ][ and  ][+
 Manual: http://www.applelogic.org/files/LANGCARDMAN.pdf
@@ -117,4 +122,24 @@ func (c *cardLanguage) applyState() {
 		mmu.setPagesWrite(0xd0, 0xff, nil)
 	}
 
+}
+
+func (c *cardLanguage) save(w io.Writer) {
+	binary.Write(w, binary.BigEndian, c.readState)
+	binary.Write(w, binary.BigEndian, c.writeState)
+	binary.Write(w, binary.BigEndian, c.activeBank)
+	c.ramBankA.save(w)
+	c.ramBankB.save(w)
+	c.ramUpper.save(w)
+}
+
+func (c *cardLanguage) load(r io.Reader) {
+	binary.Read(r, binary.BigEndian, &c.readState)
+	binary.Read(r, binary.BigEndian, &c.writeState)
+	binary.Read(r, binary.BigEndian, &c.activeBank)
+	c.ramBankA.load(r)
+	c.ramBankB.load(r)
+	c.ramUpper.load(r)
+
+	c.applyState()
 }

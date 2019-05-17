@@ -12,15 +12,14 @@ type Apple2 struct {
 	mmu                 *memoryManager
 	io                  *ioC0Page
 	cg                  *CharacterGenerator
-	cards               []cardBase
 	isApple2e           bool
 	panicSS             bool
-	activeSlot          int // Slot that has the addressing 0xc800 to 0ccfff
 	commandChannel      chan int
-	cycleDurationNs     float64 // Inverse of the cpu clock in Ghz
+	cycleDurationNs     float64 // Current speed. Inverse of the cpu clock in Ghz
 	isColor             bool
 	fastMode            bool
 	fastRequestsCounter int
+	persistance         *persistance
 }
 
 const (
@@ -28,114 +27,6 @@ const (
 	CpuClockMhz     = 14.318 / 14
 	cpuClockEuroMhz = 14.238 / 14
 )
-
-// NewApple2 instantiates an apple2
-func NewApple2(romFile string, charRomFile string, clockMhz float64,
-	isColor bool, fastMode bool, panicSS bool) *Apple2 {
-	var a Apple2
-	a.mmu = newMemoryManager(&a)
-	a.cpu = core6502.NewNMOS6502(a.mmu)
-	a.mmu.loadRom(romFile)
-	if charRomFile != "" {
-		a.cg = NewCharacterGenerator(charRomFile)
-	}
-	a.commandChannel = make(chan int, 100)
-	a.isColor = isColor
-	a.fastMode = fastMode
-	a.panicSS = panicSS
-
-	if clockMhz <= 0 {
-		// Full speed
-		a.cycleDurationNs = 0
-	} else {
-		a.cycleDurationNs = 1000.0 / clockMhz
-	}
-
-	// Set the io in 0xc000
-	a.io = newIoC0Page(&a)
-	a.mmu.setPages(0xc0, 0xc0, a.io)
-
-	return &a
-}
-
-// AddDisk2 insterts a DiskII controller
-func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) {
-	d := newCardDisk2(diskRomFile)
-	d.cardBase.insert(a, slot)
-
-	if diskImage != "" {
-		diskette := loadDisquette(diskImage)
-		//diskette.saveNib(diskImage + "bak")
-		d.drive[0].insertDiskette(diskette)
-	}
-}
-
-// AddLanguageCard inserts a 16Kb card
-func (a *Apple2) AddLanguageCard(slot int) {
-	d := newCardLanguage()
-	d.cardBase.insert(a, slot)
-	d.applyState()
-}
-
-// AddSaturnCard inserts a 128Kb card
-func (a *Apple2) AddSaturnCard(slot int) {
-	d := newCardSaturn()
-	d.cardBase.insert(a, slot)
-	d.applyState()
-}
-
-// ConfigureStdConsole uses stdin and stdout to interface with the Apple2
-func (a *Apple2) ConfigureStdConsole(stdinKeyboard bool, stdoutScreen bool) {
-	if !stdinKeyboard && !stdoutScreen {
-		return
-	}
-
-	// Init frontend
-	fe := newAnsiConsoleFrontend(a, stdinKeyboard)
-	if stdinKeyboard {
-		a.io.setKeyboardProvider(fe)
-	}
-	if stdoutScreen {
-		go fe.textModeGoRoutine()
-	}
-}
-
-// SetKeyboardProvider attaches an external keyboard provider
-func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
-	a.io.setKeyboardProvider(kb)
-}
-
-// SetSpeakerProvider attaches an external keyboard provider
-func (a *Apple2) SetSpeakerProvider(s SpeakerProvider) {
-	a.io.setSpeakerProvider(s)
-}
-
-const (
-	// CommandToggleSpeed toggles cpu speed between full speed and actual Apple II speed
-	CommandToggleSpeed = iota + 1
-	// CommandToggleColor toggles between NTSC color TV and Green phospor monitor
-	CommandToggleColor
-)
-
-// SendCommand enqueues a command to the emulator thread
-func (a *Apple2) SendCommand(command int) {
-	a.commandChannel <- command
-}
-
-func (a *Apple2) executeCommand(command int) {
-	switch command {
-	case CommandToggleSpeed:
-		if a.cycleDurationNs == 0 {
-			fmt.Println("Slow")
-			a.cycleDurationNs = 1000.0 / CpuClockMhz
-		} else {
-			fmt.Println("Fast")
-			a.cycleDurationNs = 0
-		}
-	case CommandToggleColor:
-		a.isColor = !a.isColor
-	}
-}
 
 const maxWaitDuration = 100 * time.Millisecond
 
@@ -164,8 +55,8 @@ func (a *Apple2) Run(log bool) {
 			clockDuration := time.Since(referenceTime)
 			simulatedDuration := time.Duration(float64(a.cpu.GetCycles()) * a.cycleDurationNs)
 			waitDuration := simulatedDuration - clockDuration
-			if waitDuration > maxWaitDuration {
-				// We have to wait too long. Let's fast forward
+			if waitDuration > maxWaitDuration || -waitDuration > maxWaitDuration {
+				// We have to wait too long or are too much behind. Let's fast forward
 				referenceTime = referenceTime.Add(-waitDuration)
 				waitDuration = 0
 			}
@@ -176,11 +67,42 @@ func (a *Apple2) Run(log bool) {
 	}
 }
 
-// LoadRom loads a binary file to the top of the memory.
 const (
-	apple2RomSize  = 12 * 1024
-	apple2eRomSize = 16 * 1024
+	// CommandToggleSpeed toggles cpu speed between full speed and actual Apple II speed
+	CommandToggleSpeed = iota + 1
+	// CommandToggleColor toggles between NTSC color TV and Green phospor monitor
+	CommandToggleColor
+	// CommandSaveState stores the state to file
+	CommandSaveState
+	// CommandLoadState reload the last state
+	CommandLoadState
 )
+
+// SendCommand enqueues a command to the emulator thread
+func (a *Apple2) SendCommand(command int) {
+	a.commandChannel <- command
+}
+
+func (a *Apple2) executeCommand(command int) {
+	switch command {
+	case CommandToggleSpeed:
+		if a.cycleDurationNs == 0 {
+			fmt.Println("Slow")
+			a.cycleDurationNs = 1000.0 / CpuClockMhz
+		} else {
+			fmt.Println("Fast")
+			a.cycleDurationNs = 0
+		}
+	case CommandToggleColor:
+		a.isColor = !a.isColor
+	case CommandSaveState:
+		fmt.Println("Saving state")
+		a.persistance.save("apple2.state")
+	case CommandLoadState:
+		fmt.Println("Loading state")
+		a.persistance.load("apple2.state")
+	}
+}
 
 func (a *Apple2) requestFastMode() {
 	// Note: if the fastMode is shorter than maxWaitDuration, there won't be any gain.

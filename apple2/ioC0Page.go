@@ -1,7 +1,9 @@
 package apple2
 
 import (
+	"encoding/binary"
 	"fmt"
+	"io"
 )
 
 type ioC0Page struct {
@@ -45,6 +47,14 @@ func newIoC0Page(a *Apple2) *ioC0Page {
 	}
 
 	return &io
+}
+
+func (p *ioC0Page) save(w io.Writer) {
+	binary.Write(w, binary.BigEndian, p.softSwitchesData)
+}
+
+func (p *ioC0Page) load(r io.Reader) {
+	binary.Read(r, binary.BigEndian, &p.softSwitchesData)
 }
 
 func (p *ioC0Page) addSoftSwitchRW(address uint8, ss softSwitchR) {

@@ -1,5 +1,10 @@
 package apple2
 
+import (
+	"encoding/binary"
+	"io"
+)
+
 type memoryRange struct {
 	base uint16
 	data []uint8
@@ -22,4 +27,14 @@ func (m *memoryRange) poke(address uint16, value uint8) {
 
 func (m *memoryRange) subRange(a, b uint16) []uint8 {
 	return m.data[a-m.base : b-m.base]
+}
+
+func (m *memoryRange) save(w io.Writer) {
+	binary.Write(w, binary.BigEndian, m.base)
+	binary.Write(w, binary.BigEndian, m.data)
+}
+
+func (m *memoryRange) load(r io.Reader) {
+	binary.Read(r, binary.BigEndian, &m.base)
+	binary.Read(r, binary.BigEndian, &m.data)
 }

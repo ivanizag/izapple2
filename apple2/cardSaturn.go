@@ -1,5 +1,10 @@
 package apple2
 
+import (
+	"encoding/binary"
+	"io"
+)
+
 /*
 
 RAM card with 128Kb. It's like 8 language cards.
@@ -14,9 +19,9 @@ type cardSaturn struct {
 	writeState  int
 	activeBank  int
 	activeBlock int
-	ramBankA    [8]*memoryRange // First 4kb to map in 0xD000-0xDFFF
-	ramBankB    [8]*memoryRange // Second 4kb to map in 0xD000-0xDFFF
-	ramUpper    [8]*memoryRange // Upper 8kb to map in 0xE000-0xFFFF
+	ramBankA    [saturnBlocks]*memoryRange // First 4kb to map in 0xD000-0xDFFF
+	ramBankB    [saturnBlocks]*memoryRange // Second 4kb to map in 0xD000-0xDFFF
+	ramUpper    [saturnBlocks]*memoryRange // Upper 8kb to map in 0xE000-0xFFFF
 }
 
 const (
@@ -26,13 +31,17 @@ const (
 	saturnWriteEnabled     = 2
 )
 
+const (
+	saturnBlocks = 8
+)
+
 func newCardSaturn() *cardSaturn {
 	var c cardSaturn
 	c.readState = false
 	c.writeState = lcWriteEnabled
 	c.activeBank = 1
 
-	for i := 0; i < 8; i++ {
+	for i := 0; i < saturnBlocks; i++ {
 		c.ramBankA[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
 		c.ramBankB[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
 		c.ramUpper[i] = newMemoryRange(0xe000, make([]uint8, 0x2000))
@@ -102,13 +111,13 @@ func (c *cardSaturn) ssAction(ss int) {
 		c.readState = true
 		c.writeState++
 	case 12:
-		c.activeBlock = 0
+		c.activeBlock = 4
 	case 13:
-		c.activeBlock = 1
+		c.activeBlock = 5
 	case 14:
-		c.activeBlock = 2
+		c.activeBlock = 6
 	case 15:
-		c.activeBlock = 3
+		c.activeBlock = 7
 	}
 
 	if c.writeState > lcWriteEnabled {
@@ -142,5 +151,30 @@ func (c *cardSaturn) applyState() {
 	} else {
 		mmu.setPagesWrite(0xd0, 0xff, nil)
 	}
+}
 
+func (c *cardSaturn) save(w io.Writer) {
+	for i := 0; i < saturnBlocks; i++ {
+		binary.Write(w, binary.BigEndian, c.readState)
+		binary.Write(w, binary.BigEndian, c.writeState)
+		binary.Write(w, binary.BigEndian, c.activeBank)
+		binary.Write(w, binary.BigEndian, c.activeBlock)
+		c.ramBankA[i].save(w)
+		c.ramBankB[i].save(w)
+		c.ramUpper[i].save(w)
+	}
+}
+
+func (c *cardSaturn) load(r io.Reader) {
+	for i := 0; i < saturnBlocks; i++ {
+		binary.Read(r, binary.BigEndian, &c.readState)
+		binary.Read(r, binary.BigEndian, &c.writeState)
+		binary.Read(r, binary.BigEndian, &c.activeBank)
+		binary.Read(r, binary.BigEndian, &c.activeBlock)
+		c.ramBankA[i].load(r)
+		c.ramBankB[i].load(r)
+		c.ramUpper[i].load(r)
+
+		c.applyState()
+	}
 }

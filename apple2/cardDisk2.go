@@ -1,6 +1,10 @@
 package apple2
 
-import "io/ioutil"
+import (
+	"encoding/binary"
+	"io"
+	"io/ioutil"
+)
 
 /*
 https://applesaucefdc.com/woz/reference2/
@@ -147,4 +151,32 @@ func loadCardRom(filename string) []uint8 {
 
 func (d *cardDisk2Drive) insertDiskette(dt *diskette16sector) {
 	d.diskette = dt
+}
+
+func (c *cardDisk2) save(w io.Writer) {
+	binary.Write(w, binary.BigEndian, c.selected)
+	c.drive[0].save(w)
+	c.drive[1].save(w)
+}
+
+func (c *cardDisk2) load(r io.Reader) {
+	binary.Read(r, binary.BigEndian, &c.selected)
+	c.drive[0].load(r)
+	c.drive[1].load(r)
+}
+
+func (d *cardDisk2Drive) save(w io.Writer) {
+	binary.Write(w, binary.BigEndian, d.currentPhase)
+	binary.Write(w, binary.BigEndian, d.power)
+	binary.Write(w, binary.BigEndian, d.writeMode)
+	binary.Write(w, binary.BigEndian, d.halfTrack)
+	binary.Write(w, binary.BigEndian, d.position)
+}
+
+func (d *cardDisk2Drive) load(r io.Reader) {
+	binary.Read(r, binary.BigEndian, &d.currentPhase)
+	binary.Read(r, binary.BigEndian, &d.power)
+	binary.Read(r, binary.BigEndian, &d.writeMode)
+	binary.Read(r, binary.BigEndian, &d.halfTrack)
+	binary.Read(r, binary.BigEndian, &d.position)
 }

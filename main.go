@@ -18,7 +18,7 @@ func main() {
 	disk2Slot := flag.Int(
 		"disk2Slot",
 		6,
-		"slot for the disk driver. 0 for none.")
+		"slot for the disk driver. -1 for none.")
 	diskImage := flag.String(
 		"disk",
 		"../dos33.dsk",
@@ -31,6 +31,15 @@ func main() {
 		"charRom",
 		"apple2/romdumps/Apple2rev7CharGen.rom",
 		"rom file for the disk drive controller")
+	languageCardSlot := flag.Int(
+		"languageCardSlot",
+		0,
+		"slot for the 16kb language card. -1 for none")
+	saturnCardSlot := flag.Int(
+		"saturnCardSlot",
+		-1,
+		"slot for the 256kb Saturn card. -1 for none")
+
 	useSdl := flag.Bool(
 		"sdl",
 		true,
@@ -69,9 +78,13 @@ func main() {
 
 	log := false
 	a := apple2.NewApple2(*romFile, *charRomFile, *cpuClock, !*mono, *fastDisk, *panicSS)
-	//a.AddLanguageCard(0)
-	a.AddSaturnCard(0)
-	if *disk2Slot > 0 {
+	if *languageCardSlot >= 0 {
+		a.AddLanguageCard(*languageCardSlot)
+	}
+	if *saturnCardSlot >= 0 {
+		a.AddSaturnCard(*saturnCardSlot)
+	}
+	if *disk2Slot >= 0 {
 		a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
 	}
 	if *useSdl {

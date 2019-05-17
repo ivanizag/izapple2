@@ -1,6 +1,7 @@
 package apple2
 
 import (
+	"io"
 	"io/ioutil"
 )
 
@@ -91,17 +92,34 @@ func (mmu *memoryManager) resetSlotExpansionRoms() {
 	mmu.setPagesRead(0xc8, 0xcf, nil)
 }
 
-func newMemoryManager(a *Apple2) *memoryManager {
+func (mmu *memoryManager) resetRomPaging() {
+	// Assign the first 12kb of ROM from 0xd000 to 0xffff
+	mmu.setPagesRead(0xd0, 0xff, mmu.physicalROM)
+}
+
+func (mmu *memoryManager) resetBaseRamPaging() {
+	// Assign the base RAM from 0x0000 to 0xbfff
+	mmu.setPages(0x00, 0xbf, mmu.physicalMainRAM)
+}
+
+func newMemoryManager(a *Apple2, romFile string) *memoryManager {
 	var mmu memoryManager
 	mmu.apple2 = a
 
-	// Assign RAM from 0x0000 to 0xbfff, 48kb
-	ram := make([]uint8, 0xc000)
+	ram := make([]uint8, 0xc000) // Reserve 48kb
 	mmu.physicalMainRAM = newMemoryRange(0, ram)
-	mmu.setPages(0x00, 0xc0, mmu.physicalMainRAM)
+
+	mmu.loadRom(romFile)
+	mmu.resetBaseRamPaging()
+	mmu.resetRomPaging()
 
 	return &mmu
 }
+
+const (
+	apple2RomSize  = 12 * 1024
+	apple2eRomSize = 16 * 1024
+)
 
 func (mmu *memoryManager) loadRom(filename string) {
 	data, err := ioutil.ReadFile(filename)
@@ -120,17 +138,18 @@ func (mmu *memoryManager) loadRom(filename string) {
 		// It starts with 256 unused bytes not mapped to 0xc000.
 		a.isApple2e = true
 		extraRomSize := apple2eRomSize - apple2RomSize
-		a.mmu.physicalROMe = newMemoryRange(0xc000, data[0:extraRomSize])
+		mmu.physicalROMe = newMemoryRange(0xc000, data[0:extraRomSize])
 		romStart = extraRomSize
 	}
 
-	a.mmu.physicalROM = newMemoryRange(0xd000, data[romStart:])
-	mmu.resetRomPaging()
+	mmu.physicalROM = newMemoryRange(0xd000, data[romStart:])
 }
 
-func (mmu *memoryManager) resetRomPaging() {
-	// Assign the first 12kb of ROM from 0xd000 to 0xfff
-	for i := 0x0000; i < 0x3000; i = i + 0x100 {
-		mmu.setPagesRead(0xd0, 0xff, mmu.physicalROM)
-	}
+func (mmu *memoryManager) save(w io.Writer) {
+	mmu.physicalMainRAM.save(w)
+}
+
+func (mmu *memoryManager) load(r io.Reader) {
+	mmu.physicalMainRAM.load(r)
+	mmu.resetBaseRamPaging()
 }

@@ -1,6 +1,10 @@
 package core6502
 
-import "fmt"
+import (
+	"encoding/binary"
+	"fmt"
+	"io"
+)
 
 // https://www.masswerk.at/6502/6502_instruction_set.html
 // http://www.emulator101.com/reference/6502-reference.html
@@ -76,6 +80,18 @@ func (s *State) Reset() {
 // GetCycles returns the count of CPU cycles since last reset.
 func (s *State) GetCycles() uint64 {
 	return s.cycles
+}
+
+// Save saves the CPU state (registers and cycle counter)
+func (s *State) Save(w io.Writer) {
+	binary.Write(w, binary.BigEndian, s.cycles)
+	binary.Write(w, binary.BigEndian, s.reg.data)
+}
+
+// Load loads the CPU state (registers and cycle counter)
+func (s *State) Load(r io.Reader) {
+	binary.Read(r, binary.BigEndian, &s.cycles)
+	binary.Read(r, binary.BigEndian, &s.reg.data)
 }
 
 func lineString(line []uint8, opcode opcode) string {

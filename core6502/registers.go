@@ -6,9 +6,10 @@ const (
 	regA    = 0
 	regX    = 1
 	regY    = 2
-	regP    = 4
-	regSP   = 5
-	regPC   = 6 // 2 bytes
+	regP    = 3
+	regSP   = 4
+	regPC   = 5 // 2 bytes
+	regPC2  = 6
 	regNone = -1
 )
 
@@ -24,7 +25,7 @@ const (
 )
 
 type registers struct {
-	data [8]uint8
+	data [7]uint8
 }
 
 func (r *registers) getRegister(i int) uint8 { return r.data[i] }
@@ -45,12 +46,12 @@ func (r *registers) setP(v uint8)  { r.setRegister(regP, v) }
 func (r *registers) setSP(v uint8) { r.setRegister(regSP, v) }
 
 func (r *registers) getPC() uint16 {
-	return uint16(r.data[regPC])*256 + uint16(r.data[regPC+1])
+	return uint16(r.data[regPC])*256 + uint16(r.data[regPC2])
 }
 
 func (r *registers) setPC(v uint16) {
 	r.data[regPC] = uint8(v >> 8)
-	r.data[regPC+1] = uint8(v)
+	r.data[regPC2] = uint8(v)
 }
 
 func (r *registers) getFlagBit(i uint8) uint8 {
