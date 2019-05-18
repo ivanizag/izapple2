@@ -87,6 +87,10 @@ func main() {
 	if *disk2Slot >= 0 {
 		a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
 	}
+
+	//a.AddCardInOut(2)
+	//a.AddCardLogger(4)
+
 	if *useSdl {
 		a.ConfigureStdConsole(false, *stdoutScreen)
 		apple2sdl.SDLRun(a)

@@ -39,9 +39,10 @@ func (a *Apple2) Run(log bool) {
 	// Start the processor
 	a.cpu.Reset()
 	referenceTime := time.Now()
+
 	for {
 		// Run a 6502 step
-		a.cpu.ExecuteInstruction(log)
+		a.cpu.ExecuteInstruction(log && a.cycleDurationNs != 0)
 
 		// Execute meta commands
 		commandsPending := true
@@ -80,6 +81,8 @@ const (
 	CommandSaveState
 	// CommandLoadState reload the last state
 	CommandLoadState
+	// CommandDumpDebugInfo dumps usefull info
+	CommandDumpDebugInfo
 )
 
 // SendCommand enqueues a command to the emulator thread
@@ -105,6 +108,8 @@ func (a *Apple2) executeCommand(command int) {
 	case CommandLoadState:
 		fmt.Println("Loading state")
 		a.load("apple2.state")
+	case CommandDumpDebugInfo:
+		a.dumpDebugInfo()
 	}
 }
 
@@ -170,5 +175,21 @@ func (a *Apple2) load(filename string) {
 			c.load(r)
 
 		}
+	}
+}
+
+func (a *Apple2) dumpDebugInfo() {
+	// See "Apple II Monitors Peeled"
+	pageZeroSymbols := map[int]string{
+		0x36: "CSWL",
+		0x37: "CSWH",
+		0x38: "KSWL",
+		0x39: "KSWH",
+	}
+
+	fmt.Printf("Page zero values:\n")
+	for _, k := range []int{0x36, 0x37, 0x38, 0x39} {
+		d := a.mmu.physicalMainRAM.data[k]
+		fmt.Printf("  %v(0x%x): 0x%02x\n", pageZeroSymbols[k], k, d)
 	}
 }

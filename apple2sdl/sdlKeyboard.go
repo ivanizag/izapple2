@@ -97,6 +97,8 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		k.a.SendCommand(apple2.CommandSaveState)
 	case sdl.K_F8:
 		k.a.SendCommand(apple2.CommandLoadState)
+	case sdl.K_F9:
+		k.a.SendCommand(apple2.CommandDumpDebugInfo)
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_

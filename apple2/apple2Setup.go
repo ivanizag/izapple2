@@ -60,6 +60,16 @@ func (a *Apple2) AddSaturnCard(slot int) {
 	a.insertCard(&cardSaturn{}, slot)
 }
 
+// AddCardLogger inserts a fake card that logs accesses
+func (a *Apple2) AddCardLogger(slot int) {
+	a.insertCard(&cardLogger{}, slot)
+}
+
+// AddCardInOut inserts a fake card that interfaces with the emulator host
+func (a *Apple2) AddCardInOut(slot int) {
+	a.insertCard(&cardInOut{}, slot)
+}
+
 // ConfigureStdConsole uses stdin and stdout to interface with the Apple2
 func (a *Apple2) ConfigureStdConsole(stdinKeyboard bool, stdoutScreen bool) {
 	if !stdinKeyboard && !stdoutScreen {
