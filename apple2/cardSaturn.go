@@ -35,8 +35,7 @@ const (
 	saturnBlocks = 8
 )
 
-func newCardSaturn() *cardSaturn {
-	var c cardSaturn
+func (c *cardSaturn) assign(a *Apple2, slot int) {
 	c.readState = false
 	c.writeState = lcWriteEnabled
 	c.activeBank = 1
@@ -57,7 +56,8 @@ func newCardSaturn() *cardSaturn {
 			c.writeState = lcWriteDisabled
 		}
 	}
-	return &c
+	c.cardBase.assign(a, slot)
+	c.applyState()
 }
 
 func (c *cardSaturn) ssAction(ss int) {
@@ -163,6 +163,7 @@ func (c *cardSaturn) save(w io.Writer) {
 		c.ramBankB[i].save(w)
 		c.ramUpper[i].save(w)
 	}
+	c.cardBase.save(w)
 }
 
 func (c *cardSaturn) load(r io.Reader) {
@@ -177,4 +178,5 @@ func (c *cardSaturn) load(r io.Reader) {
 
 		c.applyState()
 	}
+	c.cardBase.load(r)
 }

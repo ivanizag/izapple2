@@ -3,7 +3,6 @@ package apple2
 import (
 	"encoding/binary"
 	"io"
-	"io/ioutil"
 )
 
 /*
@@ -32,10 +31,7 @@ type cardDisk2Drive struct {
 	position     int
 }
 
-func newCardDisk2(filename string) *cardDisk2 {
-	var c cardDisk2
-	c.rom = newMemoryRange(0, loadCardRom(filename))
-
+func (c *cardDisk2) assign(a *Apple2, slot int) {
 	// Phase control soft switches
 	// Lazy emulation. It only checks for phases on and move the head
 	// up or down depending on the previous phase.
@@ -138,15 +134,8 @@ func newCardDisk2(filename string) *cardDisk2 {
 		//fmt.Printf("DISKII: Set write mode\n")
 		return 0
 	}
-	return &c
-}
 
-func loadCardRom(filename string) []uint8 {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	return data
+	c.cardBase.assign(a, slot)
 }
 
 func (d *cardDisk2Drive) insertDiskette(dt *diskette16sector) {

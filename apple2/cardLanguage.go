@@ -45,8 +45,7 @@ const (
 	lcWriteEnabled     = 2
 )
 
-func newCardLanguage() *cardLanguage {
-	var c cardLanguage
+func (c *cardLanguage) assign(a *Apple2, slot int) {
 	c.readState = false
 	c.writeState = lcWriteEnabled
 	c.activeBank = 1
@@ -66,7 +65,9 @@ func newCardLanguage() *cardLanguage {
 			c.writeState = lcWriteDisabled
 		}
 	}
-	return &c
+
+	c.cardBase.assign(a, slot)
+	c.applyState()
 }
 
 func (c *cardLanguage) ssAction(ss int) {
@@ -131,6 +132,8 @@ func (c *cardLanguage) save(w io.Writer) {
 	c.ramBankA.save(w)
 	c.ramBankB.save(w)
 	c.ramUpper.save(w)
+
+	c.cardBase.save(w)
 }
 
 func (c *cardLanguage) load(r io.Reader) {
@@ -142,4 +145,5 @@ func (c *cardLanguage) load(r io.Reader) {
 	c.ramUpper.load(r)
 
 	c.applyState()
+	c.cardBase.load(r)
 }

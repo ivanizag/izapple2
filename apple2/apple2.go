@@ -1,8 +1,12 @@
 package apple2
 
 import (
+	"bufio"
+	"encoding/binary"
 	"fmt"
 	"go6502/core6502"
+	"io"
+	"os"
 	"time"
 )
 
@@ -12,6 +16,7 @@ type Apple2 struct {
 	mmu                 *memoryManager
 	io                  *ioC0Page
 	cg                  *CharacterGenerator
+	cards               [8]card
 	isApple2e           bool
 	panicSS             bool
 	commandChannel      chan int
@@ -19,7 +24,6 @@ type Apple2 struct {
 	isColor             bool
 	fastMode            bool
 	fastRequestsCounter int
-	persistance         *persistance
 }
 
 const (
@@ -97,10 +101,10 @@ func (a *Apple2) executeCommand(command int) {
 		a.isColor = !a.isColor
 	case CommandSaveState:
 		fmt.Println("Saving state")
-		a.persistance.save("apple2.state")
+		a.save("apple2.state")
 	case CommandLoadState:
 		fmt.Println("Loading state")
-		a.persistance.load("apple2.state")
+		a.load("apple2.state")
 	}
 }
 
@@ -114,5 +118,57 @@ func (a *Apple2) requestFastMode() {
 func (a *Apple2) releaseFastMode() {
 	if a.fastMode {
 		a.fastRequestsCounter--
+	}
+}
+
+type persistent interface {
+	save(io.Writer)
+	load(io.Reader)
+}
+
+func (a *Apple2) save(filename string) {
+	f, err := os.Create(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	w := bufio.NewWriter(f)
+	defer w.Flush()
+
+	a.cpu.Save(w)
+	a.mmu.save(w)
+	a.io.save(w)
+	binary.Write(w, binary.BigEndian, a.isColor)
+	binary.Write(w, binary.BigEndian, a.fastMode)
+	binary.Write(w, binary.BigEndian, a.fastRequestsCounter)
+
+	for _, c := range a.cards {
+		if c != nil {
+			c.save(w)
+		}
+	}
+}
+
+func (a *Apple2) load(filename string) {
+	f, err := os.Open(filename)
+	if err != nil {
+		// Ignore error if can't load the file
+		return
+	}
+	defer f.Close()
+	r := bufio.NewReader(f)
+
+	a.cpu.Load(r)
+	a.mmu.load(r)
+	a.io.load(r)
+	binary.Read(r, binary.BigEndian, &a.isColor)
+	binary.Read(r, binary.BigEndian, &a.fastMode)
+	binary.Read(r, binary.BigEndian, &a.fastRequestsCounter)
+
+	for _, c := range a.cards {
+		if c != nil {
+			c.load(r)
+
+		}
 	}
 }

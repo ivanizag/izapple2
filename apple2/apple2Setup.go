@@ -8,9 +8,7 @@ import (
 func NewApple2(romFile string, charRomFile string, clockMhz float64,
 	isColor bool, fastMode bool, panicSS bool) *Apple2 {
 	var a Apple2
-	a.persistance = newPersistance(&a)
 	a.mmu = newMemoryManager(&a, romFile)
-	a.persistance.register(a.mmu)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
 	if charRomFile != "" {
 		a.cg = NewCharacterGenerator(charRomFile)
@@ -29,39 +27,37 @@ func NewApple2(romFile string, charRomFile string, clockMhz float64,
 
 	// Set the io in 0xc000
 	a.io = newIoC0Page(&a)
-	a.persistance.register(a.io)
 	a.mmu.setPages(0xc0, 0xc0, a.io)
 
 	return &a
 }
 
+func (a *Apple2) insertCard(c card, slot int) {
+	c.assign(a, slot)
+	a.cards[slot] = c
+}
+
 // AddDisk2 insterts a DiskII controller
 func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) {
-	d := newCardDisk2(diskRomFile)
-	d.cardBase.insert(a, slot)
-	a.persistance.register(d)
+	var c cardDisk2
+	c.loadRom(diskRomFile)
+	a.insertCard(&c, slot)
 
 	if diskImage != "" {
 		diskette := loadDisquette(diskImage)
 		//diskette.saveNib(diskImage + "bak")
-		d.drive[0].insertDiskette(diskette)
+		c.drive[0].insertDiskette(diskette)
 	}
 }
 
 // AddLanguageCard inserts a 16Kb card
 func (a *Apple2) AddLanguageCard(slot int) {
-	d := newCardLanguage()
-	d.cardBase.insert(a, slot)
-	d.applyState()
-	a.persistance.register(d)
+	a.insertCard(&cardLanguage{}, slot)
 }
 
 // AddSaturnCard inserts a 128Kb card
 func (a *Apple2) AddSaturnCard(slot int) {
-	d := newCardSaturn()
-	d.cardBase.insert(a, slot)
-	d.applyState()
-	a.persistance.register(d)
+	a.insertCard(&cardSaturn{}, slot)
 }
 
 // ConfigureStdConsole uses stdin and stdout to interface with the Apple2
