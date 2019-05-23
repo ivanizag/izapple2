@@ -5,9 +5,10 @@ import (
 	"os"
 )
 
-/* Info from:
-"Beneath Apple DOS" https://fabiensanglard.net/fd_proxy/prince_of_persia/Beneath%20Apple%20DOS.pdf
-https://github.com/TomHarte/CLK/wiki/Apple-GCR-disk-encoding
+/*
+See:
+	"Beneath Apple DOS" https://fabiensanglard.net/fd_proxy/prince_of_persia/Beneath%20Apple%20DOS.pdf
+	https://github.com/TomHarte/CLK/wiki/Apple-GCR-disk-encoding
 */
 
 const (
@@ -29,6 +30,11 @@ func (d *diskette16sector) read(track int, position int) (value uint8, newPositi
 	value = d.track[track][position]
 	newPosition = (position + 1) % nibBytesPerTrack
 	return
+}
+
+func (d *diskette16sector) write(track int, position int, value uint8) int {
+	d.track[track][position] = value
+	return (position + 1) % nibBytesPerTrack
 }
 
 func loadDisquette(filename string) *diskette16sector {
