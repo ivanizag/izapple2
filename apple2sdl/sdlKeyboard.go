@@ -66,8 +66,10 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	switch key.Sym {
 	case sdl.K_ESCAPE:
 		result = 27
-	case sdl.K_BACKSPACE:
+	case sdl.K_DELETE:
 		result = 24
+	case sdl.K_BACKSPACE:
+		result = 8
 	case sdl.K_RETURN:
 		result = 13
 	case sdl.K_RETURN2:
