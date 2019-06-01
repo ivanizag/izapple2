@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"encoding/binary"
 	"fmt"
-	"go6502/core6502"
 	"io"
 	"os"
 	"time"
+
+	"github.com/ivanizag/apple2/core6502"
 )
 
 // Apple2 represents all the components and state of the emulated machine

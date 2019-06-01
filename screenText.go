@@ -1,8 +1,10 @@
 package apple2
 
 import (
+	"fmt"
 	"image"
 	"image/color"
+	"strings"
 	"time"
 )
 
@@ -72,4 +74,70 @@ func snapshotTextMode(a *Apple2, page int, mixMode bool, light color.Color) *ima
 	}
 
 	return img
+}
+
+// DumpTextModeAnsi returns the text mode contents using ANSI escape codes
+// for reverse and flash
+func DumpTextModeAnsi(a *Apple2) string {
+	content := "\n"
+	content += fmt.Sprintln(strings.Repeat("#", textColumns+4))
+
+	pageIndex := 0
+	if a.io.isSoftSwitchActive(ioFlagSecondPage) {
+		pageIndex = 1
+	}
+	isAltText := a.isApple2e && a.io.isSoftSwitchActive(ioFlagAltChar)
+
+	for l := 0; l < textLines; l++ {
+		line := ""
+		for c := 0; c < textColumns; c++ {
+			char := getTextChar(a, c, l, pageIndex)
+			line += textMemoryByteToString(char, isAltText)
+		}
+		content += fmt.Sprintf("# %v #\n", line)
+	}
+
+	content += fmt.Sprintln(strings.Repeat("#", textColumns+4))
+	return content
+}
+
+func textMemoryByteToString(value uint8, isAltCharSet bool) string {
+	// See https://en.wikipedia.org/wiki/Apple_II_character_set
+	// Supports the new lowercase characters in the Apple2e
+	// Only ascii from 0x20 to 0x5F is visible
+	topBits := value >> 6
+	isInverse := topBits == 0
+	isFlash := topBits == 1
+	if isFlash && isAltCharSet {
+		// On the Apple2e with lowercase chars there is not flash mode.
+		isFlash = false
+		isInverse = true
+	}
+
+	if isAltCharSet {
+		value = value & 0x7F
+	} else {
+		value = value & 0x3F
+	}
+
+	if value < 0x20 {
+		value += 0x40
+	}
+
+	if value == 0x7f {
+		// DEL is full box
+		value = '_'
+	}
+
+	if isFlash {
+		if value == ' ' {
+			// Flashing space in Apple is the full box. It can't be done with ANSI codes
+			value = '_'
+		}
+		return fmt.Sprintf("\033[5m%v\033[0m", string(value))
+	} else if isInverse {
+		return fmt.Sprintf("\033[7m%v\033[0m", string(value))
+	} else {
+		return string(value)
+	}
 }

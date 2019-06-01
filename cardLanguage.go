@@ -15,7 +15,7 @@ be used in slot 0 anyway.
 Note also that language cards for the Apple ][ had ROM on
 board to replace the main board F8 ROM with Autostart. That
 was not used/needed on the Apple ][+. As this emulates the
-Apple ][+, it is not considered. For the PLus it is often
+Apple ][+, it is not considered. For the Plus it is often
 refered as Language card but it is really a 16 KB Ram card,
 
 

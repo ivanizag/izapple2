@@ -1,4 +1,4 @@
-package apple2sdl
+package main
 
 /*
 typedef unsigned char Uint8;
@@ -7,10 +7,10 @@ void SpeakerCallback(void *userdata, Uint8 *stream, int len);
 import "C"
 import (
 	"fmt"
-	"go6502/apple2"
 	"reflect"
 	"unsafe"
 
+	"github.com/ivanizag/apple2"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -34,9 +34,9 @@ type sdlSpeaker struct {
 I have not found a way to encode the pointer to sdlSpeaker on the userdata of
 the call to SpeakerCallback(). I use a global as workaround...
 */
-var theSdlSpeaker *sdlSpeaker
+var theSDLSpeaker *sdlSpeaker
 
-func newSdlSpeaker() *sdlSpeaker {
+func newSDLSpeaker() *sdlSpeaker {
 	var s sdlSpeaker
 	s.clickChannel = make(chan uint64, bufferSize)
 	s.pendingClicks = make([]uint64, 0, bufferSize)
@@ -57,7 +57,7 @@ func stateToLevel(state bool) C.Uint8 {
 
 //export SpeakerCallback
 func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
-	s := theSdlSpeaker
+	s := theSDLSpeaker
 	if s == nil {
 		return
 	}
@@ -152,7 +152,7 @@ func (s *sdlSpeaker) start() {
 		return
 	}
 	sdl.PauseAudio(false)
-	theSdlSpeaker = s
+	theSDLSpeaker = s
 }
 
 func (s *sdlSpeaker) close() {

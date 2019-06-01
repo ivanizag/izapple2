@@ -1,9 +1,9 @@
-package apple2sdl
+package main
 
 import (
-	"go6502/apple2"
 	"unicode/utf8"
 
+	"github.com/ivanizag/apple2"
 	"github.com/veandco/go-sdl2/sdl"
 )
 

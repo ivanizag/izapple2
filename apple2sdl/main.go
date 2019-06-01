@@ -1,16 +1,20 @@
-package apple2sdl
+package main
 
 import (
 	"unsafe"
 
+	"github.com/ivanizag/apple2"
 	"github.com/veandco/go-sdl2/sdl"
-
-	"go6502/apple2"
 )
+
+func main() {
+	a := apple2.MainApple()
+	SDLRun(a)
+}
 
 // SDLRun starts the Apple2 emulator on SDL
 func SDLRun(a *apple2.Apple2) {
-	s := newSdlSpeaker()
+	s := newSDLSpeaker()
 	s.start()
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(4*40*7, 4*24*8,

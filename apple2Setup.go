@@ -1,8 +1,6 @@
 package apple2
 
-import (
-	"go6502/core6502"
-)
+import "github.com/ivanizag/apple2/core6502"
 
 // NewApple2 instantiates an apple2
 func NewApple2(romFile string, charRomFile string, clockMhz float64,
@@ -68,22 +66,6 @@ func (a *Apple2) AddCardLogger(slot int) {
 // AddCardInOut inserts a fake card that interfaces with the emulator host
 func (a *Apple2) AddCardInOut(slot int) {
 	a.insertCard(&cardInOut{}, slot)
-}
-
-// ConfigureStdConsole uses stdin and stdout to interface with the Apple2
-func (a *Apple2) ConfigureStdConsole(stdinKeyboard bool, stdoutScreen bool) {
-	if !stdinKeyboard && !stdoutScreen {
-		return
-	}
-
-	// Init frontend
-	fe := newAnsiConsoleFrontend(a, stdinKeyboard)
-	if stdinKeyboard {
-		a.io.setKeyboardProvider(fe)
-	}
-	if stdoutScreen {
-		go fe.textModeGoRoutine()
-	}
 }
 
 // SetKeyboardProvider attaches an external keyboard provider
