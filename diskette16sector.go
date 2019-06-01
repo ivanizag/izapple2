@@ -1,7 +1,6 @@
 package apple2
 
 import (
-	"io/ioutil"
 	"os"
 )
 
@@ -40,10 +39,7 @@ func (d *diskette16sector) write(track int, position int, value uint8) int {
 func loadDisquette(filename string) *diskette16sector {
 	var d diskette16sector
 
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
+	data := loadResource(filename)
 	size := len(data)
 
 	if size == nibImageSize {

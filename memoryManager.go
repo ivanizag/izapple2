@@ -2,7 +2,6 @@ package apple2
 
 import (
 	"io"
-	"io/ioutil"
 )
 
 // See https://fabiensanglard.net/fd_proxy/prince_of_persia/Inside%20the%20Apple%20IIe.pdf
@@ -122,10 +121,7 @@ const (
 )
 
 func (mmu *memoryManager) loadRom(filename string) {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
+	data := loadResource(filename)
 	size := len(data)
 	if size != apple2RomSize && size != apple2eRomSize {
 		panic("Rom size not supported")

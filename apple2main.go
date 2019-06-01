@@ -9,11 +9,11 @@ import (
 func MainApple() *Apple2 {
 	romFile := flag.String(
 		"rom",
-		"../romdumps/Apple2_Plus.rom",
+		"<internal>/Apple2_Plus.rom",
 		"main rom file")
 	disk2RomFile := flag.String(
 		"diskRom",
-		"../romdumps/DISK2.rom",
+		"<internal>/DISK2.rom",
 		"rom file for the disk drive controller")
 	disk2Slot := flag.Int(
 		"disk2Slot",
@@ -21,7 +21,7 @@ func MainApple() *Apple2 {
 		"slot for the disk driver. -1 for none.")
 	diskImage := flag.String(
 		"disk",
-		"../romdumps/dos33.dsk",
+		"<internal>/dos33.dsk",
 		"file to load on the first disk drive")
 	cpuClock := flag.Float64(
 		"mhz",
@@ -29,7 +29,7 @@ func MainApple() *Apple2 {
 		"cpu speed in Mhz, use 0 for full speed. Use F5 to toggle.")
 	charRomFile := flag.String(
 		"charRom",
-		"../romdumps/Apple2rev7CharGen.rom",
+		"<internal>/Apple2rev7CharGen.rom",
 		"rom file for the disk drive controller")
 	languageCardSlot := flag.Int(
 		"languageCardSlot",
@@ -83,12 +83,4 @@ func MainApple() *Apple2 {
 	//a.AddCardLogger(4)
 
 	return a
-	/*	if *useSDL {
-			a.ConfigureStdConsole(false, *stdoutScreen)
-			apple2sdl.SDLRun(a)
-		} else {
-			a.ConfigureStdConsole(true, true)
-			a.Run(log)
-		}
-	*/
 }

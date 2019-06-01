@@ -2,7 +2,6 @@ package apple2
 
 import (
 	"io"
-	"io/ioutil"
 )
 
 type card interface {
@@ -23,10 +22,7 @@ func (c *cardBase) loadRom(filename string) {
 	if c.a != nil {
 		panic("Rom must be loaded before inserting the card in the slot")
 	}
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
+	data := loadResource(filename)
 	c.rom = newMemoryRange(0, data)
 }
 

@@ -2,7 +2,6 @@ package apple2
 
 import (
 	"fmt"
-	"io/ioutil"
 )
 
 /*
@@ -27,10 +26,7 @@ func NewCharacterGenerator(filename string) *CharacterGenerator {
 }
 
 func (cg *CharacterGenerator) load(filename string) {
-	bytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
+	bytes := loadResource(filename)
 	size := len(bytes)
 	if size != rev7CharGenSize {
 		panic("Character ROM size not supported")
