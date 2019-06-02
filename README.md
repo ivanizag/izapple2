@@ -44,7 +44,7 @@ casa@servidor:~$ ./apple2sdl -disk ~/Downloads/karateka.dsk
 
 
 ### Terminal mode
-To run text mode right on the terminal without the SDL2 dependency just run `apple2console`. It runs on the console using ANSI escape codes. Input is sent to the emulated Apple II one line at a time: 
+To run text mode right on the terminal without the SDL2 dependency, use `apple2console`. It runs on the console using ANSI escape codes. Input is sent to the emulated Apple II one line at a time: 
 ```
 casa@servidor:~$ ./apple2console
 
@@ -92,7 +92,7 @@ Only valid on SDL mode
 
 ```
   -charRom string
-    	rom file for the disk drive controller (default "<internal>/Apple2rev7CharGen.rom")
+    	rom file for the character generator (default "<internal>/Apple2rev7CharGen.rom")
   -disk string
     	file to load on the first disk drive (default "<internal>/dos33.dsk")
   -disk2Slot int

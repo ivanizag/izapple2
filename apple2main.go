@@ -30,7 +30,7 @@ func MainApple() *Apple2 {
 	charRomFile := flag.String(
 		"charRom",
 		"<internal>/Apple2rev7CharGen.rom",
-		"rom file for the disk drive controller")
+		"rom file for the character generator")
 	languageCardSlot := flag.Int(
 		"languageCardSlot",
 		0,
