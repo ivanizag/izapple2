@@ -101,6 +101,8 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		k.a.SendCommand(apple2.CommandLoadState)
 	case sdl.K_F9:
 		k.a.SendCommand(apple2.CommandDumpDebugInfo)
+	case sdl.K_F12:
+		apple2.SaveSnapshot(k.a, "snapshot.png")
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_

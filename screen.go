@@ -95,13 +95,15 @@ func mixSnapshots(top, bottom *image.RGBA) *image.RGBA {
 	return out
 }
 
-func saveSnapshot(a *Apple2) {
+// SaveSnapshot saves a snapshot of the screen to a png file
+func SaveSnapshot(a *Apple2, filename string) {
 	img := Snapshot(a)
 	if img == nil {
 		return
 	}
+	img = squarishPixelsFilter(img)
 
-	f, err := os.Create("snapshot.png")
+	f, err := os.Create(filename)
 	if err != nil {
 		panic(err)
 	}
@@ -110,6 +112,23 @@ func saveSnapshot(a *Apple2) {
 	fmt.Println("Saving snapshot")
 
 	png.Encode(f, img)
+}
+
+func squarishPixelsFilter(in *image.RGBA) *image.RGBA {
+	b := in.Bounds()
+	factor := 1200 / b.Dx()
+	fmt.Println(factor)
+	size := image.Rect(0, 0, factor*b.Dx(), b.Dy())
+	out := image.NewRGBA(size)
+	for x := b.Min.X; x < b.Max.X; x++ {
+		for y := b.Min.Y; y < b.Max.Y; y++ {
+			c := in.At(x, y)
+			for i := 0; i < factor; i++ {
+				out.Set(factor*x+i, y, c)
+			}
+		}
+	}
+	return out
 }
 
 func linesSeparatedFilter(in *image.RGBA) *image.RGBA {
