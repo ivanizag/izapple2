@@ -68,7 +68,8 @@ func MainApple() *Apple2 {
 		return nil
 	}
 
-	a := NewApple2(*romFile, *charRomFile, *cpuClock, !*mono, *fastDisk, *panicSS)
+	a := NewApple2(*charRomFile, *cpuClock, !*mono, *fastDisk, *panicSS)
+	a.LoadRom(*romFile)
 	if *languageCardSlot >= 0 {
 		a.AddLanguageCard(*languageCardSlot)
 	}

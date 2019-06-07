@@ -101,44 +101,15 @@ func (mmu *memoryManager) resetBaseRamPaging() {
 	mmu.setPages(0x00, 0xbf, mmu.physicalMainRAM)
 }
 
-func newMemoryManager(a *Apple2, romFile string) *memoryManager {
+func newMemoryManager(a *Apple2) *memoryManager {
 	var mmu memoryManager
 	mmu.apple2 = a
 
 	ram := make([]uint8, 0xc000) // Reserve 48kb
 	mmu.physicalMainRAM = newMemoryRange(0, ram)
-
-	mmu.loadRom(romFile)
 	mmu.resetBaseRamPaging()
-	mmu.resetRomPaging()
 
 	return &mmu
-}
-
-const (
-	apple2RomSize  = 12 * 1024
-	apple2eRomSize = 16 * 1024
-)
-
-func (mmu *memoryManager) loadRom(filename string) {
-	data := loadResource(filename)
-	size := len(data)
-	if size != apple2RomSize && size != apple2eRomSize {
-		panic("Rom size not supported")
-	}
-
-	a := mmu.apple2
-	romStart := 0
-	if size == apple2eRomSize {
-		// The extra 4kb ROM is first in the rom file.
-		// It starts with 256 unused bytes not mapped to 0xc000.
-		a.isApple2e = true
-		extraRomSize := apple2eRomSize - apple2RomSize
-		mmu.physicalROMe = newMemoryRange(0xc000, data[0:extraRomSize])
-		romStart = extraRomSize
-	}
-
-	mmu.physicalROM = newMemoryRange(0xd000, data[romStart:])
 }
 
 func (mmu *memoryManager) save(w io.Writer) {
