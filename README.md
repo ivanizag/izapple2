@@ -10,7 +10,7 @@ Portable emulator of an Apple II+. Written in Go.
 - Emulated extension cards:
     - DiskII controller
     - 16Kb Language Card
-    - 256kb Saturn RAM Card
+    - 256Kb Saturn RAM Card
 - Graphic modes:
     - Text, Lores and Hires
 - Displays:

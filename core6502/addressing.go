@@ -96,7 +96,7 @@ func resolve(s *State, line []uint8, opcode opcode) (getValue func() uint8, setV
 		} else if register != regNone {
 			s.reg.setRegister(register, value)
 		} else {
-			// Todo: assert impossible
+			panic("Should never happen")
 		}
 	}
 	return

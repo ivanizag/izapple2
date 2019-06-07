@@ -56,11 +56,11 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 
 	for i := 0x0; i <= 0xf; i++ {
 		iCopy := i
-		c.ssr[i] = func(*ioC0Page) uint8 {
+		c.ssr[iCopy] = func(*ioC0Page) uint8 {
 			c.ssAction(iCopy)
 			return 0
 		}
-		c.ssw[i] = func(*ioC0Page, uint8) {
+		c.ssw[iCopy] = func(*ioC0Page, uint8) {
 			// Writing resets write count (from A2AUDIT)
 			c.writeState = lcWriteDisabled
 		}

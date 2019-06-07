@@ -138,9 +138,8 @@ func (c *cardDisk2) softSwitchQ6Q7(index int, in uint8) uint8 {
 	if index&1 == 0 {
 		// All even addresses return the last dataLatch
 		return c.dataLatch
-	} else {
-		return 0
 	}
+	return 0
 }
 
 func (c *cardDisk2) processQ6Q7(in uint8) {
