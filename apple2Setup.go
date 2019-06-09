@@ -7,6 +7,7 @@ func NewApple2(charRomFile string, clockMhz float64,
 	isColor bool, fastMode bool, panicSS bool) *Apple2 {
 
 	var a Apple2
+	a.Name = "Apple ][+"
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
 	if charRomFile != "" {

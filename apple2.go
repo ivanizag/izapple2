@@ -13,6 +13,7 @@ import (
 
 // Apple2 represents all the components and state of the emulated machine
 type Apple2 struct {
+	Name                string
 	cpu                 *core6502.State
 	mmu                 *memoryManager
 	io                  *ioC0Page
@@ -84,6 +85,8 @@ const (
 	CommandLoadState
 	// CommandDumpDebugInfo dumps usefull info
 	CommandDumpDebugInfo
+	// CommandNextCharGenPage cycles the CharGen page if several
+	CommandNextCharGenPage
 )
 
 // SendCommand enqueues a command to the emulator thread
@@ -111,6 +114,9 @@ func (a *Apple2) executeCommand(command int) {
 		a.load("apple2.state")
 	case CommandDumpDebugInfo:
 		a.dumpDebugInfo()
+	case CommandNextCharGenPage:
+		a.cg.nextPage()
+		fmt.Printf("Chargen page %v\n", a.cg.page)
 	}
 }
 

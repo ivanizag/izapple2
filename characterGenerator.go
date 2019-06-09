@@ -11,11 +11,17 @@ import (
 
 // CharacterGenerator represents the ROM wth the characters bitmaps
 type CharacterGenerator struct {
-	data []uint8
+	data      []uint8
+	customRom bool
+	columnMap charColumnMap
+	page      int
 }
 
+type charColumnMap func(column int) int
+
 const (
-	rev7CharGenSize = 2048
+	rev7CharGenSize   = 2048
+	defaultCharGenROM = "<internal>/Apple2rev7CharGen.rom"
 )
 
 // NewCharacterGenerator instantiates a new Character Generator with the rom on the file given
@@ -26,27 +32,50 @@ func NewCharacterGenerator(filename string) *CharacterGenerator {
 }
 
 func (cg *CharacterGenerator) load(filename string) {
+	cg.customRom = !isInternalResource(filename)
 	bytes := loadResource(filename)
 	size := len(bytes)
-	if size != rev7CharGenSize {
+	if size < rev7CharGenSize {
 		panic("Character ROM size not supported")
 	}
 	cg.data = bytes
 }
 
-func (cg *CharacterGenerator) getPixel(char uint8, row int, column int) bool {
-	bits := cg.data[int(char)*8+row]
-	bit := bits >> (uint(6 - column)) & 1
-	return bit == 1
+func (cg *CharacterGenerator) setColumnMap(columnMap charColumnMap) {
+	// Regular Apple II uses bits 6 to 0 but some clones have other mappings
+	cg.columnMap = columnMap
 }
 
-func (cg *CharacterGenerator) dumpCharFast(char uint8) {
+func (cg *CharacterGenerator) setPage(page int) {
+	// Some clones had a switch to change codepage with extra characters
+	pages := len(cg.data) / rev7CharGenSize
+	cg.page = page % pages
+}
+
+func (cg *CharacterGenerator) nextPage() {
+	cg.setPage(cg.page + 1)
+}
+
+func (cg *CharacterGenerator) getPixel(char uint8, row int, column int) bool {
+	bits := cg.data[int(char)*8+row+cg.page*rev7CharGenSize]
+	var bit int
+	if cg.columnMap != nil {
+		bit = cg.columnMap(column)
+	} else {
+		// Standard Apple 2 mapping
+		bit = 6 - column
+	}
+	value := bits >> uint(bit) & 1
+	return value == 1
+}
+
+func (cg *CharacterGenerator) dumpCharRaw(char int) {
 	base := int(char) * 8
 	fmt.Printf("Char: %v\n---------\n", char)
 	for i := 0; i < 8; i++ {
 		fmt.Print("|")
 		b := cg.data[base+i]
-		for j := 6; j >= 0; j-- {
+		for j := 0; j < 8; j++ {
 			if (b>>uint(j))&1 == 1 {
 				fmt.Print("#")
 			} else {
@@ -76,7 +105,12 @@ func (cg *CharacterGenerator) dumpChar(char uint8) {
 
 // Dump to sdtout all the character maps
 func (cg *CharacterGenerator) Dump() {
-	for i := 0; i < 256; i++ {
-		cg.dumpChar(uint8(i))
+	pages := len(cg.data) / rev7CharGenSize
+	for p := 0; p < pages; p++ {
+		cg.setPage(p)
+		for i := 0; i < 256; i++ {
+			cg.dumpChar(uint8(i))
+			//cg.dumpCharRaw(int(i))
+		}
 	}
 }

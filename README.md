@@ -84,6 +84,7 @@ Line:
 - F6: Toggle between NTSC color TV and green phosphor monochrome monitor
 - F7: Save current state to disk
 - F8: Restore state from disk
+- F10: Cycle character generator codepages. Only if the character generator ROM has more than one 2Kb pages.
 - F12: Save a screen snapshot to a file `snapshot.png`
 
 Only valid on SDL mode
@@ -91,6 +92,8 @@ Only valid on SDL mode
 ### Command line options
 
 ```
+  -base64a
+        setup a Base64A clone
   -charRom string
     	rom file for the character generator (default "<internal>/Apple2rev7CharGen.rom")
   -disk string

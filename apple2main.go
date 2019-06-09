@@ -66,13 +66,6 @@ func MainApple() *Apple2 {
 	)
 	flag.Parse()
 
-	if *dumpChars {
-		cg := NewCharacterGenerator(*charRomFile)
-		cg.Dump()
-		os.Exit(0)
-		return nil
-	}
-
 	a := NewApple2(*charRomFile, *cpuClock, !*mono, *fastDisk, *panicSS)
 	if *base64a {
 		NewBase64a(a)
@@ -91,6 +84,12 @@ func MainApple() *Apple2 {
 
 	//a.AddCardInOut(2)
 	//a.AddCardLogger(4)
+
+	if *dumpChars {
+		a.cg.Dump()
+		os.Exit(0)
+		return nil
+	}
 
 	return a
 }

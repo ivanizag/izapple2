@@ -13,9 +13,13 @@ const (
 	internalPrefix = "<internal>/"
 )
 
+func isInternalResource(filename string) bool {
+	return strings.HasPrefix(filename, internalPrefix)
+}
+
 func loadResource(filename string) []uint8 {
 	var file io.Reader
-	if strings.HasPrefix(filename, internalPrefix) {
+	if isInternalResource(filename) {
 		// load from embedded resource
 		resource := strings.TrimPrefix(filename, internalPrefix)
 		resourceFile, err := romdumps.Assets.Open(resource)

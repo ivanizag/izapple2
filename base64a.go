@@ -15,12 +15,30 @@ type Base64a struct {
 
 // NewBase64a instantiates an apple2
 func NewBase64a(a *Apple2) *Base64a {
-
 	var b Base64a
 	b.a = a
+	a.Name = "Base 64A"
 	b.loadRom()
 
+	// Configure the character generator
+	if !a.cg.customRom {
+		a.cg.load("<internal>/BASE64A_ROM7_CharGen.BIN")
+	}
+	a.cg.setColumnMap(base64aCharGenColumnsMap)
+	a.cg.setPage(1)
+
 	return &b
+}
+
+func base64aCharGenColumnsMap(column int) int {
+	bit := column + 2
+	// Weird positions
+	if column == 6 {
+		bit = 2
+	} else if column == 0 {
+		bit = 1
+	}
+	return bit
 }
 
 const (
@@ -87,7 +105,7 @@ func (b *Base64a) loadRom() {
 
 func (b *Base64a) changeRomBank(bank uint8) {
 	b.romBank = bank
-	fmt.Printf("Change to ROM bank #%v\n", b.romBank)
+	//fmt.Printf("Change to ROM bank #%v\n", b.romBank)
 	b.a.mmu.physicalROM = b.romBanks[b.romBank]
 	b.a.mmu.resetRomPaging() // If rom was not active. This is going to far?
 }
