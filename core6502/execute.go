@@ -27,7 +27,7 @@ const (
 
 type opcode struct {
 	name        string
-	bytes       uint8
+	bytes       uint16
 	cycles      int
 	addressMode int
 	action      opFunc
@@ -54,14 +54,14 @@ func (s *State) ExecuteInstruction(log bool) {
 	}
 
 	line := make([]uint8, opcode.bytes)
-	for i := uint8(0); i < opcode.bytes; i++ {
+	for i := uint16(0); i < opcode.bytes; i++ {
 		line[i] = s.mem.Peek(pc)
 		pc++
 	}
 	s.reg.setPC(pc)
 
 	if log {
-		fmt.Printf("%#04x %-12s: ", pc, lineString(line, opcode))
+		fmt.Printf("%#04x %-12s: ", pc-opcode.bytes, lineString(line, opcode))
 	}
 	opcode.action(s, line, opcode)
 	s.cycles += uint64(opcode.cycles)

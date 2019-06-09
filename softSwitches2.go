@@ -76,6 +76,10 @@ func addApple2SoftSwitches(io *ioC0Page) {
 func notImplementedSoftSwitchR(*ioC0Page) uint8 {
 	return 0
 }
+
+func notImplementedSoftSwitchW(*ioC0Page, uint8) {
+}
+
 func getStatusSoftSwitch(ioFlag uint8) softSwitchR {
 	return func(io *ioC0Page) uint8 {
 		return io.softSwitchesData[ioFlag]
@@ -107,11 +111,15 @@ func getKeySoftSwitch(io *ioC0Page) uint8 {
 			io.softSwitchesData[ioDataKeyboard] = key + (1 << 7)
 		}
 	}
-	return io.softSwitchesData[ioDataKeyboard]
+	value := io.softSwitchesData[ioDataKeyboard]
+	//fmt.Printf("Key $%02x, %v\n", value, strobed)
+	return value
+
 }
 
 func strobeKeyboardSoftSwitch(io *ioC0Page) uint8 {
 	result := io.softSwitchesData[ioDataKeyboard]
+	//fmt.Printf("Strobe $%02x\n", result)
 	io.softSwitchesData[ioDataKeyboard] &^= 1 << 7
 	return result
 }

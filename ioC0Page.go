@@ -65,16 +65,16 @@ func (p *ioC0Page) addSoftSwitchRW(address uint8, ss softSwitchR) {
 }
 
 func (p *ioC0Page) addSoftSwitchR(address uint8, ss softSwitchR) {
-	if p.softSwitchesR[address] != nil {
-		fmt.Printf("Addresss 0x0c%02x is already assigned for read", address)
-	}
+	//if p.softSwitchesR[address] != nil {
+	//	fmt.Printf("Addresss 0x0c%02x is already assigned for read\n", address)
+	//}
 	p.softSwitchesR[address] = ss
 }
 
 func (p *ioC0Page) addSoftSwitchW(address uint8, ss softSwitchW) {
-	if p.softSwitchesW[address] != nil {
-		fmt.Printf("Addresss 0x0c%02x is already assigned for write", address)
-	}
+	//if p.softSwitchesW[address] != nil {
+	//	fmt.Printf("Addresss 0x0c%02x is already assigned for write\n", address)
+	//}
 	p.softSwitchesW[address] = ss
 }
 
@@ -91,7 +91,6 @@ func (p *ioC0Page) setSpeakerProvider(s SpeakerProvider) {
 }
 
 func (p *ioC0Page) peek(address uint16) uint8 {
-	//fmt.Printf("Peek on $%02x\n", address)
 	pageAddress := uint8(address)
 	ss := p.softSwitchesR[pageAddress]
 	if ss == nil {
@@ -100,7 +99,9 @@ func (p *ioC0Page) peek(address uint16) uint8 {
 		}
 		return 0
 	}
-	return ss(p)
+	value := ss(p)
+	//fmt.Printf("Peek on $%02x: $%02x\n", address, value)
+	return value
 }
 
 func (p *ioC0Page) poke(address uint16, value uint8) {

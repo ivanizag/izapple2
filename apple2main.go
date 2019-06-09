@@ -59,6 +59,11 @@ func MainApple() *Apple2 {
 		false,
 		"shows the character map",
 	)
+	base64a := flag.Bool(
+		"base64a",
+		false,
+		"setup a Base64A clone",
+	)
 	flag.Parse()
 
 	if *dumpChars {
@@ -69,7 +74,11 @@ func MainApple() *Apple2 {
 	}
 
 	a := NewApple2(*charRomFile, *cpuClock, !*mono, *fastDisk, *panicSS)
-	a.LoadRom(*romFile)
+	if *base64a {
+		NewBase64a(a)
+	} else {
+		a.LoadRom(*romFile)
+	}
 	if *languageCardSlot >= 0 {
 		a.AddLanguageCard(*languageCardSlot)
 	}
