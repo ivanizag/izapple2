@@ -2,6 +2,8 @@
 
 Portable emulator of an Apple II+. Written in Go.
 
+[![CircleCI](https://circleci.com/gh/ivanizag/apple2/tree/master.svg?style=svg)](https://circleci.com/gh/ivanizag/apple2/tree/master)
+
 ## Features
 
 - Apple II+ with 48Kb of base RAM
@@ -20,6 +22,7 @@ Portable emulator of an Apple II+. Written in Go.
 - Adjustable speed.
 - Fast disk mode to set max speed while using the disks. 
 - Single file executable with embedded ROMs and DOS 3.3
+- Optional emulation of the clone Base64A by Copam
 
 
 ## Running the emulator
