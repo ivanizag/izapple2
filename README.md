@@ -127,7 +127,8 @@ Only valid on SDL mode
 
 ### apple2console
 
-The only dependency is having a working Go installation.
+The only dependency is having a working Go installation on any platform.
+
 Run:
 ```
 $ go get github.com/ivanizag/apple2/apple2console 
@@ -136,9 +137,25 @@ $ go build github.com/ivanizag/apple2/apple2console
 
 ### apple2sdl
 
-Besides having a working Go installation, install the SDL2 developer files.
+Besides having a working Go installation, install the SDL2 developer files. Valid for any platform
 
 Run:
 ```
 $ go get github.com/ivanizag/apple2/apple2sdl
 $ go build github.com/ivanizag/apple2/apple2sdl 
+```
+
+### Cross compile apple2sdl.exe for Windows in Ubuntu
+
+Install the mingw cross compile tools and the [SDL2 Windows libs for mingw](https://www.libsdl.org/download-2.0.php).
+```
+$ sudo apt install mingw-w64
+$ wget https://www.libsdl.org/release/SDL2-devel-2.0.9-mingw.tar.gz
+$ tar -xzf SDL2-devel-2.0.9-mingw.tar.gz
+$ sudo cp -r SDL2-2.0.9/x86_64-w64-mingw32/* /usr/x86_64-w64-mingw32
+```
+Compile:
+```
+$ env CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows CGO_LDFLAGS="-L/usr/x86_64-w64-mingw32/lib -lSDL2 --verbose" CGO_FLAGS="-I/usr/x86_64-w64-mingw32/include -D_REENTRANT" go build -o apple2sdl.exe -x *.go
+```
+To run the executable in Windows, copy the file `SDL2.dll` on the same folder. The latest `SDL2.dll` can be found in the [Runtime binary for Windows 64-bit](https://www.libsdl.org/download-2.0.php)
