@@ -3,6 +3,7 @@ package apple2
 import (
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
 
@@ -11,10 +12,17 @@ import (
 
 const (
 	internalPrefix = "<internal>/"
+	httpPrefix     = "http://"
+	httpsPrefix    = "https://"
 )
 
 func isInternalResource(filename string) bool {
 	return strings.HasPrefix(filename, internalPrefix)
+}
+
+func isHTTPResource(filename string) bool {
+	return strings.HasPrefix(filename, httpPrefix) ||
+		strings.HasPrefix(filename, httpsPrefix)
 }
 
 func loadResource(filename string) []uint8 {
@@ -28,6 +36,15 @@ func loadResource(filename string) []uint8 {
 		}
 		defer resourceFile.Close()
 		file = resourceFile
+
+	} else if isHTTPResource(filename) {
+		response, err := http.Get(filename)
+		if err != nil {
+			panic(err)
+		}
+		defer response.Body.Close()
+		file = response.Body
+
 	} else {
 		diskFile, err := os.Open(filename)
 		if err != nil {

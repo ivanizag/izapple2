@@ -39,9 +39,9 @@ casa@servidor:~$ ./apple2sdl
 ![DOS 3.3 started](doc/dos33.png)
 
 ### Play games
-Download an DSK file ([Asimov](https://mirrors.apple2.org.za/ftp.apple.asimov.net/images/) is an excellent source) and use the `-disk` parameter.
+Download an DSK file locally or use the a link ([Asimov](https://www.apple.asimov.net/images/) is an excellent source) with the `-disk` parameter:
 ```
-casa@servidor:~$ ./apple2sdl -disk ~/Downloads/karateka.dsk
+casa@servidor:~$ ./apple2sdl -disk "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
 ```
 ![Karateka](doc/karateka.png)
 
