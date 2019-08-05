@@ -14,8 +14,6 @@ func main() {
 
 // SDLRun starts the Apple2 emulator on SDL
 func SDLRun(a *apple2.Apple2) {
-	s := newSDLSpeaker()
-	s.start()
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(4*40*7, 4*24*8,
 		sdl.WINDOW_SHOWN)
@@ -30,7 +28,14 @@ func SDLRun(a *apple2.Apple2) {
 
 	kp := newSDLKeyBoard(a)
 	a.SetKeyboardProvider(kp)
+
+	s := newSDLSpeaker()
+	s.start()
 	a.SetSpeakerProvider(s)
+
+	j := newSDLJoysticks()
+	a.SetJoysticksProvider(j)
+
 	go a.Run(false)
 
 	running := true
@@ -47,6 +52,12 @@ func SDLRun(a *apple2.Apple2) {
 				//fmt.Printf("[%d ms] TextInput\ttype:%d\texts:%s\n",
 				//	t.Timestamp, t.Type, t.GetText())
 				kp.putText(t)
+			case *sdl.JoyAxisEvent:
+				//fmt.Printf("AxisEvent: %v, %v, %v\n", t.Axis, t.Value, t.Which)
+				j.putAxisEvent(t)
+			case *sdl.JoyButtonEvent:
+				//fmt.Printf("ButtonEvent: %v, %v, %v\n", t.Button, t.State, t.Which)
+				j.putButtonEvent(t)
 			}
 		}
 

@@ -107,3 +107,8 @@ func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
 func (a *Apple2) SetSpeakerProvider(s SpeakerProvider) {
 	a.io.setSpeakerProvider(s)
 }
+
+// SetJoysticksProvider attaches an external joysticks provider
+func (a *Apple2) SetJoysticksProvider(j JoysticksProvider) {
+	a.io.setJoysticksProvider(j)
+}

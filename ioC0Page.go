@@ -7,26 +7,34 @@ import (
 )
 
 type ioC0Page struct {
-	softSwitchesR    [256]softSwitchR
-	softSwitchesW    [256]softSwitchW
-	softSwitchesData [128]uint8
-	keyboard         KeyboardProvider
-	speaker          SpeakerProvider
-	apple2           *Apple2
+	softSwitchesR      [256]softSwitchR
+	softSwitchesW      [256]softSwitchW
+	softSwitchesData   [128]uint8
+	keyboard           KeyboardProvider
+	speaker            SpeakerProvider
+	paddlesStrobeCycle uint64
+	joysticks          JoysticksProvider
+	apple2             *Apple2
 }
 
 type softSwitchR func(io *ioC0Page) uint8
 type softSwitchW func(io *ioC0Page, value uint8)
 
-// KeyboardProvider declares the keyboard implementation requirements
+// KeyboardProvider provides a keyboard implementation
 type KeyboardProvider interface {
 	GetKey(strobe bool) (key uint8, ok bool)
 }
 
-// SpeakerProvider declares the speaker implementation requirements
+// SpeakerProvider provides a speaker implementation
 type SpeakerProvider interface {
 	// Click receives a speaker click. The argument is the CPU cycle when it is generated
 	Click(cycle uint64)
+}
+
+// JoysticksProvider declares de the joysticks
+type JoysticksProvider interface {
+	ReadButton(i int) bool
+	ReadPaddle(i int) uint8
 }
 
 // See https://www.kreativekorp.com/miscpages/a2info/iomemory.shtml
@@ -88,6 +96,10 @@ func (p *ioC0Page) setKeyboardProvider(kb KeyboardProvider) {
 
 func (p *ioC0Page) setSpeakerProvider(s SpeakerProvider) {
 	p.speaker = s
+}
+
+func (p *ioC0Page) setJoysticksProvider(j JoysticksProvider) {
+	p.joysticks = j
 }
 
 func (p *ioC0Page) peek(address uint16) uint8 {

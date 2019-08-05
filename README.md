@@ -23,6 +23,7 @@ Portable emulator of an Apple II+. Written in Go.
 - Fast disk mode to set max speed while using the disks. 
 - Single file executable with embedded ROMs and DOS 3.3
 - Optional emulation of the clone Base64A by Copam
+- Joystick support. Up to two joysticks or four paddes.
 
 
 ## Running the emulator

@@ -98,7 +98,7 @@ func (b *Base64a) loadRom() {
 	// Write on the speaker. That is a double access and should do nothing
 	// but works somehow on the BASE64A
 	b.a.io.addSoftSwitchW(0x30, func(io *ioC0Page, value uint8) {
-		getSpeakerSoftSwitch(io)
+		speakerSoftSwitch(io)
 	})
 
 }

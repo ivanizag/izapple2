@@ -24,10 +24,10 @@ const (
 
 func addApple2SoftSwitches(io *ioC0Page) {
 
-	io.addSoftSwitchRW(0x00, getKeySoftSwitch)         // Keyboard
+	io.addSoftSwitchRW(0x00, keySoftSwitch)            // Keyboard
 	io.addSoftSwitchRW(0x10, strobeKeyboardSoftSwitch) // Keyboard Strobe
 	io.addSoftSwitchR(0x20, notImplementedSoftSwitchR) // Cassette Output
-	io.addSoftSwitchR(0x30, getSpeakerSoftSwitch)      // Speaker
+	io.addSoftSwitchR(0x30, speakerSoftSwitch)         // Speaker
 	io.addSoftSwitchR(0x40, notImplementedSoftSwitchR) // Game connector Strobe
 	// Note: Some sources indicate that all these cover 16 positions
 	// for read and write. But the Apple2e take over some of them, with
@@ -52,25 +52,25 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	io.addSoftSwitchRW(0x5f, getSoftSwitch(ioFlagAnnunciator3, true))
 
 	io.addSoftSwitchR(0x60, notImplementedSoftSwitchR) // Cassette Input
-	io.addSoftSwitchR(0x61, getStatusSoftSwitch(ioFlagButton0))
-	io.addSoftSwitchR(0x62, getStatusSoftSwitch(ioFlagButton1))
-	io.addSoftSwitchR(0x63, getStatusSoftSwitch(ioFlagButton2))
-	io.addSoftSwitchR(0x64, getStatusSoftSwitch(ioDataPaddle0))
-	io.addSoftSwitchR(0x65, getStatusSoftSwitch(ioDataPaddle1))
-	io.addSoftSwitchR(0x66, getStatusSoftSwitch(ioDataPaddle2))
-	io.addSoftSwitchR(0x67, getStatusSoftSwitch(ioDataPaddle3))
+	io.addSoftSwitchR(0x61, getButtonSoftSwitch(0))
+	io.addSoftSwitchR(0x62, getButtonSoftSwitch(1))
+	io.addSoftSwitchR(0x63, getButtonSoftSwitch(2))
+	io.addSoftSwitchR(0x64, getPaddleSoftSwitch(0))
+	io.addSoftSwitchR(0x65, getPaddleSoftSwitch(1))
+	io.addSoftSwitchR(0x66, getPaddleSoftSwitch(2))
+	io.addSoftSwitchR(0x67, getPaddleSoftSwitch(3))
 
 	// The previous 8 softswitches are repeated
 	io.addSoftSwitchR(0x68, notImplementedSoftSwitchR) // Cassette Input
-	io.addSoftSwitchR(0x69, getStatusSoftSwitch(ioFlagButton0))
-	io.addSoftSwitchR(0x6A, getStatusSoftSwitch(ioFlagButton1))
-	io.addSoftSwitchR(0x6B, getStatusSoftSwitch(ioFlagButton2))
-	io.addSoftSwitchR(0x6C, getStatusSoftSwitch(ioDataPaddle0))
-	io.addSoftSwitchR(0x6D, getStatusSoftSwitch(ioDataPaddle1))
-	io.addSoftSwitchR(0x6E, getStatusSoftSwitch(ioDataPaddle2))
-	io.addSoftSwitchR(0x6F, getStatusSoftSwitch(ioDataPaddle3))
+	io.addSoftSwitchR(0x69, getButtonSoftSwitch(0))
+	io.addSoftSwitchR(0x6A, getButtonSoftSwitch(1))
+	io.addSoftSwitchR(0x6B, getButtonSoftSwitch(2))
+	io.addSoftSwitchR(0x6C, getPaddleSoftSwitch(0))
+	io.addSoftSwitchR(0x6D, getPaddleSoftSwitch(1))
+	io.addSoftSwitchR(0x6E, getPaddleSoftSwitch(2))
+	io.addSoftSwitchR(0x6F, getPaddleSoftSwitch(3))
 
-	io.addSoftSwitchR(0x70, notImplementedSoftSwitchR) // Game controllers reset
+	io.addSoftSwitchR(0x70, strobePaddlesSoftSwitch) // Game controllers reset
 }
 
 func notImplementedSoftSwitchR(*ioC0Page) uint8 {
@@ -97,14 +97,14 @@ func getSoftSwitch(ioFlag uint8, isSet bool) softSwitchR {
 	}
 }
 
-func getSpeakerSoftSwitch(io *ioC0Page) uint8 {
+func speakerSoftSwitch(io *ioC0Page) uint8 {
 	if io.speaker != nil {
 		io.speaker.Click(io.apple2.cpu.GetCycles())
 	}
 	return 0
 }
 
-func getKeySoftSwitch(io *ioC0Page) uint8 {
+func keySoftSwitch(io *ioC0Page) uint8 {
 	strobed := (io.softSwitchesData[ioDataKeyboard] & (1 << 7)) == 0
 	if io.keyboard != nil {
 		if key, ok := io.keyboard.GetKey(strobed); ok {
@@ -122,4 +122,49 @@ func strobeKeyboardSoftSwitch(io *ioC0Page) uint8 {
 	//fmt.Printf("Strobe $%02x\n", result)
 	io.softSwitchesData[ioDataKeyboard] &^= 1 << 7
 	return result
+}
+
+func getButtonSoftSwitch(i int) softSwitchR {
+	return func(io *ioC0Page) uint8 {
+		if io.joysticks != nil && io.joysticks.ReadButton(i) {
+			return 128
+		}
+		return 0
+	}
+}
+
+/*
+  Paddle values are calculated by the time taken by a current going
+  througt the paddle variable resistor to charge a capacitor.
+  The capacitor is discharged via the strobe softswitch. The result is
+  hoy many times a 11 cycles loop runs before the capacitor reaches
+  the voltage threshold.
+
+  See: http://www.1000bit.it/support/manuali/apple/technotes/aiie/tn.aiie.06.html
+*/
+
+const paddleToCyclesFactor = 11
+
+func getPaddleSoftSwitch(i int) softSwitchR {
+	return func(io *ioC0Page) uint8 {
+		if io.joysticks == nil {
+			return 127
+		}
+		reading := io.joysticks.ReadPaddle(i)
+		cyclesNeeded := uint64(reading) * paddleToCyclesFactor
+		cyclesElapsed := io.apple2.cpu.GetCycles() - io.paddlesStrobeCycle
+		if cyclesElapsed < cyclesNeeded {
+			// The capacitor is not charged yet
+			return 128
+		} else {
+			return 0
+		}
+
+	}
+}
+
+func strobePaddlesSoftSwitch(io *ioC0Page) uint8 {
+	// On the real machine this discharges the capacitors.
+	io.paddlesStrobeCycle = io.apple2.cpu.GetCycles()
+	return 0
 }
