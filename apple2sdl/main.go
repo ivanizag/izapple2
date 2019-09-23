@@ -36,7 +36,7 @@ func SDLRun(a *apple2.Apple2) {
 	j := newSDLJoysticks()
 	a.SetJoysticksProvider(j)
 
-	go a.Run(false)
+	go a.Run()
 
 	running := true
 	for running {
