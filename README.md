@@ -99,29 +99,34 @@ Only valid on SDL mode
   -base64a
         setup a Base64A clone
   -charRom string
-    	rom file for the character generator (default "<internal>/Apple2rev7CharGen.rom")
+        rom file for the character generator (default "<internal>/Apple2rev7CharGen.rom")
   -disk string
-    	file to load on the first disk drive (default "<internal>/dos33.dsk")
+        file to load on the first disk drive (default "<internal>/dos33.dsk")
   -disk2Slot int
-    	slot for the disk driver. -1 for none. (default 6)
+        slot for the disk driver. -1 for none. (default 6)
   -diskRom string
-    	rom file for the disk drive controller (default "<internal>/DISK2.rom")
+        rom file for the disk drive controller (default "<internal>/DISK2.rom")
   -dumpChars
-    	shows the character map
+        shows the character map
   -fastDisk
-    	set fast mode when the disks are spinning (default true)
+        set fast mode when the disks are spinning (default true)
   -languageCardSlot int
-    	slot for the 16kb language card. -1 for none
+        slot for the 16kb language card. -1 for none
   -mhz float
-    	cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
+        cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
   -mono
-    	emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.
+        emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.
   -panicss
-    	panic if a not implemented softswitch is used
+        panic if a not implemented softswitch is used
   -rom string
-    	main rom file (default "<internal>/Apple2_Plus.rom")
+        main rom file (default "<internal>/Apple2_Plus.rom")
   -saturnCardSlot int
-    	slot for the 256kb Saturn card. -1 for none (default -1)
+        slot for the 256kb Saturn card. -1 for none (default -1)
+  -traceCpu
+        dump to the console the CPU execution 
+  -traceSS
+        dump to the console the sofswitches calls
+
 ```
 
 ## Building from source

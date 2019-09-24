@@ -181,4 +181,9 @@ var opcodesNMOS6502 = [256]opcode{
 	0x70: opcode{"BVS", 2, 2, modeRelative, buildOpBranch(flagV, true)},  // Extra cycles
 
 	0xEA: opcode{"NOP", 1, 2, modeImplicit, opNOP},
+
+	// Undocumented opcodes, see http://bbc.nvg.org/doc/6502OpList.txt
+	0x1A: opcode{"NOP", 1, 2, modeImplicit, opNOP}, // INC A in the 65c02
+	0xC2: opcode{"NOP", 1, 2, modeImplicit, opNOP}, // Should be HALT?
+	0x02: opcode{"NOP", 1, 2, modeImplicit, opNOP}, // Should be HALT?
 }

@@ -20,7 +20,6 @@ type Apple2 struct {
 	cg                  *CharacterGenerator
 	cards               [8]card
 	isApple2e           bool
-	panicSS             bool
 	commandChannel      chan int
 	cycleDurationNs     float64 // Current speed. Inverse of the cpu clock in Ghz
 	isColor             bool
@@ -37,14 +36,14 @@ const (
 const maxWaitDuration = 100 * time.Millisecond
 
 // Run starts the Apple2 emulation
-func (a *Apple2) Run(log bool) {
+func (a *Apple2) Run() {
 	// Start the processor
 	a.cpu.Reset()
 	referenceTime := time.Now()
 
 	for {
 		// Run a 6502 step
-		a.cpu.ExecuteInstruction(log && a.cycleDurationNs != 0)
+		a.cpu.ExecuteInstruction()
 
 		// Execute meta commands
 		commandsPending := true

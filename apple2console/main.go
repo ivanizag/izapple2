@@ -16,7 +16,7 @@ func main() {
 	a.SetKeyboardProvider(fe)
 	go fe.textModeGoRoutine(a)
 
-	a.Run(false)
+	a.Run()
 }
 
 /*

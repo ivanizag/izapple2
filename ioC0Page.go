@@ -7,14 +7,16 @@ import (
 )
 
 type ioC0Page struct {
-	softSwitchesR      [256]softSwitchR
-	softSwitchesW      [256]softSwitchW
-	softSwitchesData   [128]uint8
-	keyboard           KeyboardProvider
-	speaker            SpeakerProvider
-	paddlesStrobeCycle uint64
-	joysticks          JoysticksProvider
-	apple2             *Apple2
+	softSwitchesR       [256]softSwitchR
+	softSwitchesW       [256]softSwitchW
+	softSwitchesData    [128]uint8
+	keyboard            KeyboardProvider
+	speaker             SpeakerProvider
+	paddlesStrobeCycle  uint64
+	joysticks           JoysticksProvider
+	apple2              *Apple2
+	trace               bool
+	panicNotImplemented bool
 }
 
 type softSwitchR func(io *ioC0Page) uint8
@@ -55,6 +57,14 @@ func newIoC0Page(a *Apple2) *ioC0Page {
 	}
 
 	return &io
+}
+
+func (p *ioC0Page) setTrace(trace bool) {
+	p.trace = trace
+}
+
+func (p *ioC0Page) setPanicNotImplemented(value bool) {
+	p.panicNotImplemented = value
 }
 
 func (p *ioC0Page) save(w io.Writer) {
@@ -106,23 +116,27 @@ func (p *ioC0Page) peek(address uint16) uint8 {
 	pageAddress := uint8(address)
 	ss := p.softSwitchesR[pageAddress]
 	if ss == nil {
-		if p.apple2.panicSS {
-			panic(fmt.Sprintf("Unknown softswitch on read to 0xC0%02x", pageAddress))
+		if p.panicNotImplemented {
+			panic(fmt.Sprintf("Unknown softswitch on read to $%04x", address))
 		}
 		return 0
 	}
 	value := ss(p)
-	//fmt.Printf("Peek on $%02x: $%02x\n", address, value)
+	if p.trace {
+		fmt.Printf("Softswitch peek on $%04x: $%02x\n", address, value)
+	}
 	return value
 }
 
 func (p *ioC0Page) poke(address uint16, value uint8) {
-	//fmt.Printf("Poke on $%02x with %02x\n", address, value)
+	if p.trace {
+		fmt.Printf("Softswtich poke on $%04x with %02x\n", address, value)
+	}
 	pageAddress := uint8(address)
 	ss := p.softSwitchesW[pageAddress]
 	if ss == nil {
-		if p.apple2.panicSS {
-			panic(fmt.Sprintf("Unknown softswitch on write to 0xC0%02x", pageAddress))
+		if p.panicNotImplemented {
+			panic(fmt.Sprintf("Unknown softswitch on write to $%04x", address))
 		}
 		return
 	}

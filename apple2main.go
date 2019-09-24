@@ -53,7 +53,18 @@ func MainApple() *Apple2 {
 	panicSS := flag.Bool(
 		"panicss",
 		false,
-		"panic if a not implemented softswitch is used")
+		"panic if a not implemented softswitch is used",
+	)
+	traceCPU := flag.Bool(
+		"traceCpu",
+		false,
+		"dump to the console the CPU execution operations",
+	)
+	traceSS := flag.Bool(
+		"traceSS",
+		false,
+		"dump to the console the sofswitches calls",
+	)
 	dumpChars := flag.Bool(
 		"dumpChars",
 		false,
@@ -66,7 +77,12 @@ func MainApple() *Apple2 {
 	)
 	flag.Parse()
 
-	a := NewApple2(*charRomFile, *cpuClock, !*mono, *fastDisk, *panicSS)
+	a := NewApple2(*charRomFile, *cpuClock, !*mono, *fastDisk)
+
+	a.cpu.SetTrace(*traceCPU)
+	a.io.setTrace(*traceSS)
+	a.io.setPanicNotImplemented(*panicSS)
+
 	if *base64a {
 		NewBase64a(a)
 	} else {

@@ -17,6 +17,7 @@ type State struct {
 	mem     Memory
 	cycles  uint64
 	opcodes *[256]opcode
+	trace   bool
 }
 
 const (
@@ -43,8 +44,13 @@ func (s *State) executeLine(line []uint8) {
 	opcode.action(s, line, opcode)
 }
 
+// SetTrace activates tracing of the cpu execution
+func (s *State) SetTrace(trace bool) {
+	s.trace = trace
+}
+
 // ExecuteInstruction transforms the state given after a single instruction is executed.
-func (s *State) ExecuteInstruction(log bool) {
+func (s *State) ExecuteInstruction() {
 	pc := s.reg.getPC()
 	opcodeID := s.mem.Peek(pc)
 	opcode := s.opcodes[opcodeID]
@@ -60,12 +66,13 @@ func (s *State) ExecuteInstruction(log bool) {
 	}
 	s.reg.setPC(pc)
 
-	if log {
+	if s.trace {
+		//fmt.Printf("%#04x %#02x\n", pc-opcode.bytes, opcodeID)
 		fmt.Printf("%#04x %-12s: ", pc-opcode.bytes, lineString(line, opcode))
 	}
 	opcode.action(s, line, opcode)
 	s.cycles += uint64(opcode.cycles)
-	if log {
+	if s.trace {
 		fmt.Printf("%v, [%02x]\n", s.reg, line)
 	}
 }

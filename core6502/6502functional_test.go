@@ -22,8 +22,9 @@ func TestFunctional(t *testing.T) {
 		if log {
 			fmt.Printf("[ %d ] ", testCase)
 		}
+		s.SetTrace(log)
 		pc := s.reg.getPC()
-		s.ExecuteInstruction(log)
+		s.ExecuteInstruction()
 		if pc == s.reg.getPC() {
 			t.Errorf("Failure in test %v.", testCase)
 		}

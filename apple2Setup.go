@@ -4,7 +4,7 @@ import "github.com/ivanizag/apple2/core6502"
 
 // NewApple2 instantiates an apple2
 func NewApple2(charRomFile string, clockMhz float64,
-	isColor bool, fastMode bool, panicSS bool) *Apple2 {
+	isColor bool, fastMode bool) *Apple2 {
 
 	var a Apple2
 	a.Name = "Apple ][+"
@@ -16,7 +16,6 @@ func NewApple2(charRomFile string, clockMhz float64,
 	a.commandChannel = make(chan int, 100)
 	a.isColor = isColor
 	a.fastMode = fastMode
-	a.panicSS = panicSS
 
 	if clockMhz <= 0 {
 		// Full speed
