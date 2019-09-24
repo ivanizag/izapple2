@@ -19,7 +19,7 @@ Apple ][+, it is not considered. For the Plus it is often
 refered as Language card but it is really a 16 KB Ram card,
 
 
-"When RAM is deselected, the ROM on the LAnguage card is selected for
+"When RAM is deselected, the ROM on the Language card is selected for
 the top 2K ($F800-$FFFF), and the ROM on the main board is selected
 for $D000-$F7FF.
 
@@ -61,8 +61,11 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 			return 0
 		}
 		c.ssw[iCopy] = func(*ioC0Page, uint8) {
-			// Writing resets write count (from A2AUDIT)
-			c.writeState = lcWriteDisabled
+			c.ssAction(iCopy)
+
+			// Writing shoud reset write count per A2AUDIT
+			// but doing that makes ProDos to not load.
+			// c.writeState = lcWriteDisabled
 		}
 	}
 
