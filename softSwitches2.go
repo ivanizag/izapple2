@@ -156,10 +156,8 @@ func getPaddleSoftSwitch(i int) softSwitchR {
 		if cyclesElapsed < cyclesNeeded {
 			// The capacitor is not charged yet
 			return 128
-		} else {
-			return 0
 		}
-
+		return 0
 	}
 }
 

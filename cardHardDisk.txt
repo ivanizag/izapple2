@@ -1,0 +1,5 @@
+To implement a hard drive we just have to support boot from #PR7 and the PRODOS expextations.
+
+The prodos expectations are in http://wiki.apple2.org/index.php?title=P8_Tech_Ref_Chapter_6#Disk_Driver_Routines
+
+AppleWin writes its own firmware: https://github.com/AppleWin/AppleWin/blob/master/firmware/HDD/hddrvr.a65
