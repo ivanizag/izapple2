@@ -87,6 +87,13 @@ func (a *Apple2) AddSaturnCard(slot int) {
 	a.insertCard(&cardSaturn{}, slot)
 }
 
+// AddThunderClockPlusCard inserts a ThunderClock Plus clock card
+func (a *Apple2) AddThunderClockPlusCard(slot int, romFile string) {
+	var c cardThunderClockPlus
+	c.loadRom(romFile)
+	a.insertCard(&c, slot)
+}
+
 // AddCardLogger inserts a fake card that logs accesses
 func (a *Apple2) AddCardLogger(slot int) {
 	a.insertCard(&cardLogger{}, slot)

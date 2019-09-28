@@ -11,11 +11,12 @@ type card interface {
 }
 
 type cardBase struct {
-	a    *Apple2
-	rom  *memoryRange
-	slot int
-	ssr  [16]softSwitchR
-	ssw  [16]softSwitchW
+	a        *Apple2
+	rom      *memoryRange
+	romExtra *memoryRange
+	slot     int
+	ssr      [16]softSwitchR
+	ssw      [16]softSwitchW
 }
 
 func (c *cardBase) loadRom(filename string) {
@@ -23,7 +24,12 @@ func (c *cardBase) loadRom(filename string) {
 		panic("Rom must be loaded before inserting the card in the slot")
 	}
 	data := loadResource(filename)
-	c.rom = newMemoryRange(0, data)
+	if len(data) >= 0x100 {
+		c.rom = newMemoryRange(0, data)
+	}
+	if len(data) >= 0x800 {
+		c.romExtra = newMemoryRange(0, data)
+	}
 }
 
 func (c *cardBase) assign(a *Apple2, slot int) {
@@ -32,6 +38,11 @@ func (c *cardBase) assign(a *Apple2, slot int) {
 	if slot != 0 && c.rom != nil {
 		c.rom.base = uint16(0xc000 + slot*0x100)
 		a.mmu.setPagesRead(uint8(0xc0+slot), uint8(0xc0+slot), c.rom)
+	}
+
+	if slot != 0 && c.romExtra != nil {
+		c.romExtra.base = uint16(0xc800)
+		a.mmu.prepareCardExtraRom(slot, c.romExtra)
 	}
 
 	for i := 0; i < 0x10; i++ {

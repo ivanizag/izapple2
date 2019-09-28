@@ -39,6 +39,10 @@ func MainApple() *Apple2 {
 		"saturnCardSlot",
 		-1,
 		"slot for the 256kb Saturn card. -1 for none")
+	thunderClockCardSlot := flag.Int(
+		"thunderClockCardSlot",
+		5,
+		"slot for the ThunderClock Plus card. -1 for none")
 	mono := flag.Bool(
 		"mono",
 		false,
@@ -49,7 +53,6 @@ func MainApple() *Apple2 {
 		true,
 		"set fast mode when the disks are spinning",
 	)
-
 	panicSS := flag.Bool(
 		"panicss",
 		false,
@@ -93,6 +96,9 @@ func MainApple() *Apple2 {
 	}
 	if *saturnCardSlot >= 0 {
 		a.AddSaturnCard(*saturnCardSlot)
+	}
+	if *thunderClockCardSlot > 0 {
+		a.AddThunderClockPlusCard(*thunderClockCardSlot, "<internal>/ThunderclockPlusROM.bin")
 	}
 	if *disk2Slot >= 0 {
 		a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)

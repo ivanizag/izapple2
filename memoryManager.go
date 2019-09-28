@@ -1,6 +1,7 @@
 package apple2
 
 import (
+	"encoding/binary"
 	"io"
 )
 
@@ -14,9 +15,13 @@ type memoryManager struct {
 	activeMemoryWrite [256]memoryHandler
 
 	// Pages prepared to be paged in and out
-	physicalMainRAM *memoryRange // 0x0000 to 0xbfff, Up to 48 Kb
-	physicalROM     *memoryRange // 0xd000 to 0xffff, 12 Kb
-	physicalROMe    *memoryRange // 0xc000 to 0xcfff, Zero or 4bk in the Apple2e
+	physicalMainRAM *memoryRange  // 0x0000 to 0xbfff, Up to 48 Kb
+	physicalROM     memoryHandler // 0xd000 to 0xffff, 12 Kb
+	physicalROMe    memoryHandler // 0xc000 to 0xcfff, Zero or 4bk in the Apple2e
+
+	// Pages prapared for optional card ROM banks
+	activeSlot    uint8
+	cardsROMExtra [8]memoryHandler // 0xc800 to 0xcfff. for each card
 }
 
 type memoryHandler interface {
@@ -28,14 +33,28 @@ const (
 	ioC8Off uint16 = 0xCFFF
 )
 
-// Peek returns the data on the given address
-func (mmu *memoryManager) Peek(address uint16) uint8 {
+func (mmu *memoryManager) access(address uint16, activeMemory [256]memoryHandler) memoryHandler {
 	if address == ioC8Off {
 		mmu.resetSlotExpansionRoms()
 	}
 
 	hi := uint8(address >> 8)
-	mh := mmu.activeMemoryRead[hi]
+	if hi >= 0xC1 && hi <= 0xC7 {
+		slot := hi - 0xC0
+		if slot != mmu.activeSlot {
+			mmu.activateCardRomExtra(slot)
+		}
+	}
+	mh := activeMemory[hi]
+	if mh == nil {
+		return nil
+	}
+	return mh
+}
+
+// Peek returns the data on the given address
+func (mmu *memoryManager) Peek(address uint16) uint8 {
+	mh := mmu.access(address, mmu.activeMemoryRead)
 	if mh == nil {
 		return 0xf4 // Or some random number
 	}
@@ -44,11 +63,7 @@ func (mmu *memoryManager) Peek(address uint16) uint8 {
 
 // Poke sets the data at the given address
 func (mmu *memoryManager) Poke(address uint16, value uint8) {
-	if address == ioC8Off {
-		mmu.resetSlotExpansionRoms()
-	}
-	hi := uint8(address >> 8)
-	mh := mmu.activeMemoryWrite[hi]
+	mh := mmu.access(address, mmu.activeMemoryWrite)
 	if mh == nil {
 		return
 	}
@@ -82,13 +97,27 @@ func (mmu *memoryManager) setPagesWrite(begin uint8, end uint8, mh memoryHandler
 	}
 }
 
+func (mmu *memoryManager) prepareCardExtraRom(slot int, mh memoryHandler) {
+	mmu.cardsROMExtra[slot] = mh
+}
+
 // When 0xcfff is accessed the card expansion rom is unassigned
 func (mmu *memoryManager) resetSlotExpansionRoms() {
 	if mmu.apple2.io.isSoftSwitchActive(ioFlagIntCxRom) {
 		// Ignore if the Apple2 shadow ROM is active
 		return
 	}
+	mmu.activeSlot = 0
 	mmu.setPagesRead(0xc8, 0xcf, nil)
+}
+
+// When a card base ROM is accesed the extra rom is assigned if available
+func (mmu *memoryManager) activateCardRomExtra(slot uint8) {
+	//fmt.Printf("Activate slot %v\n", slot)
+	if mmu.cardsROMExtra[slot] != nil {
+		mmu.setPagesRead(0xC8, 0xCF, mmu.cardsROMExtra[slot])
+	}
+	mmu.activeSlot = slot
 }
 
 func (mmu *memoryManager) resetRomPaging() {
@@ -114,9 +143,14 @@ func newMemoryManager(a *Apple2) *memoryManager {
 
 func (mmu *memoryManager) save(w io.Writer) {
 	mmu.physicalMainRAM.save(w)
+	binary.Write(w, binary.BigEndian, mmu.activeSlot)
+
 }
 
 func (mmu *memoryManager) load(r io.Reader) {
 	mmu.physicalMainRAM.load(r)
+	binary.Read(r, binary.BigEndian, &mmu.activeSlot)
+	mmu.activateCardRomExtra(mmu.activeSlot)
+
 	mmu.resetBaseRamPaging()
 }

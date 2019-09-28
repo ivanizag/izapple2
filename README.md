@@ -12,7 +12,8 @@ Portable emulator of an Apple II+. Written in Go.
 - Emulated extension cards:
     - DiskII controller
     - 16Kb Language Card
-    - 256Kb Saturn RAM Card
+    - 256Kb Saturn RAM 
+    - ThunderClock Plus real time clock
 - Graphic modes:
     - Text, Lores and Hires
 - Displays:
@@ -40,7 +41,7 @@ casa@servidor:~$ ./apple2sdl
 ![DOS 3.3 started](doc/dos33.png)
 
 ### Play games
-Download an DSK file locally or use the a link ([Asimov](https://www.apple.asimov.net/images/) is an excellent source) with the `-disk` parameter:
+Download a DSK file locally or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source) with the `-disk` parameter:
 ```
 casa@servidor:~$ ./apple2sdl -disk "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
 ```
@@ -88,7 +89,7 @@ Line:
 - F6: Toggle between NTSC color TV and green phosphor monochrome monitor
 - F7: Save current state to disk
 - F8: Restore state from disk
-- F10: Cycle character generator codepages. Only if the character generator ROM has more than one 2Kb pages.
+- F10: Cycle character generator codepages. Only if the character generator ROM has more than one 2Kb page.
 - F12: Save a screen snapshot to a file `snapshot.png`
 
 Only valid on SDL mode
@@ -122,6 +123,8 @@ Only valid on SDL mode
         main rom file (default "<internal>/Apple2_Plus.rom")
   -saturnCardSlot int
         slot for the 256kb Saturn card. -1 for none (default -1)
+  -thunderClockCardSlot int
+        slot for the ThunderClock Plus card. -1 for none (default 5)
   -traceCpu
         dump to the console the CPU execution 
   -traceSS

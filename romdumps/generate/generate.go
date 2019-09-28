@@ -1,4 +1,4 @@
-// To generate the resources put the files on a "files" subdirectory and run main
+// To generate the resources put the files on a "files" subdirectory and run "go run generate.go"
 
 package main
 
