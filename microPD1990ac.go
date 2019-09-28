@@ -1,7 +1,6 @@
 package apple2
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -56,7 +55,8 @@ func (m *microPD1990ac) in(clock bool, strobe bool, command uint8, dataIn bool) 
 		case mpd1990commandTimeRead:
 			m.loadTime()
 		default:
-			panic(fmt.Sprintf("PD1990ac command %v not implemented.", m.command))
+			// Ignore unknown commands (like set time)
+			//panic(fmt.Sprintf("PD1990ac command %v not implemented.", m.command))
 		}
 	}
 
