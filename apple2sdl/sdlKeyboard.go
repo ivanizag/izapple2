@@ -103,6 +103,8 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		k.a.SendCommand(apple2.CommandDumpDebugInfo)
 	case sdl.K_F10:
 		k.a.SendCommand(apple2.CommandNextCharGenPage)
+	case sdl.K_F11:
+		k.a.SendCommand(apple2.CommandToggleCPUTrace)
 	case sdl.K_F12:
 		apple2.SaveSnapshot(k.a, "snapshot.png")
 	}

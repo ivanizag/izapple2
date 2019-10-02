@@ -90,6 +90,7 @@ Line:
 - F7: Save current state to disk
 - F8: Restore state from disk
 - F10: Cycle character generator codepages. Only if the character generator ROM has more than one 2Kb page.
+- F11: Toggle on and off the trace to console of the CPU execution
 - F12: Save a screen snapshot to a file `snapshot.png`
 
 Only valid on SDL mode

@@ -86,6 +86,8 @@ const (
 	CommandDumpDebugInfo
 	// CommandNextCharGenPage cycles the CharGen page if several
 	CommandNextCharGenPage
+	// CommandToggleCPUTrace toggle tracing of CPU execution
+	CommandToggleCPUTrace
 )
 
 // SendCommand enqueues a command to the emulator thread
@@ -116,6 +118,8 @@ func (a *Apple2) executeCommand(command int) {
 	case CommandNextCharGenPage:
 		a.cg.nextPage()
 		fmt.Printf("Chargen page %v\n", a.cg.page)
+	case CommandToggleCPUTrace:
+		a.cpu.SetTrace(!a.cpu.GetTrace())
 	}
 }
 

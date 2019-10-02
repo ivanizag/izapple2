@@ -44,11 +44,6 @@ func (s *State) executeLine(line []uint8) {
 	opcode.action(s, line, opcode)
 }
 
-// SetTrace activates tracing of the cpu execution
-func (s *State) SetTrace(trace bool) {
-	s.trace = trace
-}
-
 // ExecuteInstruction transforms the state given after a single instruction is executed.
 func (s *State) ExecuteInstruction() {
 	pc := s.reg.getPC()
@@ -136,4 +131,14 @@ func lineString(line []uint8, opcode opcode) string {
 		t += "UNKNOWN MODE"
 	}
 	return t
+}
+
+// SetTrace activates tracing of the cpu execution
+func (s *State) SetTrace(trace bool) {
+	s.trace = trace
+}
+
+// GetTrace gets trhe tracing state of the cpu execution
+func (s *State) GetTrace() bool {
+	return s.trace
 }
