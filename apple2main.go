@@ -23,6 +23,14 @@ func MainApple() *Apple2 {
 		"disk",
 		"<internal>/dos33.dsk",
 		"file to load on the first disk drive")
+	hardDiskImage := flag.String(
+		"hd",
+		"",
+		"file to load on the hard disk")
+	hardDiskSlot := flag.Int(
+		"hdSlot",
+		-1,
+		"slot for the hard drive if present. -1 for none.")
 	cpuClock := flag.Float64(
 		"mhz",
 		CpuClockMhz,
@@ -100,8 +108,15 @@ func MainApple() *Apple2 {
 	if *thunderClockCardSlot > 0 {
 		a.AddThunderClockPlusCard(*thunderClockCardSlot, "<internal>/ThunderclockPlusROM.bin")
 	}
-	if *disk2Slot >= 0 {
+	if *disk2Slot > 0 {
 		a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
+	}
+	if *hardDiskImage != "" {
+		if *hardDiskSlot <= 0 {
+			// If there is a hard disk image, but no slot assigned, use slot 7.
+			*hardDiskSlot = 7
+		}
+		a.AddHardDisk(*hardDiskSlot, *hardDiskImage)
 	}
 
 	//a.AddCardInOut(2)

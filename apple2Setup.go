@@ -64,10 +64,10 @@ func (a *Apple2) LoadRom(filename string) {
 	mmu.resetRomPaging()
 }
 
-// AddDisk2 insterts a DiskII controller
+// AddDisk2 inserts a DiskII controller
 func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) {
 	var c cardDisk2
-	c.loadRom(diskRomFile)
+	c.loadRom(loadResource(diskRomFile))
 	a.insertCard(&c, slot)
 
 	if diskImage != "" {
@@ -75,6 +75,16 @@ func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) {
 		//diskette.saveNib(diskImage + "bak")
 		c.drive[0].insertDiskette(diskette)
 	}
+}
+
+// AddHardDisk adds a ProDos hard dirve with a 2MG image
+func (a *Apple2) AddHardDisk(slot int, hdImage string) {
+	var c cardHardDisk
+	c.loadRom(buildHardDiskRom(slot))
+	a.insertCard(&c, slot)
+
+	hd := loadHardDisk2mg(hdImage)
+	c.addDisk(hd)
 }
 
 // AddLanguageCard inserts a 16Kb card
@@ -90,7 +100,7 @@ func (a *Apple2) AddSaturnCard(slot int) {
 // AddThunderClockPlusCard inserts a ThunderClock Plus clock card
 func (a *Apple2) AddThunderClockPlusCard(slot int, romFile string) {
 	var c cardThunderClockPlus
-	c.loadRom(romFile)
+	c.loadRom(loadResource(romFile))
 	a.insertCard(&c, slot)
 }
 

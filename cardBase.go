@@ -5,7 +5,7 @@ import (
 )
 
 type card interface {
-	loadRom(filename string)
+	loadRom(data []uint8)
 	assign(a *Apple2, slot int)
 	persistent
 }
@@ -19,11 +19,10 @@ type cardBase struct {
 	ssw      [16]softSwitchW
 }
 
-func (c *cardBase) loadRom(filename string) {
+func (c *cardBase) loadRom(data []uint8) {
 	if c.a != nil {
 		panic("Rom must be loaded before inserting the card in the slot")
 	}
-	data := loadResource(filename)
 	if len(data) >= 0x100 {
 		c.rom = newMemoryRange(0, data)
 	}

@@ -9,11 +9,13 @@ Portable emulator of an Apple II+. Written in Go.
 - Apple II+ with 48Kb of base RAM
 - Sound
 - 16 Sector diskettes in DSK format
+- ProDos hard disk (read only, just to support [Total Replay](https://archive.org/details/TotalReplay))
 - Emulated extension cards:
     - DiskII controller
     - 16Kb Language Card
     - 256Kb Saturn RAM 
     - ThunderClock Plus real time clock
+    - Simulated bootable hard disk card
 - Graphic modes:
     - Text, Lores and Hires
 - Displays:
@@ -47,6 +49,13 @@ casa@servidor:~$ ./apple2sdl -disk "https://www.apple.asimov.net/images/games/ac
 ```
 ![Karateka](doc/karateka.png)
 
+### Play the Total Replay collection
+Download the excellent [Total Replay](https://archive.org/details/TotalReplay) compilation by
+[a2-4am](https://github.com/a2-4am/4cade). Run it with the `-hd` parameter:
+```
+casa@servidor:~$ ./apple2sdl -hd "Total Replay v2.0.2mg"
+```
+![Total Replay](doc/totalreplay.png)
 
 ### Terminal mode
 To run text mode right on the terminal without the SDL2 dependency, use `apple2console`. It runs on the console using ANSI escape codes. Input is sent to the emulated Apple II one line at a time: 
@@ -112,6 +121,10 @@ Only valid on SDL mode
         shows the character map
   -fastDisk
         set fast mode when the disks are spinning (default true)
+  -hd string
+        file to load on the hard disk
+  -hdSlot int
+        slot for the hard drive if present. -1 for none. (default -1)
   -languageCardSlot int
         slot for the 16kb language card. -1 for none
   -mhz float
@@ -127,7 +140,7 @@ Only valid on SDL mode
   -thunderClockCardSlot int
         slot for the ThunderClock Plus card. -1 for none (default 5)
   -traceCpu
-        dump to the console the CPU execution 
+        dump to the console the CPU execution. Use F11 to toggle.
   -traceSS
         dump to the console the sofswitches calls
 
