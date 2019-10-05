@@ -138,7 +138,7 @@ Only valid on SDL mode
   -saturnCardSlot int
         slot for the 256kb Saturn card. -1 for none (default -1)
   -thunderClockCardSlot int
-        slot for the ThunderClock Plus card. -1 for none (default 5)
+        slot for the ThunderClock Plus card. -1 for none (default 4)
   -traceCpu
         dump to the console the CPU execution. Use F11 to toggle.
   -traceSS

@@ -49,7 +49,7 @@ func MainApple() *Apple2 {
 		"slot for the 256kb Saturn card. -1 for none")
 	thunderClockCardSlot := flag.Int(
 		"thunderClockCardSlot",
-		5,
+		4,
 		"slot for the ThunderClock Plus card. -1 for none")
 	mono := flag.Bool(
 		"mono",
