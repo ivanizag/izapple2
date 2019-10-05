@@ -1,5 +1,7 @@
 package apple2
 
+import "fmt"
+
 /*
 To implement a hard drive we just have to support boot from #PR7 and the PRODOS expextations.
 See Beneath Prodos, section 6-6, 7-13 and 5-8. (http://www.apple-iigs.info/doc/fichiers/beneathprodos.pdf)
@@ -7,7 +9,8 @@ See Beneath Prodos, section 6-6, 7-13 and 5-8. (http://www.apple-iigs.info/doc/f
 
 type cardHardDisk struct {
 	cardBase
-	disk *hardDisk
+	disk  *hardDisk
+	trace bool
 }
 
 func buildHardDiskRom(slot int) []uint8 {
@@ -41,9 +44,13 @@ func buildHardDiskRom(slot int) []uint8 {
 
 	copy(data[0x80:], []uint8{
 		0xad, ssBase + 0, 0xc0, // LDA $C0n0 ; Softswitch 0, execute command. Error code in reg A.
+		0x48,                   // PHA
 		0xae, ssBase + 1, 0xc0, // LDX $C0n1 ; Softswitch 2, LO(Blocks), STATUS needs that in reg X.
 		0xac, ssBase + 2, 0xc0, // LDY $C0n2 ; Softswitch 3, HI(Blocks). STATUS needs that in reg Y.
-		0x18, // CLC ; Clear carry for no errors.
+		0x18,       // CLC ; Clear carry for no errors.
+		0x68,       // PLA ; Sets Z if no error
+		0xF0, 0x01, // BEQ $01 ; Skips the SEC if reg A is zero
+		0x38, // SEC ; Set carry on errors
 		0x60, // RTS
 	})
 
@@ -63,27 +70,31 @@ const (
 )
 
 const (
-	proDosDeviceNoError             = 0
-	proDosDeviceErrorIO             = 0x27
-	proDosDeviceErrorNoDevice       = 0x28
-	proDosDeviceErrorWriteProtected = 0x2b
+	proDosDeviceNoError             = uint8(0)
+	proDosDeviceErrorIO             = uint8(0x27)
+	proDosDeviceErrorNoDevice       = uint8(0x28)
+	proDosDeviceErrorWriteProtected = uint8(0x2b)
 )
 
 func (c *cardHardDisk) assign(a *Apple2, slot int) {
 	c.ssr[0] = func(*ioC0Page) uint8 {
+
 		// Prodos entry point
 		command := a.mmu.Peek(0x42)
-		//unit := a.mmu.Peek(0x43)
-		dest := uint16(a.mmu.Peek(0x44)) + uint16(a.mmu.Peek(0x45))<<8
+		unit := a.mmu.Peek(0x43)
+		address := uint16(a.mmu.Peek(0x44)) + uint16(a.mmu.Peek(0x45))<<8
 		block := uint16(a.mmu.Peek(0x46)) + uint16(a.mmu.Peek(0x47))<<8
-		//fmt.Printf("[CardHardDisk] Command %v on unit $%x, block %v to $%x.\n", command, unit, block, dest)
+		if c.trace {
+			fmt.Printf("[CardHardDisk] Command %v on unit $%x, block %v to $%x.\n", command, unit, block, address)
+		}
 
 		switch command {
 		case proDosDeviceCommandStatus:
 			return proDosDeviceNoError
 		case proDosDeviceCommandRead:
-			c.readBlock(block, dest)
-			return proDosDeviceNoError
+			return c.readBlock(block, address)
+		case proDosDeviceCommandWrite:
+			return c.writeBlock(block, address)
 		default:
 			panic("Prodos device command not supported.")
 		}
@@ -100,15 +111,44 @@ func (c *cardHardDisk) assign(a *Apple2, slot int) {
 	c.cardBase.assign(a, slot)
 }
 
-func (c *cardHardDisk) readBlock(block uint16, dest uint16) {
-	//fmt.Printf("[CardHardDisk] Read block %v into $%x.\n", block, dest)
+func (c *cardHardDisk) readBlock(block uint16, dest uint16) uint8 {
+	if c.trace {
+		fmt.Printf("[CardHardDisk] Read block %v into $%x.\n", block, dest)
+	}
 
-	data := c.disk.read(uint32(block))
+	data, err := c.disk.read(uint32(block))
+	if err != nil {
+		return proDosDeviceErrorIO
+	}
 	// Byte by byte transfer to memory using the full Poke code path
 	for i := uint16(0); i < uint16(proDosBlockSize); i++ {
 		c.a.mmu.Poke(dest+i, data[i])
 	}
 
+	return proDosDeviceNoError
+}
+
+func (c *cardHardDisk) writeBlock(block uint16, source uint16) uint8 {
+	if c.trace {
+		fmt.Printf("[CardHardDisk] Write block %v from $%x.\n", block, source)
+	}
+
+	if c.disk.readOnly {
+		return proDosDeviceErrorWriteProtected
+	}
+
+	// Byte by byte transfer from memory using the full Peek code path
+	buf := make([]uint8, proDosBlockSize)
+	for i := uint16(0); i < uint16(proDosBlockSize); i++ {
+		buf[i] = c.a.mmu.Peek(source + i)
+	}
+
+	err := c.disk.write(uint32(block), buf)
+	if err != nil {
+		return proDosDeviceErrorIO
+	}
+
+	return proDosDeviceNoError
 }
 
 func (c *cardHardDisk) addDisk(disk *hardDisk) {

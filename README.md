@@ -9,7 +9,7 @@ Portable emulator of an Apple II+. Written in Go.
 - Apple II+ with 48Kb of base RAM
 - Sound
 - 16 Sector diskettes in DSK format
-- ProDos hard disk (read only, just to support [Total Replay](https://archive.org/details/TotalReplay))
+- ProDos hard disk
 - Emulated extension cards:
     - DiskII controller
     - 16Kb Language Card

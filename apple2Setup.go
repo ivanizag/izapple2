@@ -83,7 +83,7 @@ func (a *Apple2) AddHardDisk(slot int, hdImage string) {
 	c.loadRom(buildHardDiskRom(slot))
 	a.insertCard(&c, slot)
 
-	hd := loadHardDisk2mg(hdImage)
+	hd := openHardDisk2mg(hdImage)
 	c.addDisk(hd)
 }
 

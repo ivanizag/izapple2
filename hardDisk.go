@@ -1,12 +1,14 @@
 package apple2
 
 import (
-	"bytes"
 	"encoding/binary"
+	"errors"
+	"io"
+	"os"
 )
 
 /*
-Valid for ProDos hard disks in 2MG format. Read only.
+Valid for ProDos hard disks in 2MG format.
 
 See:
 	https://apple2.org.za/gswv/a2zine/Docs/DiskImage_2MG_Info.txt
@@ -20,8 +22,9 @@ const (
 )
 
 type hardDisk struct {
-	data   []uint8
-	header hardDisk2mgHeader
+	file     *os.File
+	readOnly bool
+	header   hardDisk2mgHeader
 }
 
 type hardDisk2mgHeader struct {
@@ -40,45 +43,88 @@ type hardDisk2mgHeader struct {
 	LengthCreator uint32
 }
 
-func (hd *hardDisk) read(block uint32) []uint8 {
+func (hd *hardDisk) read(block uint32) ([]uint8, error) {
 	if block >= hd.header.Blocks {
-		return nil
+		return nil, errors.New("disk block number is too big")
 	}
-	offset := hd.header.OffsetData + block*proDosBlockSize
-	return hd.data[offset : offset+proDosBlockSize]
+
+	buf := make([]uint8, proDosBlockSize)
+
+	offset := int64(hd.header.OffsetData + block*proDosBlockSize)
+	_, err := hd.file.ReadAt(buf, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf, nil
 }
 
-func loadHardDisk2mg(filename string) *hardDisk {
-	var hd hardDisk
-
-	hd.data = loadResource(filename)
-
-	size := len(hd.data)
-	if size < binary.Size(&hd.header) {
-		panic("2mg file is too short")
+func (hd *hardDisk) write(block uint32, data []uint8) error {
+	if hd.readOnly {
+		return errors.New("can't write in a readonly disk")
+	}
+	if block >= hd.header.Blocks {
+		return errors.New("disk block number is too big")
 	}
 
-	buf := bytes.NewReader(hd.data)
-	err := binary.Read(buf, binary.LittleEndian, &hd.header)
+	offset := int64(hd.header.OffsetData + block*proDosBlockSize)
+	_, err := hd.file.WriteAt(data, offset)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func openHardDisk2mg(filename string) *hardDisk {
+	var hd hardDisk
+
+	hd.readOnly = false
+	file, err := os.OpenFile(filename, os.O_RDWR, 0)
+	if os.IsPermission(err) {
+		// Retry in read-only mode
+		hd.readOnly = true
+		file, err = os.OpenFile(filename, os.O_RDONLY, 0)
+	}
+	if err != nil {
+		panic(err)
+	}
+	hd.file = file
+
+	fileInfo, err := hd.file.Stat()
 	if err != nil {
 		panic(err)
 	}
 
-	if hd.header.Preamble != hardDisk2mgPreamble {
-		panic("2mg file must start with '2IMG'")
+	minHeaderSize := binary.Size(&hd.header)
+	if fileInfo.Size() < int64(minHeaderSize) {
+		panic("Invalid 2MG file")
 	}
 
-	if hd.header.Format != hardDisk2mgFormatProdos {
-		panic("Only prodos hard disks are supported")
-	}
+	readHeader(hd.file, &hd.header)
 
-	if hd.header.Version != hardDisk2mgVersion {
-		panic("Version of 2MG image not supported")
-	}
-
-	if size < int(hd.header.OffsetData+hd.header.Blocks*proDosBlockSize) {
+	if fileInfo.Size() < int64(hd.header.OffsetData+hd.header.Blocks*proDosBlockSize) {
 		panic("Thr 2MG file is too small")
 	}
 
 	return &hd
+}
+
+func readHeader(buf io.Reader, header *hardDisk2mgHeader) {
+	err := binary.Read(buf, binary.LittleEndian, header)
+	if err != nil {
+		panic(err)
+	}
+
+	if header.Preamble != hardDisk2mgPreamble {
+		panic("2mg file must start with '2IMG'")
+	}
+
+	if header.Format != hardDisk2mgFormatProdos {
+		panic("Only prodos hard disks are supported")
+	}
+
+	if header.Version != hardDisk2mgVersion {
+		panic("Version of 2MG image not supported")
+	}
 }
