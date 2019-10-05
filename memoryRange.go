@@ -29,12 +29,26 @@ func (m *memoryRange) subRange(a, b uint16) []uint8 {
 	return m.data[a-m.base : b-m.base]
 }
 
-func (m *memoryRange) save(w io.Writer) {
-	binary.Write(w, binary.BigEndian, m.base)
-	binary.Write(w, binary.BigEndian, m.data)
+func (m *memoryRange) save(w io.Writer) error {
+	err := binary.Write(w, binary.BigEndian, m.base)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, m.data)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (m *memoryRange) load(r io.Reader) {
-	binary.Read(r, binary.BigEndian, &m.base)
-	binary.Read(r, binary.BigEndian, &m.data)
+func (m *memoryRange) load(r io.Reader) error {
+	err := binary.Read(r, binary.BigEndian, &m.base)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &m.data)
+	if err != nil {
+		return err
+	}
+	return nil
 }

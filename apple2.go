@@ -109,10 +109,16 @@ func (a *Apple2) executeCommand(command int) {
 		a.isColor = !a.isColor
 	case CommandSaveState:
 		fmt.Println("Saving state")
-		a.save("apple2.state")
+		err := a.save("apple2.state")
+		if err != nil {
+			fmt.Printf("Error loadind state: %v.", err)
+		}
 	case CommandLoadState:
 		fmt.Println("Loading state")
-		a.load("apple2.state")
+		err := a.load("apple2.state")
+		if err != nil {
+			fmt.Printf("Error loadind state: %v.", err)
+		}
 	case CommandDumpDebugInfo:
 		a.dumpDebugInfo()
 	case CommandNextCharGenPage:
@@ -137,55 +143,99 @@ func (a *Apple2) releaseFastMode() {
 }
 
 type persistent interface {
-	save(io.Writer)
-	load(io.Reader)
+	save(io.Writer) error
+	load(io.Reader) error
 }
 
-func (a *Apple2) save(filename string) {
+func (a *Apple2) save(filename string) error {
 	f, err := os.Create(filename)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer f.Close()
 	w := bufio.NewWriter(f)
 	defer w.Flush()
 
-	a.cpu.Save(w)
-	a.mmu.save(w)
-	a.io.save(w)
-	binary.Write(w, binary.BigEndian, a.isColor)
-	binary.Write(w, binary.BigEndian, a.fastMode)
-	binary.Write(w, binary.BigEndian, a.fastRequestsCounter)
+	err = a.cpu.Save(w)
+	if err != nil {
+		return err
+	}
+	err = a.mmu.save(w)
+	if err != nil {
+		return err
+	}
+	err = a.io.save(w)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, a.isColor)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, a.fastMode)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, a.fastRequestsCounter)
+	if err != nil {
+		return err
+	}
 
 	for _, c := range a.cards {
 		if c != nil {
-			c.save(w)
+			err = c.save(w)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func (a *Apple2) load(filename string) {
+func (a *Apple2) load(filename string) error {
 	f, err := os.Open(filename)
 	if err != nil {
-		// Ignore error if can't load the file
-		return
+		return err
 	}
 	defer f.Close()
 	r := bufio.NewReader(f)
 
-	a.cpu.Load(r)
-	a.mmu.load(r)
-	a.io.load(r)
-	binary.Read(r, binary.BigEndian, &a.isColor)
-	binary.Read(r, binary.BigEndian, &a.fastMode)
-	binary.Read(r, binary.BigEndian, &a.fastRequestsCounter)
+	err = a.cpu.Load(r)
+	if err != nil {
+		return err
+	}
+	err = a.mmu.load(r)
+	if err != nil {
+		return err
+	}
+	err = a.io.load(r)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &a.isColor)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &a.fastMode)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &a.fastRequestsCounter)
+	if err != nil {
+		return err
+	}
 
 	for _, c := range a.cards {
 		if c != nil {
-			c.load(r)
+			err = c.load(r)
+			if err != nil {
+				return err
+			}
 
 		}
 	}
+
+	return nil
 }
 
 func (a *Apple2) dumpDebugInfo() {

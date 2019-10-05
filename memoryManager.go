@@ -141,16 +141,29 @@ func newMemoryManager(a *Apple2) *memoryManager {
 	return &mmu
 }
 
-func (mmu *memoryManager) save(w io.Writer) {
-	mmu.physicalMainRAM.save(w)
-	binary.Write(w, binary.BigEndian, mmu.activeSlot)
-
+func (mmu *memoryManager) save(w io.Writer) error {
+	err := mmu.physicalMainRAM.save(w)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, mmu.activeSlot)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (mmu *memoryManager) load(r io.Reader) {
-	mmu.physicalMainRAM.load(r)
-	binary.Read(r, binary.BigEndian, &mmu.activeSlot)
+func (mmu *memoryManager) load(r io.Reader) error {
+	err := mmu.physicalMainRAM.load(r)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &mmu.activeSlot)
+	if err != nil {
+		return err
+	}
 	mmu.activateCardRomExtra(mmu.activeSlot)
 
 	mmu.resetBaseRamPaging()
+	return nil
 }

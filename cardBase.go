@@ -21,7 +21,7 @@ type cardBase struct {
 
 func (c *cardBase) loadRom(data []uint8) {
 	if c.a != nil {
-		panic("Rom must be loaded before inserting the card in the slot")
+		panic("Assert failed. Rom must be loaded before inserting the card in the slot")
 	}
 	if len(data) >= 0x100 {
 		c.rom = newMemoryRange(0, data)
@@ -50,10 +50,12 @@ func (c *cardBase) assign(a *Apple2, slot int) {
 	}
 }
 
-func (c *cardBase) save(w io.Writer) {
+func (c *cardBase) save(w io.Writer) error {
 	// Empty
+	return nil
 }
 
-func (c *cardBase) load(r io.Reader) {
+func (c *cardBase) load(r io.Reader) error {
 	// Empty
+	return nil
 }

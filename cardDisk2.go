@@ -169,34 +169,98 @@ func (d *cardDisk2Drive) insertDiskette(dt *diskette16sector) {
 	d.diskette = dt
 }
 
-func (c *cardDisk2) save(w io.Writer) {
-	binary.Write(w, binary.BigEndian, c.selected)
-	binary.Write(w, binary.BigEndian, c.dataLatch)
-	binary.Write(w, binary.BigEndian, c.q6)
-	binary.Write(w, binary.BigEndian, c.q7)
-	c.drive[0].save(w)
-	c.drive[1].save(w)
+func (c *cardDisk2) save(w io.Writer) error {
+	err := binary.Write(w, binary.BigEndian, c.selected)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, c.dataLatch)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, c.q6)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, c.q7)
+	if err != nil {
+		return err
+	}
+	err = c.drive[0].save(w)
+	if err != nil {
+		return err
+	}
+	err = c.drive[1].save(w)
+	if err != nil {
+		return err
+	}
+	return c.cardBase.save(w)
 }
 
-func (c *cardDisk2) load(r io.Reader) {
-	binary.Read(r, binary.BigEndian, &c.selected)
-	binary.Read(r, binary.BigEndian, &c.dataLatch)
-	binary.Read(r, binary.BigEndian, &c.q6)
-	binary.Read(r, binary.BigEndian, &c.q7)
-	c.drive[0].load(r)
-	c.drive[1].load(r)
+func (c *cardDisk2) load(r io.Reader) error {
+	err := binary.Read(r, binary.BigEndian, &c.selected)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &c.dataLatch)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &c.q6)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &c.q7)
+	if err != nil {
+		return err
+	}
+	err = c.drive[0].load(r)
+	if err != nil {
+		return err
+	}
+	err = c.drive[1].load(r)
+	if err != nil {
+		return err
+	}
+	return c.cardBase.load(r)
 }
 
-func (d *cardDisk2Drive) save(w io.Writer) {
-	binary.Write(w, binary.BigEndian, d.currentPhase)
-	binary.Write(w, binary.BigEndian, d.power)
-	binary.Write(w, binary.BigEndian, d.halfTrack)
-	binary.Write(w, binary.BigEndian, d.position)
+func (d *cardDisk2Drive) save(w io.Writer) error {
+	err := binary.Write(w, binary.BigEndian, d.currentPhase)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, d.power)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, d.halfTrack)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, d.position)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (d *cardDisk2Drive) load(r io.Reader) {
-	binary.Read(r, binary.BigEndian, &d.currentPhase)
-	binary.Read(r, binary.BigEndian, &d.power)
-	binary.Read(r, binary.BigEndian, &d.halfTrack)
-	binary.Read(r, binary.BigEndian, &d.position)
+func (d *cardDisk2Drive) load(r io.Reader) error {
+	err := binary.Read(r, binary.BigEndian, &d.currentPhase)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &d.power)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &d.halfTrack)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &d.position)
+	if err != nil {
+		return err
+	}
+	return nil
 }

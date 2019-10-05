@@ -128,25 +128,61 @@ func (c *cardLanguage) applyState() {
 
 }
 
-func (c *cardLanguage) save(w io.Writer) {
-	binary.Write(w, binary.BigEndian, c.readState)
-	binary.Write(w, binary.BigEndian, c.writeState)
-	binary.Write(w, binary.BigEndian, c.activeBank)
-	c.ramBankA.save(w)
-	c.ramBankB.save(w)
-	c.ramUpper.save(w)
+func (c *cardLanguage) save(w io.Writer) error {
+	err := binary.Write(w, binary.BigEndian, c.readState)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, c.writeState)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, c.activeBank)
+	if err != nil {
+		return err
+	}
+	err = c.ramBankA.save(w)
+	if err != nil {
+		return err
+	}
+	err = c.ramBankB.save(w)
+	if err != nil {
+		return err
+	}
+	err = c.ramUpper.save(w)
+	if err != nil {
+		return err
+	}
 
-	c.cardBase.save(w)
+	return c.cardBase.save(w)
 }
 
-func (c *cardLanguage) load(r io.Reader) {
-	binary.Read(r, binary.BigEndian, &c.readState)
-	binary.Read(r, binary.BigEndian, &c.writeState)
-	binary.Read(r, binary.BigEndian, &c.activeBank)
-	c.ramBankA.load(r)
-	c.ramBankB.load(r)
-	c.ramUpper.load(r)
+func (c *cardLanguage) load(r io.Reader) error {
+	err := binary.Read(r, binary.BigEndian, &c.readState)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &c.writeState)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &c.activeBank)
+	if err != nil {
+		return err
+	}
+	err = c.ramBankA.load(r)
+	if err != nil {
+		return err
+	}
+	err = c.ramBankB.load(r)
+	if err != nil {
+		return err
+	}
+	err = c.ramUpper.load(r)
+	if err != nil {
+		return err
+	}
 
 	c.applyState()
-	c.cardBase.load(r)
+	return c.cardBase.load(r)
 }

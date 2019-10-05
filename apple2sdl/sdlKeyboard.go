@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"unicode/utf8"
 
 	"github.com/ivanizag/apple2"
@@ -106,7 +107,12 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	case sdl.K_F11:
 		k.a.SendCommand(apple2.CommandToggleCPUTrace)
 	case sdl.K_F12:
-		apple2.SaveSnapshot(k.a, "snapshot.png")
+		err := apple2.SaveSnapshot(k.a, "snapshot.png")
+		if err != nil {
+			fmt.Printf("Error saving snapshoot: %v.\n.", err)
+		} else {
+			fmt.Println("Saving snapshot")
+		}
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_

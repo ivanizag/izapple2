@@ -1,18 +1,18 @@
 package apple2
 
-import "github.com/ivanizag/apple2/core6502"
+import (
+	"errors"
+
+	"github.com/ivanizag/apple2/core6502"
+)
 
 // NewApple2 instantiates an apple2
-func NewApple2(charRomFile string, clockMhz float64,
-	isColor bool, fastMode bool) *Apple2 {
+func NewApple2(clockMhz float64, isColor bool, fastMode bool) *Apple2 {
 
 	var a Apple2
 	a.Name = "Apple ][+"
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
-	if charRomFile != "" {
-		a.cg = NewCharacterGenerator(charRomFile)
-	}
 	a.commandChannel = make(chan int, 100)
 	a.isColor = isColor
 	a.fastMode = fastMode
@@ -42,11 +42,15 @@ const (
 )
 
 // LoadRom loads a standard Apple2+ or 2e ROM
-func (a *Apple2) LoadRom(filename string) {
-	data := loadResource(filename)
+func (a *Apple2) LoadRom(filename string) error {
+	data, err := loadResource(filename)
+	if err != nil {
+		return err
+	}
+
 	size := len(data)
 	if size != apple2RomSize && size != apple2eRomSize {
-		panic("Rom size not supported")
+		return errors.New("Rom size not supported")
 	}
 
 	romStart := 0
@@ -62,29 +66,42 @@ func (a *Apple2) LoadRom(filename string) {
 
 	mmu.physicalROM = newMemoryRange(0xd000, data[romStart:])
 	mmu.resetRomPaging()
+	return nil
 }
 
 // AddDisk2 inserts a DiskII controller
-func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) {
+func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) error {
 	var c cardDisk2
-	c.loadRom(loadResource(diskRomFile))
+	data, err := loadResource(diskRomFile)
+	if err != nil {
+		return err
+	}
+	c.loadRom(data)
 	a.insertCard(&c, slot)
 
 	if diskImage != "" {
-		diskette := loadDisquette(diskImage)
-		//diskette.saveNib(diskImage + "bak")
+		diskette, err := loadDisquette(diskImage)
+		if err != nil {
+			return err
+		}
 		c.drive[0].insertDiskette(diskette)
 	}
+
+	return nil
 }
 
 // AddHardDisk adds a ProDos hard dirve with a 2MG image
-func (a *Apple2) AddHardDisk(slot int, hdImage string) {
+func (a *Apple2) AddHardDisk(slot int, hdImage string) error {
 	var c cardHardDisk
 	c.loadRom(buildHardDiskRom(slot))
 	a.insertCard(&c, slot)
 
-	hd := openHardDisk2mg(hdImage)
+	hd, err := openHardDisk2mg(hdImage)
+	if err != nil {
+		return err
+	}
 	c.addDisk(hd)
+	return nil
 }
 
 // AddLanguageCard inserts a 16Kb card
@@ -98,10 +115,15 @@ func (a *Apple2) AddSaturnCard(slot int) {
 }
 
 // AddThunderClockPlusCard inserts a ThunderClock Plus clock card
-func (a *Apple2) AddThunderClockPlusCard(slot int, romFile string) {
+func (a *Apple2) AddThunderClockPlusCard(slot int, romFile string) error {
 	var c cardThunderClockPlus
-	c.loadRom(loadResource(romFile))
+	data, err := loadResource(romFile)
+	if err != nil {
+		return err
+	}
+	c.loadRom(data)
 	a.insertCard(&c, slot)
+	return nil
 }
 
 // AddCardLogger inserts a fake card that logs accesses

@@ -153,30 +153,69 @@ func (c *cardSaturn) applyState() {
 	}
 }
 
-func (c *cardSaturn) save(w io.Writer) {
+func (c *cardSaturn) save(w io.Writer) error {
 	for i := 0; i < saturnBlocks; i++ {
-		binary.Write(w, binary.BigEndian, c.readState)
-		binary.Write(w, binary.BigEndian, c.writeState)
-		binary.Write(w, binary.BigEndian, c.activeBank)
-		binary.Write(w, binary.BigEndian, c.activeBlock)
-		c.ramBankA[i].save(w)
-		c.ramBankB[i].save(w)
-		c.ramUpper[i].save(w)
+		err := binary.Write(w, binary.BigEndian, c.readState)
+		if err != nil {
+			return err
+		}
+		err = binary.Write(w, binary.BigEndian, c.writeState)
+		if err != nil {
+			return err
+		}
+		err = binary.Write(w, binary.BigEndian, c.activeBank)
+		if err != nil {
+			return err
+		}
+		err = binary.Write(w, binary.BigEndian, c.activeBlock)
+		if err != nil {
+			return err
+		}
+		err = c.ramBankA[i].save(w)
+		if err != nil {
+			return err
+		}
+		err = c.ramBankB[i].save(w)
+		if err != nil {
+			return err
+		}
+		err = c.ramUpper[i].save(w)
+		if err != nil {
+			return err
+		}
 	}
-	c.cardBase.save(w)
+	return c.cardBase.save(w)
 }
 
-func (c *cardSaturn) load(r io.Reader) {
+func (c *cardSaturn) load(r io.Reader) error {
 	for i := 0; i < saturnBlocks; i++ {
-		binary.Read(r, binary.BigEndian, &c.readState)
-		binary.Read(r, binary.BigEndian, &c.writeState)
-		binary.Read(r, binary.BigEndian, &c.activeBank)
-		binary.Read(r, binary.BigEndian, &c.activeBlock)
-		c.ramBankA[i].load(r)
-		c.ramBankB[i].load(r)
-		c.ramUpper[i].load(r)
+		err := binary.Read(r, binary.BigEndian, &c.readState)
+		if err != nil {
+			return err
+		}
+		err = binary.Read(r, binary.BigEndian, &c.writeState)
+		if err != nil {
+			return err
+		}
+		err = binary.Read(r, binary.BigEndian, &c.activeBank)
+		if err != nil {
+			return err
+		}
+		err = binary.Read(r, binary.BigEndian, &c.activeBlock)
+		if err != nil {
+			return err
+		}
+		err = c.ramBankA[i].load(r)
+		if err != nil {
+			return err
+		}
+		err = c.ramBankB[i].load(r)
+		if err != nil {
+			return err
+		}
+		err = c.ramUpper[i].load(r)
 
 		c.applyState()
 	}
-	c.cardBase.load(r)
+	return c.cardBase.load(r)
 }

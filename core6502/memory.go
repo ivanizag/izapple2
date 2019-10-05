@@ -31,13 +31,15 @@ func (m *FlatMemory) Poke(address uint16, value uint8) {
 	m.data[address] = value
 }
 
-func (m *FlatMemory) loadBinary(filename string) {
+func (m *FlatMemory) loadBinary(filename string) error {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for i, v := range bytes {
 		m.Poke(uint16(i), uint8(v))
 	}
+
+	return nil
 }

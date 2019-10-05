@@ -67,12 +67,12 @@ func (p *ioC0Page) setPanicNotImplemented(value bool) {
 	p.panicNotImplemented = value
 }
 
-func (p *ioC0Page) save(w io.Writer) {
-	binary.Write(w, binary.BigEndian, p.softSwitchesData)
+func (p *ioC0Page) save(w io.Writer) error {
+	return binary.Write(w, binary.BigEndian, p.softSwitchesData)
 }
 
-func (p *ioC0Page) load(r io.Reader) {
-	binary.Read(r, binary.BigEndian, &p.softSwitchesData)
+func (p *ioC0Page) load(r io.Reader) error {
+	return binary.Read(r, binary.BigEndian, &p.softSwitchesData)
 }
 
 func (p *ioC0Page) addSoftSwitchRW(address uint8, ss softSwitchR) {

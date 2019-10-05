@@ -1,6 +1,7 @@
 package apple2
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -25,20 +26,27 @@ const (
 )
 
 // NewCharacterGenerator instantiates a new Character Generator with the rom on the file given
-func NewCharacterGenerator(filename string) *CharacterGenerator {
+func NewCharacterGenerator(filename string) (*CharacterGenerator, error) {
 	var cg CharacterGenerator
-	cg.load(filename)
-	return &cg
+	err := cg.load(filename)
+	if err != nil {
+		return nil, err
+	}
+	return &cg, nil
 }
 
-func (cg *CharacterGenerator) load(filename string) {
+func (cg *CharacterGenerator) load(filename string) error {
 	cg.customRom = !isInternalResource(filename)
-	bytes := loadResource(filename)
+	bytes, err := loadResource(filename)
+	if err != nil {
+		return err
+	}
 	size := len(bytes)
 	if size < rev7CharGenSize {
-		panic("Character ROM size not supported")
+		return errors.New("Character ROM size not supported")
 	}
 	cg.data = bytes
+	return nil
 }
 
 func (cg *CharacterGenerator) setColumnMap(columnMap charColumnMap) {

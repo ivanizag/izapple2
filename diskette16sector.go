@@ -1,6 +1,7 @@
 package apple2
 
 import (
+	"errors"
 	"os"
 )
 
@@ -36,10 +37,13 @@ func (d *diskette16sector) write(track int, position int, value uint8) int {
 	return (position + 1) % nibBytesPerTrack
 }
 
-func loadDisquette(filename string) *diskette16sector {
+func loadDisquette(filename string) (*diskette16sector, error) {
 	var d diskette16sector
 
-	data := loadResource(filename)
+	data, err := loadResource(filename)
+	if err != nil {
+		return nil, err
+	}
 	size := len(data)
 
 	if size == nibImageSize {
@@ -54,25 +58,27 @@ func loadDisquette(filename string) *diskette16sector {
 			d.track[i] = nibEncodeTrack(trackData, defaultVolumeTag, byte(i))
 		}
 	} else {
-		panic("Invalid disk size")
+		return nil, errors.New("Invalid disk size")
 	}
 
-	return &d
+	return &d, nil
 }
 
-func (d *diskette16sector) saveNib(filename string) {
+func (d *diskette16sector) saveNib(filename string) error {
 	f, err := os.Create(filename)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer f.Close()
 
 	for _, v := range d.track {
 		_, err := f.Write(v)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
+
+	return nil
 }
 
 var dos33SectorsLogicOrder = [16]int{

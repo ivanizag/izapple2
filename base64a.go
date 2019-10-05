@@ -14,20 +14,26 @@ type Base64a struct {
 }
 
 // NewBase64a instantiates an apple2
-func NewBase64a(a *Apple2) *Base64a {
+func NewBase64a(a *Apple2) (*Base64a, error) {
 	var b Base64a
 	b.a = a
 	a.Name = "Base 64A"
-	b.loadRom()
+	err := b.loadRom()
+	if err != nil {
+		return nil, err
+	}
 
 	// Configure the character generator
 	if !a.cg.customRom {
-		a.cg.load("<internal>/BASE64A_ROM7_CharGen.BIN")
+		err := a.cg.load("<internal>/BASE64A_ROM7_CharGen.BIN")
+		if err != nil {
+			return nil, err
+		}
 	}
 	a.cg.setColumnMap(base64aCharGenColumnsMap)
 	a.cg.setPage(1)
 
-	return &b
+	return &b, nil
 }
 
 func base64aCharGenColumnsMap(column int) int {
@@ -50,7 +56,7 @@ const (
 	base64aRomChipCount  = 6
 )
 
-func (b *Base64a) loadRom() {
+func (b *Base64a) loadRom() error {
 	// Load the 6 PROM dumps
 	romBanksBytes := make([][]uint8, base64aRomBankCount)
 	for j := range romBanksBytes {
@@ -59,7 +65,10 @@ func (b *Base64a) loadRom() {
 
 	for i := 0; i < base64aRomChipCount; i++ {
 		filename := fmt.Sprintf("<internal>/BASE64A_%X.BIN", 0xd0+i*0x08)
-		data := loadResource(filename)
+		data, err := loadResource(filename)
+		if err != nil {
+			return err
+		}
 		for j := range romBanksBytes {
 			start := (j * base64aRomWindowSize) % len(data)
 			romBanksBytes[j] = append(romBanksBytes[j], data[start:start+base64aRomWindowSize]...)
@@ -101,6 +110,7 @@ func (b *Base64a) loadRom() {
 		speakerSoftSwitch(io)
 	})
 
+	return nil
 }
 
 func (b *Base64a) changeRomBank(bank uint8) {

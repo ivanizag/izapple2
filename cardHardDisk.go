@@ -96,7 +96,8 @@ func (c *cardHardDisk) assign(a *Apple2, slot int) {
 		case proDosDeviceCommandWrite:
 			return c.writeBlock(block, address)
 		default:
-			panic("Prodos device command not supported.")
+			// Prodos device command not supported
+			return proDosDeviceErrorIO
 		}
 	}
 	c.ssr[1] = func(*ioC0Page) uint8 {

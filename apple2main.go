@@ -88,16 +88,27 @@ func MainApple() *Apple2 {
 	)
 	flag.Parse()
 
-	a := NewApple2(*charRomFile, *cpuClock, !*mono, *fastDisk)
+	a := NewApple2(*cpuClock, !*mono, *fastDisk)
 
 	a.cpu.SetTrace(*traceCPU)
 	a.io.setTrace(*traceSS)
 	a.io.setPanicNotImplemented(*panicSS)
 
+	if *charRomFile != "" {
+		cg, err := NewCharacterGenerator(*charRomFile)
+		if err != nil {
+			panic(err)
+		}
+		a.cg = cg
+	}
+
 	if *base64a {
 		NewBase64a(a)
 	} else {
-		a.LoadRom(*romFile)
+		err := a.LoadRom(*romFile)
+		if err != nil {
+			panic(err)
+		}
 	}
 	if *languageCardSlot >= 0 {
 		a.AddLanguageCard(*languageCardSlot)
@@ -106,17 +117,26 @@ func MainApple() *Apple2 {
 		a.AddSaturnCard(*saturnCardSlot)
 	}
 	if *thunderClockCardSlot > 0 {
-		a.AddThunderClockPlusCard(*thunderClockCardSlot, "<internal>/ThunderclockPlusROM.bin")
+		err := a.AddThunderClockPlusCard(*thunderClockCardSlot, "<internal>/ThunderclockPlusROM.bin")
+		if err != nil {
+			panic(err)
+		}
 	}
 	if *disk2Slot > 0 {
-		a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
+		err := a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
+		if err != nil {
+			panic(err)
+		}
 	}
 	if *hardDiskImage != "" {
 		if *hardDiskSlot <= 0 {
 			// If there is a hard disk image, but no slot assigned, use slot 7.
 			*hardDiskSlot = 7
 		}
-		a.AddHardDisk(*hardDiskSlot, *hardDiskImage)
+		err := a.AddHardDisk(*hardDiskSlot, *hardDiskImage)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	//a.AddCardInOut(2)

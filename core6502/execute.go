@@ -85,15 +85,29 @@ func (s *State) GetCycles() uint64 {
 }
 
 // Save saves the CPU state (registers and cycle counter)
-func (s *State) Save(w io.Writer) {
-	binary.Write(w, binary.BigEndian, s.cycles)
+func (s *State) Save(w io.Writer) error {
+	err := binary.Write(w, binary.BigEndian, s.cycles)
+	if err != nil {
+		return err
+	}
 	binary.Write(w, binary.BigEndian, s.reg.data)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Load loads the CPU state (registers and cycle counter)
-func (s *State) Load(r io.Reader) {
-	binary.Read(r, binary.BigEndian, &s.cycles)
-	binary.Read(r, binary.BigEndian, &s.reg.data)
+func (s *State) Load(r io.Reader) error {
+	err := binary.Read(r, binary.BigEndian, &s.cycles)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(r, binary.BigEndian, &s.reg.data)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func lineString(line []uint8, opcode opcode) string {

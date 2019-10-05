@@ -25,14 +25,14 @@ func isHTTPResource(filename string) bool {
 		strings.HasPrefix(filename, httpsPrefix)
 }
 
-func loadResource(filename string) []uint8 {
+func loadResource(filename string) ([]uint8, error) {
 	var file io.Reader
 	if isInternalResource(filename) {
 		// load from embedded resource
 		resource := strings.TrimPrefix(filename, internalPrefix)
 		resourceFile, err := romdumps.Assets.Open(resource)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		defer resourceFile.Close()
 		file = resourceFile
@@ -40,7 +40,7 @@ func loadResource(filename string) []uint8 {
 	} else if isHTTPResource(filename) {
 		response, err := http.Get(filename)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		defer response.Body.Close()
 		file = response.Body
@@ -48,7 +48,7 @@ func loadResource(filename string) []uint8 {
 	} else {
 		diskFile, err := os.Open(filename)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		defer diskFile.Close()
 		file = diskFile
@@ -56,7 +56,7 @@ func loadResource(filename string) []uint8 {
 
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return data
+	return data, nil
 }

@@ -75,7 +75,7 @@ func (c *cardInOut) assign(a *Apple2, slot int) {
 
 	if slot != 2 {
 		// To make ifwork on other slots, patch C2, A0 and A1
-		panic("Only slot 2 supported for the InOut card")
+		panic("Assert failed. Only slot 2 supported for the InOut card")
 	}
 	c.cardBase.assign(a, slot)
 }

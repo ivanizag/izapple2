@@ -76,7 +76,7 @@ func (hd *hardDisk) write(block uint32, data []uint8) error {
 	return nil
 }
 
-func openHardDisk2mg(filename string) *hardDisk {
+func openHardDisk2mg(filename string) (*hardDisk, error) {
 	var hd hardDisk
 
 	hd.readOnly = false
@@ -87,44 +87,49 @@ func openHardDisk2mg(filename string) *hardDisk {
 		file, err = os.OpenFile(filename, os.O_RDONLY, 0)
 	}
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	hd.file = file
 
 	fileInfo, err := hd.file.Stat()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	minHeaderSize := binary.Size(&hd.header)
 	if fileInfo.Size() < int64(minHeaderSize) {
-		panic("Invalid 2MG file")
+		return nil, errors.New("Invalid 2MG file")
 	}
 
-	readHeader(hd.file, &hd.header)
+	err = readHeader(hd.file, &hd.header)
+	if err != nil {
+		return nil, err
+	}
 
 	if fileInfo.Size() < int64(hd.header.OffsetData+hd.header.Blocks*proDosBlockSize) {
-		panic("Thr 2MG file is too small")
+		return nil, errors.New("Thr 2MG file is too small")
 	}
 
-	return &hd
+	return &hd, nil
 }
 
-func readHeader(buf io.Reader, header *hardDisk2mgHeader) {
+func readHeader(buf io.Reader, header *hardDisk2mgHeader) error {
 	err := binary.Read(buf, binary.LittleEndian, header)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if header.Preamble != hardDisk2mgPreamble {
-		panic("2mg file must start with '2IMG'")
+		return errors.New("2mg file must start with '2IMG'")
 	}
 
 	if header.Format != hardDisk2mgFormatProdos {
-		panic("Only prodos hard disks are supported")
+		return errors.New("Only prodos hard disks are supported")
 	}
 
 	if header.Version != hardDisk2mgVersion {
-		panic("Version of 2MG image not supported")
+		return errors.New("Version of 2MG image not supported")
 	}
+
+	return nil
 }
