@@ -16,10 +16,10 @@ var opcodesNMOS6502 = [256]opcode{
 	0x40: opcode{"RTI", 1, 6, modeImplicit, opRTI},
 	0x60: opcode{"RTS", 1, 6, modeImplicit, opRTS},
 
-	0x48: opcode{"PHA", 1, 3, modeImplicit, opPHA},
-	0x08: opcode{"PHP", 1, 3, modeImplicit, opPHP},
-	0x68: opcode{"PLA", 1, 4, modeImplicit, opPLA},
-	0x28: opcode{"PLP", 1, 4, modeImplicit, opPLP},
+	0x48: opcode{"PHA", 1, 3, modeImplicit, buildOpPush(regA)},
+	0x08: opcode{"PHP", 1, 3, modeImplicit, buildOpPush(regP)},
+	0x68: opcode{"PLA", 1, 4, modeImplicit, buildOpPull(regA)},
+	0x28: opcode{"PLP", 1, 4, modeImplicit, buildOpPull(regP)},
 
 	0x09: opcode{"ORA", 2, 2, modeImmediate, buildOpLogic(operationOr)},
 	0x05: opcode{"ORA", 2, 3, modeZeroPage, buildOpLogic(operationOr)},

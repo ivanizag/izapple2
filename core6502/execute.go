@@ -63,7 +63,7 @@ func (s *State) ExecuteInstruction() {
 
 	if s.trace {
 		//fmt.Printf("%#04x %#02x\n", pc-opcode.bytes, opcodeID)
-		fmt.Printf("%#04x %-12s: ", pc-opcode.bytes, lineString(line, opcode))
+		fmt.Printf("%#04x %-13s: ", pc-opcode.bytes, lineString(line, opcode))
 	}
 	opcode.action(s, line, opcode)
 	s.cycles += uint64(opcode.cycles)
@@ -82,6 +82,16 @@ func (s *State) Reset() {
 // GetCycles returns the count of CPU cycles since last reset.
 func (s *State) GetCycles() uint64 {
 	return s.cycles
+}
+
+// SetTrace activates tracing of the cpu execution
+func (s *State) SetTrace(trace bool) {
+	s.trace = trace
+}
+
+// GetTrace gets trhe tracing state of the cpu execution
+func (s *State) GetTrace() bool {
+	return s.trace
 }
 
 // Save saves the CPU state (registers and cycle counter)
@@ -108,51 +118,4 @@ func (s *State) Load(r io.Reader) error {
 		return err
 	}
 	return nil
-}
-
-func lineString(line []uint8, opcode opcode) string {
-	t := opcode.name
-	switch opcode.addressMode {
-	case modeImplicit:
-	case modeImplicitX:
-	case modeImplicitY:
-		//Nothing
-	case modeAccumulator:
-		t += fmt.Sprintf(" A")
-	case modeImmediate:
-		t += fmt.Sprintf(" #%02x", line[1])
-	case modeZeroPage:
-		t += fmt.Sprintf(" $%02x", line[1])
-	case modeZeroPageX:
-		t += fmt.Sprintf(" $%02x,X", line[1])
-	case modeZeroPageY:
-		t += fmt.Sprintf(" $%02x,Y", line[1])
-	case modeRelative:
-		t += fmt.Sprintf(" *%+x", int8(line[1]))
-	case modeAbsolute:
-		t += fmt.Sprintf(" $%04x", getWordInLine(line))
-	case modeAbsoluteX:
-		t += fmt.Sprintf(" $%04x,X", getWordInLine(line))
-	case modeAbsoluteY:
-		t += fmt.Sprintf(" $%04x,Y", getWordInLine(line))
-	case modeIndirect:
-		t += fmt.Sprintf(" ($%04x)", getWordInLine(line))
-	case modeIndexedIndirectX:
-		t += fmt.Sprintf(" ($%02x,X)", line[1])
-	case modeIndirectIndexedY:
-		t += fmt.Sprintf(" ($%02x),Y", line[1])
-	default:
-		t += "UNKNOWN MODE"
-	}
-	return t
-}
-
-// SetTrace activates tracing of the cpu execution
-func (s *State) SetTrace(trace bool) {
-	s.trace = trace
-}
-
-// GetTrace gets trhe tracing state of the cpu execution
-func (s *State) GetTrace() bool {
-	return s.trace
 }

@@ -1,5 +1,7 @@
 package core6502
 
+import "fmt"
+
 const (
 	modeImplicit = iota + 1
 	modeImplicitX
@@ -16,6 +18,10 @@ const (
 	modeIndirect
 	modeIndexedIndirectX
 	modeIndirectIndexedY
+	// Added on the 65c02
+	modeIndirectZeroPage
+	modeAbsoluteIndexedIndirectX
+	modeZeroPageAndRelative
 )
 
 func getWordInLine(line []uint8) uint16 {
@@ -84,6 +90,22 @@ func resolve(s *State, line []uint8, opcode opcode) (getValue func() uint8, setV
 	case modeIndirectIndexedY:
 		address = getZeroPageWord(s.mem, line[1]) +
 			uint16(s.reg.getY())
+	// 65c02 additions
+	case modeIndirectZeroPage:
+		address = getZeroPageWord(s.mem, line[1])
+	case modeAbsoluteIndexedIndirectX:
+		addressAddress := getWordInLine(line) + uint16(s.reg.getX())
+		address = getWord(s.mem, addressAddress)
+	case modeRelative:
+		// This assumes that PC is already pointing to the next instruction
+		address = s.reg.getPC() + uint16(int8(line[1])) // Note: line[1] is signed
+	case modeZeroPageAndRelative:
+		// Two addressing modes combined. We refer to the second one, relative,
+		// placed one byte after the zeropage reference
+		address = s.reg.getPC() + uint16(int8(line[2])) // Note: line[2] is signed
+
+	default:
+		panic("Assert failed. Missing addressing mode")
 	}
 
 	if hasAddress {
@@ -100,4 +122,48 @@ func resolve(s *State, line []uint8, opcode opcode) (getValue func() uint8, setV
 		}
 	}
 	return
+}
+
+func lineString(line []uint8, opcode opcode) string {
+	t := opcode.name
+	switch opcode.addressMode {
+	case modeImplicit:
+	case modeImplicitX:
+	case modeImplicitY:
+		//Nothing
+	case modeAccumulator:
+		t += fmt.Sprintf(" A")
+	case modeImmediate:
+		t += fmt.Sprintf(" #%02x", line[1])
+	case modeZeroPage:
+		t += fmt.Sprintf(" $%02x", line[1])
+	case modeZeroPageX:
+		t += fmt.Sprintf(" $%02x,X", line[1])
+	case modeZeroPageY:
+		t += fmt.Sprintf(" $%02x,Y", line[1])
+	case modeRelative:
+		t += fmt.Sprintf(" *%+x", int8(line[1]))
+	case modeAbsolute:
+		t += fmt.Sprintf(" $%04x", getWordInLine(line))
+	case modeAbsoluteX:
+		t += fmt.Sprintf(" $%04x,X", getWordInLine(line))
+	case modeAbsoluteY:
+		t += fmt.Sprintf(" $%04x,Y", getWordInLine(line))
+	case modeIndirect:
+		t += fmt.Sprintf(" ($%04x)", getWordInLine(line))
+	case modeIndexedIndirectX:
+		t += fmt.Sprintf(" ($%02x,X)", line[1])
+	case modeIndirectIndexedY:
+		t += fmt.Sprintf(" ($%02x),Y", line[1])
+	// 65c02 additions:
+	case modeIndirectZeroPage:
+		t += fmt.Sprintf(" ($%02x)", line[1])
+	case modeAbsoluteIndexedIndirectX:
+		t += fmt.Sprintf(" ($%04x,X)", getWordInLine(line))
+	case modeZeroPageAndRelative:
+		t += fmt.Sprintf(" $%02x *%+x", line[1], int8(line[2]))
+	default:
+		t += "UNKNOWN MODE"
+	}
+	return t
 }

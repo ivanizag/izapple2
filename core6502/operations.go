@@ -70,13 +70,37 @@ func buildOpUpdateFlag(flag uint8, value bool) opFunc {
 	}
 }
 
-func buildOpBranch(flag uint8, value bool) opFunc {
+func buildOpBranch(flag uint8, test bool) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		if s.reg.getFlag(flag) == value {
-			// This assumes that PC is already pointing to the next instruction
-			pc := s.reg.getPC()
-			pc += uint16(int8(line[1]))
-			s.reg.setPC(pc)
+		if s.reg.getFlag(flag) == test {
+			address := resolveAddress(s, line, opcode)
+			s.reg.setPC(address)
+		}
+	}
+}
+
+func buildOpBranchOnBit(bit uint8, test bool) opFunc {
+	return func(s *State, line []uint8, opcode opcode) {
+		// Note that those operations have two addressing modes:
+		// one for the zero page value, another for the relative jump.
+		// We will have to resolve the first one here.
+		value := s.mem.Peek(uint16(line[1]))
+		bitValue := ((value >> bit) & 1) == 1
+
+		if bitValue == test {
+			address := resolveAddress(s, line, opcode)
+			s.reg.setPC(address)
+		}
+	}
+}
+
+func buildOpSetBit(bit uint8, set bool) opFunc {
+	return func(s *State, line []uint8, opcode opcode) {
+		value, setValue := resolveGetSetValue(s, line, opcode)
+		if set {
+			setValue(value | (1 << bit))
+		} else {
+			setValue(value &^ (1 << bit))
 		}
 	}
 }
@@ -84,10 +108,26 @@ func buildOpBranch(flag uint8, value bool) opFunc {
 func opBIT(s *State, line []uint8, opcode opcode) {
 	value := resolveValue(s, line, opcode)
 	acc := s.reg.getA()
-	// Future note: The immediate addressing mode (65C02 or 65816 only) does not affect V.
 	s.reg.updateFlag(flagZ, value&acc == 0)
-	s.reg.updateFlag(flagN, value&(1<<7) != 0)
-	s.reg.updateFlag(flagV, value&(1<<6) != 0)
+	// The immediate addressing mode (65C02 or 65816 only) does not affect N & V.
+	if opcode.addressMode != modeImmediate {
+		s.reg.updateFlag(flagN, value&(1<<7) != 0)
+		s.reg.updateFlag(flagV, value&(1<<6) != 0)
+	}
+}
+
+func opTRB(s *State, line []uint8, opcode opcode) {
+	value, setValue := resolveGetSetValue(s, line, opcode)
+	a := s.reg.getA()
+	s.reg.updateFlag(flagZ, (value&a) == 0)
+	setValue(value &^ a)
+}
+
+func opTSB(s *State, line []uint8, opcode opcode) {
+	value, setValue := resolveGetSetValue(s, line, opcode)
+	a := s.reg.getA()
+	s.reg.updateFlag(flagZ, (value&a) == 0)
+	setValue(value | a)
 }
 
 func buildOpCompare(reg int) opFunc {
@@ -140,6 +180,12 @@ func opADC(s *State, line []uint8, opcode opcode) {
 	s.reg.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 }
 
+func opADCAlt(s *State, line []uint8, opcode opcode) {
+	opADC(s, line, opcode)
+	// The Z and N flags on BCD are fixed in 65c02.
+	s.reg.updateFlagZN(s.reg.getA())
+}
+
 func opSBC(s *State, line []uint8, opcode opcode) {
 	value := resolveValue(s, line, opcode)
 	aValue := s.reg.getA()
@@ -168,6 +214,12 @@ func opSBC(s *State, line []uint8, opcode opcode) {
 	s.reg.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 }
 
+func opSBCAlt(s *State, line []uint8, opcode opcode) {
+	opSBC(s, line, opcode)
+	// The Z and N flags on BCD are fixed in 65c02.
+	s.reg.updateFlagZN(s.reg.getA())
+}
+
 const stackAddress uint16 = 0x0100
 
 func pushByte(s *State, value uint8) {
@@ -193,23 +245,24 @@ func pullWord(s *State) uint16 {
 
 }
 
-func opPLA(s *State, line []uint8, opcode opcode) {
-	value := pullByte(s)
-	s.reg.setA(value)
-	s.reg.updateFlagZN(value)
+func buildOpPull(regDst int) opFunc {
+	return func(s *State, line []uint8, opcode opcode) {
+		value := pullByte(s)
+		s.reg.setRegister(regDst, value)
+		if regDst != regP {
+			s.reg.updateFlagZN(value)
+		}
+	}
 }
 
-func opPLP(s *State, line []uint8, opcode opcode) {
-	value := pullByte(s)
-	s.reg.setP(value)
-}
-
-func opPHA(s *State, line []uint8, opcode opcode) {
-	pushByte(s, s.reg.getA())
-}
-
-func opPHP(s *State, line []uint8, opcode opcode) {
-	pushByte(s, s.reg.getP()|(flagB+flag5))
+func buildOpPush(regSrc int) opFunc {
+	return func(s *State, line []uint8, opcode opcode) {
+		value := s.reg.getRegister(regSrc)
+		if regSrc == regP {
+			value |= flagB + flag5
+		}
+		pushByte(s, value)
+	}
 }
 
 func opJMP(s *State, line []uint8, opcode opcode) {
@@ -239,4 +292,19 @@ func opBRK(s *State, line []uint8, opcode opcode) {
 	pushByte(s, s.reg.getP()|(flagB+flag5))
 	s.reg.setFlag(flagI)
 	s.reg.setPC(getWord(s.mem, vectorBreak))
+}
+
+func opBRKAlt(s *State, line []uint8, opcode opcode) {
+	opBRK(s, line, opcode)
+	/*
+		The only difference in the BRK instruction on the 65C02 and the 6502
+		is that the 65C02 clears the D (decimal) flag on the 65C02, whereas
+		the D flag is not affected on the 6502.
+	*/
+	s.reg.clearFlag(flagD)
+}
+
+func opSTZ(s *State, line []uint8, opcode opcode) {
+	setValue := resolveSetValue(s, line, opcode)
+	setValue(0)
 }

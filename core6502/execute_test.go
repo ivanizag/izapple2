@@ -483,5 +483,3 @@ func TestStack(t *testing.T) {
 		t.Errorf("Error in PLP, %v", s.reg)
 	}
 }
-
-// TODO: Tests for BRK, JMP, JSR, RTI, RTS
