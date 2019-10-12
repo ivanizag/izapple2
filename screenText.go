@@ -57,12 +57,28 @@ func snapshotTextMode(a *Apple2, page int, mixMode bool, light color.Color) *ima
 			rowInChar := y % charHeight
 			colInChar := x % charWidth
 			char := getTextChar(a, col, line, page)
-			topBits := char >> 6
-			isInverse := topBits == 0
-			isFlash := topBits == 1
+			var pixel bool
+			if a.isApple2e {
+				isAltText := a.io.isSoftSwitchActive(ioFlagAltChar)
+				vid6 := (char & 0x40) != 0
+				vid7 := (char & 0x80) != 0
 
-			pixel := a.cg.getPixel(char, rowInChar, colInChar)
-			pixel = pixel != (isInverse || (isFlash && isFlashedFrame))
+				char := char & 0x3f
+				if vid6 && (vid7 || isAltText) {
+					char += 0x40
+				}
+				if vid7 || (vid6 && isFlashedFrame && !isAltText) {
+					char += 0x80
+				}
+				pixel = !a.cg.getPixel(char, rowInChar, colInChar)
+			} else {
+				pixel = a.cg.getPixel(char, rowInChar, colInChar)
+				topBits := char >> 6
+				isInverse := topBits == 0
+				isFlash := topBits == 1
+
+				pixel = pixel != (isInverse || (isFlash && isFlashedFrame))
+			}
 			var colour color.Color
 			if pixel {
 				colour = light
