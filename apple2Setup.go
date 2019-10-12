@@ -6,13 +6,39 @@ import (
 	"github.com/ivanizag/apple2/core6502"
 )
 
-// NewApple2 instantiates an apple2
-func NewApple2(clockMhz float64, isColor bool, fastMode bool) *Apple2 {
+// newApple2 instantiates an apple2
+func newApple2plus() *Apple2 {
 
 	var a Apple2
 	a.Name = "Apple ][+"
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
+
+	// Set the io in 0xc000
+	a.io = newIoC0Page(&a)
+	a.mmu.setPages(0xc0, 0xc0, a.io)
+	addApple2SoftSwitches(a.io)
+
+	return &a
+}
+
+func newApple2eEnhanced() *Apple2 {
+
+	var a Apple2
+	a.Name = "Apple //e"
+	a.mmu = newMemoryManager(&a)
+	a.cpu = core6502.NewCMOS65c02(a.mmu)
+
+	// Set the io in 0xc000
+	a.io = newIoC0Page(&a)
+	a.mmu.setPages(0xc0, 0xc0, a.io)
+	addApple2SoftSwitches(a.io)
+	addApple2ESoftSwitches(a.io)
+
+	return &a
+}
+
+func (a *Apple2) setup(isColor bool, clockMhz float64, fastMode bool) {
 	a.commandChannel = make(chan int, 100)
 	a.isColor = isColor
 	a.fastMode = fastMode
@@ -23,12 +49,6 @@ func NewApple2(clockMhz float64, isColor bool, fastMode bool) *Apple2 {
 	} else {
 		a.cycleDurationNs = 1000.0 / clockMhz
 	}
-
-	// Set the io in 0xc000
-	a.io = newIoC0Page(&a)
-	a.mmu.setPages(0xc0, 0xc0, a.io)
-
-	return &a
 }
 
 func (a *Apple2) insertCard(c card, slot int) {

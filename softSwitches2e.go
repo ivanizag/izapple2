@@ -9,24 +9,37 @@ const (
 )
 
 func addApple2ESoftSwitches(io *ioC0Page) {
-
-	io.addSoftSwitchW(0x00, getSoftSwitchExt(ioFlag80Store, ssOff, nil))
-	io.addSoftSwitchW(0x01, getSoftSwitchExt(ioFlag80Store, ssOn, nil))
+	// New MMU read softswithes
 	io.addSoftSwitchW(0x06, getSoftSwitchExt(ioFlagIntCxRom, ssOff, softSwitchIntCxRomOff))
 	io.addSoftSwitchW(0x07, getSoftSwitchExt(ioFlagIntCxRom, ssOn, softSwitchIntCxRomOn))
+	io.addSoftSwitchR(0x15, getStatusSoftSwitch(ioFlagIntCxRom))
 	io.addSoftSwitchW(0x0A, getSoftSwitchExt(ioFlagSlotC3Rom, ssOff, softSwitchSlotC3RomOff))
 	io.addSoftSwitchW(0x0B, getSoftSwitchExt(ioFlagSlotC3Rom, ssOn, softSwitchSlotC3RomOn))
+	io.addSoftSwitchR(0x17, getStatusSoftSwitch(ioFlagSlotC3Rom))
+
+	// Previous read softswithes
+	io.addSoftSwitchR(0x1A, getStatusSoftSwitch(ioFlagText))
+	io.addSoftSwitchR(0x1B, getStatusSoftSwitch(ioFlagMixed))
+	io.addSoftSwitchR(0x1C, getStatusSoftSwitch(ioFlagSecondPage))
+	io.addSoftSwitchR(0x1D, getStatusSoftSwitch(ioFlagHiRes))
+
+	// New IOU read softswithes
+	io.addSoftSwitchW(0x00, getSoftSwitchExt(ioFlag80Store, ssOff, nil))
+	io.addSoftSwitchW(0x01, getSoftSwitchExt(ioFlag80Store, ssOn, nil))
+	io.addSoftSwitchR(0x18, getStatusSoftSwitch(ioFlag80Store))
 	io.addSoftSwitchW(0x0C, getSoftSwitchExt(ioFlag80Col, ssOff, nil))
 	io.addSoftSwitchW(0x0D, getSoftSwitchExt(ioFlag80Col, ssOn, nil))
+	io.addSoftSwitchR(0x1F, getStatusSoftSwitch(ioFlag80Col))
 	io.addSoftSwitchW(0x0E, getSoftSwitchExt(ioFlagAltChar, ssOff, nil))
 	io.addSoftSwitchW(0x0F, getSoftSwitchExt(ioFlagAltChar, ssOn, nil))
-	io.softSwitchesData[ioFlagAltChar] = ssOn // Not sure about this.
+	io.addSoftSwitchR(0x1E, getStatusSoftSwitch(ioFlagAltChar))
 
-	io.addSoftSwitchR(0x15, getStatusSoftSwitch(ioFlagIntCxRom))
-	io.addSoftSwitchR(0x17, getStatusSoftSwitch(ioFlagSlotC3Rom))
-	io.addSoftSwitchR(0x18, getStatusSoftSwitch(ioFlag80Store))
-	io.addSoftSwitchR(0x1C, getStatusSoftSwitch(ioFlagSecondPage))
-	io.addSoftSwitchR(0x1F, getStatusSoftSwitch(ioFlag80Col))
+	// TOOD:
+	// AKD read on 0x10
+	// VBL read on 0x19
+
+	//io.softSwitchesData[ioFlagAltChar] = ssOn // Not sure about this.
+
 }
 
 type softSwitchExtAction func(io *ioC0Page)

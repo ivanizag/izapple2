@@ -7,56 +7,57 @@ import (
 
 /*
  See:
- hhttps://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project/Companies/Apple/Documentation/Apple%20Technical%20Information%20Library/a2til041.txt
+ https://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project/Companies/Apple/Documentation/Apple%20Technical%20Information%20Library/a2til041.txt
 */
 
 // CharacterGenerator represents the ROM wth the characters bitmaps
 type CharacterGenerator struct {
 	data      []uint8
-	customRom bool
 	columnMap charColumnMap
 	page      int
 }
 
 type charColumnMap func(column int) int
 
+func charGenColumnsMap2Plus(column int) int {
+	return 6 - column
+}
+
+func charGenColumnsMap2e(column int) int {
+	return column
+}
+
 const (
-	rev7CharGenSize   = 2048
-	defaultCharGenROM = "<internal>/Apple2rev7CharGen.rom"
+	charGenPageSize = 2048
 )
 
 // NewCharacterGenerator instantiates a new Character Generator with the rom on the file given
-func NewCharacterGenerator(filename string) (*CharacterGenerator, error) {
+func newCharacterGenerator(filename string, order charColumnMap) (*CharacterGenerator, error) {
 	var cg CharacterGenerator
 	err := cg.load(filename)
 	if err != nil {
 		return nil, err
 	}
+	cg.columnMap = order
 	return &cg, nil
 }
 
 func (cg *CharacterGenerator) load(filename string) error {
-	cg.customRom = !isInternalResource(filename)
 	bytes, err := loadResource(filename)
 	if err != nil {
 		return err
 	}
 	size := len(bytes)
-	if size < rev7CharGenSize {
+	if size < charGenPageSize {
 		return errors.New("Character ROM size not supported")
 	}
 	cg.data = bytes
 	return nil
 }
 
-func (cg *CharacterGenerator) setColumnMap(columnMap charColumnMap) {
-	// Regular Apple II uses bits 6 to 0 but some clones have other mappings
-	cg.columnMap = columnMap
-}
-
 func (cg *CharacterGenerator) setPage(page int) {
 	// Some clones had a switch to change codepage with extra characters
-	pages := len(cg.data) / rev7CharGenSize
+	pages := len(cg.data) / charGenPageSize
 	cg.page = page % pages
 }
 
@@ -65,14 +66,8 @@ func (cg *CharacterGenerator) nextPage() {
 }
 
 func (cg *CharacterGenerator) getPixel(char uint8, row int, column int) bool {
-	bits := cg.data[int(char)*8+row+cg.page*rev7CharGenSize]
-	var bit int
-	if cg.columnMap != nil {
-		bit = cg.columnMap(column)
-	} else {
-		// Standard Apple 2 mapping
-		bit = 6 - column
-	}
+	bits := cg.data[int(char)*8+row+cg.page*charGenPageSize]
+	bit := cg.columnMap(column)
 	value := bits >> uint(bit) & 1
 	return value == 1
 }
@@ -113,7 +108,7 @@ func (cg *CharacterGenerator) dumpChar(char uint8) {
 
 // Dump to sdtout all the character maps
 func (cg *CharacterGenerator) Dump() {
-	pages := len(cg.data) / rev7CharGenSize
+	pages := len(cg.data) / charGenPageSize
 	for p := 0; p < pages; p++ {
 		cg.setPage(p)
 		for i := 0; i < 256; i++ {

@@ -50,12 +50,6 @@ const (
 func newIoC0Page(a *Apple2) *ioC0Page {
 	var io ioC0Page
 	io.apple2 = a
-
-	addApple2SoftSwitches(&io)
-	if a.isApple2e {
-		addApple2ESoftSwitches(&io)
-	}
-
 	return &io
 }
 
