@@ -5,11 +5,13 @@ import (
 	"os"
 )
 
+const defaultInternal = "<default>"
+
 // MainApple is a device independant main. Video, keyboard and speaker won't be defined
 func MainApple() *Apple2 {
 	romFile := flag.String(
 		"rom",
-		"<internal>/Apple2_Plus.rom",
+		defaultInternal,
 		"main rom file")
 	disk2RomFile := flag.String(
 		"diskRom",
@@ -37,7 +39,7 @@ func MainApple() *Apple2 {
 		"cpu speed in Mhz, use 0 for full speed. Use F5 to toggle.")
 	charRomFile := flag.String(
 		"charRom",
-		"<internal>/Apple2rev7CharGen.rom",
+		defaultInternal,
 		"rom file for the character generator")
 	languageCardSlot := flag.Int(
 		"languageCardSlot",
@@ -81,35 +83,79 @@ func MainApple() *Apple2 {
 		false,
 		"shows the character map",
 	)
-	base64a := flag.Bool(
-		"base64a",
-		false,
-		"setup a Base64A clone",
+	model := flag.String(
+		"model",
+		"2plus",
+		"set base model. Models available 2plus, 2e, base64a",
 	)
 	flag.Parse()
 
-	a := NewApple2(*cpuClock, !*mono, *fastDisk)
+	var a *Apple2
+	var charGenMap charColumnMap
+	initialCharGenPage := 0
+	switch *model {
+	case "2plus":
+		a = newApple2plus()
+		if *romFile == defaultInternal {
+			*romFile = "<internal>/Apple2_Plus.rom"
+		}
+		if *charRomFile == defaultInternal {
+			*charRomFile = "<internal>/Apple2rev7CharGen.rom"
+		}
+		charGenMap = charGenColumnsMap2Plus
 
+	case "2e":
+		a = newApple2eEnhanced()
+		if *romFile == defaultInternal {
+			*romFile = "<internal>/Apple2e_Enhanced.rom"
+		}
+		if *charRomFile == defaultInternal {
+			*charRomFile = "<internal>/Apple IIe Video Enhanced - 342-0265-A - 2732.bin"
+		}
+		a.isApple2e = true
+		charGenMap = charGenColumnsMap2e
+
+	case "base64a":
+		a = newBase64a()
+		if *romFile == defaultInternal {
+			err := loadBase64aRom(a)
+			if err != nil {
+				panic(err)
+			}
+			*romFile = ""
+		}
+		if *charRomFile == defaultInternal {
+			*charRomFile = "<internal>/BASE64A_ROM7_CharGen.BIN"
+			initialCharGenPage = 1
+		}
+		charGenMap = charGenColumnsMapBase64a
+
+	default:
+		panic("Model not supported")
+	}
+
+	a.setup(!*mono, *cpuClock, *fastDisk)
 	a.cpu.SetTrace(*traceCPU)
 	a.io.setTrace(*traceSS)
 	a.io.setPanicNotImplemented(*panicSS)
 
-	if *charRomFile != "" {
-		cg, err := NewCharacterGenerator(*charRomFile)
-		if err != nil {
-			panic(err)
-		}
-		a.cg = cg
-	}
-
-	if *base64a {
-		NewBase64a(a)
-	} else {
+	// Load ROM if not loaded already
+	if *romFile != "" {
 		err := a.LoadRom(*romFile)
 		if err != nil {
 			panic(err)
 		}
 	}
+
+	// Load character generator if it loaded already
+	cg, err := newCharacterGenerator(*charRomFile, charGenMap)
+	if err != nil {
+		panic(err)
+	}
+	cg.setPage(initialCharGenPage)
+	a.cg = cg
+
+	// Externsion cards
 	if *languageCardSlot >= 0 {
 		a.AddLanguageCard(*languageCardSlot)
 	}
