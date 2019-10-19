@@ -46,18 +46,13 @@ func SDLRun(a *apple2.Apple2) {
 				a.SendCommand(apple2.CommandKill)
 				running = false
 			case *sdl.KeyboardEvent:
-				//fmt.Printf("[%d ms] Keyboard\ttype:%d\tsym:%c\tmodifiers:%d\tstate:%d\trepeat:%d\n",
-				//	t.Timestamp, t.Type, t.Keysym.Sym, t.Keysym.Mod, t.State, t.Repeat)
 				kp.putKey(t)
+				j.putKey(t)
 			case *sdl.TextInputEvent:
-				//fmt.Printf("[%d ms] TextInput\ttype:%d\texts:%s\n",
-				//	t.Timestamp, t.Type, t.GetText())
 				kp.putText(t)
 			case *sdl.JoyAxisEvent:
-				//fmt.Printf("AxisEvent: %v, %v, %v\n", t.Axis, t.Value, t.Which)
 				j.putAxisEvent(t)
 			case *sdl.JoyButtonEvent:
-				//fmt.Printf("ButtonEvent: %v, %v, %v\n", t.Button, t.State, t.Which)
 				j.putButtonEvent(t)
 			}
 		}

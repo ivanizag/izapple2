@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -17,6 +19,7 @@ joystick 1.
 type sdlJoysticks struct {
 	paddle [4]uint8
 	button [4]bool
+	keys   [3]bool
 }
 
 func newSDLJoysticks() *sdlJoysticks {
@@ -34,11 +37,11 @@ func newSDLJoysticks() *sdlJoysticks {
 		/*joystick := */ sdl.JoystickOpen(iJoy)
 	}
 
-	// Initialize to maximum resistance if unpugged
-	j.paddle[0] = 255
-	j.paddle[1] = 255
-	j.paddle[2] = 255
-	j.paddle[3] = 255
+	// Initialize to mid resistance if unplugged
+	j.paddle[0] = 128
+	j.paddle[1] = 128
+	j.paddle[2] = 128
+	j.paddle[3] = 128
 
 	return &j
 }
@@ -61,18 +64,39 @@ func (j *sdlJoysticks) putButtonEvent(e *sdl.JoyButtonEvent) {
 	j.button[uint8(e.Which)*2+e.Button] = (e.State != 0)
 }
 
+func (j *sdlJoysticks) putKey(keyEvent *sdl.KeyboardEvent) {
+	/*
+		We will simultate joystick buttons with keyboard keys.
+		Actually the Apple//e dis this with the open and solid apple keys.
+		   Alt key - button 0 - Open apple
+		   AltGr key - button 1- Solid apple
+		   //Win key - button 2 (Not in the Apple //e keyboard)
+	*/
+	pressed := keyEvent.Type == sdl.KEYDOWN
+	switch keyEvent.Keysym.Sym {
+	case sdl.K_LALT:
+		j.keys[0] = pressed
+	case sdl.K_RALT:
+		j.keys[1] = pressed
+		//case sdl.K_LGUI:
+		//	j.keys[2] = pressed
+	}
+
+}
+
 func (j *sdlJoysticks) ReadButton(i int) bool {
+	var value bool
 	switch i {
 	case 0:
-		return j.button[0]
+		value = j.button[0] || j.keys[0]
 	case 1:
 		// It can be secondary of first or primary of second
-		return j.button[1] || j.button[2]
+		value = j.button[1] || j.button[2] || j.keys[1]
 	case 2:
-		return j.button[3]
-	default:
-		return false
+		value = j.button[3] || j.keys[2]
 	}
+	fmt.Printf("Button %v: %v.\n", i, value)
+	return value
 }
 
 func (j *sdlJoysticks) ReadPaddle(i int) uint8 {
