@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ivanizag/apple2/core6502"
+	"github.com/pkg/profile"
 )
 
 // Apple2 represents all the components and state of the emulated machine
@@ -25,6 +26,7 @@ type Apple2 struct {
 	isColor             bool
 	fastMode            bool
 	fastRequestsCounter int
+	profile             bool
 }
 
 const (
@@ -37,6 +39,12 @@ const maxWaitDuration = 100 * time.Millisecond
 
 // Run starts the Apple2 emulation
 func (a *Apple2) Run() {
+	if a.profile {
+		// See the log with:
+		//    go tool pprof --pdf ~/go/bin/apple2sdl /tmp/profile329536248/cpu.pprof > profile.pdf
+		defer profile.Start().Stop()
+	}
+
 	// Start the processor
 	a.cpu.Reset()
 	referenceTime := time.Now()
@@ -50,6 +58,9 @@ func (a *Apple2) Run() {
 		for commandsPending {
 			select {
 			case command := <-a.commandChannel:
+				if command == CommandKill {
+					return
+				}
 				a.executeCommand(command)
 			default:
 				commandsPending = false
@@ -73,6 +84,10 @@ func (a *Apple2) Run() {
 	}
 }
 
+func (a *Apple2) setProfile(value bool) {
+	a.profile = value
+}
+
 const (
 	// CommandToggleSpeed toggles cpu speed between full speed and actual Apple II speed
 	CommandToggleSpeed = iota + 1
@@ -88,6 +103,8 @@ const (
 	CommandNextCharGenPage
 	// CommandToggleCPUTrace toggle tracing of CPU execution
 	CommandToggleCPUTrace
+	// CommandKill stops the cpu execution loop
+	CommandKill
 )
 
 // SendCommand enqueues a command to the emulator thread

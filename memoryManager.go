@@ -33,7 +33,7 @@ const (
 	ioC8Off uint16 = 0xCFFF
 )
 
-func (mmu *memoryManager) access(address uint16, activeMemory [256]memoryHandler) memoryHandler {
+func (mmu *memoryManager) access(address uint16, activeMemory *[256]memoryHandler) memoryHandler {
 	if address == ioC8Off {
 		mmu.resetSlotExpansionRoms()
 	}
@@ -54,7 +54,7 @@ func (mmu *memoryManager) access(address uint16, activeMemory [256]memoryHandler
 
 // Peek returns the data on the given address
 func (mmu *memoryManager) Peek(address uint16) uint8 {
-	mh := mmu.access(address, mmu.activeMemoryRead)
+	mh := mmu.access(address, &mmu.activeMemoryRead)
 	if mh == nil {
 		return 0xf4 // Or some random number
 	}
@@ -63,7 +63,7 @@ func (mmu *memoryManager) Peek(address uint16) uint8 {
 
 // Poke sets the data at the given address
 func (mmu *memoryManager) Poke(address uint16, value uint8) {
-	mh := mmu.access(address, mmu.activeMemoryWrite)
+	mh := mmu.access(address, &mmu.activeMemoryWrite)
 	if mh == nil {
 		return
 	}
