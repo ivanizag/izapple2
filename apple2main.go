@@ -86,6 +86,11 @@ func MainApple() *Apple2 {
 		false,
 		"setup a Base64A clone",
 	)
+	profile := flag.Bool(
+		"profile",
+		false,
+		"generate profile trace to analyse with pprof",
+	)
 	flag.Parse()
 
 	a := NewApple2(*cpuClock, !*mono, *fastDisk)
@@ -93,6 +98,7 @@ func MainApple() *Apple2 {
 	a.cpu.SetTrace(*traceCPU)
 	a.io.setTrace(*traceSS)
 	a.io.setPanicNotImplemented(*panicSS)
+	a.setProfile(*profile)
 
 	if *charRomFile != "" {
 		cg, err := NewCharacterGenerator(*charRomFile)

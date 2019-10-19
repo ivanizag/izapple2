@@ -133,6 +133,8 @@ Only valid on SDL mode
         emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.
   -panicss
         panic if a not implemented softswitch is used
+  -profile
+        generate profile trace to analyse with pprof
   -rom string
         main rom file (default "<internal>/Apple2_Plus.rom")
   -saturnCardSlot int
