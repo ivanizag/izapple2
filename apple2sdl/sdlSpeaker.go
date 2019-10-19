@@ -21,6 +21,7 @@ const (
 	sampleDurationCycles = 1000000 * apple2.CpuClockMhz / samplingHz
 	// each sample on the sound stream is 21.31 cpu cycles approx
 	maxOutOfSyncMs = 2000
+	decayLevel     = 128
 )
 
 type sdlSpeaker struct {
@@ -28,6 +29,7 @@ type sdlSpeaker struct {
 	pendingClicks []uint64
 	lastCycle     uint64
 	lastState     bool
+	lastLevel     C.Uint8
 }
 
 /*
@@ -40,6 +42,7 @@ func newSDLSpeaker() *sdlSpeaker {
 	var s sdlSpeaker
 	s.clickChannel = make(chan uint64, bufferSize)
 	s.pendingClicks = make([]uint64, 0, bufferSize)
+	s.lastLevel = decayLevel // Mid position to avoid starting clicks.
 	return &s
 }
 
@@ -90,7 +93,7 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 
 	// Build wave
 	var i, p int
-	level := stateToLevel(s.lastState)
+	level := s.lastLevel
 	for p = 0; p < len(s.pendingClicks); p++ {
 		cycle := s.pendingClicks[p]
 		if cycle < s.lastCycle {
@@ -119,10 +122,26 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 		}
 	}
 
+	// If the buffer is empty lets decay the signal
+	if i == 0 {
+		for level != decayLevel && i < bufferSize {
+			if i%100 == 0 {
+				if level > decayLevel {
+					level--
+				} else {
+					level++
+				}
+			}
+			buf[i] = level
+			i++
+		}
+	}
+
 	// Complete the buffer if needed
 	for b := i; b < bufferSize; b++ {
 		buf[b] = level
 	}
+	s.lastLevel = level
 
 	// Remove processed clicks, store the rest for later
 	remainingClicks := len(s.pendingClicks) - p
