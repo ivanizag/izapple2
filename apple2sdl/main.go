@@ -43,6 +43,7 @@ func SDLRun(a *apple2.Apple2) {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch t := event.(type) {
 			case *sdl.QuitEvent:
+				a.SendCommand(apple2.CommandKill)
 				running = false
 			case *sdl.KeyboardEvent:
 				//fmt.Printf("[%d ms] Keyboard\ttype:%d\tsym:%c\tmodifiers:%d\tstate:%d\trepeat:%d\n",
