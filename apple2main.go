@@ -85,8 +85,8 @@ func MainApple() *Apple2 {
 	)
 	model := flag.String(
 		"model",
-		"2plus",
-		"set base model. Models available 2plus, 2e, base64a",
+		"2e",
+		"set base model. Models available 2plus, 2e, 2enh, base64a",
 	)
 	profile := flag.Bool(
 		"profile",
@@ -110,6 +110,17 @@ func MainApple() *Apple2 {
 		charGenMap = charGenColumnsMap2Plus
 
 	case "2e":
+		a = newApple2e()
+		if *romFile == defaultInternal {
+			*romFile = "<internal>/Apple2e.rom"
+		}
+		if *charRomFile == defaultInternal {
+			*charRomFile = "<internal>/Apple IIe Video Unenhanced - 342-0133-A - 2732.bin"
+		}
+		a.isApple2e = true
+		charGenMap = charGenColumnsMap2e
+
+	case "2enh":
 		a = newApple2eEnhanced()
 		if *romFile == defaultInternal {
 			*romFile = "<internal>/Apple2e_Enhanced.rom"
