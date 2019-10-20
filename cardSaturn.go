@@ -16,9 +16,9 @@ http://www.applelogic.org/files/SATURN128MAN.pdf
 type cardSaturn struct {
 	cardBase
 	readState   bool
-	writeState  int
-	activeBank  int
-	activeBlock int
+	writeState  uint8
+	activeBank  uint8
+	activeBlock uint8
 	ramBankA    [saturnBlocks]*memoryRange // First 4kb to map in 0xD000-0xDFFF
 	ramBankB    [saturnBlocks]*memoryRange // Second 4kb to map in 0xD000-0xDFFF
 	ramUpper    [saturnBlocks]*memoryRange // Upper 8kb to map in 0xE000-0xFFFF
@@ -45,21 +45,21 @@ func (c *cardSaturn) assign(a *Apple2, slot int) {
 		c.ramBankB[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
 		c.ramUpper[i] = newMemoryRange(0xe000, make([]uint8, 0x2000))
 	}
-	for i := 0x0; i <= 0xf; i++ {
+	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
-		c.ssr[iCopy] = func(*ioC0Page) uint8 {
+		c.addCardSoftSwitchR(iCopy, func(*ioC0Page) uint8 {
 			c.ssAction(iCopy, false)
 			return 0
-		}
-		c.ssw[iCopy] = func(*ioC0Page, uint8) {
+		}, "SATURNR")
+		c.addCardSoftSwitchW(iCopy, func(*ioC0Page, uint8) {
 			c.ssAction(iCopy, true)
-		}
+		}, "SATURNW")
 	}
 	c.cardBase.assign(a, slot)
 	c.applyState()
 }
 
-func (c *cardSaturn) ssAction(ss int, write bool) {
+func (c *cardSaturn) ssAction(ss uint8, write bool) {
 	switch ss {
 	case 0:
 		// RAM read, no writes

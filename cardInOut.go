@@ -19,18 +19,18 @@ type cardInOut struct {
 }
 
 func (c *cardInOut) assign(a *Apple2, slot int) {
-	for i := 0x0; i <= 0xf; i++ {
+	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
-		c.ssr[i] = func(*ioC0Page) uint8 {
+		c.addCardSoftSwitchR(i, func(*ioC0Page) uint8 {
 			value := []uint8{0xc1, 0xc1, 0x93, 0x0}[c.i%4]
 			c.i++
 			fmt.Printf("[cardInOut] Read access to softswith 0x%x for slot %v, value %x.\n", iCopy, slot, value)
 			//return 0x41 + 0x80
 			return []uint8{0x41, 0x41, 0x13}[i%3] + 0x80
-		}
-		c.ssw[i] = func(_ *ioC0Page, value uint8) {
+		}, "INOUTR")
+		c.addCardSoftSwitchW(i, func(_ *ioC0Page, value uint8) {
 			fmt.Printf("[cardInOut] Write access to softswith 0x%x for slot %v, value 0x%x.\n", iCopy, slot, value)
-		}
+		}, "INOUTW")
 	}
 
 	in := true

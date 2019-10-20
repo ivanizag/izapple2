@@ -9,6 +9,8 @@ import (
 type ioC0Page struct {
 	softSwitchesR       [256]softSwitchR
 	softSwitchesW       [256]softSwitchW
+	softSwitchesRName   [256]string
+	softSwitchesWName   [256]string
 	softSwitchesData    [128]uint8
 	keyboard            KeyboardProvider
 	speaker             SpeakerProvider
@@ -69,25 +71,27 @@ func (p *ioC0Page) load(r io.Reader) error {
 	return binary.Read(r, binary.BigEndian, &p.softSwitchesData)
 }
 
-func (p *ioC0Page) addSoftSwitchRW(address uint8, ss softSwitchR) {
-	p.addSoftSwitchR(address, ss)
+func (p *ioC0Page) addSoftSwitchRW(address uint8, ss softSwitchR, name string) {
+	p.addSoftSwitchR(address, ss, name)
 	p.addSoftSwitchW(address, func(p *ioC0Page, _ uint8) {
 		ss(p)
-	})
+	}, name)
 }
 
-func (p *ioC0Page) addSoftSwitchR(address uint8, ss softSwitchR) {
+func (p *ioC0Page) addSoftSwitchR(address uint8, ss softSwitchR, name string) {
 	//if p.softSwitchesR[address] != nil {
 	//	fmt.Printf("Addresss 0x0c%02x is already assigned for read\n", address)
 	//}
 	p.softSwitchesR[address] = ss
+	p.softSwitchesRName[address] = name
 }
 
-func (p *ioC0Page) addSoftSwitchW(address uint8, ss softSwitchW) {
+func (p *ioC0Page) addSoftSwitchW(address uint8, ss softSwitchW, name string) {
 	//if p.softSwitchesW[address] != nil {
 	//	fmt.Printf("Addresss 0x0c%02x is already assigned for write\n", address)
 	//}
 	p.softSwitchesW[address] = ss
+	p.softSwitchesWName[address] = name
 }
 
 func (p *ioC0Page) isSoftSwitchActive(ioFlag uint8) bool {
@@ -116,16 +120,14 @@ func (p *ioC0Page) peek(address uint16) uint8 {
 		return 0
 	}
 	value := ss(p)
-	if p.trace {
-		fmt.Printf("Softswitch peek on $%04x: $%02x\n", address, value)
+	if p.trace && address != 0xc000 {
+		name := p.softSwitchesRName[pageAddress]
+		fmt.Printf("Softswitch peek on $%04x %v: $%02x\n", address, name, value)
 	}
 	return value
 }
 
 func (p *ioC0Page) poke(address uint16, value uint8) {
-	if p.trace {
-		fmt.Printf("Softswtich poke on $%04x with %02x\n", address, value)
-	}
 	pageAddress := uint8(address)
 	ss := p.softSwitchesW[pageAddress]
 	if ss == nil {
@@ -133,6 +135,10 @@ func (p *ioC0Page) poke(address uint16, value uint8) {
 			panic(fmt.Sprintf("Unknown softswitch on write to $%04x", address))
 		}
 		return
+	}
+	if p.trace && address != 0xc000 {
+		name := p.softSwitchesWName[pageAddress]
+		fmt.Printf("Softswitch poke on $%04x %v with $%02x\n", address, name, value)
 	}
 	ss(p, value)
 }

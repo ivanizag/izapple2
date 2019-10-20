@@ -31,8 +31,8 @@ and selects the second 4K bank to map $D000-$DFFF."
 type cardLanguage struct {
 	cardBase
 	readState  bool
-	writeState int
-	activeBank int
+	writeState uint8
+	activeBank uint8
 	ramBankA   *memoryRange // First 4kb to map in 0xD000-0xDFFF
 	ramBankB   *memoryRange // Second 4kb to map in 0xD000-0xDFFF
 	ramUpper   *memoryRange // Upper 8kb to map in 0xE000-0xFFFF
@@ -54,22 +54,22 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 	c.ramBankB = newMemoryRange(0xd000, make([]uint8, 0x1000))
 	c.ramUpper = newMemoryRange(0xe000, make([]uint8, 0x2000))
 
-	for i := 0x0; i <= 0xf; i++ {
+	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
-		c.ssr[iCopy] = func(*ioC0Page) uint8 {
+		c.addCardSoftSwitchR(iCopy, func(*ioC0Page) uint8 {
 			c.ssAction(iCopy, false)
 			return 0
-		}
-		c.ssw[iCopy] = func(*ioC0Page, uint8) {
+		}, "LANGCARDR")
+		c.addCardSoftSwitchW(iCopy, func(*ioC0Page, uint8) {
 			c.ssAction(iCopy, true)
-		}
+		}, "LANGCARDW")
 	}
 
 	c.cardBase.assign(a, slot)
 	c.applyState()
 }
 
-func (c *cardLanguage) ssAction(ss int, write bool) {
+func (c *cardLanguage) ssAction(ss uint8, write bool) {
 	c.activeBank = (ss >> 3) & 1
 	action := ss & 0x3
 	switch action {

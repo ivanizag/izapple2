@@ -13,15 +13,15 @@ type cardLogger struct {
 }
 
 func (c *cardLogger) assign(a *Apple2, slot int) {
-	for i := 0x0; i <= 0xf; i++ {
+	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
-		c.ssr[i] = func(*ioC0Page) uint8 {
+		c.addCardSoftSwitchR(i, func(*ioC0Page) uint8 {
 			fmt.Printf("[cardLogger] Read access to softswith 0x%x for slot %v.\n", iCopy, slot)
 			return 0
-		}
-		c.ssw[i] = func(_ *ioC0Page, value uint8) {
+		}, "LOGGERR")
+		c.addCardSoftSwitchW(i, func(_ *ioC0Page, value uint8) {
 			fmt.Printf("[cardLogger] Write access to softswith 0x%x for slot %v, value 0x%v.\n", iCopy, slot, value)
-		}
+		}, "LOGGERW")
 	}
 
 	if slot != 0 {

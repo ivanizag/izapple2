@@ -2,6 +2,7 @@ package apple2
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 )
 
@@ -33,7 +34,7 @@ type cardDisk2 struct {
 
 type cardDisk2Drive struct {
 	diskette     *diskette16sector
-	currentPhase int
+	currentPhase uint8
 	power        bool // q4
 	halfTrack    int
 	position     int
@@ -50,12 +51,13 @@ const (
 
 func (c *cardDisk2) assign(a *Apple2, slot int) {
 	// Q1, Q2, Q3 and Q4 phase control soft switches,
-	for i := 0; i < 4; i++ {
+	for i := uint8(0); i < 4; i++ {
 		phase := i
-		c.ssr[phase<<1] = func(_ *ioC0Page) uint8 {
+		c.addCardSoftSwitchR(phase<<1, func(_ *ioC0Page) uint8 {
 			return c.dataLatch // All even addresses return the last dataLatch
-		}
-		c.ssr[(phase<<1)+1] = func(_ *ioC0Page) uint8 {
+		}, fmt.Sprintf("PHASE%vOFF", phase))
+
+		c.addCardSoftSwitchR((phase<<1)+1, func(_ *ioC0Page) uint8 {
 			// Move the head up or down depending on the previous phase.
 			drive := &c.drive[c.selected]
 			delta := (phase - drive.currentPhase + 4) % 4
@@ -79,50 +81,50 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 			drive.currentPhase = phase
 			//fmt.Printf("DISKII: Current halftrack is %v\n", drive.halfTrack)
 			return 0
-		}
+		}, fmt.Sprintf("PHASE%vOFF", phase))
 	}
 
 	// Q4, power switch
-	c.ssr[0x8] = func(_ *ioC0Page) uint8 {
+	c.addCardSoftSwitchR(0x8, func(_ *ioC0Page) uint8 {
 		if c.drive[c.selected].power {
 			c.drive[c.selected].power = false
 			c.a.releaseFastMode()
 		}
 		return c.dataLatch
-	}
-	c.ssr[0x9] = func(_ *ioC0Page) uint8 {
+	}, "Q4DRIVEOFF")
+	c.addCardSoftSwitchR(0x9, func(_ *ioC0Page) uint8 {
 		if !c.drive[c.selected].power {
 			c.drive[c.selected].power = true
 			c.a.requestFastMode()
 		}
 		return 0
-	}
+	}, "")
 
 	// Q5, drive selecion
-	c.ssr[0xA] = func(_ *ioC0Page) uint8 {
+	c.addCardSoftSwitchR(0xA, func(_ *ioC0Page) uint8 {
 		c.selected = 0
 		return c.dataLatch
-	}
-	c.ssr[0xB] = func(_ *ioC0Page) uint8 {
+	}, "Q5SELECT1")
+	c.addCardSoftSwitchR(0xB, func(_ *ioC0Page) uint8 {
 		c.selected = 1
 		return 0
-	}
+	}, "Q5SELECT2")
 
 	// Q6, Q7
-	for i := 0xC; i <= 0xF; i++ {
+	for i := uint8(0xC); i <= 0xF; i++ {
 		iCopy := i
-		c.ssr[iCopy] = func(_ *ioC0Page) uint8 {
+		c.addCardSoftSwitchR(iCopy, func(_ *ioC0Page) uint8 {
 			return c.softSwitchQ6Q7(iCopy, 0)
-		}
-		c.ssw[iCopy] = func(_ *ioC0Page, value uint8) {
+		}, "Q6Q7")
+		c.addCardSoftSwitchW(iCopy, func(_ *ioC0Page, value uint8) {
 			c.softSwitchQ6Q7(iCopy, value)
-		}
+		}, "Q6Q7")
 	}
 
 	c.cardBase.assign(a, slot)
 }
 
-func (c *cardDisk2) softSwitchQ6Q7(index int, in uint8) uint8 {
+func (c *cardDisk2) softSwitchQ6Q7(index uint8, in uint8) uint8 {
 	switch index {
 	case 0xC: // Q6L
 		c.q6 = false
