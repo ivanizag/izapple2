@@ -43,6 +43,9 @@ func newSDLJoysticks() *sdlJoysticks {
 	j.paddle[2] = 128
 	j.paddle[3] = 128
 
+	// To enter Apple IIe on self test mode
+	//j.keys[1] = true
+
 	return &j
 }
 

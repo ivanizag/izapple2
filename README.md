@@ -107,8 +107,6 @@ Only valid on SDL mode
 ### Command line options
 
 ```
-  -base64a
-        setup a Base64A clone
   -charRom string
         rom file for the character generator (default "<internal>/Apple2rev7CharGen.rom")
   -disk string
@@ -129,6 +127,8 @@ Only valid on SDL mode
         slot for the 16kb language card. -1 for none
   -mhz float
         cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
+  -model string
+        set base model. Models available 2plus, 2e, 2enh, base64a (default "2e")
   -mono
         emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.
   -panicss
