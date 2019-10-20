@@ -48,19 +48,18 @@ func (c *cardSaturn) assign(a *Apple2, slot int) {
 	for i := 0x0; i <= 0xf; i++ {
 		iCopy := i
 		c.ssr[iCopy] = func(*ioC0Page) uint8 {
-			c.ssAction(iCopy)
+			c.ssAction(iCopy, false)
 			return 0
 		}
 		c.ssw[iCopy] = func(*ioC0Page, uint8) {
-			// Writing does not reset write count
-			c.ssAction(iCopy)
+			c.ssAction(iCopy, true)
 		}
 	}
 	c.cardBase.assign(a, slot)
 	c.applyState()
 }
 
-func (c *cardSaturn) ssAction(ss int) {
+func (c *cardSaturn) ssAction(ss int, write bool) {
 	switch ss {
 	case 0:
 		// RAM read, no writes
@@ -122,6 +121,11 @@ func (c *cardSaturn) ssAction(ss int) {
 
 	if c.writeState > lcWriteEnabled {
 		c.writeState = lcWriteEnabled
+	}
+
+	// Writing to the softswtich disables writes.
+	if write {
+		c.writeState = lcWriteDisabled
 	}
 
 	c.applyState()

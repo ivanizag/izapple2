@@ -57,15 +57,11 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 	for i := 0x0; i <= 0xf; i++ {
 		iCopy := i
 		c.ssr[iCopy] = func(*ioC0Page) uint8 {
-			c.ssAction(iCopy)
+			c.ssAction(iCopy, false)
 			return 0
 		}
 		c.ssw[iCopy] = func(*ioC0Page, uint8) {
-			c.ssAction(iCopy)
-
-			// Writing shoud reset write count per A2AUDIT
-			// but doing that makes ProDos to not load.
-			// c.writeState = lcWriteDisabled
+			c.ssAction(iCopy, true)
 		}
 	}
 
@@ -73,7 +69,7 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 	c.applyState()
 }
 
-func (c *cardLanguage) ssAction(ss int) {
+func (c *cardLanguage) ssAction(ss int, write bool) {
 	c.activeBank = (ss >> 3) & 1
 	action := ss & 0x3
 	switch action {
@@ -97,6 +93,11 @@ func (c *cardLanguage) ssAction(ss int) {
 
 	if c.writeState > lcWriteEnabled {
 		c.writeState = lcWriteEnabled
+	}
+
+	// Writing to the softswtich disables writes.
+	if write {
+		c.writeState = lcWriteDisabled
 	}
 
 	c.applyState()
