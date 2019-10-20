@@ -15,8 +15,10 @@ type cardBase struct {
 	rom      *memoryRange
 	romExtra *memoryRange
 	slot     int
-	ssr      [16]softSwitchR
-	ssw      [16]softSwitchW
+	_ssr     [16]softSwitchR
+	_ssw     [16]softSwitchW
+	_ssrName [16]string
+	_sswName [16]string
 }
 
 func (c *cardBase) loadRom(data []uint8) {
@@ -45,9 +47,19 @@ func (c *cardBase) assign(a *Apple2, slot int) {
 	}
 
 	for i := 0; i < 0x10; i++ {
-		a.io.addSoftSwitchR(uint8(0xC80+slot*0x10+i), c.ssr[i])
-		a.io.addSoftSwitchW(uint8(0xC80+slot*0x10+i), c.ssw[i])
+		a.io.addSoftSwitchR(uint8(0xC80+slot*0x10+i), c._ssr[i], c._ssrName[i])
+		a.io.addSoftSwitchW(uint8(0xC80+slot*0x10+i), c._ssw[i], c._sswName[i])
 	}
+}
+
+func (c *cardBase) addCardSoftSwitchR(address uint8, ss softSwitchR, name string) {
+	c._ssr[address] = ss
+	c._ssrName[address] = name
+}
+
+func (c *cardBase) addCardSoftSwitchW(address uint8, ss softSwitchW, name string) {
+	c._ssw[address] = ss
+	c._sswName[address] = name
 }
 
 func (c *cardBase) save(w io.Writer) error {

@@ -77,7 +77,7 @@ const (
 )
 
 func (c *cardHardDisk) assign(a *Apple2, slot int) {
-	c.ssr[0] = func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
 
 		// Prodos entry point
 		command := a.mmu.Peek(0x42)
@@ -99,15 +99,15 @@ func (c *cardHardDisk) assign(a *Apple2, slot int) {
 			// Prodos device command not supported
 			return proDosDeviceErrorIO
 		}
-	}
-	c.ssr[1] = func(*ioC0Page) uint8 {
+	}, "HDCOMMAND")
+	c.addCardSoftSwitchR(1, func(*ioC0Page) uint8 {
 		// Blocks available, low byte
 		return uint8(c.disk.header.Blocks)
-	}
-	c.ssr[2] = func(*ioC0Page) uint8 {
+	}, "HDBLOCKSLO")
+	c.addCardSoftSwitchR(2, func(*ioC0Page) uint8 {
 		// Blocks available, high byte
 		return uint8(c.disk.header.Blocks >> 8)
-	}
+	}, "HDBLOCKHI")
 
 	c.cardBase.assign(a, slot)
 }

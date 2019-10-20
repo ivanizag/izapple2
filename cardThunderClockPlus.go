@@ -25,16 +25,16 @@ type cardThunderClockPlus struct {
 }
 
 func (c *cardThunderClockPlus) assign(a *Apple2, slot int) {
-	c.ssr[0] = func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
 		bit := c.microPD1990ac.out()
 		// Get the next data bit from uPD1990AC on the MSB
 		if bit {
 			return 0x80
 		}
 		return 0
-	}
+	}, "THUNDERCLOCKR")
 
-	c.ssw[0] = func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(0, func(_ *ioC0Page, value uint8) {
 		dataIn := (value & 0x01) == 1
 		clock := ((value >> 1) & 0x01) == 1
 		strobe := ((value >> 2) & 0x01) == 1
@@ -43,7 +43,7 @@ func (c *cardThunderClockPlus) assign(a *Apple2, slot int) {
 		dataIn, clock, strobe, command) */
 
 		c.microPD1990ac.in(clock, strobe, command, dataIn)
-	}
+	}, "THUNDERCLOCKW")
 
 	c.cardBase.assign(a, slot)
 }

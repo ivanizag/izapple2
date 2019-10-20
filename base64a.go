@@ -26,15 +26,15 @@ func newBase64a() *Apple2 {
 }
 
 func addBase64aSoftSwitches(io *ioC0Page) {
-	// Other softswitches
-	io.addSoftSwitchW(0x0C, notImplementedSoftSwitchW) // 80 columns off?
-	io.addSoftSwitchW(0x0E, notImplementedSoftSwitchW) // Alt char off?
+	// Other softswitches, not implemented but called from the ROM
+	io.addSoftSwitchW(0x0C, notImplementedSoftSwitchW, "80COLOFF")
+	io.addSoftSwitchW(0x0E, notImplementedSoftSwitchW, "ALTCHARSETOFF")
 
 	// Write on the speaker. That is a double access and should do nothing
 	// but works somehow on the BASE64A
 	io.addSoftSwitchW(0x30, func(io *ioC0Page, value uint8) {
 		speakerSoftSwitch(io)
-	})
+	}, "SPEAKER")
 }
 
 func charGenColumnsMapBase64a(column int) int {

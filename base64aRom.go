@@ -55,19 +55,19 @@ func loadBase64aRom(a *Apple2) error {
 	a.io.addSoftSwitchRW(0x58, func(*ioC0Page) uint8 {
 		r.changeBank(a.mmu, r.romBank&2)
 		return 0
-	})
+	}, "ANN0OFF-ROM")
 	a.io.addSoftSwitchRW(0x59, func(*ioC0Page) uint8 {
 		r.changeBank(a.mmu, r.romBank|1)
 		return 0
-	})
+	}, "ANN0ON-ROM")
 	a.io.addSoftSwitchRW(0x5A, func(*ioC0Page) uint8 {
 		r.changeBank(a.mmu, r.romBank&1)
 		return 0
-	})
+	}, "ANN1OFF-ROM")
 	a.io.addSoftSwitchRW(0x5B, func(*ioC0Page) uint8 {
 		r.changeBank(a.mmu, r.romBank|2)
 		return 0
-	})
+	}, "ANN1ON-ROM")
 
 	return nil
 }
