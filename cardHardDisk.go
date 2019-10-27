@@ -5,6 +5,9 @@ import "fmt"
 /*
 To implement a hard drive we just have to support boot from #PR7 and the PRODOS expextations.
 See Beneath Prodos, section 6-6, 7-13 and 5-8. (http://www.apple-iigs.info/doc/fichiers/beneathprodos.pdf)
+
+See:
+	https://prodos8.com/docs/technote/21/
 */
 
 type cardHardDisk struct {
@@ -23,6 +26,7 @@ func buildHardDiskRom(slot int) []uint8 {
 		0xa9, 0x00, // LDA #$20
 		0xa9, 0x03, // LDA #$20
 		0xa9, 0x3c, // LDA #$3c
+		// Alternate: 0xa9, 0x00, // LDA #$00 ; Not a Smartport device, but won't boot on ii+ ROM
 
 		// Boot code: SS will load block 0 in address $0800. The jump there.
 		// Note: on execution the first block expects $42 to $47 to have
