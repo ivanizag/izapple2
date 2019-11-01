@@ -127,8 +127,9 @@ func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) error 
 }
 
 // AddHardDisk adds a ProDos hard dirve with a 2MG image
-func (a *Apple2) AddHardDisk(slot int, hdImage string) error {
+func (a *Apple2) AddHardDisk(slot int, hdImage string, trace bool) error {
 	var c cardHardDisk
+	c.setTrace(trace)
 	c.loadRom(buildHardDiskRom(slot))
 	a.insertCard(&c, slot)
 

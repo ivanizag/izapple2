@@ -64,7 +64,7 @@ func MainApple() *Apple2 {
 		"set fast mode when the disks are spinning",
 	)
 	panicSS := flag.Bool(
-		"panicss",
+		"panicSS",
 		false,
 		"panic if a not implemented softswitch is used",
 	)
@@ -77,6 +77,11 @@ func MainApple() *Apple2 {
 		"traceSS",
 		false,
 		"dump to the console the sofswitches calls",
+	)
+	traceHD := flag.Bool(
+		"traceHD",
+		false,
+		"dump to the console the hd commands",
 	)
 	dumpChars := flag.Bool(
 		"dumpChars",
@@ -196,7 +201,7 @@ func MainApple() *Apple2 {
 			// If there is a hard disk image, but no slot assigned, use slot 7.
 			*hardDiskSlot = 7
 		}
-		err := a.AddHardDisk(*hardDiskSlot, *hardDiskImage)
+		err := a.AddHardDisk(*hardDiskSlot, *hardDiskImage, *traceHD)
 		if err != nil {
 			panic(err)
 		}

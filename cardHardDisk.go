@@ -159,3 +159,7 @@ func (c *cardHardDisk) writeBlock(block uint16, source uint16) uint8 {
 func (c *cardHardDisk) addDisk(disk *hardDisk) {
 	c.disk = disk
 }
+
+func (c *cardHardDisk) setTrace(trace bool) {
+	c.trace = trace
+}
