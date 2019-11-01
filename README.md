@@ -131,7 +131,7 @@ Only valid on SDL mode
         set base model. Models available 2plus, 2e, 2enh, base64a (default "2e")
   -mono
         emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.
-  -panicss
+  -panicSS
         panic if a not implemented softswitch is used
   -profile
         generate profile trace to analyse with pprof
@@ -143,6 +143,8 @@ Only valid on SDL mode
         slot for the ThunderClock Plus card. -1 for none (default 4)
   -traceCpu
         dump to the console the CPU execution. Use F11 to toggle.
+  -traceHD
+        dump to the console the hd commands
   -traceSS
         dump to the console the sofswitches calls
 
