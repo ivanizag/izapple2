@@ -32,14 +32,11 @@ type cardLanguage struct {
 	cardBase
 	readState  bool
 	writeState uint8
-	activeBank uint8
-	ramBankA   *memoryRange // First 4kb to map in 0xD000-0xDFFF
-	ramBankB   *memoryRange // Second 4kb to map in 0xD000-0xDFFF
-	ramUpper   *memoryRange // Upper 8kb to map in 0xE000-0xFFFF
+	altBank    bool
 }
 
 const (
-	// Write enabling requires two sofstwitch accesses
+	// Write enabling requires two softswitch accesses
 	lcWriteDisabled    = 0
 	lcWriteHalfEnabled = 1
 	lcWriteEnabled     = 2
@@ -48,11 +45,9 @@ const (
 func (c *cardLanguage) assign(a *Apple2, slot int) {
 	c.readState = false
 	c.writeState = lcWriteEnabled
-	c.activeBank = 1
+	c.altBank = true
 
-	c.ramBankA = newMemoryRange(0xd000, make([]uint8, 0x1000))
-	c.ramBankB = newMemoryRange(0xd000, make([]uint8, 0x1000))
-	c.ramUpper = newMemoryRange(0xe000, make([]uint8, 0x2000))
+	a.mmu.initLanguageRAM(1)
 
 	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
@@ -70,7 +65,7 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 }
 
 func (c *cardLanguage) ssAction(ss uint8, write bool) {
-	c.activeBank = (ss >> 3) & 1
+	c.altBank = ((ss >> 3) & 1) == 1
 	action := ss & 0x3
 	switch action {
 	case 0:
@@ -103,30 +98,8 @@ func (c *cardLanguage) ssAction(ss uint8, write bool) {
 	c.applyState()
 }
 
-func (c *cardLanguage) getActiveBank() *memoryRange {
-	if c.activeBank == 0 {
-		return c.ramBankA
-	}
-	return c.ramBankB
-}
-
 func (c *cardLanguage) applyState() {
-	mmu := c.a.mmu
-
-	if c.readState {
-		mmu.setPagesRead(0xd0, 0xdf, c.getActiveBank())
-		mmu.setPagesRead(0xe0, 0xff, c.ramUpper)
-	} else {
-		mmu.setPagesRead(0xd0, 0xff, mmu.physicalROM)
-	}
-
-	if c.writeState == lcWriteEnabled {
-		mmu.setPagesWrite(0xd0, 0xdf, c.getActiveBank())
-		mmu.setPagesWrite(0xe0, 0xff, c.ramUpper)
-	} else {
-		mmu.setPagesWrite(0xd0, 0xff, nil)
-	}
-
+	c.a.mmu.setLanguageRAM(c.readState, c.writeState == lcWriteEnabled, c.altBank)
 }
 
 func (c *cardLanguage) save(w io.Writer) error {
@@ -138,23 +111,10 @@ func (c *cardLanguage) save(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = binary.Write(w, binary.BigEndian, c.activeBank)
+	err = binary.Write(w, binary.BigEndian, c.altBank)
 	if err != nil {
 		return err
 	}
-	err = c.ramBankA.save(w)
-	if err != nil {
-		return err
-	}
-	err = c.ramBankB.save(w)
-	if err != nil {
-		return err
-	}
-	err = c.ramUpper.save(w)
-	if err != nil {
-		return err
-	}
-
 	return c.cardBase.save(w)
 }
 
@@ -167,23 +127,10 @@ func (c *cardLanguage) load(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	err = binary.Read(r, binary.BigEndian, &c.activeBank)
+	err = binary.Read(r, binary.BigEndian, &c.altBank)
 	if err != nil {
 		return err
 	}
-	err = c.ramBankA.load(r)
-	if err != nil {
-		return err
-	}
-	err = c.ramBankB.load(r)
-	if err != nil {
-		return err
-	}
-	err = c.ramUpper.load(r)
-	if err != nil {
-		return err
-	}
-
 	c.applyState()
 	return c.cardBase.load(r)
 }

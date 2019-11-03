@@ -13,10 +13,7 @@ func newApple2plus() *Apple2 {
 	a.Name = "Apple ][+"
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
-
-	// Set the io in 0xc000
 	a.io = newIoC0Page(&a)
-	a.mmu.setPages(0xc0, 0xc0, a.io)
 	addApple2SoftSwitches(a.io)
 
 	return &a
@@ -28,10 +25,7 @@ func newApple2e() *Apple2 {
 	a.Name = "Apple IIe"
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewCMOS65c02(a.mmu)
-
-	// Set the io in 0xc000
 	a.io = newIoC0Page(&a)
-	a.mmu.setPages(0xc0, 0xc0, a.io)
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)
 
@@ -44,10 +38,7 @@ func newApple2eEnhanced() *Apple2 {
 	a.Name = "Apple //e"
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewCMOS65c02(a.mmu)
-
-	// Set the io in 0xc000
 	a.io = newIoC0Page(&a)
-	a.mmu.setPages(0xc0, 0xc0, a.io)
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)
 
@@ -100,8 +91,7 @@ func (a *Apple2) LoadRom(filename string) error {
 		romStart = extraRomSize
 	}
 
-	mmu.physicalROM = newMemoryRange(0xd000, data[romStart:])
-	mmu.resetRomPaging()
+	mmu.physicalROM[0] = newMemoryRange(0xd000, data[romStart:])
 	return nil
 }
 

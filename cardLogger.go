@@ -24,20 +24,5 @@ func (c *cardLogger) assign(a *Apple2, slot int) {
 		}, "LOGGERW")
 	}
 
-	if slot != 0 {
-		a.mmu.setPagesRead(uint8(0xc0+slot), uint8(0xc0+slot), c)
-	}
 	c.cardBase.assign(a, slot)
-}
-
-// MemoryHandler implementation
-func (c *cardLogger) peek(address uint16) uint8 {
-	fmt.Printf("[cardLogger] Read in %x.\n", address)
-	c.a.dumpDebugInfo()
-
-	return 0xf3
-}
-
-func (*cardLogger) poke(address uint16, value uint8) {
-	fmt.Printf("[cardLogger] Write %x in %x.\n", value, address)
 }

@@ -38,12 +38,12 @@ func (c *cardBase) assign(a *Apple2, slot int) {
 	c.slot = slot
 	if slot != 0 && c.rom != nil {
 		c.rom.base = uint16(0xc000 + slot*0x100)
-		a.mmu.setPagesRead(uint8(0xc0+slot), uint8(0xc0+slot), c.rom)
+		a.mmu.setCardROM(slot, c.rom)
 	}
 
 	if slot != 0 && c.romExtra != nil {
 		c.romExtra.base = uint16(0xc800)
-		a.mmu.prepareCardExtraRom(slot, c.romExtra)
+		a.mmu.setCardROMExtra(slot, c.romExtra)
 	}
 
 	for i := 0; i < 0x10; i++ {
