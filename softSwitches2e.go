@@ -6,57 +6,31 @@ package apple2
 */
 
 const (
-	ioFlagRamRd     uint8 = 0x13
-	ioFlagRamWrt    uint8 = 0x14
-	ioFlagIntCxRom  uint8 = 0x15
-	ioFlagAltZp     uint8 = 0x16
-	ioFlagSlotC3Rom uint8 = 0x17
-	ioFlag80Store   uint8 = 0x18
-	ioFlagAltChar   uint8 = 0x1E
-	ioFlag80Col     uint8 = 0x1F
+	ioFlag80Store uint8 = 0x18
+	ioFlagAltChar uint8 = 0x1E
+	ioFlag80Col   uint8 = 0x1F
 	// ??? ioVertBlank uin8 = 0x19
 )
 
 func addApple2ESoftSwitches(io *ioC0Page) {
 	// New MMU read softswithes
-	io.addSoftSwitchW(0x02, getSoftSwitchExt(ioFlagRamRd, ssOff, nil), "RAMRDOFF")
-	io.addSoftSwitchW(0x03, getSoftSwitchExt(ioFlagRamWrt, ssOn, nil), "RAMRDON")
-	io.addSoftSwitchR(0x13, getStatusSoftSwitch(ioFlagRamWrt), "RAMRD")
+	mmu := io.apple2.mmu
+	addSoftSwitchesMmu(io, 0x02, 0x03, 0x13, &mmu.altMainRAMActiveRead, "RAMRD")
+	addSoftSwitchesMmu(io, 0x04, 0x05, 0x14, &mmu.altMainRAMActiveWrite, "RAMWRT")
+	addSoftSwitchesMmu(io, 0x06, 0x07, 0x15, &mmu.cxROMActive, "INTCXROM")
+	addSoftSwitchesMmu(io, 0x08, 0x09, 0x16, &mmu.altZeroPage, "ALTZP")
+	addSoftSwitchesMmu(io, 0x0a, 0x0b, 0x17, &mmu.c3ROMActive, "SLOTC3ROM")
 
-	io.addSoftSwitchW(0x04, getSoftSwitchExt(ioFlagRamWrt, ssOff, nil), "RAMWRTOFF")
-	io.addSoftSwitchW(0x05, getSoftSwitchExt(ioFlagRamWrt, ssOn, nil), "RAMWRTON")
-	io.addSoftSwitchR(0x14, getStatusSoftSwitch(ioFlagRamWrt), "RAMWRT")
-
-	io.addSoftSwitchW(0x06, getSoftSwitchExt(ioFlagIntCxRom, ssOff, softSwitchIntCxRomOff), "INTCXROMOFF")
-	io.addSoftSwitchW(0x07, getSoftSwitchExt(ioFlagIntCxRom, ssOn, softSwitchIntCxRomOn), "INTCXROMON")
-	io.addSoftSwitchR(0x15, getStatusSoftSwitch(ioFlagIntCxRom), "INTCXROM")
-
-	io.addSoftSwitchW(0x08, getSoftSwitchExt(ioFlagAltZp, ssOff, nil), "ALTZPOFF")
-	io.addSoftSwitchW(0x09, getSoftSwitchExt(ioFlagAltZp, ssOn, nil), "ALTZPON")
-	io.addSoftSwitchR(0x16, getStatusSoftSwitch(ioFlagAltZp), "ALTZP")
-
-	io.addSoftSwitchW(0x0A, getSoftSwitchExt(ioFlagSlotC3Rom, ssOff, softSwitchSlotC3RomOff), "SLOTC3ROMOFF")
-	io.addSoftSwitchW(0x0B, getSoftSwitchExt(ioFlagSlotC3Rom, ssOn, softSwitchSlotC3RomOn), "SLOTC3ROMON")
-	io.addSoftSwitchR(0x17, getStatusSoftSwitch(ioFlagSlotC3Rom), "SLOTC3ROM")
+	// New IOU read softswithes
+	addSoftSwitchesIou(io, 0x00, 0x01, 0x18, ioFlag80Store, "80STORE")
+	addSoftSwitchesIou(io, 0x0c, 0x0d, 0x1f, ioFlag80Col, "80COL")
+	addSoftSwitchesIou(io, 0x0e, 0x0f, 0x1e, ioFlagAltChar, "ALTCHARSET")
 
 	// Previous read softswithes
 	io.addSoftSwitchR(0x1A, getStatusSoftSwitch(ioFlagText), "TEXT")
 	io.addSoftSwitchR(0x1B, getStatusSoftSwitch(ioFlagMixed), "MIXED")
 	io.addSoftSwitchR(0x1C, getStatusSoftSwitch(ioFlagSecondPage), "PAGE2")
 	io.addSoftSwitchR(0x1D, getStatusSoftSwitch(ioFlagHiRes), "HIRES")
-
-	// New IOU read softswithes
-	io.addSoftSwitchW(0x00, getSoftSwitchExt(ioFlag80Store, ssOff, nil), "80STOREOFF")
-	io.addSoftSwitchW(0x01, getSoftSwitchExt(ioFlag80Store, ssOn, nil), "80STOREON")
-	io.addSoftSwitchR(0x18, getStatusSoftSwitch(ioFlag80Store), "80STORE")
-
-	io.addSoftSwitchW(0x0C, getSoftSwitchExt(ioFlag80Col, ssOff, nil), "80COLOFF")
-	io.addSoftSwitchW(0x0D, getSoftSwitchExt(ioFlag80Col, ssOn, nil), "80COLON")
-	io.addSoftSwitchR(0x1F, getStatusSoftSwitch(ioFlag80Col), "80COL")
-
-	io.addSoftSwitchW(0x0E, getSoftSwitchExt(ioFlagAltChar, ssOff, nil), "ALTCHARSETOFF")
-	io.addSoftSwitchW(0x0F, getSoftSwitchExt(ioFlagAltChar, ssOn, nil), "ALTCHARSETON")
-	io.addSoftSwitchR(0x1E, getStatusSoftSwitch(ioFlagAltChar), "ALTCHARSET")
 
 	// TOOD:
 	// AKD read on 0x10
@@ -66,37 +40,33 @@ func addApple2ESoftSwitches(io *ioC0Page) {
 
 }
 
-type softSwitchExtAction func(io *ioC0Page)
+func addSoftSwitchesMmu(io *ioC0Page, addressClear uint8, addressSet uint8, AddressGet uint8, flag *bool, name string) {
+	io.addSoftSwitchW(addressClear, func(_ *ioC0Page, _ uint8) {
+		*flag = false
+	}, name+"OFF")
 
-func getSoftSwitchExt(ioFlag uint8, dstValue uint8, action softSwitchExtAction) softSwitchW {
-	return func(io *ioC0Page, _ uint8) {
-		currentValue := io.softSwitchesData[ioFlag]
-		if currentValue == dstValue {
-			return // Already switched, ignore
+	io.addSoftSwitchW(addressSet, func(_ *ioC0Page, _ uint8) {
+		*flag = true
+	}, name+"ON")
+
+	io.addSoftSwitchR(AddressGet, func(_ *ioC0Page) uint8 {
+		if *flag {
+			return ssOn
 		}
-		if action != nil {
-			action(io)
-		}
-		io.softSwitchesData[ioFlag] = dstValue
-	}
+		return ssOff
+	}, name)
 }
 
-func softSwitchIntCxRomOn(io *ioC0Page) {
-	//io.apple2.mmu.setPagesRead(0xc1, 0xcf, io.apple2.mmu.physicalROMe)
-}
+func addSoftSwitchesIou(io *ioC0Page, addressClear uint8, addressSet uint8, AddressGet uint8, ioFlag uint8, name string) {
+	io.addSoftSwitchW(addressClear, func(_ *ioC0Page, _ uint8) {
+		io.softSwitchesData[ioFlag] = ssOff
+	}, name+"OFF")
 
-func softSwitchIntCxRomOff(io *ioC0Page) {
-	// TODO restore all the ROM from the slots for 0xc1 to 0xc7
-	//io.apple2.mmu.setPages(0xc1, 0xc7, nil)
-}
+	io.addSoftSwitchW(addressSet, func(_ *ioC0Page, _ uint8) {
+		io.softSwitchesData[ioFlag] = ssOn
+	}, name+"ON")
 
-func softSwitchSlotC3RomOn(io *ioC0Page) {
-	// TODO restore the slot 3 ROM
-	//io.apple2.mmu.setPages(0xc3, 0xc3, nil)
+	io.addSoftSwitchR(AddressGet, func(_ *ioC0Page) uint8 {
+		return io.softSwitchesData[ioFlag]
+	}, name)
 }
-
-func softSwitchSlotC3RomOff(io *ioC0Page) {
-	//io.apple2.mmu.setPagesRead(0xc3, 0xc3, io.apple2.mmu.physicalROMe)
-}
-
-// TODO: apply state after persistance load
