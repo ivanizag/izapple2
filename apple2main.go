@@ -90,7 +90,7 @@ func MainApple() *Apple2 {
 	)
 	model := flag.String(
 		"model",
-		"2e",
+		"2enh",
 		"set base model. Models available 2plus, 2e, 2enh, base64a",
 	)
 	profile := flag.Bool(

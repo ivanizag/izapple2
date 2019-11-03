@@ -2,7 +2,6 @@ package apple2
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
 )
 
@@ -27,23 +26,27 @@ type memoryManager struct {
 	physicalDAltRAM []memoryHandler  // 0xd000 to 0xdfff, 4KB. Up to 8 banks.
 	physicalEFRAM   []memoryHandler  // 0xe000 to 0xffff, 8KB. Up to 8 banks.
 
-	// Pages prapared for optional card ROM banks in 0xc800 to 0xcfff
-	altMainRAMActiveRead  bool // Use extra RAM on the 128KB Apple2e for read
-	altMainRAMActiveWrite bool // Use extra RAM on the 128KB Apple2e for write
-
-	c3ROMActive bool  // Apple2e slot 3 ROM shadow
-	cxROMActive bool  // Apple2e slots ROM shadow
-	activeSlot  uint8 // Active slot owner of 0xc800 to 0xcfff
-
+	// Configuration switches, Language cards
 	lcSelectedBlock uint8 // Language card block selected. Usually, allways 0. But Saturn has 8
 	lcActiveRead    bool  // Upper RAM active for read
 	lcActiveWrite   bool  // Upper RAM active for read
 	lcAltBank       bool  // Alternate
-	romPage         uint8 // Active ROM page
+
+	// Configuration switches, Apple //e
+	altZeroPage           bool  // Use extra RAM from 0x0000 to 0x01ff. And additional language card block
+	altMainRAMActiveRead  bool  // Use extra RAM from 0x0200 to 0xbfff for read
+	altMainRAMActiveWrite bool  // Use extra RAM from 0x0200 to 0xbfff for write
+	c3ROMActive           bool  // Apple2e slot 3 ROM shadow
+	cxROMActive           bool  // Apple2e slots ROM shadow
+	activeSlot            uint8 // Active slot owner of 0xc800 to 0xcfff
+
+	// Configuration switches, Base64A
+	romPage uint8 // Active ROM page
 }
 
 const (
 	ioC8Off                uint16 = 0xcfff
+	addressLimitZero       uint16 = 0x01ff
 	addressLimitMainRAM    uint16 = 0xbfff
 	addressLimitIO         uint16 = 0xc0ff
 	addressLimitSlots      uint16 = 0xc7ff
@@ -59,14 +62,20 @@ type memoryHandler interface {
 func newMemoryManager(a *Apple2) *memoryManager {
 	var mmu memoryManager
 	mmu.apple2 = a
-
-	ram := make([]uint8, 0xc000) // Reserve 48kb
-	mmu.physicalMainRAM = newMemoryRange(0, ram)
+	mmu.physicalMainRAM = newMemoryRange(0, make([]uint8, 0xc000))
 
 	return &mmu
 }
 
 func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
+	// First two pages
+	if address <= addressLimitZero {
+		if mmu.altZeroPage {
+			return mmu.physicalMainRAMAlt
+		}
+		return mmu.physicalMainRAM
+	}
+
 	// Main RAM area
 	if address <= addressLimitMainRAM {
 		if mmu.altMainRAMActiveRead {
@@ -104,13 +113,17 @@ func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 
 	// Upper address area
 	if mmu.lcActiveRead {
+		block := mmu.lcSelectedBlock
+		if mmu.altZeroPage {
+			block = 1
+		}
 		if address <= addressLimitDArea {
 			if mmu.lcAltBank {
-				return mmu.physicalDAltRAM[mmu.lcSelectedBlock]
+				return mmu.physicalDAltRAM[block]
 			}
-			return mmu.physicalDRAM[mmu.lcSelectedBlock]
+			return mmu.physicalDRAM[block]
 		}
-		return mmu.physicalEFRAM[mmu.lcSelectedBlock]
+		return mmu.physicalEFRAM[block]
 	}
 
 	// Use ROM
@@ -118,6 +131,14 @@ func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 }
 
 func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
+	// First two pages
+	if address <= addressLimitZero {
+		if mmu.altZeroPage {
+			return mmu.physicalMainRAMAlt
+		}
+		return mmu.physicalMainRAM
+	}
+
 	// Main RAM area
 	if address <= addressLimitMainRAM {
 		if mmu.altMainRAMActiveWrite {
@@ -149,13 +170,17 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 
 	// Upper address area
 	if mmu.lcActiveWrite {
+		block := mmu.lcSelectedBlock
+		if mmu.altZeroPage {
+			block = 1
+		}
 		if address <= addressLimitDArea {
 			if mmu.lcAltBank {
-				return mmu.physicalDAltRAM[mmu.lcSelectedBlock]
+				return mmu.physicalDAltRAM[block]
 			}
-			return mmu.physicalDRAM[mmu.lcSelectedBlock]
+			return mmu.physicalDRAM[block]
 		}
-		return mmu.physicalEFRAM[mmu.lcSelectedBlock]
+		return mmu.physicalEFRAM[block]
 	}
 
 	// Use ROM
@@ -166,7 +191,7 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 func (mmu *memoryManager) Peek(address uint16) uint8 {
 	mh := mmu.accessRead(address)
 	if mh == nil {
-		fmt.Printf("Reading void addressing 0x%x\n", address)
+		//fmt.Printf("Reading void addressing 0x%x\n", address)
 		return 0xf4 // Or some random number
 	}
 	return mh.peek(address)
@@ -176,7 +201,7 @@ func (mmu *memoryManager) Peek(address uint16) uint8 {
 func (mmu *memoryManager) Poke(address uint16, value uint8) {
 	mh := mmu.accessWrite(address)
 	if mh == nil {
-		fmt.Printf("Writing to void addressing 0x%x\n", address)
+		//fmt.Printf("Writing to void addressing 0x%x\n", address)
 		return
 	}
 	mh.poke(address, value)
@@ -200,6 +225,10 @@ func (mmu *memoryManager) initLanguageRAM(groups int) {
 		mmu.physicalDAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
 		mmu.physicalEFRAM[i] = newMemoryRange(0xe000, make([]uint8, 0x2000))
 	}
+}
+
+func (mmu *memoryManager) InitRAMalt() {
+	mmu.physicalMainRAMAlt = newMemoryRange(0, make([]uint8, 0xc000))
 }
 
 // Memory configuration

@@ -8,7 +8,6 @@ import (
 
 // newApple2 instantiates an apple2
 func newApple2plus() *Apple2 {
-
 	var a Apple2
 	a.Name = "Apple ][+"
 	a.mmu = newMemoryManager(&a)
@@ -20,12 +19,12 @@ func newApple2plus() *Apple2 {
 }
 
 func newApple2e() *Apple2 {
-
 	var a Apple2
 	a.Name = "Apple IIe"
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewCMOS65c02(a.mmu)
 	a.io = newIoC0Page(&a)
+	a.mmu.InitRAMalt()
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)
 
@@ -33,12 +32,12 @@ func newApple2e() *Apple2 {
 }
 
 func newApple2eEnhanced() *Apple2 {
-
 	var a Apple2
 	a.Name = "Apple //e"
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewCMOS65c02(a.mmu)
 	a.io = newIoC0Page(&a)
+	a.mmu.InitRAMalt()
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)
 

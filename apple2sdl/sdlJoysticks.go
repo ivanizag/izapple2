@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -98,7 +96,6 @@ func (j *sdlJoysticks) ReadButton(i int) bool {
 	case 2:
 		value = j.button[3] || j.keys[2]
 	}
-	fmt.Printf("Button %v: %v.\n", i, value)
 	return value
 }
 
