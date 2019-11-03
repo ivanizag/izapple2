@@ -15,10 +15,7 @@ func newBase64a() *Apple2 {
 	a.Name = "Base 64A"
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
-
-	// Set the io in 0xc000
 	a.io = newIoC0Page(&a)
-	a.mmu.setPages(0xc0, 0xc0, a.io)
 	addApple2SoftSwitches(a.io)
 	addBase64aSoftSwitches(a.io)
 

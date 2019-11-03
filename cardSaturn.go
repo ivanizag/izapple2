@@ -17,19 +17,9 @@ type cardSaturn struct {
 	cardBase
 	readState   bool
 	writeState  uint8
-	activeBank  uint8
+	altBank     bool
 	activeBlock uint8
-	ramBankA    [saturnBlocks]*memoryRange // First 4kb to map in 0xD000-0xDFFF
-	ramBankB    [saturnBlocks]*memoryRange // Second 4kb to map in 0xD000-0xDFFF
-	ramUpper    [saturnBlocks]*memoryRange // Upper 8kb to map in 0xE000-0xFFFF
 }
-
-const (
-	// Write enabling requires two sofstwitch accesses
-	saturnWriteDisabled    = 0
-	saturnWriteHalfEnabled = 1
-	saturnWriteEnabled     = 2
-)
 
 const (
 	saturnBlocks = 8
@@ -38,13 +28,10 @@ const (
 func (c *cardSaturn) assign(a *Apple2, slot int) {
 	c.readState = false
 	c.writeState = lcWriteEnabled
-	c.activeBank = 1
+	c.altBank = true
+	c.activeBlock = 0
+	a.mmu.initLanguageRAM(saturnBlocks)
 
-	for i := 0; i < saturnBlocks; i++ {
-		c.ramBankA[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
-		c.ramBankB[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
-		c.ramUpper[i] = newMemoryRange(0xe000, make([]uint8, 0x2000))
-	}
 	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
 		c.addCardSoftSwitchR(iCopy, func(*ioC0Page) uint8 {
@@ -63,22 +50,22 @@ func (c *cardSaturn) ssAction(ss uint8, write bool) {
 	switch ss {
 	case 0:
 		// RAM read, no writes
-		c.activeBank = 0
+		c.altBank = false
 		c.readState = true
 		c.writeState = lcWriteDisabled
 	case 1:
 		// ROM read, RAM write
-		c.activeBank = 0
+		c.altBank = false
 		c.readState = false
 		c.writeState++
 	case 2:
 		// ROM read, no writes
-		c.activeBank = 0
+		c.altBank = false
 		c.readState = false
 		c.writeState = lcWriteDisabled
 	case 3:
 		//RAM read, RAM write
-		c.activeBank = 0
+		c.altBank = false
 		c.readState = true
 		c.writeState++
 	case 4:
@@ -91,22 +78,22 @@ func (c *cardSaturn) ssAction(ss uint8, write bool) {
 		c.activeBlock = 3
 	case 8:
 		// RAM read, no writes
-		c.activeBank = 1
+		c.altBank = true
 		c.readState = true
 		c.writeState = lcWriteDisabled
 	case 9:
 		// ROM read, RAM write
-		c.activeBank = 1
+		c.altBank = true
 		c.readState = false
 		c.writeState++
 	case 10:
 		// ROM read, no writes
-		c.activeBank = 1
+		c.altBank = true
 		c.readState = false
 		c.writeState = lcWriteDisabled
 	case 11:
 		//RAM read, RAM write
-		c.activeBank = 1
+		c.altBank = true
 		c.readState = true
 		c.writeState++
 	case 12:
@@ -131,30 +118,9 @@ func (c *cardSaturn) ssAction(ss uint8, write bool) {
 	c.applyState()
 }
 
-func (c *cardSaturn) getActiveBank() [8]*memoryRange {
-	if c.activeBank == 0 {
-		return c.ramBankA
-	}
-	return c.ramBankB
-}
-
 func (c *cardSaturn) applyState() {
-	mmu := c.a.mmu
-	block := c.activeBlock
-
-	if c.readState {
-		mmu.setPagesRead(0xd0, 0xdf, c.getActiveBank()[block])
-		mmu.setPagesRead(0xe0, 0xff, c.ramUpper[block])
-	} else {
-		mmu.setPagesRead(0xd0, 0xff, mmu.physicalROM)
-	}
-
-	if c.writeState == lcWriteEnabled {
-		mmu.setPagesWrite(0xd0, 0xdf, c.getActiveBank()[block])
-		mmu.setPagesWrite(0xe0, 0xff, c.ramUpper[block])
-	} else {
-		mmu.setPagesWrite(0xd0, 0xff, nil)
-	}
+	c.a.mmu.setLanguageRAMBlock(c.activeBlock)
+	c.a.mmu.setLanguageRAM(c.readState, c.writeState == lcWriteEnabled, c.altBank)
 }
 
 func (c *cardSaturn) save(w io.Writer) error {
@@ -167,23 +133,11 @@ func (c *cardSaturn) save(w io.Writer) error {
 		if err != nil {
 			return err
 		}
-		err = binary.Write(w, binary.BigEndian, c.activeBank)
+		err = binary.Write(w, binary.BigEndian, c.altBank)
 		if err != nil {
 			return err
 		}
 		err = binary.Write(w, binary.BigEndian, c.activeBlock)
-		if err != nil {
-			return err
-		}
-		err = c.ramBankA[i].save(w)
-		if err != nil {
-			return err
-		}
-		err = c.ramBankB[i].save(w)
-		if err != nil {
-			return err
-		}
-		err = c.ramUpper[i].save(w)
 		if err != nil {
 			return err
 		}
@@ -201,7 +155,7 @@ func (c *cardSaturn) load(r io.Reader) error {
 		if err != nil {
 			return err
 		}
-		err = binary.Read(r, binary.BigEndian, &c.activeBank)
+		err = binary.Read(r, binary.BigEndian, &c.altBank)
 		if err != nil {
 			return err
 		}
@@ -209,16 +163,6 @@ func (c *cardSaturn) load(r io.Reader) error {
 		if err != nil {
 			return err
 		}
-		err = c.ramBankA[i].load(r)
-		if err != nil {
-			return err
-		}
-		err = c.ramBankB[i].load(r)
-		if err != nil {
-			return err
-		}
-		err = c.ramUpper[i].load(r)
-
 		c.applyState()
 	}
 	return c.cardBase.load(r)

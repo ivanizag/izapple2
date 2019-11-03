@@ -8,12 +8,6 @@ import (
 	Copam BASE64A uses paginated ROM
 */
 
-// Base64aROM Models the paginated ROM on a BASE64A clone
-type base64aROM struct {
-	romBanks [4]*memoryRange
-	romBank  uint8
-}
-
 const (
 	// There are 6 ROM chips. Each can have 4Kb or 8Kb. They can fill
 	// 2 or 4 banks with 2kb windows.
@@ -43,38 +37,34 @@ func loadBase64aRom(a *Apple2) error {
 	}
 
 	// Create banks
-	var r base64aROM
 	for j := range romBanksBytes {
-		r.romBanks[j] = newMemoryRange(0xd000, romBanksBytes[j])
+		a.mmu.physicalROM[j] = newMemoryRange(0xd000, romBanksBytes[j])
 	}
 
 	// Start with first bank active
-	r.changeBank(a.mmu, 0)
+	a.mmu.setActiveROMPage(0)
 
 	// Add rom soft switches. They use the annunciator 0 and 1
 	a.io.addSoftSwitchRW(0x58, func(*ioC0Page) uint8 {
-		r.changeBank(a.mmu, r.romBank&2)
+		p := a.mmu.getActiveROMPage()
+		a.mmu.setActiveROMPage(p & 2)
 		return 0
 	}, "ANN0OFF-ROM")
 	a.io.addSoftSwitchRW(0x59, func(*ioC0Page) uint8 {
-		r.changeBank(a.mmu, r.romBank|1)
+		p := a.mmu.getActiveROMPage()
+		a.mmu.setActiveROMPage(p | 1)
 		return 0
 	}, "ANN0ON-ROM")
 	a.io.addSoftSwitchRW(0x5A, func(*ioC0Page) uint8 {
-		r.changeBank(a.mmu, r.romBank&1)
+		p := a.mmu.getActiveROMPage()
+		a.mmu.setActiveROMPage(p & 1)
 		return 0
 	}, "ANN1OFF-ROM")
 	a.io.addSoftSwitchRW(0x5B, func(*ioC0Page) uint8 {
-		r.changeBank(a.mmu, r.romBank|2)
+		p := a.mmu.getActiveROMPage()
+		a.mmu.setActiveROMPage(p | 2)
 		return 0
 	}, "ANN1ON-ROM")
 
 	return nil
-}
-
-func (r *base64aROM) changeBank(mmu *memoryManager, bank uint8) {
-	r.romBank = bank
-	//fmt.Printf("Change to ROM bank #%v\n", r.romBank)
-	mmu.physicalROM = r.romBanks[r.romBank]
-	mmu.resetRomPaging() // If rom was not active. This is going too far?
 }

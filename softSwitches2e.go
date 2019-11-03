@@ -82,21 +82,21 @@ func getSoftSwitchExt(ioFlag uint8, dstValue uint8, action softSwitchExtAction) 
 }
 
 func softSwitchIntCxRomOn(io *ioC0Page) {
-	io.apple2.mmu.setPagesRead(0xc1, 0xcf, io.apple2.mmu.physicalROMe)
+	//io.apple2.mmu.setPagesRead(0xc1, 0xcf, io.apple2.mmu.physicalROMe)
 }
 
 func softSwitchIntCxRomOff(io *ioC0Page) {
 	// TODO restore all the ROM from the slots for 0xc1 to 0xc7
-	io.apple2.mmu.setPages(0xc1, 0xc7, nil)
+	//io.apple2.mmu.setPages(0xc1, 0xc7, nil)
 }
 
 func softSwitchSlotC3RomOn(io *ioC0Page) {
 	// TODO restore the slot 3 ROM
-	io.apple2.mmu.setPages(0xc3, 0xc3, nil)
+	//io.apple2.mmu.setPages(0xc3, 0xc3, nil)
 }
 
 func softSwitchSlotC3RomOff(io *ioC0Page) {
-	io.apple2.mmu.setPagesRead(0xc3, 0xc3, io.apple2.mmu.physicalROMe)
+	//io.apple2.mmu.setPagesRead(0xc3, 0xc3, io.apple2.mmu.physicalROMe)
 }
 
 // TODO: apply state after persistance load
