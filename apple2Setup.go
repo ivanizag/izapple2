@@ -22,7 +22,8 @@ func newApple2e() *Apple2 {
 	var a Apple2
 	a.Name = "Apple IIe"
 	a.mmu = newMemoryManager(&a)
-	a.cpu = core6502.NewCMOS65c02(a.mmu)
+	a.cpu = core6502.NewNMOS6502(a.mmu)
+	//a.cpu = core6502.NewCMOS65c02(a.mmu)
 	a.io = newIoC0Page(&a)
 	a.mmu.InitRAMalt()
 	addApple2SoftSwitches(a.io)
