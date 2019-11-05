@@ -36,8 +36,8 @@ type memoryManager struct {
 	altZeroPage           bool  // Use extra RAM from 0x0000 to 0x01ff. And additional language card block
 	altMainRAMActiveRead  bool  // Use extra RAM from 0x0200 to 0xbfff for read
 	altMainRAMActiveWrite bool  // Use extra RAM from 0x0200 to 0xbfff for write
-	c3ROMActive           bool  // Apple2e slot 3 ROM shadow
-	cxROMActive           bool  // Apple2e slots ROM shadow
+	slotC3ROMActive       bool  // Apple2e slot 3  ROM shadow
+	intCxROMActive        bool  // Apple2e slots internal ROM shadow
 	activeSlot            uint8 // Active slot owner of 0xc800 to 0xcfff
 
 	// Configuration switches, Base64A
@@ -67,8 +67,47 @@ func newMemoryManager(a *Apple2) *memoryManager {
 	return &mmu
 }
 
+func (mmu *memoryManager) accessCArea(address uint16) memoryHandler {
+	if mmu.intCxROMActive {
+		return mmu.physicalROMe
+	}
+	// First slot area
+	if address <= addressLimitSlots {
+		slot := uint8((address >> 8) & 0x07)
+		mmu.activeSlot = slot
+		if !mmu.slotC3ROMActive && (slot == 3) {
+			return mmu.physicalROMe
+		}
+		return mmu.cardsROM[slot]
+	}
+	// Extra slot area
+	if address == ioC8Off {
+		// Reset extra slot area owner
+		mmu.activeSlot = 0
+	}
+
+	if !mmu.slotC3ROMActive && (mmu.activeSlot == 3) {
+		return mmu.physicalROMe
+	}
+	return mmu.cardsROMExtra[mmu.activeSlot]
+}
+
+func (mmu *memoryManager) accessLCArea(address uint16) memoryHandler {
+	block := mmu.lcSelectedBlock
+	if mmu.altZeroPage {
+		block = 1
+	}
+	if address <= addressLimitDArea {
+		if mmu.lcAltBank {
+			return mmu.physicalDAltRAM[block]
+		}
+		return mmu.physicalDRAM[block]
+	}
+	return mmu.physicalEFRAM[block]
+}
+
 func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
-	// First two pages
+	// First two pages, $00xx and $01xx
 	if address <= addressLimitZero {
 		if mmu.altZeroPage {
 			return mmu.physicalMainRAMAlt
@@ -84,46 +123,19 @@ func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 		return mmu.physicalMainRAM
 	}
 
-	// IO section
+	// IO section, $C0cc
 	if address <= addressLimitIO {
 		return mmu.apple2.io
 	}
 
-	// Slots sections
+	// Slots sections, $Cxxx
 	if address <= addressLimitSlotsExtra {
-		slot := uint8((address >> 8) & 0x07)
-		if mmu.cxROMActive {
-			return mmu.physicalROMe
-		}
-		// First slot area
-		if address <= addressLimitSlots {
-			if mmu.c3ROMActive && (slot == 3) {
-				return mmu.physicalROMe
-			}
-			mmu.activeSlot = slot
-			return mmu.cardsROM[slot]
-		}
-		// Extra slot area
-		if address == ioC8Off {
-			// Reset extra slot area owner
-			mmu.activeSlot = 0
-		}
-		return mmu.cardsROMExtra[slot]
+		return mmu.accessCArea(address)
 	}
 
 	// Upper address area
 	if mmu.lcActiveRead {
-		block := mmu.lcSelectedBlock
-		if mmu.altZeroPage {
-			block = 1
-		}
-		if address <= addressLimitDArea {
-			if mmu.lcAltBank {
-				return mmu.physicalDAltRAM[block]
-			}
-			return mmu.physicalDRAM[block]
-		}
-		return mmu.physicalEFRAM[block]
+		return mmu.accessLCArea(address)
 	}
 
 	// Use ROM
@@ -131,7 +143,7 @@ func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 }
 
 func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
-	// First two pages
+	// First two pages, $00xx and $01xx
 	if address <= addressLimitZero {
 		if mmu.altZeroPage {
 			return mmu.physicalMainRAMAlt
@@ -147,40 +159,19 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 		return mmu.physicalMainRAM
 	}
 
-	// IO section
+	// IO section, $C0xx
 	if address <= addressLimitIO {
 		return mmu.apple2.io
 	}
 
-	// Slots sections
+	// Slots sections, $Cxxx
 	if address <= addressLimitSlotsExtra {
-		slot := uint8((address >> 8) & 0x07)
-		// First slot area
-		if address <= addressLimitSlots {
-			mmu.activeSlot = slot
-			return mmu.cardsROM[slot]
-		}
-		// Extra slot area
-		if address == ioC8Off {
-			// Reset extra slot area owner
-			mmu.activeSlot = 0
-		}
-		return mmu.cardsROMExtra[slot]
+		return mmu.accessCArea(address)
 	}
 
 	// Upper address area
 	if mmu.lcActiveWrite {
-		block := mmu.lcSelectedBlock
-		if mmu.altZeroPage {
-			block = 1
-		}
-		if address <= addressLimitDArea {
-			if mmu.lcAltBank {
-				return mmu.physicalDAltRAM[block]
-			}
-			return mmu.physicalDRAM[block]
-		}
-		return mmu.physicalEFRAM[block]
+		return mmu.accessLCArea(address)
 	}
 
 	// Use ROM

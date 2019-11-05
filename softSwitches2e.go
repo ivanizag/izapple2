@@ -17,9 +17,9 @@ func addApple2ESoftSwitches(io *ioC0Page) {
 	mmu := io.apple2.mmu
 	addSoftSwitchesMmu(io, 0x02, 0x03, 0x13, &mmu.altMainRAMActiveRead, "RAMRD")
 	addSoftSwitchesMmu(io, 0x04, 0x05, 0x14, &mmu.altMainRAMActiveWrite, "RAMWRT")
-	addSoftSwitchesMmu(io, 0x06, 0x07, 0x15, &mmu.cxROMActive, "INTCXROM")
+	addSoftSwitchesMmu(io, 0x06, 0x07, 0x15, &mmu.intCxROMActive, "INTCXROM")
 	addSoftSwitchesMmu(io, 0x08, 0x09, 0x16, &mmu.altZeroPage, "ALTZP")
-	addSoftSwitchesMmu(io, 0x0a, 0x0b, 0x17, &mmu.c3ROMActive, "SLOTC3ROM")
+	addSoftSwitchesMmu(io, 0x0a, 0x0b, 0x17, &mmu.slotC3ROMActive, "SLOTC3ROM")
 
 	// New IOU read softswithes
 	addSoftSwitchesIou(io, 0x00, 0x01, 0x18, ioFlag80Store, "80STORE")
@@ -31,6 +31,13 @@ func addApple2ESoftSwitches(io *ioC0Page) {
 	io.addSoftSwitchR(0x1B, getStatusSoftSwitch(ioFlagMixed), "MIXED")
 	io.addSoftSwitchR(0x1C, getStatusSoftSwitch(ioFlagSecondPage), "PAGE2")
 	io.addSoftSwitchR(0x1D, getStatusSoftSwitch(ioFlagHiRes), "HIRES")
+
+	io.addSoftSwitchR(0x11, func(_ *ioC0Page) uint8 {
+		return ssFromBool(mmu.lcAltBank)
+	}, "BSRBANK2")
+	io.addSoftSwitchR(0x12, func(_ *ioC0Page) uint8 {
+		return ssFromBool(mmu.lcActiveRead)
+	}, "BSRREADRAM")
 
 	// TOOD:
 	// AKD read on 0x10
@@ -50,10 +57,7 @@ func addSoftSwitchesMmu(io *ioC0Page, addressClear uint8, addressSet uint8, Addr
 	}, name+"ON")
 
 	io.addSoftSwitchR(AddressGet, func(_ *ioC0Page) uint8 {
-		if *flag {
-			return ssOn
-		}
-		return ssOff
+		return ssFromBool(*flag)
 	}, name)
 }
 
