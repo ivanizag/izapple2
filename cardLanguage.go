@@ -32,7 +32,7 @@ type cardLanguage struct {
 	cardBase
 	readState  bool
 	writeState uint8
-	altBank    bool
+	altBank    bool // false is bank1, true is bank2
 }
 
 const (
@@ -45,7 +45,7 @@ const (
 func (c *cardLanguage) assign(a *Apple2, slot int) {
 	c.readState = false
 	c.writeState = lcWriteEnabled
-	c.altBank = true
+	c.altBank = true // Start on bank2
 
 	if a.isApple2e {
 		// The Apple //e with 128kb has two blocks of language upper RAM
@@ -69,7 +69,7 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 }
 
 func (c *cardLanguage) ssAction(ss uint8, write bool) {
-	c.altBank = ((ss >> 3) & 1) == 1
+	c.altBank = ((ss >> 3) & 1) == 0
 	action := ss & 0x3
 	switch action {
 	case 0:
