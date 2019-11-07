@@ -35,7 +35,7 @@ func MainApple() *Apple2 {
 		"slot for the hard drive if present. -1 for none.")
 	cpuClock := flag.Float64(
 		"mhz",
-		CpuClockMhz,
+		CPUClockMhz,
 		"cpu speed in Mhz, use 0 for full speed. Use F5 to toggle.")
 	charRomFile := flag.String(
 		"charRom",

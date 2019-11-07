@@ -18,7 +18,7 @@ const (
 	samplingHz = 48000
 	bufferSize = 10000
 	// bufferSize/samplingHz will be the max delay of the sound
-	sampleDurationCycles = 1000000 * apple2.CpuClockMhz / samplingHz
+	sampleDurationCycles = 1000000 * apple2.CPUClockMhz / samplingHz
 	// each sample on the sound stream is 21.31 cpu cycles approx
 	maxOutOfSyncMs = 2000
 	decayLevel     = 128
@@ -83,7 +83,7 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	}
 
 	// Verify that we are not too long behind
-	var maxOutOfSyncCyclesFloat = 1000 * apple2.CpuClockMhz * maxOutOfSyncMs
+	var maxOutOfSyncCyclesFloat = 1000 * apple2.CPUClockMhz * maxOutOfSyncMs
 	var maxOutOfSyncCycles = uint64(maxOutOfSyncCyclesFloat)
 	for _, pc := range s.pendingClicks {
 		if pc-s.lastCycle > maxOutOfSyncCycles {
