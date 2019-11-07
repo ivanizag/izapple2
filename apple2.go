@@ -27,11 +27,12 @@ type Apple2 struct {
 	fastMode            bool
 	fastRequestsCounter int
 	profile             bool
+	showSpeed           bool
 }
 
 const (
-	// CpuClockMhz is the actual Apple II clock speed
-	CpuClockMhz     = 14.318 / 14
+	// CPUClockMhz is the actual Apple II clock speed
+	CPUClockMhz     = 14.318 / 14
 	cpuClockEuroMhz = 14.238 / 14
 )
 
@@ -48,6 +49,8 @@ func (a *Apple2) Run() {
 	// Start the processor
 	a.cpu.Reset()
 	referenceTime := time.Now()
+	speedReferenceTime := referenceTime
+	speedReferenceCycles := uint64(0)
 
 	for {
 		// Run a 6502 step
@@ -81,6 +84,17 @@ func (a *Apple2) Run() {
 				time.Sleep(waitDuration)
 			}
 		}
+
+		if a.showSpeed && a.cpu.GetCycles()-speedReferenceCycles > 1000000 {
+			// Calculate speed in MHz every million cycles
+			newTime := time.Now()
+			newCycles := a.cpu.GetCycles()
+			elapsedCycles := float64(newCycles - speedReferenceCycles)
+			freq := 1000.0 * elapsedCycles / float64(newTime.Sub(speedReferenceTime).Nanoseconds())
+			fmt.Printf("Freq: %f Mhz\n", freq)
+			speedReferenceTime = newTime
+			speedReferenceCycles = newCycles
+		}
 	}
 }
 
@@ -91,6 +105,8 @@ func (a *Apple2) setProfile(value bool) {
 const (
 	// CommandToggleSpeed toggles cpu speed between full speed and actual Apple II speed
 	CommandToggleSpeed = iota + 1
+	// CommandShowSpeed toggles printinf the current freq in Mhz
+	CommandShowSpeed
 	// CommandToggleColor toggles between NTSC color TV and Green phospor monitor
 	CommandToggleColor
 	// CommandSaveState stores the state to file
@@ -117,11 +133,13 @@ func (a *Apple2) executeCommand(command int) {
 	case CommandToggleSpeed:
 		if a.cycleDurationNs == 0 {
 			fmt.Println("Slow")
-			a.cycleDurationNs = 1000.0 / CpuClockMhz
+			a.cycleDurationNs = 1000.0 / CPUClockMhz
 		} else {
 			fmt.Println("Fast")
 			a.cycleDurationNs = 0
 		}
+	case CommandShowSpeed:
+		a.showSpeed = !a.showSpeed
 	case CommandToggleColor:
 		a.isColor = !a.isColor
 	case CommandSaveState:

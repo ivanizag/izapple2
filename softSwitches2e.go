@@ -40,8 +40,7 @@ func addApple2ESoftSwitches(io *ioC0Page) {
 	}, "BSRREADRAM")
 
 	// TOOD:
-	// AKD read on 0x10
-	// VBL read on 0x19
+	// VBL or VERTBLANK read on 0x19
 
 	//io.softSwitchesData[ioFlagAltChar] = ssOn // Not sure about this.
 
