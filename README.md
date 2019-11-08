@@ -25,6 +25,7 @@ Portable emulator of an Apple II+. Written in Go.
     - Text 40 columns
     - text 80 columns (Apple //e only)
     - Low-Resolution graphics
+    - Double-Width Low-Resolution graphics (Apple //e only)
     - High-Resolution graphics
     - Mixed mode
 - Displays:
