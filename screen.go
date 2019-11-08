@@ -47,12 +47,7 @@ func Snapshot(a *Apple2) *image.RGBA {
 		if isHiResMode {
 			snap = snapshotHiResModeMonoShift(a, pageIndex, isMixMode, lightColor)
 		} else {
-			if isDoubleResMode {
-				//snap = snapshotLoResDoubleModeMono(a, false /*isSecondPage*/, isMixMode, lightColor)
-				snap = snapshotLoResModeMono(a, isSecondPage, isMixMode, lightColor)
-			} else {
-				snap = snapshotLoResModeMono(a, isSecondPage, isMixMode, lightColor)
-			}
+			snap = snapshotLoResModeMono(a, isDoubleResMode, isSecondPage, isMixMode, lightColor)
 		}
 
 		if isMixMode {
