@@ -21,9 +21,12 @@ func Snapshot(a *Apple2) *image.RGBA {
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
 	isHiResMode := a.io.isSoftSwitchActive(ioFlagHiRes)
 	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
+	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
+	isDoubleResMode := !isTextMode && is80Columns && a.io.isSoftSwitchActive(ioFlagAnnunciator3)
+	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
 
 	pageIndex := 0
-	if a.io.isSoftSwitchActive(ioFlagSecondPage) {
+	if isSecondPage {
 		pageIndex = 1
 	}
 
@@ -39,16 +42,21 @@ func Snapshot(a *Apple2) *image.RGBA {
 
 	var snap *image.RGBA
 	if isTextMode {
-		snap = snapshotTextMode(a, pageIndex, false, lightColor)
+		snap = snapshotTextMode(a, is80Columns, isSecondPage, false /*isMixMode*/, lightColor)
 	} else {
 		if isHiResMode {
 			snap = snapshotHiResModeMonoShift(a, pageIndex, isMixMode, lightColor)
 		} else {
-			snap = snapshotLoResModeMonoShift(a, pageIndex, isMixMode, lightColor)
+			if isDoubleResMode {
+				//snap = snapshotLoResDoubleModeMono(a, false /*isSecondPage*/, isMixMode, lightColor)
+				snap = snapshotLoResModeMono(a, isSecondPage, isMixMode, lightColor)
+			} else {
+				snap = snapshotLoResModeMono(a, isSecondPage, isMixMode, lightColor)
+			}
 		}
 
 		if isMixMode {
-			snapText := snapshotTextMode(a, pageIndex, isMixMode, lightColor)
+			snapText := snapshotTextMode(a, is80Columns, false /*isSecondPage*/, true /*isMixMode*/, lightColor)
 			snap = mixSnapshots(snap, snapText)
 		}
 		if isColor {

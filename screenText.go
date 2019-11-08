@@ -16,6 +16,7 @@ const (
 	textLinesMix     = 4
 	textPage1Address = uint16(0x0400)
 	textPage2Address = uint16(0x0800)
+	textPageSize     = uint16(0x0400)
 )
 
 func getTextCharOffset(col int, line int) uint16 {
@@ -27,36 +28,74 @@ func getTextCharOffset(col int, line int) uint16 {
 	return uint16(section*40 + eigth*0x80 + col)
 }
 
-func getTextChar(a *Apple2, col int, line int, page int) uint8 {
-	address := textPage1Address
-	if page == 1 {
-		address = textPage2Address
-	}
-	address += getTextCharOffset(col, line)
-	return a.mmu.physicalMainRAM.subRange(address, address+1)[0]
+func snapshotTextMode(a *Apple2, is80Columns bool, isSecondPage bool, isMixMode bool, light color.Color) *image.RGBA {
+	text, columns, lines := getActiveText(a, is80Columns, isSecondPage, isMixMode)
+	return renderTextMode(a, text, columns, lines, light)
 }
 
-func snapshotTextMode(a *Apple2, page int, mixMode bool, light color.Color) *image.RGBA {
-	// Flash mode is 2Hz
-	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
+func getActiveText(a *Apple2, is80Columns bool, isSecondPage bool, isMixMode bool) ([]uint8, int, int) {
 
+	lines := textLines
+	if isMixMode {
+		lines = textLinesMix
+	}
+
+	if !is80Columns {
+		text40Columns := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage, isMixMode)
+		return text40Columns, textColumns, lines
+	}
+
+	text40Columns := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage, isMixMode)
+	text40ColumnsAlt := getTextFromMemory(a.mmu.physicalMainRAMAlt, isSecondPage, isMixMode)
+	// Merge the two 40 cols to return 80 cols
+	text80Columns := make([]uint8, 2*len(text40Columns))
+	for i := 0; i < len(text40Columns); i++ {
+		text80Columns[2*i] = text40ColumnsAlt[i]
+		text80Columns[2*i+1] = text40Columns[i]
+	}
+	return text80Columns, textColumns * 2, lines
+}
+
+func getTextFromMemory(mem *memoryRange, isSecondPage bool, isMixMode bool) []uint8 {
 	lineStart := 0
-	if mixMode {
+	if isMixMode {
 		lineStart = textLines - textLinesMix
 	}
 
-	width := textColumns * charWidth
-	height := (textLines - lineStart) * charHeight
+	addressStart := textPage1Address
+	if isSecondPage {
+		addressStart = textPage2Address
+	}
+	addressEnd := addressStart + textPageSize
+	data := mem.subRange(addressStart, addressEnd)
+
+	lines := textLines - lineStart
+	text := make([]uint8, lines*textColumns)
+	for l := 0; l < lines; l++ {
+		for c := 0; c < textColumns; c++ {
+			char := data[getTextCharOffset(c, l+lineStart)]
+			text[textColumns*l+c] = char
+		}
+	}
+	return text
+}
+
+func renderTextMode(a *Apple2, text []uint8, columns int, lines int, light color.Color) *image.RGBA {
+	// Flash mode is 2Hz
+	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
+
+	width := columns * charWidth
+	height := lines * charHeight
 	size := image.Rect(0, 0, width, height)
 	img := image.NewRGBA(size)
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
-			line := y/charHeight + lineStart
+			line := y / charHeight
 			col := x / charWidth
 			rowInChar := y % charHeight
 			colInChar := x % charWidth
-			char := getTextChar(a, col, line, page)
+			char := text[line*columns+col]
 			var pixel bool
 			if a.isApple2e {
 				isAltText := a.io.isSoftSwitchActive(ioFlagAltChar)
@@ -95,25 +134,25 @@ func snapshotTextMode(a *Apple2, page int, mixMode bool, light color.Color) *ima
 // DumpTextModeAnsi returns the text mode contents using ANSI escape codes
 // for reverse and flash
 func DumpTextModeAnsi(a *Apple2) string {
-	content := "\n"
-	content += fmt.Sprintln(strings.Repeat("#", textColumns+4))
+	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
+	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
 
-	pageIndex := 0
-	if a.io.isSoftSwitchActive(ioFlagSecondPage) {
-		pageIndex = 1
-	}
+	text, columns, lines := getActiveText(a, is80Columns, isSecondPage, false /*isMixedMode*/)
+	content := "\n"
+	content += fmt.Sprintln(strings.Repeat("#", columns+4))
+
 	isAltText := a.isApple2e && a.io.isSoftSwitchActive(ioFlagAltChar)
 
-	for l := 0; l < textLines; l++ {
+	for l := 0; l < lines; l++ {
 		line := ""
-		for c := 0; c < textColumns; c++ {
-			char := getTextChar(a, c, l, pageIndex)
+		for c := 0; c < columns; c++ {
+			char := text[l*columns+c]
 			line += textMemoryByteToString(char, isAltText)
 		}
 		content += fmt.Sprintf("# %v #\n", line)
 	}
 
-	content += fmt.Sprintln(strings.Repeat("#", textColumns+4))
+	content += fmt.Sprintln(strings.Repeat("#", columns+4))
 	return content
 }
 
