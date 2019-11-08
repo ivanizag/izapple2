@@ -36,6 +36,7 @@ type memoryManager struct {
 	altZeroPage           bool  // Use extra RAM from 0x0000 to 0x01ff. And additional language card block
 	altMainRAMActiveRead  bool  // Use extra RAM from 0x0200 to 0xbfff for read
 	altMainRAMActiveWrite bool  // Use extra RAM from 0x0200 to 0xbfff for write
+	store80Active         bool  // Special pagination for text and graphics areas
 	slotC3ROMActive       bool  // Apple2e slot 3  ROM shadow
 	intCxROMActive        bool  // Apple2e slots internal ROM shadow
 	activeSlot            uint8 // Active slot owner of 0xc800 to 0xcfff
@@ -47,6 +48,10 @@ type memoryManager struct {
 const (
 	ioC8Off                uint16 = 0xcfff
 	addressLimitZero       uint16 = 0x01ff
+	addressStartText       uint16 = 0x0400
+	addressLimitText       uint16 = 0x07ff
+	addressStartHgr        uint16 = 0x2000
+	addressLimitHgr        uint16 = 0x3fff
 	addressLimitMainRAM    uint16 = 0xbfff
 	addressLimitIO         uint16 = 0xc0ff
 	addressLimitSlots      uint16 = 0xc7ff
@@ -106,75 +111,68 @@ func (mmu *memoryManager) accessLCArea(address uint16) memoryHandler {
 	return mmu.physicalEFRAM[block]
 }
 
+func (mmu *memoryManager) getPhysicalMainRAM(alt bool) *memoryRange {
+	if alt {
+		return mmu.physicalMainRAMAlt
+	}
+	return mmu.physicalMainRAM
+}
+
 func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
-	// First two pages, $00xx and $01xx
 	if address <= addressLimitZero {
-		if mmu.altZeroPage {
-			return mmu.physicalMainRAMAlt
-		}
-		return mmu.physicalMainRAM
+		return mmu.getPhysicalMainRAM(mmu.altZeroPage)
 	}
-
-	// Main RAM area
+	if mmu.store80Active && address <= addressLimitHgr {
+		altPage := mmu.apple2.io.isSoftSwitchActive(ioFlagSecondPage)
+		if address >= addressStartText && address <= addressLimitText {
+			return mmu.getPhysicalMainRAM(altPage)
+		}
+		hires := mmu.apple2.io.isSoftSwitchActive(ioFlagHiRes)
+		if hires && address >= addressStartHgr && address <= addressLimitHgr {
+			return mmu.getPhysicalMainRAM(altPage)
+		}
+	}
 	if address <= addressLimitMainRAM {
-		if mmu.altMainRAMActiveRead {
-			return mmu.physicalMainRAMAlt
-		}
-		return mmu.physicalMainRAM
+		return mmu.getPhysicalMainRAM(mmu.altMainRAMActiveRead)
 	}
-
-	// IO section, $C0cc
 	if address <= addressLimitIO {
 		return mmu.apple2.io
 	}
-
-	// Slots sections, $Cxxx
 	if address <= addressLimitSlotsExtra {
 		return mmu.accessCArea(address)
 	}
-
-	// Upper address area
 	if mmu.lcActiveRead {
 		return mmu.accessLCArea(address)
 	}
-
-	// Use ROM
 	return mmu.physicalROM[mmu.romPage]
 }
 
 func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
-	// First two pages, $00xx and $01xx
 	if address <= addressLimitZero {
-		if mmu.altZeroPage {
-			return mmu.physicalMainRAMAlt
-		}
-		return mmu.physicalMainRAM
+		return mmu.getPhysicalMainRAM(mmu.altZeroPage)
 	}
-
-	// Main RAM area
+	if address <= addressLimitHgr && mmu.store80Active {
+		altPage := mmu.apple2.io.isSoftSwitchActive(ioFlagSecondPage)
+		if address >= addressStartText && address <= addressLimitText {
+			return mmu.getPhysicalMainRAM(altPage)
+		}
+		hires := mmu.apple2.io.isSoftSwitchActive(ioFlagHiRes)
+		if false && hires && address >= addressStartHgr && address <= addressLimitHgr {
+			return mmu.getPhysicalMainRAM(altPage)
+		}
+	}
 	if address <= addressLimitMainRAM {
-		if mmu.altMainRAMActiveWrite {
-			return mmu.physicalMainRAMAlt
-		}
-		return mmu.physicalMainRAM
+		return mmu.getPhysicalMainRAM(mmu.altMainRAMActiveWrite)
 	}
-
-	// IO section, $C0xx
 	if address <= addressLimitIO {
 		return mmu.apple2.io
 	}
-
-	// Slots sections, $Cxxx
 	if address <= addressLimitSlotsExtra {
 		return mmu.accessCArea(address)
 	}
-
-	// Upper address area
 	if mmu.lcActiveWrite {
 		return mmu.accessLCArea(address)
 	}
-
-	// Use ROM
 	return mmu.physicalROM[mmu.romPage]
 }
 

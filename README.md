@@ -6,7 +6,11 @@ Portable emulator of an Apple II+. Written in Go.
 
 ## Features
 
-- Apple II+ with 48Kb of base RAM
+- Models:
+    - Apple ][+ with 48Kb of base RAM
+    - Apple //e with 128Kb of RAM
+    - Apple //e enhanced with 128Kb of RAM
+    - Base64A clone with 48Kb of base RAM and paginated ROM
 - Sound
 - 16 Sector diskettes in DSK format
 - ProDos hard disk
@@ -16,8 +20,13 @@ Portable emulator of an Apple II+. Written in Go.
     - 256Kb Saturn RAM 
     - ThunderClock Plus real time clock
     - Simulated bootable hard disk card
+    - Apple //e 80 columns with 64Kb
 - Graphic modes:
-    - Text, Lores and Hires
+    - Text 40 columns
+    - text 80 columns (Apple //e only)
+    - Low-Resolution graphics
+    - High-Resolution graphics
+    - Mixed mode
 - Displays:
     - Green monochrome monitor with half width pixel support
     - NTSC Color TV (extracting the phase from the mono signal)
@@ -25,7 +34,6 @@ Portable emulator of an Apple II+. Written in Go.
 - Adjustable speed.
 - Fast disk mode to set max speed while using the disks. 
 - Single file executable with embedded ROMs and DOS 3.3
-- Optional emulation of the clone Base64A by Copam
 - Joystick support. Up to two joysticks or four paddles.
 
 
@@ -95,6 +103,7 @@ Line:
 ### Keys
 
 - F5: Toggle speed between real and fastest
+- Ctrl F5: Show current speed in Mhz
 - F6: Toggle between NTSC color TV and green phosphor monochrome monitor
 - F7: Save current state to disk
 - F8: Restore state from disk
@@ -128,7 +137,7 @@ Only valid on SDL mode
   -mhz float
         cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
   -model string
-        set base model. Models available 2plus, 2e, 2enh, base64a (default "2e")
+        set base model. Models available 2plus, 2e, 2enh, base64a (default "2enh")
   -mono
         emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.
   -panicSS

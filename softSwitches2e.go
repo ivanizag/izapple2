@@ -6,7 +6,6 @@ package apple2
 */
 
 const (
-	ioFlag80Store uint8 = 0x18
 	ioFlagAltChar uint8 = 0x1E
 	ioFlag80Col   uint8 = 0x1F
 	// ??? ioVertBlank uin8 = 0x19
@@ -20,9 +19,9 @@ func addApple2ESoftSwitches(io *ioC0Page) {
 	addSoftSwitchesMmu(io, 0x06, 0x07, 0x15, &mmu.intCxROMActive, "INTCXROM")
 	addSoftSwitchesMmu(io, 0x08, 0x09, 0x16, &mmu.altZeroPage, "ALTZP")
 	addSoftSwitchesMmu(io, 0x0a, 0x0b, 0x17, &mmu.slotC3ROMActive, "SLOTC3ROM")
+	addSoftSwitchesMmu(io, 0x00, 0x01, 0x18, &mmu.store80Active, "80STORE")
 
 	// New IOU read softswithes
-	addSoftSwitchesIou(io, 0x00, 0x01, 0x18, ioFlag80Store, "80STORE")
 	addSoftSwitchesIou(io, 0x0c, 0x0d, 0x1f, ioFlag80Col, "80COL")
 	addSoftSwitchesIou(io, 0x0e, 0x0f, 0x1e, ioFlagAltChar, "ALTCHARSET")
 
