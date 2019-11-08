@@ -67,8 +67,6 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	switch key.Sym {
 	case sdl.K_ESCAPE:
 		result = 27
-	case sdl.K_DELETE:
-		result = 24
 	case sdl.K_BACKSPACE:
 		result = 8
 	case sdl.K_RETURN:
@@ -83,13 +81,19 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	case sdl.K_RIGHT:
 		result = 21
 
-	// Base64A clone particularities
-	case sdl.K_F2:
-		result = 127
+	// Apple //e
 	case sdl.K_UP:
-		result = 31
+		result = 11 // 31 in the Base64A
 	case sdl.K_DOWN:
 		result = 10
+	case sdl.K_TAB:
+		result = 9
+	case sdl.K_DELETE:
+		result = 127 // 24 in the Base64A
+
+	// Base64A clone particularities
+	case sdl.K_F2:
+		result = 127 // Base64A
 
 	// Control of the emulator
 	case sdl.K_F5:
