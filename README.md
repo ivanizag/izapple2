@@ -12,8 +12,9 @@ Portable emulator of an Apple II+. Written in Go.
     - Apple //e enhanced with 128Kb of RAM
     - Base64A clone with 48Kb of base RAM and paginated ROM
 - Sound
-- 16 Sector diskettes in DSK format
-- ProDos hard disk
+- Storage
+    - 16 Sector diskettes in DSK format
+    - ProDos hard disk
 - Emulated extension cards:
     - DiskII controller
     - 16Kb Language Card
@@ -27,6 +28,7 @@ Portable emulator of an Apple II+. Written in Go.
     - Low-Resolution graphics
     - Double-Width Low-Resolution graphics (Apple //e only)
     - High-Resolution graphics
+    - Double-Width High-Resolution graphics (Apple //e only)
     - Mixed mode
 - Displays:
     - Green monochrome monitor with half width pixel support
