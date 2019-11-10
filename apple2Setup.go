@@ -130,6 +130,13 @@ func (a *Apple2) AddHardDisk(slot int, hdImage string, trace bool) error {
 	return nil
 }
 
+// AddVidHD adds a card with the signature of VidHD
+func (a *Apple2) AddVidHD(slot int) {
+	var c cardVidHD
+	c.loadRom(buildVidHDRom())
+	a.insertCard(&c, slot)
+}
+
 // AddLanguageCard inserts a 16Kb card
 func (a *Apple2) AddLanguageCard(slot int) {
 	a.insertCard(&cardLanguage{}, slot)
