@@ -53,51 +53,46 @@ func MainApple() *Apple2 {
 		"thunderClockCardSlot",
 		4,
 		"slot for the ThunderClock Plus card. -1 for none")
+	vidHDCardSlot := flag.Int(
+		"vidHDSlot",
+		2,
+		"slot for the VidHD card, -1 for none")
 	mono := flag.Bool(
 		"mono",
 		false,
-		"emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.",
-	)
+		"emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.")
 	fastDisk := flag.Bool(
 		"fastDisk",
 		true,
-		"set fast mode when the disks are spinning",
-	)
+		"set fast mode when the disks are spinning")
 	panicSS := flag.Bool(
 		"panicSS",
 		false,
-		"panic if a not implemented softswitch is used",
-	)
+		"panic if a not implemented softswitch is used")
 	traceCPU := flag.Bool(
 		"traceCpu",
 		false,
-		"dump to the console the CPU execution operations",
-	)
+		"dump to the console the CPU execution operations")
 	traceSS := flag.Bool(
 		"traceSS",
 		false,
-		"dump to the console the sofswitches calls",
-	)
+		"dump to the console the sofswitches calls")
 	traceHD := flag.Bool(
 		"traceHD",
 		false,
-		"dump to the console the hd commands",
-	)
+		"dump to the console the hd commands")
 	dumpChars := flag.Bool(
 		"dumpChars",
 		false,
-		"shows the character map",
-	)
+		"shows the character map")
 	model := flag.String(
 		"model",
 		"2enh",
-		"set base model. Models available 2plus, 2e, 2enh, base64a",
-	)
+		"set base model. Models available 2plus, 2e, 2enh, base64a")
 	profile := flag.Bool(
 		"profile",
 		false,
-		"generate profile trace to analyse with pprof",
-	)
+		"generate profile trace to analyse with pprof")
 	flag.Parse()
 
 	var a *Apple2
@@ -189,6 +184,9 @@ func MainApple() *Apple2 {
 		if err != nil {
 			panic(err)
 		}
+	}
+	if *vidHDCardSlot > 0 {
+		a.AddVidHD(*vidHDCardSlot)
 	}
 	if *disk2Slot > 0 {
 		err := a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
