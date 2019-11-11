@@ -34,9 +34,9 @@ func snapshotSuperHiResMode(a *Apple2) *image.RGBA {
 		b1 := palleteMem[iMem]
 		iMem++
 
-		red := (b0 & 0x0f) << 4
-		green := b1 & 0xf0
-		blue := (b1 & 0x0f) << 4
+		red := (b1 & 0x0f) << 4
+		green := b0 & 0xf0
+		blue := (b0 & 0x0f) << 4
 
 		colors[i] = color.RGBA{red, green, blue, 255}
 	}
