@@ -8,7 +8,11 @@ package apple2
 const (
 	ioFlagAltChar uint8 = 0x1E
 	ioFlag80Col   uint8 = 0x1F
-	// ??? ioVertBlank uin8 = 0x19
+)
+
+const (
+	screenDrawCycles         = uint64(12480 + 4550)
+	screenVertBlankingCycles = uint64(4550)
 )
 
 func addApple2ESoftSwitches(io *ioC0Page) {
@@ -38,8 +42,19 @@ func addApple2ESoftSwitches(io *ioC0Page) {
 		return ssFromBool(mmu.lcActiveRead)
 	}, "BSRREADRAM")
 
-	// TOOD:
-	// VBL or VERTBLANK read on 0x19
+	io.addSoftSwitchR(0x19, func(_ *ioC0Page) uint8 {
+		// See "Inside Apple IIe", page 268
+		// See http://rich12345.tripod.com/aiivideo/vbl.html
+		// For each screen draw:
+		//      12480 cycles drawing lines, VERTBLANK = $00
+		//       4550 cycles doing the return to position (0,0), VERTBLANK = $80
+		// Vert blank takes 12480 cycles every page redraw
+		cycles := io.apple2.cpu.GetCycles() % screenDrawCycles
+		if cycles <= screenVertBlankingCycles {
+			return ssOn
+		}
+		return ssOff
+	}, "VERTBLANK")
 
 	//io.softSwitchesData[ioFlagAltChar] = ssOn // Not sure about this.
 

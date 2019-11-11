@@ -80,6 +80,12 @@ func notImplementedSoftSwitchR(*ioC0Page) uint8 {
 func notImplementedSoftSwitchW(*ioC0Page, uint8) {
 }
 
+func setStatusSoftSwitch(ioFlag uint8) softSwitchW {
+	return func(io *ioC0Page, value uint8) {
+		io.softSwitchesData[ioFlag] = value
+	}
+}
+
 func getStatusSoftSwitch(ioFlag uint8) softSwitchR {
 	return func(io *ioC0Page) uint8 {
 		return io.softSwitchesData[ioFlag]
