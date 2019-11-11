@@ -24,6 +24,7 @@ func Snapshot(a *Apple2) *image.RGBA {
 	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
 	isDoubleResMode := !isTextMode && is80Columns && !a.io.isSoftSwitchActive(ioFlagAnnunciator3)
 	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
+	isSuperHighResMode := a.io.isSoftSwitchActive(ioDataNewVideo)
 
 	var lightColor color.Color
 	if isColor {
@@ -36,7 +37,9 @@ func Snapshot(a *Apple2) *image.RGBA {
 	}
 
 	var snap *image.RGBA
-	if isTextMode {
+	if isSuperHighResMode { // Has to be first and disables the rest
+		snap = snapshotSuperHiResMode(a)
+	} else if isTextMode {
 		snap = snapshotTextMode(a, is80Columns, isSecondPage, false /*isMixMode*/, lightColor)
 	} else {
 		if isHiResMode {
@@ -58,7 +61,9 @@ func Snapshot(a *Apple2) *image.RGBA {
 		}
 	}
 
-	snap = linesSeparatedFilter(snap)
+	if !isSuperHighResMode {
+		snap = linesSeparatedFilter(snap)
+	}
 	return snap
 }
 
