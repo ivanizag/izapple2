@@ -1,6 +1,6 @@
-# Apple II+ emulator
+# Apple ][+, //e emulator
 
-Portable emulator of an Apple II+. Written in Go.
+Portable emulator of an Apple II+ or //e. Written in Go.
 
 [![CircleCI](https://circleci.com/gh/ivanizag/apple2/tree/master.svg?style=svg)](https://circleci.com/gh/ivanizag/apple2/tree/master)
 
@@ -11,7 +11,6 @@ Portable emulator of an Apple II+. Written in Go.
     - Apple //e with 128Kb of RAM
     - Apple //e enhanced with 128Kb of RAM
     - Base64A clone with 48Kb of base RAM and paginated ROM
-- Sound
 - Storage
     - 16 Sector diskettes in DSK format
     - ProDos hard disk
@@ -20,8 +19,9 @@ Portable emulator of an Apple II+. Written in Go.
     - 16Kb Language Card
     - 256Kb Saturn RAM 
     - ThunderClock Plus real time clock
-    - Simulated bootable hard disk card
-    - Apple //e 80 columns with 64Kb
+    - Bootable hard disk card
+    - Apple //e 80 columns with 64Kb extra RAM
+    - VidHd, limited to the ROM signature and SHR as used by Total Replay
 - Graphic modes:
     - Text 40 columns
     - text 80 columns (Apple //e only)
@@ -29,20 +29,24 @@ Portable emulator of an Apple II+. Written in Go.
     - Double-Width Low-Resolution graphics (Apple //e only)
     - High-Resolution graphics
     - Double-Width High-Resolution graphics (Apple //e only)
+    - Super High Resolution (VidHD only)
     - Mixed mode
 - Displays:
     - Green monochrome monitor with half width pixel support
     - NTSC Color TV (extracting the phase from the mono signal)
+    - RGB for Super High Resolution
     - ANSI Console, avoiding the SDL2 dependency
-- Adjustable speed.
-- Fast disk mode to set max speed while using the disks. 
-- Single file executable with embedded ROMs and DOS 3.3
-- Joystick support. Up to two joysticks or four paddles.
+- Other features:
+    - Sound
+    - Joystick support. Up to two joysticks or four paddles.
+    - Adjustable speed.
+    - Fast disk mode to set max speed while using the disks. 
+    - Single file executable with embedded ROMs and DOS 3.3
 
 
 ## Running the emulator
 
-No installation required. [Download](https://github.com/ivanizag/apple2/releases) the single file executable `apple2xxx_xxx` for linux or Mac, SDL2 graphics or console.
+No installation required. [Download](https://github.com/ivanizag/apple2/releases) the single file executable `apple2xxx_xxx` for linux or Mac, SDL2 graphics or console. Build from source to get the latest features.
 
 ### Default mode
 
@@ -66,6 +70,10 @@ Download the excellent [Total Replay](https://archive.org/details/TotalReplay) c
 ```
 casa@servidor:~$ ./apple2sdl -hd "Total Replay v2.0.2mg"
 ```
+Displays super hi-res box art as seen with the VidHD card.
+
+Note: for version 3, compile `4cade` with `use_smartport = 0` in `prorwts2.a` as SmartPort is not emulated (yet). 
+
 ![Total Replay](doc/totalreplay.png)
 
 ### Terminal mode
@@ -159,6 +167,9 @@ Only valid on SDL mode
         dump to the console the hd commands
   -traceSS
         dump to the console the sofswitches calls
+  -vidHDSlot int
+    	  slot for the VidHD card, -1 for none (default 2)
+
 
 ```
 
