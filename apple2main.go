@@ -49,14 +49,18 @@ func MainApple() *Apple2 {
 		"saturnCardSlot",
 		-1,
 		"slot for the 256kb Saturn card. -1 for none")
-	thunderClockCardSlot := flag.Int(
-		"thunderClockCardSlot",
-		4,
-		"slot for the ThunderClock Plus card. -1 for none")
 	vidHDCardSlot := flag.Int(
 		"vidHDSlot",
 		2,
 		"slot for the VidHD card, -1 for none")
+	fastChipCardSlot := flag.Int(
+		"fastChipSlot",
+		3,
+		"slot for the FASTChip accelerator card, -1 for none")
+	thunderClockCardSlot := flag.Int(
+		"thunderClockCardSlot",
+		4,
+		"slot for the ThunderClock Plus card. -1 for none")
 	mono := flag.Bool(
 		"mono",
 		false,
@@ -185,8 +189,11 @@ func MainApple() *Apple2 {
 			panic(err)
 		}
 	}
-	if *vidHDCardSlot > 0 {
+	if *vidHDCardSlot >= 0 {
 		a.AddVidHD(*vidHDCardSlot)
+	}
+	if *fastChipCardSlot >= 0 {
+		a.AddFastChip(*fastChipCardSlot)
 	}
 	if *disk2Slot > 0 {
 		err := a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)

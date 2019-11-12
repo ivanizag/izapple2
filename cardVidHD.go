@@ -27,7 +27,7 @@ const (
 )
 
 func (c *cardVidHD) assign(a *Apple2, slot int) {
-	// The softswitches are outside the card reverded ss
+	// The softswitches are outside the card reserved ss
 	a.io.addSoftSwitchR(0x22, notImplementedSoftSwitchR, "VIDHD-TBCOLOR")
 	a.io.addSoftSwitchW(0x22, notImplementedSoftSwitchW, "VIDHD-TBCOLOR")
 	a.io.addSoftSwitchR(0x29, getStatusSoftSwitch(ioDataNewVideo), "VIDHD-NEWVIDEO")

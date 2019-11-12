@@ -137,6 +137,13 @@ func (a *Apple2) AddVidHD(slot int) {
 	a.insertCard(&c, slot)
 }
 
+// AddFastChip adds a card with the signature of VidHD
+func (a *Apple2) AddFastChip(slot int) {
+	var c cardFastChip
+	c.loadRom(buildFastChipRom())
+	a.insertCard(&c, slot)
+}
+
 // AddLanguageCard inserts a 16Kb card
 func (a *Apple2) AddLanguageCard(slot int) {
 	a.insertCard(&cardLanguage{}, slot)
