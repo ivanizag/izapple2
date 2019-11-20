@@ -96,6 +96,10 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		result = 127 // Base64A
 
 	// Control of the emulator
+	case sdl.K_F1:
+		if ctrl {
+			k.a.SendCommand(apple2.CommandReset)
+		}
 	case sdl.K_F5:
 		if ctrl {
 			k.a.SendCommand(apple2.CommandShowSpeed)

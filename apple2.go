@@ -121,6 +121,8 @@ const (
 	CommandToggleCPUTrace
 	// CommandKill stops the cpu execution loop
 	CommandKill
+	// CommandReset executes a 6502 reset
+	CommandReset
 )
 
 // SendCommand enqueues a command to the emulator thread
@@ -161,6 +163,8 @@ func (a *Apple2) executeCommand(command int) {
 		fmt.Printf("Chargen page %v\n", a.cg.page)
 	case CommandToggleCPUTrace:
 		a.cpu.SetTrace(!a.cpu.GetTrace())
+	case CommandReset:
+		a.cpu.Reset()
 	}
 }
 

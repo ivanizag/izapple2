@@ -114,8 +114,9 @@ Line:
 
 ### Keys
 
+- Ctrl-F1: Reset button
 - F5: Toggle speed between real and fastest
-- Ctrl F5: Show current speed in Mhz
+- Ctrl-F5: Show current speed in Mhz
 - F6: Toggle between NTSC color TV and green phosphor monochrome monitor
 - F7: Save current state to disk
 - F8: Restore state from disk
