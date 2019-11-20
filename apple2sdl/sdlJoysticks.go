@@ -15,9 +15,10 @@ joystick 1.
 */
 
 type sdlJoysticks struct {
-	paddle [4]uint8
-	button [4]bool
-	keys   [3]bool
+	paddle    [4]uint8
+	hasPaddle [4]bool
+	button    [4]bool
+	keys      [3]bool
 }
 
 func newSDLJoysticks() *sdlJoysticks {
@@ -33,13 +34,15 @@ func newSDLJoysticks() *sdlJoysticks {
 	joyCount := sdl.NumJoysticks()
 	for iJoy := 0; iJoy < joyCount && iJoy < 2; iJoy++ {
 		/*joystick := */ sdl.JoystickOpen(iJoy)
+		j.hasPaddle[iJoy*2] = true
+		j.hasPaddle[iJoy*2+1] = true
 	}
 
-	// Initialize to mid resistance if unplugged
-	j.paddle[0] = 128
-	j.paddle[1] = 128
-	j.paddle[2] = 128
-	j.paddle[3] = 128
+	// Initialize to max resistance if unplugged
+	j.paddle[0] = 255
+	j.paddle[1] = 255
+	j.paddle[2] = 255
+	j.paddle[3] = 255
 
 	// To enter Apple IIe on self test mode
 	//j.keys[1] = true
@@ -68,7 +71,7 @@ func (j *sdlJoysticks) putButtonEvent(e *sdl.JoyButtonEvent) {
 func (j *sdlJoysticks) putKey(keyEvent *sdl.KeyboardEvent) {
 	/*
 		We will simultate joystick buttons with keyboard keys.
-		Actually the Apple//e dis this with the open and solid apple keys.
+		Actually the Apple//e does this with the open and solid apple keys.
 		   Alt key - button 0 - Open apple
 		   AltGr key - button 1- Solid apple
 		   //Win key - button 2 (Not in the Apple //e keyboard)
@@ -99,6 +102,6 @@ func (j *sdlJoysticks) ReadButton(i int) bool {
 	return value
 }
 
-func (j *sdlJoysticks) ReadPaddle(i int) uint8 {
-	return j.paddle[i]
+func (j *sdlJoysticks) ReadPaddle(i int) (uint8, bool) {
+	return j.paddle[i], j.hasPaddle[i]
 }
