@@ -157,7 +157,7 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 			return mmu.getPhysicalMainRAM(altPage)
 		}
 		hires := mmu.apple2.io.isSoftSwitchActive(ioFlagHiRes)
-		if false && hires && address >= addressStartHgr && address <= addressLimitHgr {
+		if hires && address >= addressStartHgr && address <= addressLimitHgr {
 			return mmu.getPhysicalMainRAM(altPage)
 		}
 	}
