@@ -154,9 +154,12 @@ const paddleToCyclesFactor = 11
 func getPaddleSoftSwitch(i int) softSwitchR {
 	return func(io *ioC0Page) uint8 {
 		if io.joysticks == nil {
-			return 127
+			return 255 // Capacitors never discharge if there is not joystick
 		}
-		reading := io.joysticks.ReadPaddle(i)
+		reading, hasData := io.joysticks.ReadPaddle(i)
+		if !hasData {
+			return 255 // Capacitors never discharge if there is not joystick
+		}
 		cyclesNeeded := uint64(reading) * paddleToCyclesFactor
 		cyclesElapsed := io.apple2.cpu.GetCycles() - io.paddlesStrobeCycle
 		if cyclesElapsed < cyclesNeeded {

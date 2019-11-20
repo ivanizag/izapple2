@@ -38,7 +38,7 @@ type SpeakerProvider interface {
 // JoysticksProvider declares de the joysticks
 type JoysticksProvider interface {
 	ReadButton(i int) bool
-	ReadPaddle(i int) uint8
+	ReadPaddle(i int) (uint8, bool)
 }
 
 // See https://www.kreativekorp.com/miscpages/a2info/iomemory.shtml
