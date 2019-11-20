@@ -16,7 +16,7 @@ import (
 
 const (
 	samplingHz = 48000
-	bufferSize = 10000
+	bufferSize = 1000
 	// bufferSize/samplingHz will be the max delay of the sound
 	sampleDurationCycles = 1000000 * apple2.CPUClockMhz / samplingHz
 	// each sample on the sound stream is 21.31 cpu cycles approx
