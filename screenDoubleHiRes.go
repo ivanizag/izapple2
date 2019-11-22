@@ -28,7 +28,7 @@ func snapshotDoubleHiResModeMono(a *Apple2, isSecondPage bool, mixedMode bool, l
 		// For the NTSC filter to work we have to insert an initial black pixel and skip the last one
 		img.Set(x, y, color.Black)
 		x++
-		for iByte := 0; iByte < hiResLineBytes-1; iByte++ {
+		for iByte := 0; iByte < hiResLineBytes; iByte++ {
 			for iPart := 0; iPart < 2; iPart++ {
 				b := lineParts[iPart][iByte]
 				for j := uint(0); j < 7; j++ {
