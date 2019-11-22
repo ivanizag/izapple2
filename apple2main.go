@@ -52,7 +52,7 @@ func MainApple() *Apple2 {
 	vidHDCardSlot := flag.Int(
 		"vidHDSlot",
 		2,
-		"slot for the VidHD card, -1 for none")
+		"slot for the VidHD card, only for //e models. -1 for none")
 	fastChipCardSlot := flag.Int(
 		"fastChipSlot",
 		3,
@@ -112,6 +112,7 @@ func MainApple() *Apple2 {
 			*charRomFile = "<internal>/Apple2rev7CharGen.rom"
 		}
 		charGenMap = charGenColumnsMap2Plus
+		*vidHDCardSlot = -1
 
 	case "2e":
 		a = newApple2e()
@@ -149,6 +150,7 @@ func MainApple() *Apple2 {
 			initialCharGenPage = 1
 		}
 		charGenMap = charGenColumnsMapBase64a
+		*vidHDCardSlot = -1
 
 	default:
 		panic("Model not supported")

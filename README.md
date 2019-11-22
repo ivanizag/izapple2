@@ -21,7 +21,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - ThunderClock Plus real time clock
     - Bootable hard disk card
     - Apple //e 80 columns with 64Kb extra RAM
-    - VidHd, limited to the ROM signature and SHR as used by Total Replay
+    - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
     - FASTChip, limited to what Total Replay needs to set and clear fast mode
 - Graphic modes:
     - Text 40 columns
@@ -170,7 +170,7 @@ Only valid on SDL mode
   -traceSS
         dump to the console the sofswitches calls
   -vidHDSlot int
-    	  slot for the VidHD card, -1 for none (default 2)
+    	  slot for the VidHD card, only for //e models. -1 for none (default 2)
 
 
 ```
