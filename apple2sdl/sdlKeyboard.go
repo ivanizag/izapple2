@@ -44,8 +44,6 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		10 A=PEEK(49152)
 		20 PRINT A, A - 128
 		30 GOTO 10
-
-		Missing Reset button
 	*/
 	if keyEvent.Type != sdl.KEYDOWN {
 		// Process only key pushes

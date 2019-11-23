@@ -72,10 +72,10 @@ func (s *State) ExecuteInstruction() {
 	}
 }
 
-// Reset resets the processor state. Moves the program counter to the vector in 0cfffc.
+// Reset resets the processor. Moves the program counter to the vector in 0cfffc.
 func (s *State) Reset() {
 	startAddress := getWord(s.mem, vectorReset)
-	s.cycles = 0
+	s.cycles += 6
 	s.reg.setPC(startAddress)
 }
 
