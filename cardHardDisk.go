@@ -4,10 +4,13 @@ import "fmt"
 
 /*
 To implement a hard drive we just have to support boot from #PR7 and the PRODOS expextations.
-See Beneath Prodos, section 6-6, 7-13 and 5-8. (http://www.apple-iigs.info/doc/fichiers/beneathprodos.pdf)
 
 See:
+	Beneath Prodos, section 6-6, 7-13 and 5-8. (http://www.apple-iigs.info/doc/fichiers/beneathprodos.pdf)
+	Apple IIc Technical Reference, 2nd Edition. Chapter 8. https://ia800207.us.archive.org/19/items/AppleIIcTechnicalReference2ndEd/Apple%20IIc%20Technical%20Reference%202nd%20ed.pdf
 	https://prodos8.com/docs/technote/21/
+
+
 */
 
 type cardHardDisk struct {
@@ -23,13 +26,13 @@ func buildHardDiskRom(slot int) []uint8 {
 	copy(data, []uint8{
 		// Preamble bytes to comply with the expectation in $Cn01, 3, 5 and 7
 		0xa9, 0x20, // LDA #$20
-		0xa9, 0x00, // LDA #$20
-		0xa9, 0x03, // LDA #$20
+		0xa9, 0x00, // LDA #$00
+		0xa9, 0x03, // LDA #$03
 		0xa9, 0x3c, // LDA #$3c
 		// Alternate: 0xa9, 0x00, // LDA #$00 ; Not a Smartport device, but won't boot on ii+ ROM
 
 		// Boot code: SS will load block 0 in address $0800. The jump there.
-		// Note: on execution the first block expects $42 to $47 to have
+		// Note: after execution the first block expects $42 to $47 to have
 		// valid values to read block 0. At least Total Replay expects that.
 		0xa9, 0x01, // LDA·#$01
 		0x85, 0x42, // STA $42 ; Command READ(1)
@@ -42,15 +45,37 @@ func buildHardDiskRom(slot int) []uint8 {
 		0x85, 0x45, // STA $45 ; Dest HI($0800)
 
 		0xad, ssBase, 0xc0, // LDA $C0n1 ;Call to softswitch 0.
-		0xa2, uint8(slot << 4), // LDX $s7 ;Slot on hign nibble of X
-		0x4c, 0x01, 0x08, // JMP $801
+		0xa2, uint8(slot << 4), // LDX $s7 ; Slot on hign nibble of X
+		0x4c, 0x01, 0x08, // JMP $801 ; Jump to loaded boot sector
 	})
 
+	// Entrypoints and Smartport body
+	copy(data[0x40:], []uint8{
+		0x4c, 0x80, 0xc0 + uint8(slot), // JMP $cs80 ; Prodos Entrypoint
+
+		// 3 btes later, smartport entrypoint. Uses the ProDos MLI calling convention
+		0x68,                   // PLA
+		0x8d, ssBase + 4, 0xc0, // STA $c0n4 ; Softswitch 4, store LO(cmdblock)
+		0xa8,                   // TAY ; We will need it later
+		0x68,                   // PLA
+		0x8d, ssBase + 5, 0xc0, // STA $c0n5 ; Softswitch 5, store HI(cmdblock)
+		0x48,       // PHA
+		0x98,       // TYA
+		0x69, 0x03, // ADC #$03 ; Fix return address past the cmdblock
+		0x48,                   // PHA
+		0xad, ssBase + 3, 0xc0, // LDA $C0n3 ; Softswitch 3, execute command. Error code in reg A.
+		0x18,       // CLC ; Clear carry for no errors.
+		0xF0, 0x01, // BEQ $01 ; Skips the SEC if reg A is zero
+		0x38, // SEC ; Set carry on errors
+		0x60, // RTS
+	})
+
+	// Prodos entrypoint body
 	copy(data[0x80:], []uint8{
 		0xad, ssBase + 0, 0xc0, // LDA $C0n0 ; Softswitch 0, execute command. Error code in reg A.
 		0x48,                   // PHA
-		0xae, ssBase + 1, 0xc0, // LDX $C0n1 ; Softswitch 2, LO(Blocks), STATUS needs that in reg X.
-		0xac, ssBase + 2, 0xc0, // LDY $C0n2 ; Softswitch 3, HI(Blocks). STATUS needs that in reg Y.
+		0xae, ssBase + 1, 0xc0, // LDX $C0n1 ; Softswitch 1, LO(Blocks), STATUS needs that in reg X.
+		0xac, ssBase + 2, 0xc0, // LDY $C0n2 ; Softswitch 2, HI(Blocks). STATUS needs that in reg Y.
 		0x18,       // CLC ; Clear carry for no errors.
 		0x68,       // PLA ; Sets Z if no error
 		0xF0, 0x01, // BEQ $01 ; Skips the SEC if reg A is zero
@@ -61,7 +86,7 @@ func buildHardDiskRom(slot int) []uint8 {
 	data[0xfc] = 0
 	data[0xfd] = 0
 	data[0xfe] = 3    // Status and Read. No write, no format. Single volume
-	data[0xff] = 0x80 // Driver entry point
+	data[0xff] = 0x40 // Driver entry point
 
 	return data
 }
@@ -112,6 +137,19 @@ func (c *cardHardDisk) assign(a *Apple2, slot int) {
 		// Blocks available, high byte
 		return uint8(c.disk.header.Blocks >> 8)
 	}, "HDBLOCKHI")
+
+	c.addCardSoftSwitchR(3, func(*ioC0Page) uint8 {
+		if c.trace {
+			fmt.Printf("[CardHardDisk] Smart port command. Not implemented.\n")
+		}
+		return proDosDeviceErrorIO
+	}, "HDSMARTPORT")
+	c.addCardSoftSwitchW(4, func(*ioC0Page, uint8) {
+		// Not implemented
+	}, "HDSMARTPORTLO")
+	c.addCardSoftSwitchW(5, func(*ioC0Page, uint8) {
+		// Not implemented
+	}, "HDSMARTPORTHI")
 
 	c.cardBase.assign(a, slot)
 }

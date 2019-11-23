@@ -73,8 +73,6 @@ casa@servidor:~$ ./apple2sdl -hd "Total Replay v2.0.2mg"
 ```
 Displays super hi-res box art as seen with the VidHD card.
 
-Note: for version 3, compile `4cade` with `use_smartport = 0` in `prorwts2.a` as SmartPort is not emulated (yet). 
-
 ![Total Replay](doc/totalreplay.png)
 
 ### Terminal mode
