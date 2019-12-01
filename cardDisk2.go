@@ -33,11 +33,18 @@ type cardDisk2 struct {
 }
 
 type cardDisk2Drive struct {
-	diskette     *diskette16sector
-	currentPhase uint8
-	power        bool // q4
-	halfTrack    int
-	position     int
+	diskette   *diskette16sector
+	power      bool // q4, not realy used for anything
+	position   int
+	magnets    uint8 // q3, q2, q1 and q0 with q0 on the LSB
+	tracksStep int   // Stepmotor for tracks position. 4 steps per track
+}
+
+type diskette interface {
+	powerOn(cycle uint64)
+	powerOff(cycle uint64)
+	read(halfTrack int, cycle uint64) uint8
+	write(halfTrack int, value uint8, cycle uint64)
 }
 
 const (
@@ -54,32 +61,20 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 	for i := uint8(0); i < 4; i++ {
 		phase := i
 		c.addCardSoftSwitchR(phase<<1, func(_ *ioC0Page) uint8 {
+			// Update magnets and position
+			drive := &c.drive[c.selected]
+			drive.magnets &^= (1 << phase)
+			drive.tracksStep = moveStep(drive.magnets, drive.tracksStep)
+
 			return c.dataLatch // All even addresses return the last dataLatch
 		}, fmt.Sprintf("PHASE%vOFF", phase))
 
 		c.addCardSoftSwitchR((phase<<1)+1, func(_ *ioC0Page) uint8 {
-			// Move the head up or down depending on the previous phase.
+			// Update magnets and position
 			drive := &c.drive[c.selected]
-			delta := (phase - drive.currentPhase + 4) % 4
-			switch delta {
-			case 1: // Up
-				drive.halfTrack++
-			case 2: // Illegal, let's say up
-				drive.halfTrack++
-			case 3: // Down
-				drive.halfTrack--
-			case 0: // No chamge
-			}
+			drive.magnets |= (1 << phase)
+			drive.tracksStep = moveStep(drive.magnets, drive.tracksStep)
 
-			// Don't go over the limits
-			if drive.halfTrack > maxHalfTrack {
-				drive.halfTrack = maxHalfTrack
-			} else if drive.halfTrack < 0 {
-				drive.halfTrack = 0
-			}
-
-			drive.currentPhase = phase
-			//fmt.Printf("DISKII: Current halftrack is %v\n", drive.halfTrack)
 			return 0
 		}, fmt.Sprintf("PHASE%vOFF", phase))
 	}
@@ -124,6 +119,78 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 	c.cardBase.assign(a, slot)
 }
 
+const (
+	maxStep      = 68 * 2 // What is the maximum quarter tracks a DiskII can go?
+	stepsPerTurn = 8
+)
+const (
+	dirN         = 0
+	dirNW        = 1
+	dirW         = 2
+	dirSW        = 3
+	dirS         = 4
+	dirSE        = 5
+	dirE         = 6
+	dirNE        = 7
+	dirUndefined = 8
+)
+
+var magnetsDirections = []int{
+	// Magnets bits, ESWN: east, south, west, north
+	dirUndefined, // 0000
+	dirN,         // 0001
+	dirW,         // 0010
+	dirNW,        // 0011
+	dirS,         // 0100
+	dirUndefined, // 0101
+	dirSW,        // 0110
+	dirW,         // 0111
+	dirE,         // 1000
+	dirNE,        // 1001
+	dirUndefined, // 1010
+	dirN,         // 1011
+	dirSE,        // 1100
+	dirE,         // 1101
+	dirS,         // 1110
+	dirUndefined, // 1111
+}
+
+func moveStep(magnets uint8, prevStep int) int {
+
+	//fmt.Printf("magnets: 0x%x\n", magnets)
+
+	magnetsDirection := magnetsDirections[magnets]
+	if magnetsDirection == dirUndefined {
+		// Don't move if magnets don't push on a defined direction.
+		return prevStep
+	}
+
+	prevDirection := prevStep % stepsPerTurn // Direction, removing full revolutions.
+	delta := magnetsDirection - prevDirection
+	if delta < 0 {
+		delta = delta + stepsPerTurn
+	}
+
+	var nextStep int
+	if delta < 4 {
+		// Steps up
+		nextStep = prevStep + delta
+		if nextStep > maxStep {
+			nextStep = maxStep
+		}
+	} else if delta == 4 {
+		// Don't move if magnets push on the oposite direction
+		nextStep = prevStep
+	} else { // delta > 4
+		// Steps down
+		nextStep = prevStep + delta - stepsPerTurn
+		if nextStep < 0 {
+			nextStep = 0
+		}
+	}
+	return nextStep
+}
+
 func (c *cardDisk2) softSwitchQ6Q7(index uint8, in uint8) uint8 {
 	switch index {
 	case 0xC: // Q6L
@@ -151,10 +218,10 @@ func (c *cardDisk2) processQ6Q7(in uint8) {
 	}
 	if !c.q6 {
 		if !c.q7 { // Q6L-Q7L: Read
-			track := d.halfTrack / 2
+			track := d.tracksStep / 4
 			c.dataLatch, d.position = d.diskette.read(track, d.position)
 		} else { // Q6L-Q7H: Write the dataLatch value to disk. Shift data out
-			track := d.halfTrack / 2
+			track := d.tracksStep / 4
 			d.position = d.diskette.write(track, d.position, c.dataLatch)
 		}
 	} else {
@@ -228,15 +295,15 @@ func (c *cardDisk2) load(r io.Reader) error {
 }
 
 func (d *cardDisk2Drive) save(w io.Writer) error {
-	err := binary.Write(w, binary.BigEndian, d.currentPhase)
+	err := binary.Write(w, binary.BigEndian, d.power)
 	if err != nil {
 		return err
 	}
-	err = binary.Write(w, binary.BigEndian, d.power)
+	err = binary.Write(w, binary.BigEndian, d.magnets)
 	if err != nil {
 		return err
 	}
-	err = binary.Write(w, binary.BigEndian, d.halfTrack)
+	err = binary.Write(w, binary.BigEndian, d.tracksStep)
 	if err != nil {
 		return err
 	}
@@ -248,15 +315,15 @@ func (d *cardDisk2Drive) save(w io.Writer) error {
 }
 
 func (d *cardDisk2Drive) load(r io.Reader) error {
-	err := binary.Read(r, binary.BigEndian, &d.currentPhase)
+	err := binary.Read(r, binary.BigEndian, &d.power)
 	if err != nil {
 		return err
 	}
-	err = binary.Read(r, binary.BigEndian, &d.power)
+	err = binary.Read(r, binary.BigEndian, &d.magnets)
 	if err != nil {
 		return err
 	}
-	err = binary.Read(r, binary.BigEndian, &d.halfTrack)
+	err = binary.Read(r, binary.BigEndian, &d.tracksStep)
 	if err != nil {
 		return err
 	}
