@@ -25,7 +25,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - FASTChip, limited to what Total Replay needs to set and clear fast mode
 - Graphic modes:
     - Text 40 columns
-    - text 80 columns (Apple //e only)
+    - Text 80 columns (Apple //e only)
     - Low-Resolution graphics
     - Double-Width Low-Resolution graphics (Apple //e only)
     - High-Resolution graphics

@@ -33,9 +33,8 @@ type cardDisk2 struct {
 }
 
 type cardDisk2Drive struct {
-	diskette   *diskette16sector
-	power      bool // q4, not realy used for anything
-	position   int
+	diskette   diskette
+	power      bool  // q4
 	phases     uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
 	tracksStep int   // Stepmotor for tracks position. 4 steps per track
 }
@@ -43,8 +42,8 @@ type cardDisk2Drive struct {
 type diskette interface {
 	powerOn(cycle uint64)
 	powerOff(cycle uint64)
-	read(halfTrack int, cycle uint64) uint8
-	write(halfTrack int, value uint8, cycle uint64)
+	read(quarterTrack int, cycle uint64) uint8
+	write(quarterTrack int, value uint8, cycle uint64)
 }
 
 const (
@@ -81,16 +80,24 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 
 	// Q4, power switch
 	c.addCardSoftSwitchR(0x8, func(_ *ioC0Page) uint8 {
-		if c.drive[c.selected].power {
-			c.drive[c.selected].power = false
+		drive := c.drive[c.selected]
+		if !drive.power {
+			drive.power = false
 			c.a.releaseFastMode()
+			if drive.diskette != nil {
+				drive.diskette.powerOff(c.a.cpu.GetCycles())
+			}
 		}
 		return c.dataLatch
 	}, "Q4DRIVEOFF")
 	c.addCardSoftSwitchR(0x9, func(_ *ioC0Page) uint8 {
-		if !c.drive[c.selected].power {
-			c.drive[c.selected].power = true
+		drive := c.drive[c.selected]
+		if !drive.power {
+			drive.power = true
 			c.a.requestFastMode()
+			if drive.diskette != nil {
+				drive.diskette.powerOn(c.a.cpu.GetCycles())
+			}
 		}
 		return 0
 	}, "")
@@ -117,6 +124,47 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 	}
 
 	c.cardBase.assign(a, slot)
+}
+
+func (c *cardDisk2) softSwitchQ6Q7(index uint8, in uint8) uint8 {
+	switch index {
+	case 0xC: // Q6L
+		c.q6 = false
+	case 0xD: // Q6H
+		c.q6 = true
+	case 0xE: // Q/L
+		c.q7 = false
+	case 0xF: // Q7H
+		c.q7 = true
+	}
+
+	c.processQ6Q7(in)
+	if index&1 == 0 {
+		// All even addresses return the last dataLatch
+		return c.dataLatch
+	}
+	return 0
+}
+
+func (c *cardDisk2) processQ6Q7(in uint8) {
+	d := &c.drive[c.selected]
+	if d.diskette == nil {
+		return
+	}
+	if !c.q6 {
+		if !c.q7 { // Q6L-Q7L: Read
+			c.dataLatch = d.diskette.read(d.tracksStep, c.a.cpu.GetCycles())
+		} else { // Q6L-Q7H: Write the dataLatch value to disk. Shift data out
+			d.diskette.write(d.tracksStep, c.dataLatch, c.a.cpu.GetCycles())
+		}
+	} else {
+		if !c.q7 { // Q6H-Q7L: Sense write protect / prewrite state
+			// Bit 7 of the control status register means write protected
+			c.dataLatch = 0 // Never write protected
+		} else { // Q6H-Q7H: Load data into the controller
+			c.dataLatch = in
+		}
+	}
 }
 
 /*
@@ -197,50 +245,7 @@ func moveStep(phases uint8, prevStep int) int {
 	return nextStep
 }
 
-func (c *cardDisk2) softSwitchQ6Q7(index uint8, in uint8) uint8 {
-	switch index {
-	case 0xC: // Q6L
-		c.q6 = false
-	case 0xD: // Q6H
-		c.q6 = true
-	case 0xE: // Q/L
-		c.q7 = false
-	case 0xF: // Q7H
-		c.q7 = true
-	}
-
-	c.processQ6Q7(in)
-	if index&1 == 0 {
-		// All even addresses return the last dataLatch
-		return c.dataLatch
-	}
-	return 0
-}
-
-func (c *cardDisk2) processQ6Q7(in uint8) {
-	d := &c.drive[c.selected]
-	if d.diskette == nil {
-		return
-	}
-	if !c.q6 {
-		if !c.q7 { // Q6L-Q7L: Read
-			track := d.tracksStep / stepsPerTrack
-			c.dataLatch, d.position = d.diskette.read(track, d.position)
-		} else { // Q6L-Q7H: Write the dataLatch value to disk. Shift data out
-			track := d.tracksStep / stepsPerTrack
-			d.position = d.diskette.write(track, d.position, c.dataLatch)
-		}
-	} else {
-		if !c.q7 { // Q6H-Q7L: Sense write protect / prewrite state
-			// Bit 7 of the control status register means write protected
-			c.dataLatch = 0 // Never write protected
-		} else { // Q6H-Q7H: Load data into the controller
-			c.dataLatch = in
-		}
-	}
-}
-
-func (d *cardDisk2Drive) insertDiskette(dt *diskette16sector) {
+func (d *cardDisk2Drive) insertDiskette(dt diskette) {
 	d.diskette = dt
 }
 
@@ -313,10 +318,6 @@ func (d *cardDisk2Drive) save(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = binary.Write(w, binary.BigEndian, d.position)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -330,10 +331,6 @@ func (d *cardDisk2Drive) load(r io.Reader) error {
 		return err
 	}
 	err = binary.Read(r, binary.BigEndian, &d.tracksStep)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &d.position)
 	if err != nil {
 		return err
 	}

@@ -23,18 +23,28 @@ const (
 )
 
 type diskette16sector struct {
-	track [numberOfTracks][]byte
+	track    [numberOfTracks][]byte
+	position int
 }
 
-func (d *diskette16sector) read(track int, position int) (value uint8, newPosition int) {
-	value = d.track[track][position]
-	newPosition = (position + 1) % nibBytesPerTrack
-	return
+func (d *diskette16sector) powerOn(_ uint64) {
+	// Not needed
+}
+func (d *diskette16sector) powerOff(_ uint64) {
+	// Not needed
 }
 
-func (d *diskette16sector) write(track int, position int, value uint8) int {
-	d.track[track][position] = value
-	return (position + 1) % nibBytesPerTrack
+func (d *diskette16sector) read(quarterTrack int, _ uint64) uint8 {
+	track := quarterTrack / stepsPerTrack
+	value := d.track[track][d.position]
+	d.position = (d.position + 1) % nibBytesPerTrack
+	return value
+}
+
+func (d *diskette16sector) write(quarterTrack int, value uint8, _ uint64) {
+	track := quarterTrack / stepsPerTrack
+	d.track[track][d.position] = value
+	d.position = (d.position + 1) % nibBytesPerTrack
 }
 
 func loadDisquette(filename string) (*diskette16sector, error) {
