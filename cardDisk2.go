@@ -36,7 +36,7 @@ type cardDisk2Drive struct {
 	diskette   *diskette16sector
 	power      bool // q4, not realy used for anything
 	position   int
-	magnets    uint8 // q3, q2, q1 and q0 with q0 on the LSB
+	phases     uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
 	tracksStep int   // Stepmotor for tracks position. 4 steps per track
 }
 
@@ -63,8 +63,8 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 		c.addCardSoftSwitchR(phase<<1, func(_ *ioC0Page) uint8 {
 			// Update magnets and position
 			drive := &c.drive[c.selected]
-			drive.magnets &^= (1 << phase)
-			drive.tracksStep = moveStep(drive.magnets, drive.tracksStep)
+			drive.phases &^= (1 << phase)
+			drive.tracksStep = moveStep(drive.phases, drive.tracksStep)
 
 			return c.dataLatch // All even addresses return the last dataLatch
 		}, fmt.Sprintf("PHASE%vOFF", phase))
@@ -72,8 +72,8 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 		c.addCardSoftSwitchR((phase<<1)+1, func(_ *ioC0Page) uint8 {
 			// Update magnets and position
 			drive := &c.drive[c.selected]
-			drive.magnets |= (1 << phase)
-			drive.tracksStep = moveStep(drive.magnets, drive.tracksStep)
+			drive.phases |= (1 << phase)
+			drive.tracksStep = moveStep(drive.phases, drive.tracksStep)
 
 			return 0
 		}, fmt.Sprintf("PHASE%vOFF", phase))
@@ -119,56 +119,62 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 	c.cardBase.assign(a, slot)
 }
 
+/*
+Stepper motor to position the track.
+
+There are a number of group of four magnets. The stepper motor can be thought as a long
+line of groups of magnets, each group on the same configuration. We call phase each of those
+magnets. The cog is attracted to the enabled magnets, and can stay aligned to a magnet or
+between two.
+
+Phases (magents):                       3   2   1   0   3   2   1   0   3   2   1   0
+Cog direction (step withn a group):   7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0
+
+We will consider that the cog would go to the prefferred postion if there is one. Independenly
+of the previous position. The previous position is only used to know if it goes up or down
+a full group.
+*/
+
 const (
-	maxStep      = 68 * 2 // What is the maximum quarter tracks a DiskII can go?
-	stepsPerTurn = 8
-)
-const (
-	dirN         = 0
-	dirNW        = 1
-	dirW         = 2
-	dirSW        = 3
-	dirS         = 4
-	dirSE        = 5
-	dirE         = 6
-	dirNE        = 7
-	dirUndefined = 8
+	undefinedPosition = -1
+	maxStep           = 68 * 2 // What is the maximum quarter tracks a DiskII can go?
+	stepsPerGroup     = 8
+	stepsPerTrack     = 4
 )
 
-var magnetsDirections = []int{
-	// Magnets bits, ESWN: east, south, west, north
-	dirUndefined, // 0000
-	dirN,         // 0001
-	dirW,         // 0010
-	dirNW,        // 0011
-	dirS,         // 0100
-	dirUndefined, // 0101
-	dirSW,        // 0110
-	dirW,         // 0111
-	dirE,         // 1000
-	dirNE,        // 1001
-	dirUndefined, // 1010
-	dirN,         // 1011
-	dirSE,        // 1100
-	dirE,         // 1101
-	dirS,         // 1110
-	dirUndefined, // 1111
+var cogPositions = []int{
+	undefinedPosition, // 0000, phases active
+	0,                 // 0001
+	2,                 // 0010
+	1,                 // 0011
+	4,                 // 0100
+	undefinedPosition, // 0101
+	3,                 // 0110
+	2,                 // 0111
+	6,                 // 1000
+	7,                 // 1001
+	undefinedPosition, // 1010
+	0,                 // 1011
+	5,                 // 1100
+	6,                 // 1101
+	4,                 // 1110
+	undefinedPosition, // 1111
 }
 
-func moveStep(magnets uint8, prevStep int) int {
+func moveStep(phases uint8, prevStep int) int {
 
-	//fmt.Printf("magnets: 0x%x\n", magnets)
+	//fmt.Printf("magnets: 0x%x\n", phases)
 
-	magnetsDirection := magnetsDirections[magnets]
-	if magnetsDirection == dirUndefined {
+	cogPosition := cogPositions[phases]
+	if cogPosition == undefinedPosition {
 		// Don't move if magnets don't push on a defined direction.
 		return prevStep
 	}
 
-	prevDirection := prevStep % stepsPerTurn // Direction, removing full revolutions.
-	delta := magnetsDirection - prevDirection
+	prevPosition := prevStep % stepsPerGroup // Direction, step in the current group of magnets.
+	delta := cogPosition - prevPosition
 	if delta < 0 {
-		delta = delta + stepsPerTurn
+		delta = delta + stepsPerGroup
 	}
 
 	var nextStep int
@@ -183,7 +189,7 @@ func moveStep(magnets uint8, prevStep int) int {
 		nextStep = prevStep
 	} else { // delta > 4
 		// Steps down
-		nextStep = prevStep + delta - stepsPerTurn
+		nextStep = prevStep + delta - stepsPerGroup
 		if nextStep < 0 {
 			nextStep = 0
 		}
@@ -218,10 +224,10 @@ func (c *cardDisk2) processQ6Q7(in uint8) {
 	}
 	if !c.q6 {
 		if !c.q7 { // Q6L-Q7L: Read
-			track := d.tracksStep / 4
+			track := d.tracksStep / stepsPerTrack
 			c.dataLatch, d.position = d.diskette.read(track, d.position)
 		} else { // Q6L-Q7H: Write the dataLatch value to disk. Shift data out
-			track := d.tracksStep / 4
+			track := d.tracksStep / stepsPerTrack
 			d.position = d.diskette.write(track, d.position, c.dataLatch)
 		}
 	} else {
@@ -299,7 +305,7 @@ func (d *cardDisk2Drive) save(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = binary.Write(w, binary.BigEndian, d.magnets)
+	err = binary.Write(w, binary.BigEndian, d.phases)
 	if err != nil {
 		return err
 	}
@@ -319,7 +325,7 @@ func (d *cardDisk2Drive) load(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	err = binary.Read(r, binary.BigEndian, &d.magnets)
+	err = binary.Read(r, binary.BigEndian, &d.phases)
 	if err != nil {
 		return err
 	}
