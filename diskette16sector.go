@@ -20,28 +20,58 @@ const (
 	nibImageSize     = numberOfTracks * nibBytesPerTrack
 	dskImageSize     = numberOfTracks * numberOfSectors * bytesPerSector
 	defaultVolumeTag = 254
+	cyclesPerBit     = 4
 )
 
 type diskette16sector struct {
-	track    [numberOfTracks][]byte
-	position int
+	track     [numberOfTracks][]byte
+	timeBased bool
+	// Not time based implementation
+	position int // For not time based implemenation
+	// Time based implementation, expermiental
+	cycleOn uint64 // Cycle when the disk was last turned on
 }
 
-func (d *diskette16sector) powerOn(_ uint64) {
-	// Not needed
+func (d *diskette16sector) powerOn(cycle uint64) {
+	d.cycleOn = cycle
 }
 func (d *diskette16sector) powerOff(_ uint64) {
 	// Not needed
 }
 
-func (d *diskette16sector) read(quarterTrack int, _ uint64) uint8 {
-	track := quarterTrack / stepsPerTrack
-	value := d.track[track][d.position]
+func (d *diskette16sector) getBitPositionInTrack(cycle uint64) int {
+	// Calculate how long the disk has been spinning. We move one bit every 4 cycles.
+	// In this implementation we don't take into account hot long the motor takes to be at full speed.
+	cycles := cycle - d.cycleOn
+	position := cycles / cyclesPerBit
+	return int(position % (8 * nibBytesPerTrack)) // Ignore full turns
+}
+
+func (d *diskette16sector) read(quarterTrack int, cycle uint64) uint8 {
+	track := d.track[quarterTrack/stepsPerTrack]
+	if d.timeBased {
+		bitPosition := d.getBitPositionInTrack(cycle)
+		bytePosition := bitPosition / 8
+		shift := uint(bitPosition % 8)
+		if shift == 1 {
+			// We continue having the previous data for a little longer
+			shift = 0
+		}
+		value := track[bytePosition]
+		value >>= shift
+		//fmt.Printf("%v, %v, %v, %x\n", bitPosition, shift, bytePosition, uint8(data))
+		return value
+	}
+	value := track[d.position]
 	d.position = (d.position + 1) % nibBytesPerTrack
+	//fmt.Printf("%v, %v, %v, %x\n", 0, 0, d.position, uint8(value))
 	return value
 }
 
 func (d *diskette16sector) write(quarterTrack int, value uint8, _ uint64) {
+	if d.timeBased {
+		panic("Write not implmented on time based disk implementation")
+	}
 	track := quarterTrack / stepsPerTrack
 	d.track[track][d.position] = value
 	d.position = (d.position + 1) % nibBytesPerTrack
@@ -49,6 +79,9 @@ func (d *diskette16sector) write(quarterTrack int, value uint8, _ uint64) {
 
 func loadDisquette(filename string) (*diskette16sector, error) {
 	var d diskette16sector
+
+	// Experimental
+	d.timeBased = true
 
 	data, err := loadResource(filename)
 	if err != nil {

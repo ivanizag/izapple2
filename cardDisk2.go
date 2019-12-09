@@ -126,13 +126,16 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 	c.cardBase.assign(a, slot)
 }
 
+// Q6: shift/load
+// Q7: read/write
+
 func (c *cardDisk2) softSwitchQ6Q7(index uint8, in uint8) uint8 {
 	switch index {
 	case 0xC: // Q6L
 		c.q6 = false
 	case 0xD: // Q6H
 		c.q6 = true
-	case 0xE: // Q/L
+	case 0xE: // Q7L
 		c.q7 = false
 	case 0xF: // Q7H
 		c.q7 = true
@@ -151,13 +154,13 @@ func (c *cardDisk2) processQ6Q7(in uint8) {
 	if d.diskette == nil {
 		return
 	}
-	if !c.q6 {
+	if !c.q6 { // shift
 		if !c.q7 { // Q6L-Q7L: Read
 			c.dataLatch = d.diskette.read(d.tracksStep, c.a.cpu.GetCycles())
 		} else { // Q6L-Q7H: Write the dataLatch value to disk. Shift data out
 			d.diskette.write(d.tracksStep, c.dataLatch, c.a.cpu.GetCycles())
 		}
-	} else {
+	} else { // load
 		if !c.q7 { // Q6H-Q7L: Sense write protect / prewrite state
 			// Bit 7 of the control status register means write protected
 			c.dataLatch = 0 // Never write protected
