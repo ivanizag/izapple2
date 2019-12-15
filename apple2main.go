@@ -25,6 +25,10 @@ func MainApple() *Apple2 {
 		"disk",
 		"<internal>/dos33.dsk",
 		"file to load on the first disk drive")
+	wozImage := flag.String(
+		"woz",
+		"",
+		"file to load on the first disk drive")
 	hardDiskImage := flag.String(
 		"hd",
 		"",
@@ -98,6 +102,16 @@ func MainApple() *Apple2 {
 		false,
 		"generate profile trace to analyse with pprof")
 	flag.Parse()
+
+	if *wozImage != "" {
+		d, err := loadDisquetteWoz(*wozImage)
+		if err != nil {
+			panic(err)
+		}
+		d.dump()
+		panic("Woz loaded")
+
+	}
 
 	var a *Apple2
 	var charGenMap charColumnMap
