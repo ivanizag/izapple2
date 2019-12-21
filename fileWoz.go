@@ -192,6 +192,14 @@ func loadFileWoz(filename string) (*fileWoz, error) {
 		return nil, errors.New("Woz version not supported")
 	}
 
+	// Discard not supported features
+	if f.info.DiskType != 1 {
+		return nil, errors.New("Only 5.25 disks are supported")
+	}
+	if f.info.BootSectorFormat == 2 { // Info not available in WOZ 1.0
+		return nil, errors.New("Woz 13 sector disks are not supported")
+	}
+
 	return &f, nil
 }
 
