@@ -1,5 +1,39 @@
 package apple2
 
+/*
+See:
+	https://applesaucefdc.com/woz/
+
+Emulation status for the disk used on the reference:
+	- How to begin
+		- DOS 3.3: Works
+		- * DOS 3.2: Not working, 13 sector disks can't boot
+	- Next choices
+		- Bouncing Kamungas: Works
+		- *** Commando: Not working
+		- Planetfall: Working
+		- Rescue Raiders: Working
+		- *** Sammy Lightfoot: Not working
+		- Stargate: Working
+	- Cross track sync
+		- *** Blazing Paddles: Not working
+		- *** Take 1: Not working
+		- *** Hard Hat Mack: Not working
+	- Half tracks
+		- The Bilestoad: Working
+	- Even more bit fiddling
+		- Dino Eggs: Working
+		- Crisis Mountain: Working
+		- Miner 2049er II: Working
+	- When bits aren't really bits
+		- *** The Print Shop Companion: Not working
+	- What is the lifespan of the data latch?
+		- *** First Math Adventures - Understanding Word Problems
+	- Reading Offset Data Streams
+		- Border Zone: Unknown, there is no UI to swap disks
+
+*/
+
 type disketteWoz struct {
 	data    *fileWoz
 	cycleOn uint64 // Cycle when the disk was last turned on
