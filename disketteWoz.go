@@ -1,5 +1,7 @@
 package apple2
 
+import "math/rand"
+
 /*
 See:
 	https://applesaucefdc.com/woz/
@@ -26,7 +28,7 @@ Emulation status for the disk used on the reference:
 		- Crisis Mountain: Working
 		- Miner 2049er II: Working
 	- When bits aren't really bits
-		- *** The Print Shop Companion: Not working
+		- The Print Shop Companion: Working
 	- What is the lifespan of the data latch?
 		- *** First Math Adventures - Understanding Word Problems
 	- Reading Offset Data Streams
@@ -43,6 +45,8 @@ type disketteWoz struct {
 	position  uint32
 	cycle     uint64
 	trackSize uint32
+
+	mc3470Buffer uint8 // Four bit buffer to detect weak bits and to add latency
 
 	visibleLatch          uint8
 	visibleLatchCountDown int8 // The visible latch stores a valid latch reading for 2 bit timings
@@ -65,8 +69,17 @@ func (d *disketteWoz) read(quarterTrack int, cycle uint64) uint8 {
 	// Process bits from woz
 	// TODO: avoid processing too many bits if delta is big
 	for i := uint64(0); i < deltaBits; i++ {
+		// Get next bit taking into account the MC3470 latency and weak bits
 		d.position++
-		bit := d.data.getBit(d.position, quarterTrack)
+		fluxBit := d.data.getBit(d.position, quarterTrack)
+		d.mc3470Buffer = (d.mc3470Buffer<<1 + fluxBit) & 0x0f
+		bit := (d.mc3470Buffer >> 1) & 0x1 // Use the previous to last bit to add latency
+		if d.mc3470Buffer == 0 && rand.Intn(100) < 3 {
+			// Four consecutive zeros.It'a a fake bit.
+			// Output a random value. 70% zero, 30% one
+			bit = 1
+		}
+
 		d.latch = (d.latch << 1) + bit
 		if d.latch >= 0x80 {
 			// Valid byte, store value a bit longer and clear the internal latch
