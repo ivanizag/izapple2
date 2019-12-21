@@ -168,6 +168,10 @@ func (c *cardDisk2) processQ6Q7(in uint8) {
 			c.dataLatch = in
 		}
 	}
+
+	if c.dataLatch >= 0x80 {
+		//fmt.Printf("Datalacth: 0x%.2x in cycle %v\n", c.dataLatch, c.a.cpu.GetCycles())
+	}
 }
 
 /*

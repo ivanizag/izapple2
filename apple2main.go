@@ -104,11 +104,11 @@ func MainApple() *Apple2 {
 	flag.Parse()
 
 	if *wozImage != "" {
-		d, err := loadDisquetteWoz(*wozImage)
+		f, err := loadFileWoz(*wozImage)
 		if err != nil {
 			panic(err)
 		}
-		d.dump()
+		f.dump()
 		panic("Woz loaded")
 
 	}
