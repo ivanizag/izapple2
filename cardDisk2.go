@@ -80,8 +80,8 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 
 	// Q4, power switch
 	c.addCardSoftSwitchR(0x8, func(_ *ioC0Page) uint8 {
-		drive := c.drive[c.selected]
-		if !drive.power {
+		drive := &c.drive[c.selected]
+		if drive.power {
 			drive.power = false
 			c.a.releaseFastMode()
 			if drive.diskette != nil {
@@ -91,7 +91,7 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 		return c.dataLatch
 	}, "Q4DRIVEOFF")
 	c.addCardSoftSwitchR(0x9, func(_ *ioC0Page) uint8 {
-		drive := c.drive[c.selected]
+		drive := &c.drive[c.selected]
 		if !drive.power {
 			drive.power = true
 			c.a.requestFastMode()
@@ -100,7 +100,7 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 			}
 		}
 		return 0
-	}, "")
+	}, "Q4DRIVEON")
 
 	// Q5, drive selecion
 	c.addCardSoftSwitchR(0xA, func(_ *ioC0Page) uint8 {
