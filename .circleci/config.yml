@@ -1,10 +1,9 @@
 version: 2
 jobs:
   build:
-    working_directory: /go/src/github.com/ivanizag/apple2
     docker:
-      - image: circleci/golang:1.10
+      - image: circleci/golang:1.12
     steps:
       - checkout
       - run: go get -d ./...
-      - run: go test . ./core6502
+      - run: go test ./...
