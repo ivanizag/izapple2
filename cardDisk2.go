@@ -39,13 +39,6 @@ type cardDisk2Drive struct {
 	tracksStep int   // Stepmotor for tracks position. 4 steps per track
 }
 
-type diskette interface {
-	powerOn(cycle uint64)
-	powerOff(cycle uint64)
-	read(quarterTrack int, cycle uint64) uint8
-	write(quarterTrack int, value uint8, cycle uint64)
-}
-
 const (
 	diskBitCycle           = 4   // There is a dataLatch bit transferred every 4 cycles
 	diskLatchReadCycles    = 7   // Loaded data is available for a little more than 7ns

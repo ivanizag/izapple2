@@ -27,13 +27,23 @@ type fileNib struct {
 	track [numberOfTracks][]byte
 }
 
-func loadNibOrDsk(filename string) (*fileNib, error) {
-	var f fileNib
-
+func loadFileNibOrDsk(filename string) (*fileNib, error) {
 	data, err := loadResource(filename)
 	if err != nil {
 		return nil, err
 	}
+
+	return newFileNibOrDsk(data)
+}
+
+func isFileNibOrDsk(data []uint8) bool {
+	size := len(data)
+	return size == nibImageSize || size == dskImageSize
+}
+
+func newFileNibOrDsk(data []uint8) (*fileNib, error) {
+	var f fileNib
+
 	size := len(data)
 
 	if size == nibImageSize {

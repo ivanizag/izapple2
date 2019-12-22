@@ -11,6 +11,12 @@ type diskette16sector struct {
 	position int
 }
 
+func newDisquette16Sector(f *fileNib) *diskette16sector {
+	var d diskette16sector
+	d.nib = f
+	return &d
+}
+
 func (d *diskette16sector) powerOn(cycle uint64) {
 	// Not used
 }
@@ -30,15 +36,4 @@ func (d *diskette16sector) write(quarterTrack int, value uint8, _ uint64) {
 	track := quarterTrack / stepsPerTrack
 	d.nib.track[track][d.position] = value
 	d.position = (d.position + 1) % nibBytesPerTrack
-}
-
-func loadDisquette(filename string) (*diskette16sectorTimed, error) {
-	var d diskette16sectorTimed
-
-	f, err := loadNibOrDsk(filename)
-	if err != nil {
-		return nil, err
-	}
-	d.nib = f
-	return &d, nil
 }

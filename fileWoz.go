@@ -87,12 +87,27 @@ func (f *fileWoz) getBit(position uint32, quarterTrack int) uint8 {
 }
 
 func loadFileWoz(filename string) (*fileWoz, error) {
-	var f fileWoz
-
 	data, err := loadResource(filename)
 	if err != nil {
 		return nil, err
 	}
+
+	return newFileWoz(data)
+}
+
+func isFileWoz(data []uint8) bool {
+	header := data[:len(headerWoz2)]
+	if bytes.Equal(headerWoz1, header) {
+		return true
+	}
+	if bytes.Equal(headerWoz2, header) {
+		return true
+	}
+	return false
+}
+
+func newFileWoz(data []uint8) (*fileWoz, error) {
+	var f fileWoz
 
 	// Verify header. Note, the CRC is not verified
 	header := data[:len(headerWoz2)]
@@ -190,14 +205,6 @@ func loadFileWoz(filename string) (*fileWoz, error) {
 		}
 	} else {
 		return nil, errors.New("Woz version not supported")
-	}
-
-	// Discard not supported features
-	if f.info.DiskType != 1 {
-		return nil, errors.New("Only 5.25 disks are supported")
-	}
-	if f.info.BootSectorFormat == 2 { // Info not available in WOZ 1.0
-		return nil, errors.New("Woz 13 sector disks are not supported")
 	}
 
 	return &f, nil
