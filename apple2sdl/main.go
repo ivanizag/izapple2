@@ -9,7 +9,9 @@ import (
 
 func main() {
 	a := apple2.MainApple()
-	SDLRun(a)
+	if a != nil {
+		SDLRun(a)
+	}
 }
 
 // SDLRun starts the Apple2 emulator on SDL
