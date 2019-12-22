@@ -28,7 +28,7 @@ func MainApple() *Apple2 {
 	wozImage := flag.String(
 		"woz",
 		"",
-		"file to load on the first disk drive")
+		"show WOZ file information")
 	hardDiskImage := flag.String(
 		"hd",
 		"",
@@ -109,7 +109,7 @@ func MainApple() *Apple2 {
 			panic(err)
 		}
 		f.dump()
-		panic("Woz loaded")
+		return nil
 
 	}
 

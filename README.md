@@ -12,7 +12,9 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - Apple //e enhanced with 128Kb of RAM
     - Base64A clone with 48Kb of base RAM and paginated ROM
 - Storage
+    - 16 Sector diskettes in NIB format
     - 16 Sector diskettes in DSK format
+    - 16 Sector diskettes in WOZ 1.0 or 2.0 format (read only)
     - ProDos hard disk
 - Emulated extension cards:
     - DiskII controller
@@ -59,7 +61,7 @@ casa@servidor:~$ ./apple2sdl
 ![DOS 3.3 started](doc/dos33.png)
 
 ### Play games
-Download a DSK file locally or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source) with the `-disk` parameter:
+Download a DSK or WOZ file or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source) with the `-disk` parameter:
 ```
 casa@servidor:~$ ./apple2sdl -disk "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
 ```
@@ -169,6 +171,8 @@ Only valid on SDL mode
         dump to the console the sofswitches calls
   -vidHDSlot int
     	  slot for the VidHD card, only for //e models. -1 for none (default 2)
+  -woz string
+    	  show WOZ file information
 
 
 ```
