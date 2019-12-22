@@ -1,6 +1,9 @@
 package apple2
 
-import "math/rand"
+import (
+	"errors"
+	"math/rand"
+)
 
 /*
 See:
@@ -32,7 +35,10 @@ Emulation status for the disk used on the reference:
 	- What is the lifespan of the data latch?
 		- *** First Math Adventures - Understanding Word Problems
 	- Reading Offset Data Streams
-		- Border Zone: Unknown, there is no UI to swap disks
+		- *** Wings of Fury: Not working
+		- Stickybear Town Builder: Working
+	- Optimal bit timing of WOZ 2,0
+		- * Border Zone: Unknown, there is no UI to swap disks
 
 */
 
@@ -50,6 +56,20 @@ type disketteWoz struct {
 
 	visibleLatch          uint8
 	visibleLatchCountDown int8 // The visible latch stores a valid latch reading for 2 bit timings
+}
+
+func newDisquetteWoz(f *fileWoz) (*disketteWoz, error) {
+	// Discard not supported features
+	if f.info.DiskType != 1 {
+		return nil, errors.New("Only 5.25 disks are supported")
+	}
+	if f.info.BootSectorFormat == 2 { // Info not available in WOZ 1.0
+		return nil, errors.New("Woz 13 sector disks are not supported")
+	}
+
+	var d disketteWoz
+	d.data = f
+	return &d, nil
 }
 
 func (d *disketteWoz) powerOn(cycle uint64) {
@@ -106,16 +126,4 @@ func (d *disketteWoz) read(quarterTrack int, cycle uint64) uint8 {
 
 func (d *disketteWoz) write(quarterTrack int, value uint8, _ uint64) {
 	panic("Write not implemented on woz disk implementation")
-}
-
-func loadDisquetteWoz(filename string) (*disketteWoz, error) {
-	var d disketteWoz
-
-	f, err := loadFileWoz(filename)
-	if err != nil {
-		return nil, err
-	}
-	d.data = f
-
-	return &d, nil
 }

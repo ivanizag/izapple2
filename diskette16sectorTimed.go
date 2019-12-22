@@ -5,6 +5,12 @@ type diskette16sectorTimed struct {
 	cycleOn uint64 // Cycle when the disk was last turned on
 }
 
+func newDisquette16SectorTimed(f *fileNib) *diskette16sectorTimed {
+	var d diskette16sectorTimed
+	d.nib = f
+	return &d
+}
+
 func (d *diskette16sectorTimed) powerOn(cycle uint64) {
 	d.cycleOn = cycle
 }
@@ -37,16 +43,4 @@ func (d *diskette16sectorTimed) read(quarterTrack int, cycle uint64) uint8 {
 
 func (d *diskette16sectorTimed) write(quarterTrack int, value uint8, _ uint64) {
 	panic("Write not implemented on time based disk implementation")
-}
-
-func loadDisquetteTimed(filename string) (*diskette16sectorTimed, error) {
-	var d diskette16sectorTimed
-
-	f, err := loadNibOrDsk(filename)
-	if err != nil {
-		return nil, err
-	}
-	d.nib = f
-
-	return &d, nil
 }
