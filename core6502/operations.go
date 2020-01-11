@@ -12,20 +12,20 @@ func buildOpTransfer(regSrc int, regDst int) opFunc {
 
 func buildOpIncDec(inc bool) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		value, setValue := resolveGetSetValue(s, line, opcode)
+		value := resolveValue(s, line, opcode)
 		if inc {
 			value++
 		} else {
 			value--
 		}
 		s.reg.updateFlagZN(value)
-		setValue(value)
+		resolveSetValue(s, line, opcode, value)
 	}
 }
 
 func buildOpShift(isLeft bool, isRotate bool) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		value, setValue := resolveGetSetValue(s, line, opcode)
+		value := resolveValue(s, line, opcode)
 
 		oldCarry := s.reg.getFlagBit(flagC)
 		var carry bool
@@ -44,7 +44,7 @@ func buildOpShift(isLeft bool, isRotate bool) opFunc {
 		}
 		s.reg.updateFlag(flagC, carry)
 		s.reg.updateFlagZN(value)
-		setValue(value)
+		resolveSetValue(s, line, opcode, value)
 	}
 }
 
@@ -58,9 +58,8 @@ func buildOpLoad(regDst int) opFunc {
 
 func buildOpStore(regSrc int) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		setValue := resolveSetValue(s, line, opcode)
 		value := s.reg.getRegister(regSrc)
-		setValue(value)
+		resolveSetValue(s, line, opcode, value)
 	}
 }
 
@@ -96,12 +95,13 @@ func buildOpBranchOnBit(bit uint8, test bool) opFunc {
 
 func buildOpSetBit(bit uint8, set bool) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
-		value, setValue := resolveGetSetValue(s, line, opcode)
+		value := resolveValue(s, line, opcode)
 		if set {
-			setValue(value | (1 << bit))
+			value = value | (1 << bit)
 		} else {
-			setValue(value &^ (1 << bit))
+			value = value &^ (1 << bit)
 		}
+		resolveSetValue(s, line, opcode, value)
 	}
 }
 
@@ -117,17 +117,17 @@ func opBIT(s *State, line []uint8, opcode opcode) {
 }
 
 func opTRB(s *State, line []uint8, opcode opcode) {
-	value, setValue := resolveGetSetValue(s, line, opcode)
+	value := resolveValue(s, line, opcode)
 	a := s.reg.getA()
 	s.reg.updateFlag(flagZ, (value&a) == 0)
-	setValue(value &^ a)
+	resolveSetValue(s, line, opcode, value&^a)
 }
 
 func opTSB(s *State, line []uint8, opcode opcode) {
-	value, setValue := resolveGetSetValue(s, line, opcode)
+	value := resolveValue(s, line, opcode)
 	a := s.reg.getA()
 	s.reg.updateFlag(flagZ, (value&a) == 0)
-	setValue(value | a)
+	resolveSetValue(s, line, opcode, value|a)
 }
 
 func buildOpCompare(reg int) opFunc {
@@ -305,6 +305,5 @@ func opBRKAlt(s *State, line []uint8, opcode opcode) {
 }
 
 func opSTZ(s *State, line []uint8, opcode opcode) {
-	setValue := resolveSetValue(s, line, opcode)
-	setValue(0)
+	resolveSetValue(s, line, opcode, 0)
 }

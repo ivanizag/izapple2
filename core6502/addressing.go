@@ -29,46 +29,44 @@ func getWordInLine(line []uint8) uint16 {
 }
 
 func resolveValue(s *State, line []uint8, opcode opcode) uint8 {
-	getValue, _, _ := resolve(s, line, opcode)
-	return getValue()
+	switch opcode.addressMode {
+	case modeAccumulator:
+		return s.reg.getA()
+	case modeImplicitX:
+		return s.reg.getX()
+	case modeImplicitY:
+		return s.reg.getY()
+	case modeImmediate:
+		return line[1]
+	}
+
+	// The value is in memory
+	address := resolveAddress(s, line, opcode)
+	return s.mem.Peek(address)
 }
 
-func resolveGetSetValue(s *State, line []uint8, opcode opcode) (value uint8, setValue func(uint8)) {
-	getValue, setValue, _ := resolve(s, line, opcode)
-	value = getValue()
-	return
-}
+func resolveSetValue(s *State, line []uint8, opcode opcode, value uint8) {
+	switch opcode.addressMode {
+	case modeAccumulator:
+		s.reg.setA(value)
+		return
+	case modeImplicitX:
+		s.reg.setX(value)
+		return
+	case modeImplicitY:
+		s.reg.setY(value)
+		return
+	}
 
-func resolveSetValue(s *State, line []uint8, opcode opcode) func(uint8) {
-	_, setValue, _ := resolve(s, line, opcode)
-	return setValue
+	// The value is in memory
+	address := resolveAddress(s, line, opcode)
+	s.mem.Poke(address, value)
 }
 
 func resolveAddress(s *State, line []uint8, opcode opcode) uint16 {
-	_, _, address := resolve(s, line, opcode)
-	return address
-}
-
-func resolve(s *State, line []uint8, opcode opcode) (getValue func() uint8, setValue func(uint8), address uint16) {
-	hasAddress := true
-	register := regNone
+	var address uint16
 
 	switch opcode.addressMode {
-	case modeAccumulator:
-		getValue = func() uint8 { return s.reg.getA() }
-		hasAddress = false
-		register = regA
-	case modeImplicitX:
-		getValue = func() uint8 { return s.reg.getX() }
-		hasAddress = false
-		register = regX
-	case modeImplicitY:
-		getValue = func() uint8 { return s.reg.getY() }
-		hasAddress = false
-		register = regY
-	case modeImmediate:
-		getValue = func() uint8 { return line[1] }
-		hasAddress = false
 	case modeZeroPage:
 		address = uint16(line[1])
 	case modeZeroPageX:
@@ -103,25 +101,10 @@ func resolve(s *State, line []uint8, opcode opcode) (getValue func() uint8, setV
 		// Two addressing modes combined. We refer to the second one, relative,
 		// placed one byte after the zeropage reference
 		address = s.reg.getPC() + uint16(int8(line[2])) // Note: line[2] is signed
-
 	default:
 		panic("Assert failed. Missing addressing mode")
 	}
-
-	if hasAddress {
-		getValue = func() uint8 { return s.mem.Peek(address) }
-	}
-
-	setValue = func(value uint8) {
-		if hasAddress {
-			s.mem.Poke(address, value)
-		} else if register != regNone {
-			s.reg.setRegister(register, value)
-		} else {
-			panic("Assert failed. Should never happen")
-		}
-	}
-	return
+	return address
 }
 
 func lineString(line []uint8, opcode opcode) string {
