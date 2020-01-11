@@ -1,13 +1,26 @@
 package main
 
 import (
+	"flag"
 	"unsafe"
 
 	"github.com/ivanizag/apple2"
+	"github.com/pkg/profile"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 func main() {
+	prof := flag.Bool(
+		"profile",
+		false,
+		"generate profile trace to analyse with pprof")
+	flag.Parse()
+	if *prof {
+		// See the log with:
+		//    go tool pprof --pdf ~/go/bin/apple2sdl /tmp/profile329536248/cpu.pprof > profile.pdf
+		defer profile.Start().Stop()
+	}
+
 	a := apple2.MainApple()
 	if a != nil {
 		SDLRun(a)

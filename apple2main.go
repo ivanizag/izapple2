@@ -97,10 +97,6 @@ func MainApple() *Apple2 {
 		"model",
 		"2enh",
 		"set base model. Models available 2plus, 2e, 2enh, base64a")
-	profile := flag.Bool(
-		"profile",
-		false,
-		"generate profile trace to analyse with pprof")
 	flag.Parse()
 
 	if *wozImage != "" {
@@ -174,7 +170,6 @@ func MainApple() *Apple2 {
 	a.cpu.SetTrace(*traceCPU)
 	a.io.setTrace(*traceSS)
 	a.io.setPanicNotImplemented(*panicSS)
-	a.setProfile(*profile)
 
 	// Load ROM if not loaded already
 	if *romFile != "" {
