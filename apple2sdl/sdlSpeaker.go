@@ -48,7 +48,12 @@ func newSDLSpeaker() *sdlSpeaker {
 
 // Click receives a speaker click. The argument is the CPU cycle when it is generated
 func (s *sdlSpeaker) Click(cycle uint64) {
-	s.clickChannel <- cycle
+	select {
+		case s.clickChannel <- cycle:
+			// Sent
+		default:
+			// The channel is full, the click is lost.
+	}
 }
 
 func stateToLevel(state bool) C.Uint8 {
