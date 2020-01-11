@@ -25,6 +25,7 @@ type Apple2 struct {
 	isColor             bool
 	fastMode            bool
 	fastRequestsCounter int
+	profile             bool
 	showSpeed           bool
 }
 
@@ -89,6 +90,15 @@ func (a *Apple2) Run() {
 			speedReferenceCycles = newCycles
 		}
 	}
+}
+
+func (a *Apple2) setProfiling(value bool) {
+	a.profile = value
+}
+
+// IsProfiling returns true when profiling
+func (a *Apple2) IsProfiling() bool {
+	return a.profile
 }
 
 const (
