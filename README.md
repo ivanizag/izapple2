@@ -15,7 +15,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - 16 Sector diskettes in NIB format
     - 16 Sector diskettes in DSK format
     - 16 Sector diskettes in WOZ 1.0 or 2.0 format (read only)
-    - ProDos hard disk
+    - Hard disk with ProDOS and SmartPort support
 - Emulated extension cards:
     - DiskII controller
     - 16Kb Language Card

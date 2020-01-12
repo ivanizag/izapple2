@@ -15,8 +15,9 @@ See:
 
 type cardHardDisk struct {
 	cardBase
-	disk  *hardDisk
-	trace bool
+	disk      *hardDisk
+	mliParams uint16
+	trace     bool
 }
 
 func buildHardDiskRom(slot int) []uint8 {
@@ -53,14 +54,15 @@ func buildHardDiskRom(slot int) []uint8 {
 	copy(data[0x40:], []uint8{
 		0x4c, 0x80, 0xc0 + uint8(slot), // JMP $cs80 ; Prodos Entrypoint
 
-		// 3 btes later, smartport entrypoint. Uses the ProDos MLI calling convention
+		// 3 bytes later, smartport entrypoint. Uses the ProDos MLI calling convention
 		0x68,                   // PLA
-		0x8d, ssBase + 4, 0xc0, // STA $c0n4 ; Softswitch 4, store LO(cmdblock)
+		0x8d, ssBase + 4, 0xc0, // STA $c0n4 ; Softswitch 4, store LO(cmdBlock)
 		0xa8,                   // TAY ; We will need it later
 		0x68,                   // PLA
-		0x8d, ssBase + 5, 0xc0, // STA $c0n5 ; Softswitch 5, store HI(cmdblock)
+		0x8d, ssBase + 5, 0xc0, // STA $c0n5 ; Softswitch 5, store HI(cmdBlock)
 		0x48,       // PHA
 		0x98,       // TYA
+		0x18,       // CLC
 		0x69, 0x03, // ADC #$03 ; Fix return address past the cmdblock
 		0x48,                   // PHA
 		0xad, ssBase + 3, 0xc0, // LDA $C0n3 ; Softswitch 3, execute command. Error code in reg A.
@@ -107,14 +109,13 @@ const (
 
 func (c *cardHardDisk) assign(a *Apple2, slot int) {
 	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
-
 		// Prodos entry point
 		command := a.mmu.Peek(0x42)
 		unit := a.mmu.Peek(0x43)
 		address := uint16(a.mmu.Peek(0x44)) + uint16(a.mmu.Peek(0x45))<<8
 		block := uint16(a.mmu.Peek(0x46)) + uint16(a.mmu.Peek(0x47))<<8
 		if c.trace {
-			fmt.Printf("[CardHardDisk] Command %v on unit $%x, block %v to $%x.\n", command, unit, block, address)
+			fmt.Printf("[CardHardDisk] Prodos command %v on unit $%x, block %v to $%x.\n", command, unit, block, address)
 		}
 
 		switch command {
@@ -139,16 +140,39 @@ func (c *cardHardDisk) assign(a *Apple2, slot int) {
 	}, "HDBLOCKHI")
 
 	c.addCardSoftSwitchR(3, func(*ioC0Page) uint8 {
+		// Smart port entry point
+		command := c.a.mmu.Peek(c.mliParams + 1)
+		paramsAddress := uint16(c.a.mmu.Peek(c.mliParams+2)) + uint16(c.a.mmu.Peek(c.mliParams+3))<<8
+		unit := a.mmu.Peek(paramsAddress + 1)
+		address := uint16(a.mmu.Peek(paramsAddress+2)) + uint16(a.mmu.Peek(paramsAddress+3))<<8
+		block := uint16(a.mmu.Peek(paramsAddress+4)) + uint16(a.mmu.Peek(paramsAddress+5))<<8
 		if c.trace {
-			fmt.Printf("[CardHardDisk] Smart port command. Not implemented.\n")
+			fmt.Printf("[CardHardDisk] Smart port command %v on unit $%x, block %v to $%x.\n", command, unit, block, address)
 		}
-		return proDosDeviceErrorIO
+
+		switch command {
+		case proDosDeviceCommandStatus:
+			return proDosDeviceNoError
+		case proDosDeviceCommandRead:
+			return c.readBlock(block, address)
+		case proDosDeviceCommandWrite:
+			return c.writeBlock(block, address)
+		default:
+			// Smartport device command not supported
+			return proDosDeviceErrorIO
+		}
 	}, "HDSMARTPORT")
-	c.addCardSoftSwitchW(4, func(*ioC0Page, uint8) {
-		// Not implemented
+	c.addCardSoftSwitchW(4, func(_ *ioC0Page, value uint8) {
+		c.mliParams = (c.mliParams & 0xff00) + uint16(value)
+		if c.trace {
+			fmt.Printf("[CardHardDisk] Smart port LO: 0x%x.\n", c.mliParams)
+		}
 	}, "HDSMARTPORTLO")
-	c.addCardSoftSwitchW(5, func(*ioC0Page, uint8) {
-		// Not implemented
+	c.addCardSoftSwitchW(5, func(_ *ioC0Page, value uint8) {
+		c.mliParams = (c.mliParams & 0x00ff) + (uint16(value) << 8)
+		if c.trace {
+			fmt.Printf("[CardHardDisk] Smart port HI: 0x%x.\n", c.mliParams)
+		}
 	}, "HDSMARTPORTHI")
 
 	c.cardBase.assign(a, slot)
