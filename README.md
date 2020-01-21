@@ -71,7 +71,7 @@ casa@servidor:~$ ./apple2sdl -disk "https://www.apple.asimov.net/images/games/ac
 Download the excellent [Total Replay](https://archive.org/details/TotalReplay) compilation by
 [a2-4am](https://github.com/a2-4am/4cade). Run it with the `-hd` parameter:
 ```
-casa@servidor:~$ ./apple2sdl -hd "Total Replay v2.0.2mg"
+casa@servidor:~$ ./apple2sdl -hd "Total Replay v3.0.2mg"
 ```
 Displays super hi-res box art as seen with the VidHD card.
 
