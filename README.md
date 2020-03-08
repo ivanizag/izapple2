@@ -19,7 +19,8 @@ Portable emulator of an Apple II+ or //e. Written in Go.
 - Emulated extension cards:
     - DiskII controller
     - 16Kb Language Card
-    - 256Kb Saturn RAM 
+    - 256Kb Saturn RAM
+    - 1Mb Memory Expansion Card
     - ThunderClock Plus real time clock
     - Bootable hard disk card
     - Apple //e 80 columns with 64Kb extra RAM
@@ -118,8 +119,8 @@ Line:
 - F5: Toggle speed between real and fastest
 - Ctrl-F5: Show current speed in Mhz
 - F6: Toggle between NTSC color TV and green phosphor monochrome monitor
-- F7: Save current state to disk
-- F8: Restore state from disk
+- F7: Save current state to disk (incomplete)
+- F8: Restore state from disk (incomplete)
 - F10: Cycle character generator codepages. Only if the character generator ROM has more than one 2Kb page.
 - F11: Toggle on and off the trace to console of the CPU execution
 - F12: Save a screen snapshot to a file `snapshot.png`
@@ -139,6 +140,8 @@ Only valid on SDL mode
         rom file for the disk drive controller (default "<internal>/DISK2.rom")
   -dumpChars
         shows the character map
+  -fastChipSlot int
+    	slot for the FASTChip accelerator card, -1 for none (default 3)        
   -fastDisk
         set fast mode when the disks are spinning (default true)
   -hd string
@@ -147,6 +150,8 @@ Only valid on SDL mode
         slot for the hard drive if present. -1 for none. (default -1)
   -languageCardSlot int
         slot for the 16kb language card. -1 for none
+  -memoryExpSlot int
+    	  slot for the Memory Expansion card with 1GB. -1 for none (default 4)
   -mhz float
         cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
   -model string
@@ -162,7 +167,7 @@ Only valid on SDL mode
   -saturnCardSlot int
         slot for the 256kb Saturn card. -1 for none (default -1)
   -thunderClockCardSlot int
-        slot for the ThunderClock Plus card. -1 for none (default 4)
+        slot for the ThunderClock Plus card. -1 for none (default 5)
   -traceCpu
         dump to the console the CPU execution. Use F11 to toggle.
   -traceHD

@@ -154,6 +154,18 @@ func (a *Apple2) AddSaturnCard(slot int) {
 	a.insertCard(&cardSaturn{}, slot)
 }
 
+// AddMemoryExpansionCard inserts an Apple II Memory Expansion card with 1GB
+func (a *Apple2) AddMemoryExpansionCard(slot int, romFile string) error {
+	var c cardMemoryExpansion
+	data, err := loadResource(romFile)
+	if err != nil {
+		return err
+	}
+	c.loadRom(data)
+	a.insertCard(&c, slot)
+	return nil
+}
+
 // AddThunderClockPlusCard inserts a ThunderClock Plus clock card
 func (a *Apple2) AddThunderClockPlusCard(slot int, romFile string) error {
 	var c cardThunderClockPlus

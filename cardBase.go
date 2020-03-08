@@ -12,8 +12,9 @@ type card interface {
 
 type cardBase struct {
 	a        *Apple2
-	rom      *memoryRange
-	romExtra *memoryRange
+	romCsxx  *memoryRange
+	romC8xx  *memoryRange
+	romCxxx  *memoryRange
 	slot     int
 	_ssr     [16]softSwitchR
 	_ssw     [16]softSwitchW
@@ -25,25 +26,39 @@ func (c *cardBase) loadRom(data []uint8) {
 	if c.a != nil {
 		panic("Assert failed. Rom must be loaded before inserting the card in the slot")
 	}
-	if len(data) >= 0x100 {
-		c.rom = newMemoryRange(0, data)
-	}
-	if len(data) >= 0x800 {
-		c.romExtra = newMemoryRange(0, data)
+	if len(data) == 0x100 {
+		// Just 256 bytes in Cs00
+		c.romCsxx = newMemoryRange(0, data)
+	} else if len(data) == 0x800 {
+		// The file has C800 to C8FF
+		// The 256 bytes in Cx00 are copied from the first page in C800
+		c.romCsxx = newMemoryRange(0, data)
+		c.romC8xx = newMemoryRange(0xc800, data)
+	} else if len(data) == 0x1000 {
+		// The file covers the full Cxxx range. Only showing the page
+		// corresponding to the slot used.
+		c.romCxxx = newMemoryRange(0xc000, data)
+	} else {
+		panic("Invalid ROM size")
 	}
 }
 
 func (c *cardBase) assign(a *Apple2, slot int) {
 	c.a = a
 	c.slot = slot
-	if slot != 0 && c.rom != nil {
-		c.rom.base = uint16(0xc000 + slot*0x100)
-		a.mmu.setCardROM(slot, c.rom)
-	}
-
-	if slot != 0 && c.romExtra != nil {
-		c.romExtra.base = uint16(0xc800)
-		a.mmu.setCardROMExtra(slot, c.romExtra)
+	if slot != 0 {
+		if c.romCsxx != nil {
+			// Relocate to the assigned slot
+			c.romCsxx.base = uint16(0xc000 + slot*0x100)
+			a.mmu.setCardROM(slot, c.romCsxx)
+		}
+		if c.romC8xx != nil {
+			a.mmu.setCardROMExtra(slot, c.romC8xx)
+		}
+		if c.romCxxx != nil {
+			a.mmu.setCardROM(slot, c.romCxxx)
+			a.mmu.setCardROMExtra(slot, c.romCxxx)
+		}
 	}
 
 	for i := 0; i < 0x10; i++ {

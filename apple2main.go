@@ -61,9 +61,13 @@ func MainApple() *Apple2 {
 		"fastChipSlot",
 		3,
 		"slot for the FASTChip accelerator card, -1 for none")
+	memoryExpansionCardSlot := flag.Int(
+		"memoryExpSlot",
+		4,
+		"slot for the Memory Expansion card with 1GB. -1 for none")
 	thunderClockCardSlot := flag.Int(
 		"thunderClockCardSlot",
-		4,
+		5,
 		"slot for the ThunderClock Plus card. -1 for none")
 	mono := flag.Bool(
 		"mono",
@@ -199,8 +203,16 @@ func MainApple() *Apple2 {
 	if *saturnCardSlot >= 0 {
 		a.AddSaturnCard(*saturnCardSlot)
 	}
+	if *memoryExpansionCardSlot >= 0 {
+		err := a.AddMemoryExpansionCard(*memoryExpansionCardSlot,
+			"<internal>/MemoryExpansionCard-341-0344a.bin")
+		if err != nil {
+			panic(err)
+		}
+	}
 	if *thunderClockCardSlot > 0 {
-		err := a.AddThunderClockPlusCard(*thunderClockCardSlot, "<internal>/ThunderclockPlusROM.bin")
+		err := a.AddThunderClockPlusCard(*thunderClockCardSlot,
+			"<internal>/ThunderclockPlusROM.bin")
 		if err != nil {
 			panic(err)
 		}
