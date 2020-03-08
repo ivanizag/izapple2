@@ -131,7 +131,7 @@ Only valid on SDL mode
 
 ```
   -charRom string
-        rom file for the character generator (default "<internal>/Apple2rev7CharGen.rom")
+        rom file for the character generator (default "<default>")
   -disk string
         file to load on the first disk drive (default "<internal>/dos33.dsk")
   -disk2Slot int
@@ -163,7 +163,7 @@ Only valid on SDL mode
   -profile
         generate profile trace to analyse with pprof
   -rom string
-        main rom file (default "<internal>/Apple2_Plus.rom")
+        main rom file (default "<default>")
   -saturnCardSlot int
         slot for the 256kb Saturn card. -1 for none (default -1)
   -thunderClockCardSlot int
