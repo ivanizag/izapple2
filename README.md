@@ -54,7 +54,7 @@ No installation required. [Download](https://github.com/ivanizag/apple2/releases
 
 ### Default mode
 
-Execute without parameters to have an emulated Apple II+ with 64kb booting DOS 3.3 ready to run Applesoft:
+Execute without parameters to have an emulated Apple //e Enhanced with 128kb booting DOS 3.3 ready to run Applesoft:
 ```
 casa@servidor:~$ ./apple2sdl
 ```
