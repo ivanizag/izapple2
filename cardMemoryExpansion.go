@@ -28,7 +28,6 @@ value in the range $F0-FF. The top nybble can be any value  when you write it,
 but it will always be “F” when you read it. If the card has more than one
 Megabyte of RAM, the top nybble will be a meaningful part of the address.
 
-
 */
 const (
 	memoryExpansionSize256  = 256 * 1024
@@ -89,6 +88,13 @@ func (c *cardMemoryExpansion) assign(a *Apple2, slot int) {
 		}
 		c.index = (c.index + 1) & memoryExpansionMask
 	}, "MEMORYEXW")
+
+	// The rest of the softswitches return 255, at least on //e and //c
+	for i := uint8(4); i < 16; i++ {
+		c.addCardSoftSwitchR(i, func(*ioC0Page) uint8 {
+			return 255
+		}, "MEMORYEXUNUSEDR")
+	}
 
 	c.cardBase.assign(a, slot)
 }
