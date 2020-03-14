@@ -47,6 +47,7 @@ func SDLRun(a *apple2.Apple2) {
 
 	go a.Run()
 
+	paused := false
 	running := true
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -64,6 +65,15 @@ func SDLRun(a *apple2.Apple2) {
 			case *sdl.JoyButtonEvent:
 				j.putButtonEvent(t)
 			}
+		}
+
+		if paused != a.IsPaused() {
+			if a.IsPaused() {
+				window.SetTitle(a.Name + " - PAUSED!")
+			} else {
+				window.SetTitle(a.Name)
+			}
+			paused = a.IsPaused()
 		}
 
 		img := apple2.Snapshot(a)
