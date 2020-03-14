@@ -27,6 +27,7 @@ type Apple2 struct {
 	fastRequestsCounter int
 	profile             bool
 	showSpeed           bool
+	paused              bool
 }
 
 const (
@@ -48,7 +49,13 @@ func (a *Apple2) Run() {
 
 	for {
 		// Run a 6502 step
-		a.cpu.ExecuteInstruction()
+		if !a.paused {
+			a.cpu.ExecuteInstruction()
+		} else {
+			time.Sleep(200 * time.Millisecond)
+			referenceTime = time.Now()
+			speedReferenceTime = referenceTime
+		}
 
 		// Execute meta commands
 		commandsPending := true
@@ -92,6 +99,11 @@ func (a *Apple2) Run() {
 	}
 }
 
+// IsPaused returns true when emulator is paused
+func (a *Apple2) IsPaused() bool {
+	return a.paused
+}
+
 func (a *Apple2) setProfiling(value bool) {
 	a.profile = value
 }
@@ -122,6 +134,8 @@ const (
 	CommandKill
 	// CommandReset executes a 6502 reset
 	CommandReset
+	// CommandPauseUnpauseEmulator allows the Pause button to freeze the emulator for a coffee break
+	CommandPauseUnpauseEmulator
 )
 
 // SendCommand enqueues a command to the emulator thread
@@ -164,6 +178,8 @@ func (a *Apple2) executeCommand(command int) {
 		a.cpu.SetTrace(!a.cpu.GetTrace())
 	case CommandReset:
 		a.cpu.Reset()
+	case CommandPauseUnpauseEmulator:
+		a.paused = !a.paused
 	}
 }
 
