@@ -14,10 +14,11 @@ See:
 
 type cardFastChip struct {
 	cardBase
-	unlocked      bool
-	unlockCounter uint8
-	enabled       bool
-	accelerated   bool
+	unlocked       bool
+	unlockCounter  uint8
+	enabled        bool
+	accelerated    bool
+	configRegister uint8
 }
 
 func buildFastChipRom() []uint8 {
@@ -43,6 +44,7 @@ func (c *cardFastChip) assign(a *Apple2, slot int) {
 		} else {
 			c.unlockCounter = 0
 			c.unlocked = false
+			c.enabled = false
 		}
 	}, "FASTCHIP-LOCK")
 
@@ -53,20 +55,36 @@ func (c *cardFastChip) assign(a *Apple2, slot int) {
 	}, "FASTCHIP-ENABLE")
 
 	a.io.addSoftSwitchW(0x6d, func(_ *ioC0Page, value uint8) {
-		if c.unlocked && c.enabled {
-			newAccelerated := (value > fastChipNormalSpeed)
-			if newAccelerated == c.accelerated {
-				// No change requested
-				return
-			}
-			if newAccelerated {
-				a.requestFastMode()
-			} else {
-				a.releaseFastMode()
-			}
-			c.accelerated = newAccelerated
+		if c.enabled {
+			c.setSpeed(a, value)
 		}
 	}, "FASTCHIP-SPEED")
 
+	a.io.addSoftSwitchW(0x6e, func(_ *ioC0Page, value uint8) {
+		if c.enabled {
+			c.configRegister = value
+		}
+	}, "FASTCHIP-CONFIG")
+
+	a.io.addSoftSwitchW(0x6f, func(_ *ioC0Page, value uint8) {
+		if c.enabled && c.configRegister == 0 {
+			c.setSpeed(a, value)
+		}
+	}, "FASTCHIP-CONFIG")
+
 	c.cardBase.assign(a, slot)
+}
+
+func (c *cardFastChip) setSpeed(a *Apple2, value uint8) {
+	newAccelerated := (value > fastChipNormalSpeed)
+	if newAccelerated == c.accelerated {
+		// No change requested
+		return
+	}
+	if newAccelerated {
+		a.requestFastMode()
+	} else {
+		a.releaseFastMode()
+	}
+	c.accelerated = newAccelerated
 }
