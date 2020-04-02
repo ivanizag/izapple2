@@ -77,7 +77,7 @@ func (s *State) ExecuteInstruction() {
 	opcode.action(s, s.lineCache, opcode)
 	s.cycles += uint64(opcode.cycles)
 	if s.trace {
-		fmt.Printf("%v, [%02x]\n", s.reg, s.lineCache)
+		fmt.Printf("%v, [%02x]\n", s.reg, s.lineCache[0:opcode.bytes])
 	}
 }
 
