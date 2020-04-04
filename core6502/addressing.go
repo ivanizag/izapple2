@@ -117,7 +117,7 @@ func lineString(line []uint8, opcode opcode) string {
 	case modeAccumulator:
 		t += fmt.Sprintf(" A")
 	case modeImmediate:
-		t += fmt.Sprintf(" #%02x", line[1])
+		t += fmt.Sprintf(" #$%02x", line[1])
 	case modeZeroPage:
 		t += fmt.Sprintf(" $%02x", line[1])
 	case modeZeroPageX:
@@ -144,7 +144,7 @@ func lineString(line []uint8, opcode opcode) string {
 	case modeAbsoluteIndexedIndirectX:
 		t += fmt.Sprintf(" ($%04x,X)", getWordInLine(line))
 	case modeZeroPageAndRelative:
-		t += fmt.Sprintf(" $%02x *%+x", line[1], int8(line[2]))
+		t += fmt.Sprintf(" $%02x %+x", line[1], int8(line[2]))
 	default:
 		t += "UNKNOWN MODE"
 	}
