@@ -26,6 +26,10 @@ for $D000-$F7FF.
 Power on RESET initializes ROM to read mode and RAM to write mode,
 and selects the second 4K bank to map $D000-$DFFF."
 
+Writing to the softswtich disables writing in LC? Saw that
+somewhere but doing so fails IIe self check.
+
+
 */
 
 type cardLanguage struct {
@@ -56,11 +60,11 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
 		c.addCardSoftSwitchR(iCopy, func(*ioC0Page) uint8 {
-			c.ssAction(iCopy, false)
+			c.ssAction(iCopy)
 			return 0
 		}, "LANGCARDR")
 		c.addCardSoftSwitchW(iCopy, func(*ioC0Page, uint8) {
-			c.ssAction(iCopy, true)
+			c.ssAction(iCopy)
 		}, "LANGCARDW")
 	}
 
@@ -68,7 +72,7 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 	c.applyState()
 }
 
-func (c *cardLanguage) ssAction(ss uint8, write bool) {
+func (c *cardLanguage) ssAction(ss uint8) {
 	c.altBank = ((ss >> 3) & 1) == 0
 	action := ss & 0x3
 	switch action {
@@ -92,11 +96,6 @@ func (c *cardLanguage) ssAction(ss uint8, write bool) {
 
 	if c.writeState > lcWriteEnabled {
 		c.writeState = lcWriteEnabled
-	}
-
-	// Writing to the softswtich disables writes.
-	if write {
-		c.writeState = lcWriteDisabled
 	}
 
 	c.applyState()
