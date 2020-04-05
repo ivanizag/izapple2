@@ -40,7 +40,6 @@ func (c *cardSaturn) assign(a *Apple2, slot int) {
 		}, "SATURNR")
 		c.addCardSoftSwitchW(iCopy, func(*ioC0Page, uint8) {
 			c.ssAction(iCopy)
-			c.ssAction(iCopy)
 		}, "SATURNW")
 	}
 	c.cardBase.assign(a, slot)
