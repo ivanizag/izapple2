@@ -64,12 +64,18 @@ func snapshotLoResModeMono(a *Apple2, isDoubleResMode bool, isSecondPage bool, i
 			// The groups of 4 mono pixels need to be alligned with an offset to get plain surfaces
 			offset := (c * pixelWidth) % 4
 
+			if isDoubleResMode && ((c % 2) == 0) {
+				// See "Understanding the Apple II", page 8-44
+				// Even blocks color are rotated left on bit
+				offset = offset + 3
+			}
+
 			// Insert the pixelWidth pixels required
 			for i := 0; i < pixelWidth; i++ {
 				v := patterns[grPixel][i+offset]
 				// Repeat the same color for 4 lines
 				for r := 0; r < loResPixelHeight; r++ {
-					img.Set(c*loResPixelWidth+i, l*4+r, v)
+					img.Set(c*pixelWidth+i, l*4+r, v)
 				}
 			}
 
