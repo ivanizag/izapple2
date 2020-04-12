@@ -139,6 +139,8 @@ Only valid on SDL mode
         slot for the disk driver. -1 for none. (default 6)
   -diskRom string
         rom file for the disk drive controller (default "<internal>/DISK2.rom")
+  -diskb string
+    	file to load on the second disk drive
   -dumpChars
         shows the character map
   -fastChipSlot int
