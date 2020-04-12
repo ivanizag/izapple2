@@ -95,7 +95,7 @@ func (a *Apple2) LoadRom(filename string) error {
 }
 
 // AddDisk2 inserts a DiskII controller
-func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) error {
+func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage, diskBImage string) error {
 	var c cardDisk2
 	data, err := loadResource(diskRomFile)
 	if err != nil {
@@ -110,6 +110,14 @@ func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage string) error 
 			return err
 		}
 		c.drive[0].insertDiskette(diskette)
+	}
+
+	if diskBImage != "" {
+		diskette, err := loadDisquette(diskBImage)
+		if err != nil {
+			return err
+		}
+		c.drive[1].insertDiskette(diskette)
 	}
 
 	return nil

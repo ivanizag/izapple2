@@ -25,6 +25,10 @@ func MainApple() *Apple2 {
 		"disk",
 		"<internal>/dos33.dsk",
 		"file to load on the first disk drive")
+	diskBImage := flag.String(
+		"diskb",
+		"",
+		"file to load on the second disk drive")
 	wozImage := flag.String(
 		"woz",
 		"",
@@ -224,7 +228,7 @@ func MainApple() *Apple2 {
 		a.AddFastChip(*fastChipCardSlot)
 	}
 	if *disk2Slot > 0 {
-		err := a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage)
+		err := a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage, *diskBImage)
 		if err != nil {
 			panic(err)
 		}
