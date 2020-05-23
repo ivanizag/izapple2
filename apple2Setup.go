@@ -44,6 +44,21 @@ func newApple2eEnhanced() *Apple2 {
 	return &a
 }
 
+func newApple2c() *Apple2 {
+	var a Apple2
+	a.Name = "Apple //c (ROM FF)"
+	a.mmu = newMemoryManager(&a)
+	a.cpu = core6502.NewCMOS65c02(a.mmu)
+	a.io = newIoC0Page(&a)
+	a.mmu.InitRAMalt()
+	addApple2SoftSwitches(a.io)
+	addApple2ESoftSwitches(a.io)
+
+	a.mmu.intCxROMActive = true
+
+	return &a
+}
+
 func (a *Apple2) setup(isColor bool, clockMhz float64, fastMode bool) {
 	a.commandChannel = make(chan int, 100)
 	a.isColor = isColor
