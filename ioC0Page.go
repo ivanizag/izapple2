@@ -94,6 +94,13 @@ func (p *ioC0Page) addSoftSwitchW(address uint8, ss softSwitchW, name string) {
 	p.softSwitchesWName[address] = name
 }
 
+func (p *ioC0Page) copySoftSwitchRW(src uint8, dst uint8) {
+	p.softSwitchesR[dst] = p.softSwitchesR[src]
+	p.softSwitchesRName[dst] = p.softSwitchesRName[src]
+	p.softSwitchesW[dst] = p.softSwitchesW[src]
+	p.softSwitchesWName[dst] = p.softSwitchesWName[src]
+}
+
 func (p *ioC0Page) isSoftSwitchActive(ioFlag uint8) bool {
 	return (p.softSwitchesData[ioFlag] & ssOn) == ssOn
 }
@@ -154,4 +161,38 @@ func ssFromBool(value bool) uint8 {
 		return ssOn
 	}
 	return ssOff
+}
+
+func (p *ioC0Page) addSoftSwitchesMmu(addressClear uint8, addressSet uint8, AddressGet uint8, flag *bool, name string) {
+	p.addSoftSwitchW(addressClear, func(_ *ioC0Page, _ uint8) {
+		*flag = false
+	}, name+"OFF")
+
+	p.addSoftSwitchW(addressSet, func(_ *ioC0Page, _ uint8) {
+		*flag = true
+	}, name+"ON")
+
+	p.addSoftSwitchR(AddressGet, func(_ *ioC0Page) uint8 {
+		return ssFromBool(*flag)
+	}, name)
+}
+
+func (p *ioC0Page) disableSoftSwitchesMmu(addressClear uint8, addressSet uint8, addressGet uint8) {
+	p.addSoftSwitchW(addressClear, nil, "DISABLED")
+	p.addSoftSwitchW(addressSet, nil, "DISABLED")
+	p.addSoftSwitchR(addressGet, nil, "DISABLED")
+}
+
+func (p *ioC0Page) addSoftSwitchesIou(addressClear uint8, addressSet uint8, addressGet uint8, ioFlag uint8, name string) {
+	p.addSoftSwitchW(addressClear, func(io *ioC0Page, _ uint8) {
+		io.softSwitchesData[ioFlag] = ssOff
+	}, name+"OFF")
+
+	p.addSoftSwitchW(addressSet, func(io *ioC0Page, _ uint8) {
+		io.softSwitchesData[ioFlag] = ssOn
+	}, name+"ON")
+
+	p.addSoftSwitchR(addressGet, func(io *ioC0Page) uint8 {
+		return io.softSwitchesData[ioFlag]
+	}, name)
 }

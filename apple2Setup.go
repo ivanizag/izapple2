@@ -53,8 +53,7 @@ func newApple2c() *Apple2 {
 	a.mmu.InitRAMalt()
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)
-
-	a.mmu.intCxROMActive = true
+	addApple2CSoftSwitches(a.io)
 
 	return &a
 }

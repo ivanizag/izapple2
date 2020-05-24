@@ -12,14 +12,15 @@ const (
 	ioFlagAnnunciator2 uint8 = 0x5c
 	ioFlagAnnunciator3 uint8 = 0x5e
 
-	ioDataCassette uint8 = 0x60
-	ioFlagButton0  uint8 = 0x61
-	ioFlagButton1  uint8 = 0x62
-	ioFlagButton2  uint8 = 0x63
-	ioDataPaddle0  uint8 = 0x64
-	ioDataPaddle1  uint8 = 0x65
-	ioDataPaddle2  uint8 = 0x66
-	ioDataPaddle3  uint8 = 0x67
+	ioDataCassette  uint8 = 0x60
+	ioFlag40ColOnly uint8 = 0x60 // Only for Apple IIc
+	ioFlagButton0   uint8 = 0x61
+	ioFlagButton1   uint8 = 0x62
+	ioFlagButton2   uint8 = 0x63
+	ioDataPaddle0   uint8 = 0x64
+	ioDataPaddle1   uint8 = 0x65
+	ioDataPaddle2   uint8 = 0x66
+	ioDataPaddle3   uint8 = 0x67
 )
 
 func addApple2SoftSwitches(io *ioC0Page) {

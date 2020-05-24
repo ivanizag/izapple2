@@ -19,7 +19,7 @@ type Apple2 struct {
 	io                  *ioC0Page
 	cg                  *CharacterGenerator
 	cards               [8]card
-	isApple2e           bool
+	isApple2e           bool // Or IIc. TODO: remove uses
 	commandChannel      chan int
 	cycleDurationNs     float64 // Current speed. Inverse of the cpu clock in Ghz
 	isColor             bool
