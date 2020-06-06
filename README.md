@@ -12,8 +12,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - Apple //e enhanced with 128Kb of RAM
     - Base64A clone with 48Kb of base RAM and paginated ROM
 - Storage
-    - 16 Sector diskettes in NIB format
-    - 16 Sector diskettes in DSK format
+    - 16 Sector diskettes in NIB, DSK or PO format
     - 16 Sector diskettes in WOZ 1.0 or 2.0 format (read only)
     - Hard disk with ProDOS and SmartPort support
 - Emulated extension cards:
@@ -46,6 +45,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - Adjustable speed.
     - Fast disk mode to set max speed while using the disks. 
     - Single file executable with embedded ROMs and DOS 3.3
+    - Pause (thanks a2geek)
 
 
 ## Running the emulator

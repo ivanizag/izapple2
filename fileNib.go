@@ -1,7 +1,6 @@
 package apple2
 
 import (
-	"errors"
 	"os"
 )
 
@@ -27,41 +26,38 @@ type fileNib struct {
 	track [numberOfTracks][]byte
 }
 
-func loadFileNibOrDsk(filename string) (*fileNib, error) {
-	data, err := loadResource(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	return newFileNibOrDsk(data)
+func isFileNib(data []uint8) bool {
+	return len(data) == nibImageSize
 }
 
-func isFileNibOrDsk(data []uint8) bool {
-	size := len(data)
-	return size == nibImageSize || size == dskImageSize
-}
-
-func newFileNibOrDsk(data []uint8) (*fileNib, error) {
+func newFileNib(data []uint8) *fileNib {
 	var f fileNib
 
-	size := len(data)
-
-	if size == nibImageSize {
-		// Load file already in nib format
-		for i := 0; i < numberOfTracks; i++ {
-			f.track[i] = data[nibBytesPerTrack*i : nibBytesPerTrack*(i+1)]
-		}
-	} else if size == dskImageSize {
-		// Convert to nib
-		for i := 0; i < numberOfTracks; i++ {
-			trackData := data[i*bytesPerTrack : (i+1)*bytesPerTrack]
-			f.track[i] = nibEncodeTrack(trackData, defaultVolumeTag, byte(i))
-		}
-	} else {
-		return nil, errors.New("Invalid disk size")
+	for i := 0; i < numberOfTracks; i++ {
+		f.track[i] = data[nibBytesPerTrack*i : nibBytesPerTrack*(i+1)]
 	}
 
-	return &f, nil
+	return &f
+}
+
+func isFileDsk(data []uint8) bool {
+	return len(data) == dskImageSize
+}
+
+func newFileDsk(data []uint8, isPO bool) *fileNib {
+	var f fileNib
+
+	logicalOrder := dos33SectorsLogicalOrder
+	if isPO {
+		logicalOrder = prodosSectorsLogicalOrder
+	}
+
+	for i := 0; i < numberOfTracks; i++ {
+		trackData := data[i*bytesPerTrack : (i+1)*bytesPerTrack]
+		f.track[i] = nibEncodeTrack(trackData, defaultVolumeTag, byte(i), &logicalOrder)
+	}
+
+	return &f
 }
 
 func (f *fileNib) saveNib(filename string) error {
@@ -81,9 +77,16 @@ func (f *fileNib) saveNib(filename string) error {
 	return nil
 }
 
-var dos33SectorsLogicOrder = [16]int{
+// See Beneath Apple DOS, figure 3.24
+var dos33SectorsLogicalOrder = [16]int{
 	0x0, 0x7, 0xE, 0x6, 0xD, 0x5, 0xC, 0x4,
 	0xB, 0x3, 0xA, 0x2, 0x9, 0x1, 0x8, 0xF,
+}
+
+// See Beneath Apple ProDOS, figure 3.1
+var prodosSectorsLogicalOrder = [16]int{
+	0x0, 0x8, 0x1, 0x9, 0x2, 0xA, 0x3, 0xB,
+	0x4, 0xC, 0x5, 0xD, 0x6, 0xE, 0x7, 0xF,
 }
 
 var sixAndTwoTranslateTable = [0x40]byte{
@@ -118,7 +121,7 @@ func oddEvenEncodeByte(b byte) []byte {
 	return e
 }
 
-func nibEncodeTrack(data []byte, volume byte, track byte) []byte {
+func nibEncodeTrack(data []byte, volume byte, track byte, logicalOrder *[16]int) []byte {
 	b := make([]byte, 0, nibBytesPerTrack) // Buffer slice with enough capacity
 	// Initialize gaps to be copied for each sector
 	gap1 := make([]byte, gap1Len)
@@ -134,7 +137,7 @@ func nibEncodeTrack(data []byte, volume byte, track byte) []byte {
 		but on the physical encoded track as well as in the nib
 		files they are in phisical order.
 		*/
-		logicalSector := dos33SectorsLogicOrder[physicalSector]
+		logicalSector := logicalOrder[physicalSector]
 		sectorData := data[logicalSector*bytesPerSector : (logicalSector+1)*bytesPerSector]
 
 		//  6and2 prenibbilizing.

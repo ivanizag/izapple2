@@ -1,6 +1,9 @@
 package apple2
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 type diskette interface {
 	powerOn(cycle uint64)
@@ -15,13 +18,16 @@ func loadDisquette(filename string) (diskette, error) {
 		return nil, err
 	}
 
-	if isFileNibOrDsk(data) {
-		f, err := newFileNibOrDsk(data)
-		if err != nil {
-			return nil, err
-		}
+	if isFileNib(data) {
 		var d diskette16sector
-		d.nib = f
+		d.nib = newFileNib(data)
+		return &d, nil
+	}
+
+	if isFileDsk(data) {
+		isPO := strings.HasSuffix(strings.ToLower(filename), "po")
+		var d diskette16sector
+		d.nib = newFileDsk(data, isPO)
 		return &d, nil
 	}
 
