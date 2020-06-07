@@ -5,6 +5,7 @@ jobs:
       - image: circleci/golang:1.12
     steps:
       - checkout
+      - run: sudo apt update
       - run: sudo apt install libsdl2-dev
       - run: go get -d ./...
       - run: go test ./...
