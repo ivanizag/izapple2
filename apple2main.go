@@ -109,6 +109,11 @@ func MainApple() *Apple2 {
 		"profile",
 		false,
 		"generate profile trace to analyse with pprof")
+	traceMLI := flag.Bool(
+		"traceMLI",
+		false,
+		"dump to the console the calls to ProDOS machine langunage interface calls to $BF00")
+
 	flag.Parse()
 
 	if *wozImage != "" {
@@ -178,7 +183,7 @@ func MainApple() *Apple2 {
 		panic("Model not supported")
 	}
 
-	a.setup(!*mono, *cpuClock, *fastDisk)
+	a.setup(!*mono, *cpuClock, *fastDisk, *traceMLI)
 	a.cpu.SetTrace(*traceCPU)
 	a.io.setTrace(*traceSS)
 	a.io.setPanicNotImplemented(*panicSS)

@@ -28,6 +28,7 @@ type Apple2 struct {
 	profile             bool
 	showSpeed           bool
 	paused              bool
+	traceMLI            *traceProDOS
 }
 
 const (
@@ -51,10 +52,9 @@ func (a *Apple2) Run() {
 		// Run a 6502 step
 		if !a.paused {
 			a.cpu.ExecuteInstruction()
+			a.executionTrace()
 		} else {
 			time.Sleep(200 * time.Millisecond)
-			referenceTime = time.Now()
-			speedReferenceTime = referenceTime
 		}
 
 		// Execute meta commands
@@ -62,10 +62,17 @@ func (a *Apple2) Run() {
 		for commandsPending {
 			select {
 			case command := <-a.commandChannel:
-				if command == CommandKill {
+				switch command {
+				case CommandKill:
 					return
+				case CommandPauseUnpauseEmulator:
+					a.paused = !a.paused
+					referenceTime = time.Now()
+					speedReferenceTime = referenceTime
+				default:
+					// Execute the other commands
+					a.executeCommand(command)
 				}
-				a.executeCommand(command)
 			default:
 				commandsPending = false
 			}
@@ -178,8 +185,6 @@ func (a *Apple2) executeCommand(command int) {
 		a.cpu.SetTrace(!a.cpu.GetTrace())
 	case CommandReset:
 		a.cpu.Reset()
-	case CommandPauseUnpauseEmulator:
-		a.paused = !a.paused
 	}
 }
 
@@ -193,6 +198,12 @@ func (a *Apple2) requestFastMode() {
 func (a *Apple2) releaseFastMode() {
 	if a.fastMode {
 		a.fastRequestsCounter--
+	}
+}
+
+func (a *Apple2) executionTrace() {
+	if a.traceMLI != nil {
+		a.traceMLI.inspect()
 	}
 }
 

@@ -46,6 +46,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - Fast disk mode to set max speed while using the disks. 
     - Single file executable with embedded ROMs and DOS 3.3
     - Pause (thanks a2geek)
+    - ProDOS MLI calls tracing
 
 
 ## Running the emulator
@@ -175,6 +176,8 @@ Only valid on SDL mode
         dump to the console the CPU execution. Use F11 to toggle.
   -traceHD
         dump to the console the hd commands
+  -traceMLI
+        dump to the console the calls to ProDOS machine langunage interface calls to $BF00
   -traceSS
         dump to the console the sofswitches calls
   -vidHDSlot int

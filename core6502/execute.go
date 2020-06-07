@@ -103,6 +103,16 @@ func (s *State) GetTrace() bool {
 	return s.trace
 }
 
+// GetPCAndSP returns the current program counter and stack pointer. Used to trace MLI calls
+func (s *State) GetPCAndSP() (uint16, uint8) {
+	return s.reg.getPC(), s.reg.getSP()
+}
+
+// GetCarryAndAcc returns the value of te carry flag and the accumulator. Used to trace MLI calls
+func (s *State) GetCarryAndAcc() (bool, uint8) {
+	return s.reg.getFlag(flagC), s.reg.getA()
+}
+
 // Save saves the CPU state (registers and cycle counter)
 func (s *State) Save(w io.Writer) error {
 	err := binary.Write(w, binary.BigEndian, s.cycles)

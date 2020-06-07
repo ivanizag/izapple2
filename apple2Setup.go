@@ -44,10 +44,13 @@ func newApple2eEnhanced() *Apple2 {
 	return &a
 }
 
-func (a *Apple2) setup(isColor bool, clockMhz float64, fastMode bool) {
+func (a *Apple2) setup(isColor bool, clockMhz float64, fastMode bool, traceMLI bool) {
 	a.commandChannel = make(chan int, 100)
 	a.isColor = isColor
 	a.fastMode = fastMode
+	if traceMLI {
+		a.traceMLI = newTraceProDOS(a)
+	}
 
 	if clockMhz <= 0 {
 		// Full speed
