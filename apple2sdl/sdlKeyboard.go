@@ -11,6 +11,8 @@ import (
 type sdlKeyboard struct {
 	keyChannel chan uint8
 	a          *apple2.Apple2
+
+	showPages bool
 }
 
 func newSDLKeyBoard(a *apple2.Apple2) *sdlKeyboard {
@@ -105,7 +107,11 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 			k.a.SendCommand(apple2.CommandToggleSpeed)
 		}
 	case sdl.K_F6:
-		k.a.SendCommand(apple2.CommandToggleColor)
+		if ctrl {
+			k.showPages = !k.showPages
+		} else {
+			k.a.SendCommand(apple2.CommandToggleColor)
+		}
 	case sdl.K_F7:
 		k.a.SendCommand(apple2.CommandSaveState)
 	case sdl.K_F8:

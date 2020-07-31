@@ -120,6 +120,7 @@ Line:
 - F5: Toggle speed between real and fastest
 - Ctrl-F5: Show current speed in Mhz
 - F6: Toggle between NTSC color TV and green phosphor monochrome monitor
+- Ctrl-F6: Show a split screen with the views for NTSC color TV, monochrome monitor, HGR page 1 and HGR page 2.
 - F7: Save current state to disk (incomplete)
 - F8: Restore state from disk (incomplete)
 - F10: Cycle character generator codepages. Only if the character generator ROM has more than one 2Kb page.

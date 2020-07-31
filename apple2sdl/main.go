@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"unsafe"
 
 	"github.com/ivanizag/apple2"
@@ -77,7 +78,12 @@ func SDLRun(a *apple2.Apple2) {
 		}
 
 		if !a.IsPaused() {
-			img := apple2.Snapshot(a)
+			var img *image.RGBA
+			if kp.showPages {
+				img = apple2.SnapshotHGRModes(a)
+			} else {
+				img = apple2.Snapshot(a)
+			}
 			if img != nil {
 				surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]),
 					int32(img.Bounds().Dx()), int32(img.Bounds().Dy()),

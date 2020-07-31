@@ -17,6 +17,10 @@ References:
 
 // Snapshot the currently visible screen
 func Snapshot(a *Apple2) *image.RGBA {
+	return activeSnapshot(a, false)
+}
+
+func activeSnapshot(a *Apple2, raw bool) *image.RGBA {
 	isColor := a.isColor
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
 	isHiResMode := a.io.isSoftSwitchActive(ioFlagHiRes)
@@ -56,15 +60,40 @@ func Snapshot(a *Apple2) *image.RGBA {
 			snapText := snapshotTextMode(a, is80Columns, false /*isSecondPage*/, true /*isMixMode*/, lightColor)
 			snap = mixSnapshots(snap, snapText)
 		}
-		if isColor {
+		if isColor && !raw {
 			snap = filterNTSCColor(false /*blacker*/, snap)
 		}
 	}
 
-	if !isSuperHighResMode {
+	if !raw && !isSuperHighResMode {
 		snap = linesSeparatedFilter(snap)
 	}
 	return snap
+}
+
+// SnapshotAllModes to get all modes mixed
+func SnapshotHGRModes(a *Apple2) *image.RGBA {
+	bwSnap := activeSnapshot(a, true)
+	if bwSnap.Bounds().Dx() == hiResWidth {
+		bwSnap = doubleWidthFilter(bwSnap)
+	}
+	colorSnap := filterNTSCColor(false, bwSnap)
+	page1Snap := filterNTSCColor(false /*blacker*/, snapshotHiResModeMono(a, false /*2nd page*/, false /*mix*/, color.White)) // HGR 1
+	page2Snap := filterNTSCColor(false /*blacker*/, snapshotHiResModeMono(a, true /*2nd page*/, false /*mix*/, color.White))  // HGR 2
+
+	size := image.Rect(0, 0, hiResWidth*4, hiResHeight*2)
+	out := image.NewRGBA(size)
+
+	for y := 0; y < hiResHeight; y++ {
+		for x := 0; x < hiResWidth*2; x++ {
+			out.Set(x, y, colorSnap.At(x, y))
+			out.Set(x+hiResWidth*2, y, bwSnap.At(x, y))
+			out.Set(x, y+hiResHeight, page1Snap.At(x, y))
+			out.Set(x+hiResWidth*2, y+hiResHeight, page2Snap.At(x, y))
+		}
+	}
+
+	return out
 }
 
 func mixSnapshots(top, bottom *image.RGBA) *image.RGBA {
@@ -89,7 +118,7 @@ func mixSnapshots(top, bottom *image.RGBA) *image.RGBA {
 		}
 	}
 
-	// Copy bottom, applyng the factor
+	// Copy bottom, applying the factor
 	for y := bottomBounds.Min.Y; y < bottomBounds.Max.Y; y++ {
 		for x := bottomBounds.Min.X; x < bottomBounds.Max.X; x++ {
 			c := bottom.At(x, y)
@@ -145,6 +174,20 @@ func linesSeparatedFilter(in *image.RGBA) *image.RGBA {
 			out.Set(x, 4*y+1, c)
 			out.Set(x, 4*y+2, c)
 			out.Set(x, 4*y+3, color.Black)
+		}
+	}
+	return out
+}
+
+func doubleWidthFilter(in *image.RGBA) *image.RGBA {
+	b := in.Bounds()
+	size := image.Rect(0, 0, 2*b.Dx(), b.Dy())
+	out := image.NewRGBA(size)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c := in.At(x, y)
+			out.Set(2*x, y, c)
+			out.Set(2*x+1, y, c)
 		}
 	}
 	return out
