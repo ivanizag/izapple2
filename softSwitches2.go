@@ -7,7 +7,7 @@ const (
 	ioFlagMixed        uint8 = 0x52
 	ioFlagSecondPage   uint8 = 0x54
 	ioFlagHiRes        uint8 = 0x56
-	ioFlagAnnunciator0 uint8 = 0x58 // On Copam Electronics Base-64A this is used to bank swith the ROM
+	ioFlagAnnunciator0 uint8 = 0x58
 	ioFlagAnnunciator1 uint8 = 0x5a
 	ioFlagAnnunciator2 uint8 = 0x5c
 	ioFlagAnnunciator3 uint8 = 0x5e
@@ -20,6 +20,9 @@ const (
 	ioDataPaddle1  uint8 = 0x65
 	ioDataPaddle2  uint8 = 0x66
 	ioDataPaddle3  uint8 = 0x67
+
+	ioFlag1RGBCard uint8 = 0x7e // Not real softSwitches. Using the numbers to store the flags somewhere.
+	ioFlag2RGBCard uint8 = 0x7f
 )
 
 func addApple2SoftSwitches(io *ioC0Page) {
@@ -71,6 +74,10 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	io.addSoftSwitchR(0x6F, getPaddleSoftSwitch(3), "PDL3")
 
 	io.addSoftSwitchR(0x70, strobePaddlesSoftSwitch, "RESETPDL") // Game controllers reset
+
+	// For RGB screen modes. Default to NTSC artifacts
+	io.softSwitchesData[ioFlag1RGBCard] = ssOn
+	io.softSwitchesData[ioFlag2RGBCard] = ssOn
 }
 
 func notImplementedSoftSwitchR(*ioC0Page) uint8 {
@@ -141,9 +148,9 @@ func getButtonSoftSwitch(i int) softSwitchR {
 
 /*
   Paddle values are calculated by the time taken by a current going
-  througt the paddle variable resistor to charge a capacitor.
+  through the paddle variable resistor to charge a capacitor.
   The capacitor is discharged via the strobe softswitch. The result is
-  hoy many times a 11 cycles loop runs before the capacitor reaches
+  how many times a 11 cycles loop runs before the capacitor reaches
   the voltage threshold.
 
   See: http://www.1000bit.it/support/manuali/apple/technotes/aiie/tn.aiie.06.html

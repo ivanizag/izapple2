@@ -54,7 +54,7 @@ func getNTSCColorMap() []color.Color {
 	return colorMap
 }
 
-func filterNTSCColor(blacker bool, in *image.RGBA) *image.RGBA {
+func filterNTSCColor(in *image.RGBA, mask *image.Alpha) *image.RGBA {
 	colorMap := getNTSCColorMap()
 
 	b := in.Bounds()
@@ -69,19 +69,21 @@ func filterNTSCColor(blacker bool, in *image.RGBA) *image.RGBA {
 			r, _, _, _ := cIn.RGBA()
 
 			pos := 1 << (3 - uint(x%4))
-			var cOut color.Color
 			if r != 0 {
 				v |= pos
-				cOut = colorMap[v]
 			} else {
 				v &^= pos
-				if blacker {
-					// If there is no luminance, let's have black anyway
-					cOut = colorMap[0]
-				} else {
-					cOut = colorMap[v]
+			}
+
+			cOut := colorMap[v]
+			if mask != nil {
+				// RGM mode7
+				_, _, _, a := mask.At(x, y).RGBA()
+				if a > 0 {
+					cOut = cIn
 				}
 			}
+
 			out.Set(x, y, cOut)
 		}
 

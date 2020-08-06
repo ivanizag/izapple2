@@ -30,6 +30,11 @@ func activeSnapshot(a *Apple2, raw bool) *image.RGBA {
 	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
 	isSuperHighResMode := a.io.isSoftSwitchActive(ioDataNewVideo)
 
+	rgbFlag1 := a.io.isSoftSwitchActive(ioFlag1RGBCard)
+	rgbFlag2 := a.io.isSoftSwitchActive(ioFlag2RGBCard)
+	isMono560 := isDoubleResMode && !rgbFlag1 && !rgbFlag2
+	isRGBMixMode := isDoubleResMode && !rgbFlag1 && rgbFlag2
+
 	var lightColor color.Color
 	if isColor {
 		lightColor = color.White
@@ -41,6 +46,7 @@ func activeSnapshot(a *Apple2, raw bool) *image.RGBA {
 	}
 
 	var snap *image.RGBA
+	var ntscMask *image.Alpha
 	if isSuperHighResMode { // Has to be first and disables the rest
 		snap = snapshotSuperHiResMode(a)
 	} else if isTextMode {
@@ -48,7 +54,7 @@ func activeSnapshot(a *Apple2, raw bool) *image.RGBA {
 	} else {
 		if isHiResMode {
 			if isDoubleResMode {
-				snap = snapshotDoubleHiResModeMono(a, isSecondPage, isMixMode, lightColor)
+				snap, ntscMask = snapshotDoubleHiResModeMono(a, isSecondPage, isMixMode, isRGBMixMode, lightColor)
 			} else {
 				snap = snapshotHiResModeMono(a, isSecondPage, isMixMode, lightColor)
 			}
@@ -60,8 +66,8 @@ func activeSnapshot(a *Apple2, raw bool) *image.RGBA {
 			snapText := snapshotTextMode(a, is80Columns, false /*isSecondPage*/, true /*isMixMode*/, lightColor)
 			snap = mixSnapshots(snap, snapText)
 		}
-		if isColor && !raw {
-			snap = filterNTSCColor(false /*blacker*/, snap)
+		if isColor && !(raw || isMono560) {
+			snap = filterNTSCColor(snap, ntscMask)
 		}
 	}
 
@@ -71,15 +77,15 @@ func activeSnapshot(a *Apple2, raw bool) *image.RGBA {
 	return snap
 }
 
-// SnapshotAllModes to get all modes mixed
+// SnapshotHGRModes to get all modes mixed
 func SnapshotHGRModes(a *Apple2) *image.RGBA {
 	bwSnap := activeSnapshot(a, true)
 	if bwSnap.Bounds().Dx() == hiResWidth {
 		bwSnap = doubleWidthFilter(bwSnap)
 	}
-	colorSnap := filterNTSCColor(false, bwSnap)
-	page1Snap := filterNTSCColor(false /*blacker*/, snapshotHiResModeMono(a, false /*2nd page*/, false /*mix*/, color.White)) // HGR 1
-	page2Snap := filterNTSCColor(false /*blacker*/, snapshotHiResModeMono(a, true /*2nd page*/, false /*mix*/, color.White))  // HGR 2
+	colorSnap := filterNTSCColor(bwSnap, nil)
+	page1Snap := filterNTSCColor(snapshotHiResModeMono(a, false /*2nd page*/, false /*mix*/, color.White), nil) // HGR 1
+	page2Snap := filterNTSCColor(snapshotHiResModeMono(a, true /*2nd page*/, false /*mix*/, color.White), nil)  // HGR 2
 
 	size := image.Rect(0, 0, hiResWidth*4, hiResHeight*2)
 	out := image.NewRGBA(size)

@@ -189,6 +189,11 @@ func (a *Apple2) AddThunderClockPlusCard(slot int, romFile string) error {
 	return nil
 }
 
+// AddRGBCard inserts an RBG option to the Apple IIe 80 col 64KB card
+func (a *Apple2) AddRGBCard() {
+	setupRGBCard(a)
+}
+
 // AddCardLogger inserts a fake card that logs accesses
 func (a *Apple2) AddCardLogger(slot int) {
 	a.insertCard(&cardLogger{}, slot)

@@ -22,7 +22,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - 1Mb Memory Expansion Card
     - ThunderClock Plus real time clock
     - Bootable hard disk card
-    - Apple //e 80 columns with 64Kb extra RAM
+    - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
     - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
     - FASTChip, limited to what Total Replay needs to set and clear fast mode
 - Graphic modes:
@@ -34,16 +34,19 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - Double-Width High-Resolution graphics (Apple //e only)
     - Super High Resolution (VidHD only)
     - Mixed mode
+    - RGB card mode 11, mono 560x192
+    - RGB card mode 13, ntsc 140*192 (regular DHGR)
+    - RGB card mode 14, mix of modes 11 and 13 on the fly
 - Displays:
     - Green monochrome monitor with half width pixel support
     - NTSC Color TV (extracting the phase from the mono signal)
-    - RGB for Super High Resolution
+    - RGB for Super High Resolution and RGB card
     - ANSI Console, avoiding the SDL2 dependency
 - Other features:
     - Sound
-    - Joystick support. Up to two joysticks or four paddles.
-    - Adjustable speed.
-    - Fast disk mode to set max speed while using the disks. 
+    - Joystick support. Up to two joysticks or four paddles
+    - Adjustable speed
+    - Fast disk mode to set max speed while using the disks
     - Single file executable with embedded ROMs and DOS 3.3
     - Pause (thanks a2geek)
     - ProDOS MLI calls tracing
@@ -142,11 +145,11 @@ Only valid on SDL mode
   -diskRom string
         rom file for the disk drive controller (default "<internal>/DISK2.rom")
   -diskb string
-    	file to load on the second disk drive
+        file to load on the second disk drive
   -dumpChars
         shows the character map
   -fastChipSlot int
-    	slot for the FASTChip accelerator card, -1 for none (default 3)        
+        slot for the FASTChip accelerator card, -1 for none (default 3)
   -fastDisk
         set fast mode when the disks are spinning (default true)
   -hd string
@@ -156,7 +159,7 @@ Only valid on SDL mode
   -languageCardSlot int
         slot for the 16kb language card. -1 for none
   -memoryExpSlot int
-    	  slot for the Memory Expansion card with 1GB. -1 for none (default 4)
+        slot for the Memory Expansion card with 1GB. -1 for none (default 4)
   -mhz float
         cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
   -model string
@@ -167,6 +170,8 @@ Only valid on SDL mode
         panic if a not implemented softswitch is used
   -profile
         generate profile trace to analyse with pprof
+  -rgb
+        emulate the RGB modes of the 80col RGB card for DHGR (default true)
   -rom string
         main rom file (default "<default>")
   -saturnCardSlot int
@@ -178,13 +183,13 @@ Only valid on SDL mode
   -traceHD
         dump to the console the hd commands
   -traceMLI
-        dump to the console the calls to ProDOS machine langunage interface calls to $BF00
+        dump to the console the calls to ProDOS machine language interface calls to $BF00
   -traceSS
         dump to the console the sofswitches calls
   -vidHDSlot int
-    	  slot for the VidHD card, only for //e models. -1 for none (default 2)
+        slot for the VidHD card, only for //e models. -1 for none (default 2)
   -woz string
-    	  show WOZ file information
+        show WOZ file information
 
 
 ```

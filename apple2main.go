@@ -77,6 +77,10 @@ func MainApple() *Apple2 {
 		"mono",
 		false,
 		"emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.")
+	rgbCard := flag.Bool(
+		"rgb",
+		true,
+		"emulate the RGB modes of the 80col RGB card for DHGR")
 	fastDisk := flag.Bool(
 		"fastDisk",
 		true,
@@ -112,7 +116,7 @@ func MainApple() *Apple2 {
 	traceMLI := flag.Bool(
 		"traceMLI",
 		false,
-		"dump to the console the calls to ProDOS machine langunage interface calls to $BF00")
+		"dump to the console the calls to ProDOS machine language interface calls to $BF00")
 
 	flag.Parse()
 
@@ -247,6 +251,10 @@ func MainApple() *Apple2 {
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if *rgbCard {
+		a.AddRGBCard()
 	}
 
 	//a.AddCardInOut(2)
