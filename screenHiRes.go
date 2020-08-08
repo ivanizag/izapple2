@@ -19,9 +19,9 @@ func getHiResLineOffset(line int) uint16 {
 	// See "Understanding the Apple II", page 5-14
 	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
 	section := line >> 6 // Top, middle and bottom
-	outerEigth := (line >> 3) & 0x07
-	innerEigth := line & 0x07
-	return uint16(section*40 + outerEigth*0x80 + innerEigth*0x400)
+	outerEighth := (line >> 3) & 0x07
+	innerEighth := line & 0x07
+	return uint16(section*40 + outerEighth*0x80 + innerEighth*0x400)
 }
 
 func getHiResLine(a *Apple2, line int, isSecondPage bool, auxMem bool) []uint8 {
@@ -34,18 +34,12 @@ func getHiResLine(a *Apple2, line int, isSecondPage bool, auxMem bool) []uint8 {
 	return a.mmu.getPhysicalMainRAM(auxMem).subRange(address, address+hiResLineBytes)
 }
 
-func snapshotHiResModeMono(a *Apple2, isSecondPage bool, mixedMode bool, light color.Color) *image.RGBA {
+func snapshotHiResModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
 	// As described in "Undertanding the Apple II", with half pixel shifts
-
-	height := hiResHeight
-	if mixedMode {
-		height = hiResHeightMixed
-	}
-
-	size := image.Rect(0, 0, 2*hiResWidth, height)
+	size := image.Rect(0, 0, 2*hiResWidth, hiResHeight)
 	img := image.NewRGBA(size)
 
-	for y := 0; y < height; y++ {
+	for y := 0; y < hiResHeight; y++ {
 		bytes := getHiResLine(a, y, isSecondPage, false /*auxMem*/)
 		x := 0
 		var previousColour color.Color = color.Black

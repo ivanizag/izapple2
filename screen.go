@@ -15,28 +15,89 @@ References:
  - "More Colors for your Apple", https://archive.org/details/byte-magazine-1979-06/page/n61
 */
 
-// Snapshot the currently visible screen
-func Snapshot(a *Apple2) *image.RGBA {
-	return activeSnapshot(a, false)
-}
+const (
+	videoText40 uint8 = 0x01
+	videoGR     uint8 = 0x02
+	videoHGR    uint8 = 0x03
 
-func activeSnapshot(a *Apple2, raw bool) *image.RGBA {
-	isColor := a.isColor
+	videoText80 uint8 = 0x08
+	videoDGR    uint8 = 0x09
+	videoDHGR   uint8 = 0x0a
+
+	videoMono560 uint8 = 0x10
+	videoRGBMix  uint8 = 0x11
+	videoSHR     uint8 = 0x12
+
+	// Modifiers
+	videoBaseMask   uint8 = 0x1f
+	videoSecondPage uint8 = 0x20
+	videoMixText40  uint8 = 0x40
+	videoMixText80  uint8 = 0x80
+)
+
+func getCurrentVideoMode(a *Apple2) uint8 {
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
 	isHiResMode := a.io.isSoftSwitchActive(ioFlagHiRes)
-	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
 	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
 	isDoubleResMode := !isTextMode && is80Columns && !a.io.isSoftSwitchActive(ioFlagAnnunciator3)
-	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
 	isSuperHighResMode := a.io.isSoftSwitchActive(ioDataNewVideo)
 
 	rgbFlag1 := a.io.isSoftSwitchActive(ioFlag1RGBCard)
 	rgbFlag2 := a.io.isSoftSwitchActive(ioFlag2RGBCard)
 	isMono560 := isDoubleResMode && !rgbFlag1 && !rgbFlag2
 	isRGBMixMode := isDoubleResMode && !rgbFlag1 && rgbFlag2
+	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
+
+	mode := uint8(0)
+	if isSuperHighResMode {
+		mode = videoSHR
+		isMixMode = false
+	} else if isTextMode {
+		if is80Columns {
+			mode = videoText80
+		} else {
+			mode = videoText40
+		}
+		isMixMode = false
+	} else if isHiResMode {
+		if !isDoubleResMode {
+			mode = videoHGR
+		} else if isMono560 {
+			mode = videoMono560
+		} else if isRGBMixMode {
+			mode = videoRGBMix
+		} else {
+			mode = videoDHGR
+		}
+	} else if isDoubleResMode {
+		mode = videoDGR
+	} else {
+		mode = videoGR
+	}
+
+	// Modifiers
+	if isMixMode {
+		if is80Columns {
+			mode |= videoMixText80
+		} else {
+			mode |= videoMixText40
+		}
+	}
+	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
+	if isSecondPage {
+		mode |= videoSecondPage
+	}
+
+	return mode
+}
+
+func snapshotByMode(a *Apple2, videoMode uint8) *image.RGBA {
+	videoBase := videoMode & videoBaseMask
+	isSecondPage := (videoMode & videoSecondPage) != 0
+	isMixMode := (videoMode & (videoMixText40 | videoMixText80)) != 0
 
 	var lightColor color.Color
-	if isColor {
+	if a.isColor {
 		lightColor = color.White
 	} else {
 		// Color for typical Apple ][ period green P1 phosphor monitors
@@ -45,101 +106,80 @@ func activeSnapshot(a *Apple2, raw bool) *image.RGBA {
 
 	}
 
+	applyNTSCFilter := a.isColor
 	var snap *image.RGBA
 	var ntscMask *image.Alpha
-	if isSuperHighResMode { // Has to be first and disables the rest
+	switch videoBase {
+	case videoText40:
+		snap = snapshotTextMode(a, false /*is80Columns*/, isSecondPage, lightColor)
+		applyNTSCFilter = false
+	case videoText80:
+		snap = snapshotTextMode(a, true /*is80Columns*/, isSecondPage, lightColor)
+		applyNTSCFilter = false
+	case videoGR:
+		snap = snapshotLoResModeMono(a, false /*isDoubleResMode*/, isSecondPage, lightColor)
+	case videoDGR:
+		snap = snapshotLoResModeMono(a, true /*isDoubleResMode*/, isSecondPage, lightColor)
+	case videoHGR:
+		snap = snapshotHiResModeMono(a, isSecondPage, lightColor)
+	case videoDHGR:
+		snap, _ = snapshotDoubleHiResModeMono(a, isSecondPage, false /*isRGBMixMode*/, lightColor)
+	case videoMono560:
+		snap, _ = snapshotDoubleHiResModeMono(a, isSecondPage, false /*isRGBMixMode*/, lightColor)
+		applyNTSCFilter = false
+	case videoRGBMix:
+		snap, ntscMask = snapshotDoubleHiResModeMono(a, isSecondPage, true /*isRGBMixMode*/, lightColor)
+	case videoSHR:
 		snap = snapshotSuperHiResMode(a)
-	} else if isTextMode {
-		snap = snapshotTextMode(a, is80Columns, isSecondPage, false /*isMixMode*/, lightColor)
-	} else {
-		if isHiResMode {
-			if isDoubleResMode {
-				snap, ntscMask = snapshotDoubleHiResModeMono(a, isSecondPage, isMixMode, isRGBMixMode, lightColor)
-			} else {
-				snap = snapshotHiResModeMono(a, isSecondPage, isMixMode, lightColor)
-			}
-		} else {
-			snap = snapshotLoResModeMono(a, isDoubleResMode, isSecondPage, isMixMode, lightColor)
-		}
-
-		if isMixMode {
-			snapText := snapshotTextMode(a, is80Columns, false /*isSecondPage*/, true /*isMixMode*/, lightColor)
-			snap = mixSnapshots(snap, snapText)
-		}
-		if isColor && !(raw || isMono560) {
-			snap = filterNTSCColor(snap, ntscMask)
-		}
+		applyNTSCFilter = false
 	}
 
-	if !raw && !isSuperHighResMode {
-		snap = linesSeparatedFilter(snap)
+	if isMixMode {
+		isMix80 := (videoMode & videoMixText80) != 0
+		bottom := snapshotTextMode(a, isMix80, isSecondPage, lightColor)
+		snap = mixSnapshots(snap, bottom)
+	}
+
+	if applyNTSCFilter {
+		snap = filterNTSCColor(snap, ntscMask)
 	}
 	return snap
 }
 
-// SnapshotHGRModes to get all modes mixed
-func SnapshotHGRModes(a *Apple2) *image.RGBA {
-	bwSnap := activeSnapshot(a, true)
-	if bwSnap.Bounds().Dx() == hiResWidth {
-		bwSnap = doubleWidthFilter(bwSnap)
-	}
-	colorSnap := filterNTSCColor(bwSnap, nil)
-	page1Snap := filterNTSCColor(snapshotHiResModeMono(a, false /*2nd page*/, false /*mix*/, color.White), nil) // HGR 1
-	page2Snap := filterNTSCColor(snapshotHiResModeMono(a, true /*2nd page*/, false /*mix*/, color.White), nil)  // HGR 2
+// Snapshot the currently visible screen
+func (a *Apple2) Snapshot() *image.RGBA {
+	videoMode := getCurrentVideoMode(a)
+	snap := snapshotByMode(a, videoMode)
 
-	size := image.Rect(0, 0, hiResWidth*4, hiResHeight*2)
-	out := image.NewRGBA(size)
-
-	for y := 0; y < hiResHeight; y++ {
-		for x := 0; x < hiResWidth*2; x++ {
-			out.Set(x, y, colorSnap.At(x, y))
-			out.Set(x+hiResWidth*2, y, bwSnap.At(x, y))
-			out.Set(x, y+hiResHeight, page1Snap.At(x, y))
-			out.Set(x+hiResWidth*2, y+hiResHeight, page2Snap.At(x, y))
-		}
+	if snap.Bounds().Dy() == hiResHeight {
+		// Apply the filter to regular CRT snapshots with 192 lines. Not to SHR
+		snap = linesSeparatedFilter(snap)
 	}
 
-	return out
+	return snap
 }
 
 func mixSnapshots(top, bottom *image.RGBA) *image.RGBA {
-	topBounds := top.Bounds()
-	topWidth := topBounds.Dx()
-	topHeight := topBounds.Dy()
-
-	bottomBounds := bottom.Bounds()
-	bottomWidth := bottomBounds.Dx()
-	bottomHeight := bottomBounds.Dy()
-
+	topWidth := top.Bounds().Dx()
+	bottomWidth := bottom.Bounds().Dx()
 	factor := topWidth / bottomWidth
 
-	size := image.Rect(0, 0, topWidth, topHeight+bottomHeight)
-	out := image.NewRGBA(size)
-
-	// Copy top
-	for y := topBounds.Min.Y; y < topBounds.Max.Y; y++ {
-		for x := topBounds.Min.X; x < topBounds.Max.X; x++ {
-			c := top.At(x, y)
-			out.Set(x, y, c)
-		}
-	}
-
-	// Copy bottom, applying the factor
-	for y := bottomBounds.Min.Y; y < bottomBounds.Max.Y; y++ {
-		for x := bottomBounds.Min.X; x < bottomBounds.Max.X; x++ {
+	// Copy bottom's bottom on top's bottom, applying the factor
+	for y := hiResHeightMixed; y < hiResHeight; y++ {
+		for x := 0; x < topWidth; x++ {
 			c := bottom.At(x, y)
 			for f := 0; f < factor; f++ {
-				out.Set(x*factor+f, topHeight+y, c)
+				top.Set(x*factor+f, y, c)
 			}
 		}
 	}
 
-	return out
+	return top
 }
 
 // SaveSnapshot saves a snapshot of the screen to a png file
 func SaveSnapshot(a *Apple2, filename string) error {
-	img := Snapshot(a)
+	img := a.Snapshot()
 	img = squarishPixelsFilter(img)
 
 	f, err := os.Create(filename)
@@ -180,20 +220,6 @@ func linesSeparatedFilter(in *image.RGBA) *image.RGBA {
 			out.Set(x, 4*y+1, c)
 			out.Set(x, 4*y+2, c)
 			out.Set(x, 4*y+3, color.Black)
-		}
-	}
-	return out
-}
-
-func doubleWidthFilter(in *image.RGBA) *image.RGBA {
-	b := in.Bounds()
-	size := image.Rect(0, 0, 2*b.Dx(), b.Dy())
-	out := image.NewRGBA(size)
-	for y := b.Min.Y; y < b.Max.Y; y++ {
-		for x := b.Min.X; x < b.Max.X; x++ {
-			c := in.At(x, y)
-			out.Set(2*x, y, c)
-			out.Set(2*x+1, y, c)
 		}
 	}
 	return out

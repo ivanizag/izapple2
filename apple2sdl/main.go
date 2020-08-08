@@ -80,9 +80,10 @@ func SDLRun(a *apple2.Apple2) {
 		if !a.IsPaused() {
 			var img *image.RGBA
 			if kp.showPages {
-				img = apple2.SnapshotHGRModes(a)
+				img = a.SnapshotParts()
+				window.SetTitle(a.Name + " " + a.VideoModeName())
 			} else {
-				img = apple2.Snapshot(a)
+				img = a.Snapshot()
 			}
 			if img != nil {
 				surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]),

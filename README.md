@@ -42,6 +42,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - NTSC Color TV (extracting the phase from the mono signal)
   - RGB for Super High Resolution and RGB card
   - ANSI Console, avoiding the SDL2 dependency
+  - Debug mode: shows four panels with actual screen, page1, page2 and extra info dependant of the video mode
 - Other features:
   - Sound
   - Joystick support. Up to two joysticks or four paddles
@@ -131,10 +132,10 @@ Line:
 - F5: Toggle speed between real and fastest
 - Ctrl-F5: Show current speed in Mhz
 - F6: Toggle between NTSC color TV and green phosphor monochrome monitor
-- Ctrl-F6: Show a split screen with the views for NTSC color TV, monochrome monitor, HGR page 1 and HGR page 2.
+- Ctrl-F6: Show the video mode and a split screen with the views for NTSC color TV, page 1, page 2 and extra info.
 - F7: Save current state to disk (incomplete)
 - F8: Restore state from disk (incomplete)
-- F10: Cycle character generator codepages. Only if the character generator ROM has more than one 2Kb page.
+- F10: Cycle character generator code pages. Only if the character generator ROM has more than one 2Kb page.
 - F11: Toggle on and off the trace to console of the CPU execution
 - F12: Save a screen snapshot to a file `snapshot.png`
 - Pause: Pause the emulation

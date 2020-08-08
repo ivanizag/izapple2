@@ -38,11 +38,8 @@ func getColorPatterns(light color.Color) [16][16]color.Color {
 
 }
 
-func snapshotLoResModeMono(a *Apple2, isDoubleResMode bool, isSecondPage bool, isMixMode bool, light color.Color) *image.RGBA {
-	text, columns, lines := getActiveText(a, isDoubleResMode, isSecondPage, false)
-	if isMixMode {
-		lines -= textLinesMix
-	}
+func snapshotLoResModeMono(a *Apple2, isDoubleResMode bool, isSecondPage bool, light color.Color) *image.RGBA {
+	text, columns, lines := getActiveText(a, isDoubleResMode, isSecondPage)
 	grLines := lines * 2
 	pixelWidth := loResPixelWidth
 	if isDoubleResMode {
@@ -61,7 +58,7 @@ func snapshotLoResModeMono(a *Apple2, isDoubleResMode bool, isSecondPage bool, i
 				grPixel = char & 0xf
 			}
 			// We place pixelWidth mono pixels per graphic pixel.
-			// The groups of 4 mono pixels need to be alligned with an offset to get plain surfaces
+			// The groups of 4 mono pixels need to be aligned with an offset to get plain surfaces
 			offset := (c * pixelWidth) % 4
 
 			if isDoubleResMode && ((c % 2) == 0) {

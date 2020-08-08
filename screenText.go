@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	charWidth        = 7
-	charHeight       = 8
-	textColumns      = 40
-	textLines        = 24
-	textLinesMix     = 4
+	charWidth   = 7
+	charHeight  = 8
+	textColumns = 40
+	textLines   = 24
+
 	textPage1Address = uint16(0x0400)
 	textPage2Address = uint16(0x0800)
 	textPageSize     = uint16(0x0400)
@@ -24,44 +24,33 @@ func getTextCharOffset(col int, line int) uint16 {
 	// See "Understanding the Apple II", page 5-10
 	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
 	section := line / 8 // Top, middle and bottom
-	eigth := line % 8
-	return uint16(section*40 + eigth*0x80 + col)
+	eighth := line % 8
+	return uint16(section*40 + eighth*0x80 + col)
 }
 
-func snapshotTextMode(a *Apple2, is80Columns bool, isSecondPage bool, isMixMode bool, light color.Color) *image.RGBA {
-	text, columns, lines := getActiveText(a, is80Columns, isSecondPage, isMixMode)
+func snapshotTextMode(a *Apple2, is80Columns bool, isSecondPage bool, light color.Color) *image.RGBA {
+	text, columns, lines := getActiveText(a, is80Columns, isSecondPage)
 	return renderTextMode(a, text, columns, lines, light)
 }
 
-func getActiveText(a *Apple2, is80Columns bool, isSecondPage bool, isMixMode bool) ([]uint8, int, int) {
-
-	lines := textLines
-	if isMixMode {
-		lines = textLinesMix
-	}
-
+func getActiveText(a *Apple2, is80Columns bool, isSecondPage bool) ([]uint8, int, int) {
 	if !is80Columns {
-		text40Columns := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage, isMixMode)
-		return text40Columns, textColumns, lines
+		text40Columns := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
+		return text40Columns, textColumns, textLines
 	}
 
-	text40Columns := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage, isMixMode)
-	text40ColumnsAlt := getTextFromMemory(a.mmu.physicalMainRAMAlt, isSecondPage, isMixMode)
+	text40Columns := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
+	text40ColumnsAlt := getTextFromMemory(a.mmu.physicalMainRAMAlt, isSecondPage)
 	// Merge the two 40 cols to return 80 cols
 	text80Columns := make([]uint8, 2*len(text40Columns))
 	for i := 0; i < len(text40Columns); i++ {
 		text80Columns[2*i] = text40ColumnsAlt[i]
 		text80Columns[2*i+1] = text40Columns[i]
 	}
-	return text80Columns, textColumns * 2, lines
+	return text80Columns, textColumns * 2, textLines
 }
 
-func getTextFromMemory(mem *memoryRange, isSecondPage bool, isMixMode bool) []uint8 {
-	lineStart := 0
-	if isMixMode {
-		lineStart = textLines - textLinesMix
-	}
-
+func getTextFromMemory(mem *memoryRange, isSecondPage bool) []uint8 {
 	addressStart := textPage1Address
 	if isSecondPage {
 		addressStart = textPage2Address
@@ -69,11 +58,10 @@ func getTextFromMemory(mem *memoryRange, isSecondPage bool, isMixMode bool) []ui
 	addressEnd := addressStart + textPageSize
 	data := mem.subRange(addressStart, addressEnd)
 
-	lines := textLines - lineStart
-	text := make([]uint8, lines*textColumns)
-	for l := 0; l < lines; l++ {
+	text := make([]uint8, textLines*textColumns)
+	for l := 0; l < textLines; l++ {
 		for c := 0; c < textColumns; c++ {
-			char := data[getTextCharOffset(c, l+lineStart)]
+			char := data[getTextCharOffset(c, l)]
 			text[textColumns*l+c] = char
 		}
 	}
@@ -81,7 +69,7 @@ func getTextFromMemory(mem *memoryRange, isSecondPage bool, isMixMode bool) []ui
 }
 
 func renderTextMode(a *Apple2, text []uint8, columns int, lines int, light color.Color) *image.RGBA {
-	// Flash mode is 2Hz
+	// Flash mode is 2Hz (host time)
 	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
 
 	width := columns * charWidth
@@ -137,7 +125,7 @@ func DumpTextModeAnsi(a *Apple2) string {
 	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
 	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
 
-	text, columns, lines := getActiveText(a, is80Columns, isSecondPage, false /*isMixedMode*/)
+	text, columns, lines := getActiveText(a, is80Columns, isSecondPage)
 	content := "\n"
 	content += fmt.Sprintln(strings.Repeat("#", columns+4))
 
