@@ -7,23 +7,25 @@ import (
 // SnapshotParts the currently visible screen
 func (a *Apple2) SnapshotParts() *image.RGBA {
 	videoMode := getCurrentVideoMode(a)
+	isSecondPage := (videoMode & videoSecondPage) != 0
+	videoBase := videoMode & videoBaseMask
+
 	snapScreen := snapshotByMode(a, videoMode)
 	snapPage1 := snapshotByMode(a, videoMode&^videoSecondPage)
 	snapPage2 := snapshotByMode(a, videoMode|videoSecondPage)
 	var snapAux *image.RGBA
 
-	/*videoBase := videoMode & videoBaseMask
-	if videoBase == videoRGBMix {
-	isSecondPage := (videoMode & videoSecondPage) != 0
-	_, mask := snapshotDoubleHiResModeMono(a, isSecondPage, true /*isRGBMixMode*/ /*, color.White)
+	/*
+		if videoBase == videoRGBMix {
+		_, mask := snapshotDoubleHiResModeMono(a, isSecondPage, true /*isRGBMixMode*/ /*, color.White)
 		snapAux = filterMask(mask)
 	}*/
 
-	if snapAux == nil && (videoMode&videoMixText80) != 0 {
+	if videoBase == videoRGBText40 {
+		snapAux = snapshotText40RGBModeColors(a, isSecondPage)
+	} else if (videoMode & videoMixText80) != 0 {
 		snapAux = snapshotByMode(a, videoText80)
-	}
-
-	if snapAux == nil {
+	} else {
 		snapAux = snapshotByMode(a, videoText40)
 	}
 
@@ -44,6 +46,9 @@ func (a *Apple2) VideoModeName() string {
 		applyNTSCFilter = false
 	case videoText80:
 		name = "TEXT80COL"
+		applyNTSCFilter = false
+	case videoRGBText40:
+		name = "TEXT40COLRGB"
 		applyNTSCFilter = false
 	case videoGR:
 		name = "GR"

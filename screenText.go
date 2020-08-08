@@ -19,8 +19,28 @@ const (
 	textPageSize     = uint16(0x0400)
 )
 
-func getTextCharOffset(col int, line int) uint16 {
+func snapshotText40Mode(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
+	text := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
+	return renderTextMode(a, text, nil /*colorMap*/, light)
+}
 
+func snapshotText80Mode(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
+	text := getText80FromMemory(a, isSecondPage)
+	return renderTextMode(a, text, nil /*colorMap*/, light)
+}
+
+func snapshotText40RGBMode(a *Apple2, isSecondPage bool) *image.RGBA {
+	text := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
+	colorMap := getTextFromMemory(a.mmu.physicalMainRAMAlt, isSecondPage)
+	return renderTextMode(a, text, colorMap, nil)
+}
+
+func snapshotText40RGBModeColors(a *Apple2, isSecondPage bool) *image.RGBA {
+	colorMap := getTextFromMemory(a.mmu.physicalMainRAMAlt, isSecondPage)
+	return renderTextMode(a, nil /*text*/, colorMap, nil)
+}
+
+func getTextCharOffset(col int, line int) uint16 {
 	// See "Understanding the Apple II", page 5-10
 	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
 	section := line / 8 // Top, middle and bottom
@@ -28,26 +48,18 @@ func getTextCharOffset(col int, line int) uint16 {
 	return uint16(section*40 + eighth*0x80 + col)
 }
 
-func snapshotTextMode(a *Apple2, is80Columns bool, isSecondPage bool, light color.Color) *image.RGBA {
-	text, columns, lines := getActiveText(a, is80Columns, isSecondPage)
-	return renderTextMode(a, text, columns, lines, light)
-}
-
-func getActiveText(a *Apple2, is80Columns bool, isSecondPage bool) ([]uint8, int, int) {
-	if !is80Columns {
-		text40Columns := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
-		return text40Columns, textColumns, textLines
-	}
-
+func getText80FromMemory(a *Apple2, isSecondPage bool) []uint8 {
 	text40Columns := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
 	text40ColumnsAlt := getTextFromMemory(a.mmu.physicalMainRAMAlt, isSecondPage)
+
 	// Merge the two 40 cols to return 80 cols
 	text80Columns := make([]uint8, 2*len(text40Columns))
 	for i := 0; i < len(text40Columns); i++ {
 		text80Columns[2*i] = text40ColumnsAlt[i]
 		text80Columns[2*i+1] = text40Columns[i]
 	}
-	return text80Columns, textColumns * 2, textLines
+
+	return text80Columns
 }
 
 func getTextFromMemory(mem *memoryRange, isSecondPage bool) []uint8 {
@@ -68,12 +80,50 @@ func getTextFromMemory(mem *memoryRange, isSecondPage bool) []uint8 {
 	return text
 }
 
-func renderTextMode(a *Apple2, text []uint8, columns int, lines int, light color.Color) *image.RGBA {
+/*
+	See:
+		https://mrob.com/pub/xapple2/colors.html
+		https://archive.org/details/IIgs_2523063_Master_Color_Values
+*/
+var rgbColorMap = [16]color.Color{
+	color.RGBA{0, 0, 0, 255},       // Black
+	color.RGBA{221, 0, 51, 255},    // Magenta
+	color.RGBA{0, 0, 153, 255},     // Dark Blue
+	color.RGBA{221, 34, 221, 255},  // Purple
+	color.RGBA{0, 119, 34, 255},    // Dark Green
+	color.RGBA{85, 85, 85, 255},    // Grey 1
+	color.RGBA{34, 34, 255, 255},   // Medium Blue
+	color.RGBA{102, 170, 255, 255}, // Light Blue
+	color.RGBA{136, 85, 0, 255},    // Brown
+	color.RGBA{255, 102, 0, 255},   // Orange
+	color.RGBA{170, 170, 170, 255}, // Grey 2
+	color.RGBA{255, 153, 136, 255}, // Pink
+	color.RGBA{17, 221, 0, 255},    // Green
+	color.RGBA{255, 255, 0, 255},   // Yellow
+	color.RGBA{68, 255, 153, 255},  // Aquamarine
+	color.RGBA{255, 255, 255, 255}, // White
+}
+
+func getRGBTextColor(pixel bool, colorKey uint8) color.Color {
+	if pixel {
+		colorKey >>= 4
+	}
+	colorKey &= 0x0f
+	return rgbColorMap[colorKey]
+
+}
+
+func renderTextMode(a *Apple2, text []uint8, colorMap []uint8, light color.Color) *image.RGBA {
 	// Flash mode is 2Hz (host time)
 	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
+	isAltText := a.io.isSoftSwitchActive(ioFlagAltChar)
 
+	columns := len(text) / textLines
+	if text == nil {
+		columns = textColumns
+	}
 	width := columns * charWidth
-	height := lines * charHeight
+	height := textLines * charHeight
 	size := image.Rect(0, 0, width, height)
 	img := image.NewRGBA(size)
 
@@ -83,13 +133,18 @@ func renderTextMode(a *Apple2, text []uint8, columns int, lines int, light color
 			col := x / charWidth
 			rowInChar := y % charHeight
 			colInChar := x % charWidth
-			char := text[line*columns+col]
+			charIndex := line*columns + col
+			var char uint8
+			if text != nil {
+				char = text[charIndex]
+			} else {
+				char = 79 + 128 // Debug screen filed with O
+			}
+
 			var pixel bool
 			if a.isApple2e {
-				isAltText := a.io.isSoftSwitchActive(ioFlagAltChar)
 				vid6 := (char & 0x40) != 0
 				vid7 := (char & 0x80) != 0
-
 				char := char & 0x3f
 				if vid6 && (vid7 || isAltText) {
 					char += 0x40
@@ -106,12 +161,16 @@ func renderTextMode(a *Apple2, text []uint8, columns int, lines int, light color
 
 				pixel = pixel != (isInverse || (isFlash && isFlashedFrame))
 			}
+
 			var colour color.Color
-			if pixel {
+			if colorMap != nil {
+				colour = getRGBTextColor(pixel, colorMap[charIndex])
+			} else if pixel {
 				colour = light
 			} else {
 				colour = color.Black
 			}
+
 			img.Set(x, y, colour)
 		}
 	}
@@ -124,14 +183,19 @@ func renderTextMode(a *Apple2, text []uint8, columns int, lines int, light color
 func DumpTextModeAnsi(a *Apple2) string {
 	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
 	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
-
-	text, columns, lines := getActiveText(a, is80Columns, isSecondPage)
-	content := "\n"
-	content += fmt.Sprintln(strings.Repeat("#", columns+4))
-
 	isAltText := a.isApple2e && a.io.isSoftSwitchActive(ioFlagAltChar)
 
-	for l := 0; l < lines; l++ {
+	var text []uint8
+	if is80Columns {
+		text = getText80FromMemory(a, isSecondPage)
+	} else {
+		text = getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
+	}
+	columns := len(text) / textLines
+
+	content := "\n"
+	content += fmt.Sprintln(strings.Repeat("#", columns+4))
+	for l := 0; l < textLines; l++ {
 		line := ""
 		for c := 0; c < columns; c++ {
 			char := text[l*columns+c]

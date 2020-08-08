@@ -34,6 +34,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Double-Width High-Resolution graphics (Apple //e only)
   - Super High Resolution (VidHD only)
   - Mixed mode
+  - RGB card text 40 columns with 16 colors for foreground and background
   - RGB card mode 11, mono 560x192
   - RGB card mode 13, ntsc 140*192 (regular DHGR)
   - RGB card mode 14, mix of modes 11 and 13 on the fly

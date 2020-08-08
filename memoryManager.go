@@ -123,7 +123,7 @@ func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 		return mmu.getPhysicalMainRAM(mmu.altZeroPage)
 	}
 	if mmu.store80Active && address <= addressLimitHgr {
-		altPage := mmu.apple2.io.isSoftSwitchActive(ioFlagSecondPage)
+		altPage := mmu.apple2.io.isSoftSwitchActive(ioFlagSecondPage) // TODO: move flag to mmu property like the store80
 		if address >= addressStartText && address <= addressLimitText {
 			return mmu.getPhysicalMainRAM(altPage)
 		}

@@ -38,9 +38,19 @@ func getColorPatterns(light color.Color) [16][16]color.Color {
 
 }
 
-func snapshotLoResModeMono(a *Apple2, isDoubleResMode bool, isSecondPage bool, light color.Color) *image.RGBA {
-	text, columns, lines := getActiveText(a, isDoubleResMode, isSecondPage)
-	grLines := lines * 2
+func snapshotLoResModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
+	data := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
+	return renderGrMode(data, false /*isMeres*/, light)
+}
+
+func snapshotMeResModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
+	data := getText80FromMemory(a, isSecondPage)
+	return renderGrMode(data, true /*isMeres*/, light)
+}
+
+func renderGrMode(data []uint8, isDoubleResMode bool, light color.Color) *image.RGBA {
+	grLines := textLines * 2
+	columns := len(data) / textLines
 	pixelWidth := loResPixelWidth
 	if isDoubleResMode {
 		pixelWidth = doubleLoResPixelWidth
@@ -52,7 +62,7 @@ func snapshotLoResModeMono(a *Apple2, isDoubleResMode bool, isSecondPage bool, l
 	patterns := getColorPatterns(light)
 	for l := 0; l < grLines; l++ {
 		for c := 0; c < columns; c++ {
-			char := text[(l/2)*columns+c]
+			char := data[(l/2)*columns+c]
 			grPixel := char >> 4
 			if l%2 == 0 {
 				grPixel = char & 0xf

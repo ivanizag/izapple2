@@ -24,9 +24,10 @@ const (
 	videoDGR    uint8 = 0x09
 	videoDHGR   uint8 = 0x0a
 
-	videoMono560 uint8 = 0x10
-	videoRGBMix  uint8 = 0x11
-	videoSHR     uint8 = 0x12
+	videoRGBText40 uint8 = 0x10
+	videoMono560   uint8 = 0x11
+	videoRGBMix    uint8 = 0x12
+	videoSHR       uint8 = 0x13
 
 	// Modifiers
 	videoBaseMask   uint8 = 0x1f
@@ -56,7 +57,11 @@ func getCurrentVideoMode(a *Apple2) uint8 {
 		if is80Columns {
 			mode = videoText80
 		} else {
-			mode = videoText40
+			if a.mmu.store80Active {
+				mode = videoRGBText40
+			} else {
+				mode = videoText40
+			}
 		}
 		isMixMode = false
 	} else if isHiResMode {
@@ -111,15 +116,18 @@ func snapshotByMode(a *Apple2, videoMode uint8) *image.RGBA {
 	var ntscMask *image.Alpha
 	switch videoBase {
 	case videoText40:
-		snap = snapshotTextMode(a, false /*is80Columns*/, isSecondPage, lightColor)
+		snap = snapshotText40Mode(a, isSecondPage, lightColor)
 		applyNTSCFilter = false
 	case videoText80:
-		snap = snapshotTextMode(a, true /*is80Columns*/, isSecondPage, lightColor)
+		snap = snapshotText80Mode(a, isSecondPage, lightColor)
+		applyNTSCFilter = false
+	case videoRGBText40:
+		snap = snapshotText40RGBMode(a, isSecondPage)
 		applyNTSCFilter = false
 	case videoGR:
-		snap = snapshotLoResModeMono(a, false /*isDoubleResMode*/, isSecondPage, lightColor)
+		snap = snapshotLoResModeMono(a, isSecondPage, lightColor)
 	case videoDGR:
-		snap = snapshotLoResModeMono(a, true /*isDoubleResMode*/, isSecondPage, lightColor)
+		snap = snapshotMeResModeMono(a, isSecondPage, lightColor)
 	case videoHGR:
 		snap = snapshotHiResModeMono(a, isSecondPage, lightColor)
 	case videoDHGR:
@@ -135,8 +143,12 @@ func snapshotByMode(a *Apple2, videoMode uint8) *image.RGBA {
 	}
 
 	if isMixMode {
-		isMix80 := (videoMode & videoMixText80) != 0
-		bottom := snapshotTextMode(a, isMix80, isSecondPage, lightColor)
+		var bottom *image.RGBA
+		if (videoMode & videoMixText40) != 0 {
+			bottom = snapshotText40Mode(a, isSecondPage, lightColor)
+		} else {
+			bottom = snapshotText80Mode(a, isSecondPage, lightColor)
+		}
 		snap = mixSnapshots(snap, bottom)
 	}
 
