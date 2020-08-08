@@ -7,50 +7,49 @@ Portable emulator of an Apple II+ or //e. Written in Go.
 ## Features
 
 - Models:
-    - Apple ][+ with 48Kb of base RAM
-    - Apple //e with 128Kb of RAM
-    - Apple //e enhanced with 128Kb of RAM
-    - Base64A clone with 48Kb of base RAM and paginated ROM
+  - Apple ][+ with 48Kb of base RAM
+  - Apple //e with 128Kb of RAM
+  - Apple //e enhanced with 128Kb of RAM
+  - Base64A clone with 48Kb of base RAM and paginated ROM
 - Storage
-    - 16 Sector diskettes in NIB, DSK or PO format
-    - 16 Sector diskettes in WOZ 1.0 or 2.0 format (read only)
-    - Hard disk with ProDOS and SmartPort support
+  - 16 Sector diskettes in NIB, DSK or PO format
+  - 16 Sector diskettes in WOZ 1.0 or 2.0 format (read only)
+  - Hard disk with ProDOS and SmartPort support
 - Emulated extension cards:
-    - DiskII controller
-    - 16Kb Language Card
-    - 256Kb Saturn RAM
-    - 1Mb Memory Expansion Card
-    - ThunderClock Plus real time clock
-    - Bootable hard disk card
-    - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
-    - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
-    - FASTChip, limited to what Total Replay needs to set and clear fast mode
+  - DiskII controller
+  - 16Kb Language Card
+  - 256Kb Saturn RAM
+  - 1Mb Memory Expansion Card
+  - ThunderClock Plus real time clock
+  - Bootable hard disk card
+  - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
+  - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
+  - FASTChip, limited to what Total Replay needs to set and clear fast mode
 - Graphic modes:
-    - Text 40 columns
-    - Text 80 columns (Apple //e only)
-    - Low-Resolution graphics
-    - Double-Width Low-Resolution graphics (Apple //e only)
-    - High-Resolution graphics
-    - Double-Width High-Resolution graphics (Apple //e only)
-    - Super High Resolution (VidHD only)
-    - Mixed mode
-    - RGB card mode 11, mono 560x192
-    - RGB card mode 13, ntsc 140*192 (regular DHGR)
-    - RGB card mode 14, mix of modes 11 and 13 on the fly
+  - Text 40 columns
+  - Text 80 columns (Apple //e only)
+  - Low-Resolution graphics
+  - Double-Width Low-Resolution graphics (Apple //e only)
+  - High-Resolution graphics
+  - Double-Width High-Resolution graphics (Apple //e only)
+  - Super High Resolution (VidHD only)
+  - Mixed mode
+  - RGB card mode 11, mono 560x192
+  - RGB card mode 13, ntsc 140*192 (regular DHGR)
+  - RGB card mode 14, mix of modes 11 and 13 on the fly
 - Displays:
-    - Green monochrome monitor with half width pixel support
-    - NTSC Color TV (extracting the phase from the mono signal)
-    - RGB for Super High Resolution and RGB card
-    - ANSI Console, avoiding the SDL2 dependency
+  - Green monochrome monitor with half width pixel support
+  - NTSC Color TV (extracting the phase from the mono signal)
+  - RGB for Super High Resolution and RGB card
+  - ANSI Console, avoiding the SDL2 dependency
 - Other features:
-    - Sound
-    - Joystick support. Up to two joysticks or four paddles
-    - Adjustable speed
-    - Fast disk mode to set max speed while using the disks
-    - Single file executable with embedded ROMs and DOS 3.3
-    - Pause (thanks a2geek)
-    - ProDOS MLI calls tracing
-
+  - Sound
+  - Joystick support. Up to two joysticks or four paddles
+  - Adjustable speed
+  - Fast disk mode to set max speed while using the disks
+  - Single file executable with embedded ROMs and DOS 3.3
+  - Pause (thanks a2geek)
+  - ProDOS MLI calls tracing
 
 ## Running the emulator
 
@@ -59,32 +58,41 @@ No installation required. [Download](https://github.com/ivanizag/apple2/releases
 ### Default mode
 
 Execute without parameters to have an emulated Apple //e Enhanced with 128kb booting DOS 3.3 ready to run Applesoft:
-```
+
+``` shell
 casa@servidor:~$ ./apple2sdl
 ```
 
 ![DOS 3.3 started](doc/dos33.png)
 
 ### Play games
+
 Download a DSK or WOZ file or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source) with the `-disk` parameter:
-```
+
+``` shell
 casa@servidor:~$ ./apple2sdl -disk "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
 ```
+
 ![Karateka](doc/karateka.png)
 
 ### Play the Total Replay collection
+
 Download the excellent [Total Replay](https://archive.org/details/TotalReplay) compilation by
 [a2-4am](https://github.com/a2-4am/4cade). Run it with the `-hd` parameter:
-```
+
+``` shell
 casa@servidor:~$ ./apple2sdl -hd "Total Replay v3.0.2mg"
 ```
+
 Displays super hi-res box art as seen with the VidHD card.
 
 ![Total Replay](doc/totalreplay.png)
 
 ### Terminal mode
-To run text mode right on the terminal without the SDL2 dependency, use `apple2console`. It runs on the console using ANSI escape codes. Input is sent to the emulated Apple II one line at a time: 
-```
+
+To run text mode right on the terminal without the SDL2 dependency, use `apple2console`. It runs on the console using ANSI escape codes. Input is sent to the emulated Apple II one line at a time:
+
+``` shell
 casa@servidor:~$ ./apple2console -model 2plus
 
 ############################################
@@ -113,7 +121,7 @@ casa@servidor:~$ ./apple2console -model 2plus
 #                                          #
 #                                          #
 ############################################
-Line: 
+Line:
 
 ```
 
@@ -135,7 +143,7 @@ Only valid on SDL mode
 
 ### Command line options
 
-```
+``` shell
   -charRom string
         rom file for the character generator (default "<default>")
   -disk string
@@ -201,27 +209,30 @@ Only valid on SDL mode
 The only dependency is having a working Go installation on any platform.
 
 Run:
+
+``` shell
+go get github.com/ivanizag/apple2/apple2console
+go build github.com/ivanizag/apple2/apple2console
 ```
-$ go get github.com/ivanizag/apple2/apple2console 
-$ go build github.com/ivanizag/apple2/apple2console 
-``` 
 
 ### apple2sdl
 
 Besides having a working Go installation, install the SDL2 developer files. Valid for any platform
 
 Run:
-```
-$ go get github.com/ivanizag/apple2/apple2sdl
-$ go build github.com/ivanizag/apple2/apple2sdl 
+
+``` shell
+go get github.com/ivanizag/apple2/apple2sdl
+go build github.com/ivanizag/apple2/apple2sdl
 ```
 
 ### Use docker to cross compile for Linux and Windows
 
 To create executables for Linux and Windows without installing Go, SDL2 or the Windows cross compilation toosl, run:
-```
-$ cd docker
-$ ./build.sh
+
+``` shell
+cd docker
+./build.sh
 ```
 
 To run in Windows, copy the file `SDL2.dll` on the same folder as `apple2sdl.exe`. The latest `SDL2.dll` can be found in the [Runtime binary for Windows 64-bit](https://www.libsdl.org/download-2.0.php).
