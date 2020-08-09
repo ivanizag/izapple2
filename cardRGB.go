@@ -7,6 +7,9 @@ See:
 	https://apple2online.com/web_documents/Video-7%20Manual%20KB.pdf
 	https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/hardware/video/DIGICARD%2064K%20Extended%2080%20Column%20RGB%20Card%20for%20Apple%20IIe%20Instruction%20Manual.pdf
 
+Diagnostics disk:
+	https://mirrors.apple2.org.za/ftp.apple.asimov.net/images/hardware/video/Video-7%20Apple%20II%20RGB%20Demo%20%28Video-7%2C%20Inc.%29%281984%29.dsk
+
 It goes to the 80 column slot.
 
 To set the state it AN3 in graphics mode has to go off-on-off-on. Each pair off-on record the state of 80col:

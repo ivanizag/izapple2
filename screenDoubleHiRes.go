@@ -7,6 +7,7 @@ import (
 
 const (
 	doubleHiResWidth = 2 * hiResWidth
+	rgb160Width      = 4 * 160
 )
 
 func snapshotDoubleHiResModeMono(a *Apple2, isSecondPage bool, getNTSCMask bool, light color.Color) (*image.RGBA, *image.Alpha) {
@@ -61,4 +62,33 @@ func snapshotDoubleHiResModeMono(a *Apple2, isSecondPage bool, getNTSCMask bool,
 		}
 	}
 	return img, ntscMask
+}
+
+func snapshotDoubleHiRes160ModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
+	size := image.Rect(0, 0, rgb160Width, hiResHeight)
+	img := image.NewRGBA(size)
+
+	for y := 0; y < hiResHeight; y++ {
+		lineParts := [][]uint8{
+			getHiResLine(a, y, isSecondPage, true /*auxmem*/),
+			getHiResLine(a, y, isSecondPage, false /*auxmem*/),
+		}
+		x := 0
+		for iByte := 0; iByte < hiResLineBytes; iByte++ {
+			for iPart := 0; iPart < 2; iPart++ {
+				b := lineParts[iPart][iByte]
+				for j := uint(0); j < 8; j++ {
+					// Set color
+					bit := (b >> j) & 1
+					colour := light
+					if bit == 0 {
+						colour = color.Black
+					}
+					img.Set(x, y, colour)
+					x++
+				}
+			}
+		}
+	}
+	return img
 }

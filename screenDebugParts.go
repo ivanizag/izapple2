@@ -63,6 +63,8 @@ func (a *Apple2) VideoModeName() string {
 		applyNTSCFilter = false
 	case videoRGBMix:
 		name = "RGMMIX"
+	case videoRGB160:
+		name = "RGB160"
 	case videoSHR:
 		name = "SHR"
 		applyNTSCFilter = false
@@ -89,21 +91,23 @@ func (a *Apple2) VideoModeName() string {
 }
 
 func mixFourSnapshots(snaps []*image.RGBA) *image.RGBA {
-	size := image.Rect(0, 0, hiResWidth*4, hiResHeight*2)
+	width := snaps[0].Rect.Dx()
+	height := snaps[0].Rect.Dy()
+	size := image.Rect(0, 0, width*2, height*2)
 	out := image.NewRGBA(size)
 
-	for i := 0; i < 4; i++ {
-		if snaps[i].Bounds().Dx() < hiResWidth*2 {
+	for i := 1; i < 4; i++ {
+		if snaps[i].Bounds().Dx() < width {
 			snaps[i] = doubleWidthFilter(snaps[i])
 		}
 	}
 
-	for y := 0; y < hiResHeight; y++ {
-		for x := 0; x < hiResWidth*2; x++ {
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
 			out.Set(x, y, snaps[0].At(x, y))
-			out.Set(x+hiResWidth*2, y, snaps[1].At(x, y))
-			out.Set(x, y+hiResHeight, snaps[2].At(x, y))
-			out.Set(x+hiResWidth*2, y+hiResHeight, snaps[3].At(x, y))
+			out.Set(x+width, y, snaps[1].At(x, y))
+			out.Set(x, y+height, snaps[2].At(x, y))
+			out.Set(x+width, y+height, snaps[3].At(x, y))
 		}
 	}
 

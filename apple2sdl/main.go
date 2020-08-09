@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"unsafe"
 
@@ -81,7 +82,7 @@ func SDLRun(a *apple2.Apple2) {
 			var img *image.RGBA
 			if kp.showPages {
 				img = a.SnapshotParts()
-				window.SetTitle(a.Name + " " + a.VideoModeName())
+				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
 			} else {
 				img = a.Snapshot()
 			}

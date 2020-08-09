@@ -52,13 +52,15 @@ func filterNTSCColor(in *image.RGBA, mask *image.Alpha) *image.RGBA {
 	colorMap := ntscColorMap // or rgbColorMap
 
 	b := in.Bounds()
-	size := image.Rect(0, 0, b.Dx()+3, b.Dy())
+	width := b.Dx()
+	height := b.Dy()
+	size := image.Rect(0, 0, width+4, height)
 	out := image.NewRGBA(size)
 
-	for y := b.Min.Y; y < b.Max.Y; y++ {
+	for y := 0; y < height; y++ {
 		// We store the last four bits. We start with 0000
 		v := 0
-		for x := b.Min.X; x < b.Dx(); x++ {
+		for x := 0; x < width; x++ {
 			cIn := in.At(x, y)
 			r, _, _, _ := cIn.RGBA()
 
@@ -82,7 +84,7 @@ func filterNTSCColor(in *image.RGBA, mask *image.Alpha) *image.RGBA {
 		}
 
 		// We fade for the last three positions
-		for x := b.Dx(); x < b.Max.X; x++ {
+		for x := width; x < width+4; x++ {
 			v >>= 1
 			cOut := colorMap[v]
 			out.Set(x, y, cOut)

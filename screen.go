@@ -27,7 +27,8 @@ const (
 	videoRGBText40 uint8 = 0x10
 	videoMono560   uint8 = 0x11
 	videoRGBMix    uint8 = 0x12
-	videoSHR       uint8 = 0x13
+	videoRGB160    uint8 = 0x13
+	videoSHR       uint8 = 0x14
 
 	// Modifiers
 	videoBaseMask   uint8 = 0x1f
@@ -47,6 +48,8 @@ func getCurrentVideoMode(a *Apple2) uint8 {
 	rgbFlag2 := a.io.isSoftSwitchActive(ioFlag2RGBCard)
 	isMono560 := isDoubleResMode && !rgbFlag1 && !rgbFlag2
 	isRGBMixMode := isDoubleResMode && !rgbFlag1 && rgbFlag2
+	isRGB160Mode := isDoubleResMode && rgbFlag1 && !rgbFlag2
+
 	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
 
 	mode := uint8(0)
@@ -71,6 +74,8 @@ func getCurrentVideoMode(a *Apple2) uint8 {
 			mode = videoMono560
 		} else if isRGBMixMode {
 			mode = videoRGBMix
+		} else if isRGB160Mode {
+			mode = videoRGB160
 		} else {
 			mode = videoDHGR
 		}
@@ -137,6 +142,8 @@ func snapshotByMode(a *Apple2, videoMode uint8) *image.RGBA {
 		applyNTSCFilter = false
 	case videoRGBMix:
 		snap, ntscMask = snapshotDoubleHiResModeMono(a, isSecondPage, true /*isRGBMixMode*/, lightColor)
+	case videoRGB160:
+		snap = snapshotDoubleHiRes160ModeMono(a, isSecondPage, lightColor)
 	case videoSHR:
 		snap = snapshotSuperHiResMode(a)
 		applyNTSCFilter = false

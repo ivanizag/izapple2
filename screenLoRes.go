@@ -73,8 +73,8 @@ func renderGrMode(data []uint8, isDoubleResMode bool, light color.Color) *image.
 
 			if isDoubleResMode && ((c % 2) == 0) {
 				// See "Understanding the Apple II", page 8-44
-				// Even blocks color are rotated left on bit
-				offset = offset + 3
+				// Even blocks color are rotated left one bit
+				offset = offset + 3 // Equivalent to -1
 			}
 
 			// Insert the pixelWidth pixels required
