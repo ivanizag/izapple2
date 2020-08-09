@@ -85,7 +85,7 @@ func getRGBTextColor(pixel bool, colorKey uint8) color.Color {
 		colorKey >>= 4
 	}
 	colorKey &= 0x0f
-	return rgbColorMap[colorKey]
+	return ntscColorMap[colorKey]
 
 }
 

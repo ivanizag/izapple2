@@ -16,31 +16,36 @@ References:
 */
 
 const (
-	videoText40 uint8 = 0x01
-	videoGR     uint8 = 0x02
-	videoHGR    uint8 = 0x03
+	// Base Video Mode
+	videoBaseMask  uint16 = 0x1f
+	videoText40    uint16 = 0x01
+	videoGR        uint16 = 0x02
+	videoHGR       uint16 = 0x03
+	videoText80    uint16 = 0x08
+	videoDGR       uint16 = 0x09
+	videoDHGR      uint16 = 0x0a
+	videoText40RGB uint16 = 0x10
+	videoMono560   uint16 = 0x11
+	videoRGBMix    uint16 = 0x12
+	videoRGB160    uint16 = 0x13
+	videoSHR       uint16 = 0x14
 
-	videoText80 uint8 = 0x08
-	videoDGR    uint8 = 0x09
-	videoDHGR   uint8 = 0x0a
+	// Mix text modifiers
+	videoMixTextMask  uint16 = 0x0f00
+	videoMixText40    uint16 = 0x0100
+	videoMixText80    uint16 = 0x0200
+	videoMixText40RGB uint16 = 0x0300
 
-	videoRGBText40 uint8 = 0x10
-	videoMono560   uint8 = 0x11
-	videoRGBMix    uint8 = 0x12
-	videoRGB160    uint8 = 0x13
-	videoSHR       uint8 = 0x14
-
-	// Modifiers
-	videoBaseMask   uint8 = 0x1f
-	videoSecondPage uint8 = 0x20
-	videoMixText40  uint8 = 0x40
-	videoMixText80  uint8 = 0x80
+	// Other modifiers
+	videoModifiersMask uint16 = 0xf000
+	videoSecondPage    uint16 = 0x1000
 )
 
-func getCurrentVideoMode(a *Apple2) uint8 {
+func getCurrentVideoMode(a *Apple2) uint16 {
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
 	isHiResMode := a.io.isSoftSwitchActive(ioFlagHiRes)
 	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
+	isStore80Active := a.mmu.store80Active
 	isDoubleResMode := !isTextMode && is80Columns && !a.io.isSoftSwitchActive(ioFlagAnnunciator3)
 	isSuperHighResMode := a.io.isSoftSwitchActive(ioDataNewVideo)
 
@@ -52,19 +57,17 @@ func getCurrentVideoMode(a *Apple2) uint8 {
 
 	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
 
-	mode := uint8(0)
+	mode := uint16(0)
 	if isSuperHighResMode {
 		mode = videoSHR
 		isMixMode = false
 	} else if isTextMode {
 		if is80Columns {
 			mode = videoText80
+		} else if isStore80Active {
+			mode = videoText40RGB
 		} else {
-			if a.mmu.store80Active {
-				mode = videoRGBText40
-			} else {
-				mode = videoText40
-			}
+			mode = videoText40
 		}
 		isMixMode = false
 	} else if isHiResMode {
@@ -89,6 +92,8 @@ func getCurrentVideoMode(a *Apple2) uint8 {
 	if isMixMode {
 		if is80Columns {
 			mode |= videoMixText80
+		} else if isStore80Active {
+			mode |= videoMixText40RGB
 		} else {
 			mode |= videoMixText40
 		}
@@ -101,10 +106,10 @@ func getCurrentVideoMode(a *Apple2) uint8 {
 	return mode
 }
 
-func snapshotByMode(a *Apple2, videoMode uint8) *image.RGBA {
+func snapshotByMode(a *Apple2, videoMode uint16) *image.RGBA {
 	videoBase := videoMode & videoBaseMask
+	mixMode := videoMode & videoMixTextMask
 	isSecondPage := (videoMode & videoSecondPage) != 0
-	isMixMode := (videoMode & (videoMixText40 | videoMixText80)) != 0
 
 	var lightColor color.Color
 	if a.isColor {
@@ -126,7 +131,7 @@ func snapshotByMode(a *Apple2, videoMode uint8) *image.RGBA {
 	case videoText80:
 		snap = snapshotText80Mode(a, isSecondPage, lightColor)
 		applyNTSCFilter = false
-	case videoRGBText40:
+	case videoText40RGB:
 		snap = snapshotText40RGBMode(a, isSecondPage)
 		applyNTSCFilter = false
 	case videoGR:
@@ -149,19 +154,28 @@ func snapshotByMode(a *Apple2, videoMode uint8) *image.RGBA {
 		applyNTSCFilter = false
 	}
 
-	if isMixMode {
+	if applyNTSCFilter {
+		snap = filterNTSCColor(snap, ntscMask)
+	}
+
+	if mixMode != 0 {
 		var bottom *image.RGBA
-		if (videoMode & videoMixText40) != 0 {
+		applyNTSCFilter := a.isColor
+		switch mixMode {
+		case videoMixText40:
 			bottom = snapshotText40Mode(a, isSecondPage, lightColor)
-		} else {
+		case videoMixText80:
 			bottom = snapshotText80Mode(a, isSecondPage, lightColor)
+		case videoMixText40RGB:
+			bottom = snapshotText40RGBMode(a, isSecondPage)
+			applyNTSCFilter = false
+		}
+		if applyNTSCFilter {
+			snap = filterNTSCColor(snap, ntscMask)
 		}
 		snap = mixSnapshots(snap, bottom)
 	}
 
-	if applyNTSCFilter {
-		snap = filterNTSCColor(snap, ntscMask)
-	}
 	return snap
 }
 

@@ -9,6 +9,8 @@ func (a *Apple2) SnapshotParts() *image.RGBA {
 	videoMode := getCurrentVideoMode(a)
 	isSecondPage := (videoMode & videoSecondPage) != 0
 	videoBase := videoMode & videoBaseMask
+	mixMode := videoMode & videoMixTextMask
+	modifiers := videoMode & videoModifiersMask
 
 	snapScreen := snapshotByMode(a, videoMode)
 	snapPage1 := snapshotByMode(a, videoMode&^videoSecondPage)
@@ -21,12 +23,17 @@ func (a *Apple2) SnapshotParts() *image.RGBA {
 		snapAux = filterMask(mask)
 	}*/
 
-	if videoBase == videoRGBText40 {
+	if videoBase == videoText40RGB {
 		snapAux = snapshotText40RGBModeColors(a, isSecondPage)
-	} else if (videoMode & videoMixText80) != 0 {
-		snapAux = snapshotByMode(a, videoText80)
 	} else {
-		snapAux = snapshotByMode(a, videoText40)
+		switch mixMode {
+		case videoMixText80:
+			snapAux = snapshotByMode(a, videoText80|modifiers)
+		case videoMixText40RGB:
+			snapAux = snapshotByMode(a, videoText40RGB|modifiers)
+		default:
+			snapAux = snapshotByMode(a, videoText40|modifiers)
+		}
 	}
 
 	return mixFourSnapshots([]*image.RGBA{snapScreen, snapAux, snapPage1, snapPage2})
@@ -36,6 +43,7 @@ func (a *Apple2) SnapshotParts() *image.RGBA {
 func (a *Apple2) VideoModeName() string {
 	videoMode := getCurrentVideoMode(a)
 	videoBase := videoMode & videoBaseMask
+	mixMode := videoMode & videoMixTextMask
 
 	var name string
 	applyNTSCFilter := a.isColor
@@ -47,7 +55,7 @@ func (a *Apple2) VideoModeName() string {
 	case videoText80:
 		name = "TEXT80COL"
 		applyNTSCFilter = false
-	case videoRGBText40:
+	case videoText40RGB:
 		name = "TEXT40COLRGB"
 		applyNTSCFilter = false
 	case videoGR:
@@ -76,12 +84,13 @@ func (a *Apple2) VideoModeName() string {
 		name += "-PAGE2"
 	}
 
-	if (videoMode & videoMixText40) != 0 {
+	switch mixMode {
+	case videoMixText40:
 		name += "-MIX40"
-	}
-
-	if (videoMode & videoMixText80) != 0 {
+	case videoMixText80:
 		name += "-MIX80"
+	case videoMixText40RGB:
+		name += "-MIX40RGB"
 	}
 
 	if applyNTSCFilter {
