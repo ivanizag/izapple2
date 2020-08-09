@@ -80,30 +80,6 @@ func getTextFromMemory(mem *memoryRange, isSecondPage bool) []uint8 {
 	return text
 }
 
-/*
-	See:
-		https://mrob.com/pub/xapple2/colors.html
-		https://archive.org/details/IIgs_2523063_Master_Color_Values
-*/
-var rgbColorMap = [16]color.Color{
-	color.RGBA{0, 0, 0, 255},       // Black
-	color.RGBA{221, 0, 51, 255},    // Magenta
-	color.RGBA{0, 0, 153, 255},     // Dark Blue
-	color.RGBA{221, 34, 221, 255},  // Purple
-	color.RGBA{0, 119, 34, 255},    // Dark Green
-	color.RGBA{85, 85, 85, 255},    // Grey 1
-	color.RGBA{34, 34, 255, 255},   // Medium Blue
-	color.RGBA{102, 170, 255, 255}, // Light Blue
-	color.RGBA{136, 85, 0, 255},    // Brown
-	color.RGBA{255, 102, 0, 255},   // Orange
-	color.RGBA{170, 170, 170, 255}, // Grey 2
-	color.RGBA{255, 153, 136, 255}, // Pink
-	color.RGBA{17, 221, 0, 255},    // Green
-	color.RGBA{255, 255, 0, 255},   // Yellow
-	color.RGBA{68, 255, 153, 255},  // Aquamarine
-	color.RGBA{255, 255, 255, 255}, // White
-}
-
 func getRGBTextColor(pixel bool, colorKey uint8) color.Color {
 	if pixel {
 		colorKey >>= 4

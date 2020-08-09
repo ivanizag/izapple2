@@ -5,57 +5,51 @@ import (
 	"image/color"
 )
 
-func getNTSCColorMap() []color.Color {
-	// RGB values from https://mrob.com/pub/xapple2/colors.html
-	black := color.RGBA{0, 0, 0, 255} /*COLOR=0 */ /*  0   0    0*/
+/*
+	See:
+		https://mrob.com/pub/xapple2/colors.html
+		https://archive.org/details/IIgs_2523063_Master_Color_Values
+*/
+var ntscColorMap = [16]color.Color{
+	color.RGBA{0, 0, 0, 255},       // Black
+	color.RGBA{227, 30, 96, 255},   // Magenta
+	color.RGBA{96, 78, 189, 255},   // Dark Blue
+	color.RGBA{255, 68, 253, 255},  // Purple
+	color.RGBA{0, 163, 96, 255},    // Dark Green
+	color.RGBA{156, 156, 156, 255}, // Grey 1
+	color.RGBA{20, 207, 253, 255},  // Medium Blue
+	color.RGBA{208, 195, 255, 255}, // Light Blue
+	color.RGBA{96, 114, 3, 255},    // Brown
+	color.RGBA{255, 106, 60, 255},  // Orange
+	color.RGBA{156, 156, 156, 255}, // Grey 2
+	color.RGBA{255, 160, 208, 255}, // Pink
+	color.RGBA{20, 245, 60, 255},   // Green
+	color.RGBA{208, 221, 141, 255}, // Yellow
+	color.RGBA{114, 255, 208, 255}, // Aquamarine
+	color.RGBA{255, 255, 255, 255}, // White
+}
 
-	dkBlue := color.RGBA{96, 78, 189, 255} /*COLOR=2 */ /*  0  60   25*/
-	red := color.RGBA{227, 30, 96, 255}    /*COLOR=1 */ /* 90  60   25*/
-	brown := color.RGBA{96, 114, 3, 255}   /*COLOR=8 */ /*180  60   25*/
-	dkGreen := color.RGBA{0, 163, 96, 255} /*COLOR=4 */ /*270  60   25*/
-
-	grey := color.RGBA{156, 156, 156, 255}  /*COLOR=10*/ /*  0   0   50*/
-	purple := color.RGBA{255, 68, 253, 255} /*HCOLOR=2*/ /* 45 100   50*/
-	orange := color.RGBA{255, 106, 60, 255} /*HCOLOR=5*/ /*135 100   50*/
-	green := color.RGBA{20, 245, 60, 255}   /*HCOLOR=1*/ /*225 100   50*/
-	blue := color.RGBA{20, 207, 253, 255}   /*HCOLOR=6*/ /*315 100   50*/
-
-	//purple := color.RGBA{255, 68, 253, 255} /*COLOR=3 */ /* 45 100   50*/
-	//orange := color.RGBA{255, 106, 60, 255} /*COLOR=9 */ /*135 100   50*/
-	//green := color.RGBA{20, 245, 60, 255} /*COLOR=12*/ /*225 100   50*/
-	//blue := color.RGBA{20, 207, 253, 255} /*COLOR=6 */ /*315 100   50*/
-
-	ltBlue := color.RGBA{208, 195, 255, 255} /*COLOR=7 */ /*  0  60   75*/
-	pink := color.RGBA{255, 160, 208, 255}   /*COLOR=11*/ /* 90  60   75*/
-	yellow := color.RGBA{208, 221, 141, 255} /*COLOR=13*/ /*180  60   75*/
-	aqua := color.RGBA{114, 255, 208, 255}   /*COLOR=14*/ /*270  60   75*/
-
-	white := color.RGBA{255, 255, 255, 255} /*COLOR=15*/ /*  0   0  100*/
-
-	colorMap := []color.Color{
-		/* 0000 */ black,
-		/* 0001 */ brown,
-		/* 0010 */ dkGreen,
-		/* 0011 */ green,
-		/* 0100 */ dkBlue,
-		/* 0101 */ grey,
-		/* 0110 */ blue,
-		/* 0111 */ aqua,
-		/* 1000 */ red,
-		/* 1001 */ orange,
-		/* 1010 */ grey,
-		/* 1011 */ yellow,
-		/* 1100 */ purple,
-		/* 1101 */ pink,
-		/* 1110 */ ltBlue,
-		/* 1111 */ white,
-	}
-
-	return colorMap
+var rgbColorMap = [16]color.Color{
+	color.RGBA{0, 0, 0, 255},       // Black
+	color.RGBA{221, 0, 51, 255},    // Magenta
+	color.RGBA{0, 0, 153, 255},     // Dark Blue
+	color.RGBA{221, 34, 221, 255},  // Purple
+	color.RGBA{0, 119, 34, 255},    // Dark Green
+	color.RGBA{85, 85, 85, 255},    // Grey 1
+	color.RGBA{34, 34, 255, 255},   // Medium Blue
+	color.RGBA{102, 170, 255, 255}, // Light Blue
+	color.RGBA{136, 85, 0, 255},    // Brown
+	color.RGBA{255, 102, 0, 255},   // Orange
+	color.RGBA{170, 170, 170, 255}, // Grey 2
+	color.RGBA{255, 153, 136, 255}, // Pink
+	color.RGBA{17, 221, 0, 255},    // Green
+	color.RGBA{255, 255, 0, 255},   // Yellow
+	color.RGBA{68, 255, 153, 255},  // Aquamarine
+	color.RGBA{255, 255, 255, 255}, // White
 }
 
 func filterNTSCColor(in *image.RGBA, mask *image.Alpha) *image.RGBA {
-	colorMap := getNTSCColorMap()
+	colorMap := ntscColorMap // or rgbColorMap
 
 	b := in.Bounds()
 	size := image.Rect(0, 0, b.Dx()+3, b.Dy())
@@ -68,7 +62,7 @@ func filterNTSCColor(in *image.RGBA, mask *image.Alpha) *image.RGBA {
 			cIn := in.At(x, y)
 			r, _, _, _ := cIn.RGBA()
 
-			pos := 1 << (3 - uint(x%4))
+			pos := 1 << uint(x%4)
 			if r != 0 {
 				v |= pos
 			} else {
@@ -89,7 +83,7 @@ func filterNTSCColor(in *image.RGBA, mask *image.Alpha) *image.RGBA {
 
 		// We fade for the last three positions
 		for x := b.Dx(); x < b.Max.X; x++ {
-			v = (v << 1) & 0xF
+			v >>= 1
 			cOut := colorMap[v]
 			out.Set(x, y, cOut)
 		}
