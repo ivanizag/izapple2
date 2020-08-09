@@ -24,14 +24,14 @@ func snapshotSuperHiResMode(a *Apple2) *image.RGBA {
 	size := image.Rect(0, 0, shrWidth, shrHeight)
 	img := image.NewRGBA(size)
 
-	// Load the palletes
-	palleteMem := a.mmu.physicalMainRAMAlt.subRange(shrColorPalettesAddress, shrColorPalettesAddressEnd)
+	// Load the palettes
+	paletteMem := a.mmu.physicalMainRAMAlt.subRange(shrColorPalettesAddress, shrColorPalettesAddressEnd)
 	colors := make([]color.Color, palettesCount)
 	iMem := 0
 	for i := 0; i < palettesCount; i++ {
-		b0 := palleteMem[iMem]
+		b0 := paletteMem[iMem]
 		iMem++
-		b1 := palleteMem[iMem]
+		b1 := paletteMem[iMem]
 		iMem++
 
 		red := (b1 & 0x0f) << 4
@@ -49,7 +49,7 @@ func snapshotSuperHiResMode(a *Apple2) *image.RGBA {
 		controlByte := a.mmu.physicalMainRAMAlt.peek(shrScanLineControlAddress + uint16(y))
 		is640Wide := (controlByte & 0x80) != 0
 		isColorFill := (controlByte & 0x20) != 0
-		palleteIndex := (controlByte & 0x0f) << 4
+		paletteIndex := (controlByte & 0x0f) << 4
 
 		lineAddress := shrPixelDataAddress + uint16(shrWidthBytes*y)
 		lineBytes := a.mmu.physicalMainRAMAlt.subRange(lineAddress, uint16(lineAddress+shrWidthBytes))
@@ -62,7 +62,7 @@ func snapshotSuperHiResMode(a *Apple2) *image.RGBA {
 				for j := 3; j >= 0; j-- {
 					p := (b >> (uint(j) * 2)) & 0x03
 					offset := palettesSelectionTable[j]
-					color := colors[palleteIndex+offset+p]
+					color := colors[paletteIndex+offset+p]
 					img.Set(x, y, color)
 					x++
 				}
@@ -84,10 +84,10 @@ func snapshotSuperHiResMode(a *Apple2) *image.RGBA {
 				} else {
 					previousColor = p1
 				}
-				img.Set(x, y, colors[palleteIndex+p0])
-				img.Set(x+1, y, colors[palleteIndex+p0])
-				img.Set(x+2, y, colors[palleteIndex+p1])
-				img.Set(x+3, y, colors[palleteIndex+p1])
+				img.Set(x, y, colors[paletteIndex+p0])
+				img.Set(x+1, y, colors[paletteIndex+p0])
+				img.Set(x+2, y, colors[paletteIndex+p1])
+				img.Set(x+3, y, colors[paletteIndex+p1])
 				x += 4
 			}
 		}
