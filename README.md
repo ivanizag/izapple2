@@ -19,7 +19,8 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - DiskII controller
   - 16Kb Language Card
   - 256Kb Saturn RAM
-  - 1Mb Memory Expansion Card
+  - 1Mb Memory Expansion Card (slinky)
+  - RAMWorks style expansion Card (up to 16MB additional) (Apple //e only)
   - ThunderClock Plus real time clock
   - Bootable hard disk card
   - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
@@ -34,8 +35,9 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Double-Width High-Resolution graphics (Apple //e only)
   - Super High Resolution (VidHD only)
   - Mixed mode
-  - RGB card text 40 columns with 16 colors for foreground and background
+  - RGB card text 40 columns with 16 colors for foreground and background (mixable)
   - RGB card mode 11, mono 560x192
+  - RGB card mode 12, ntsc 160*192
   - RGB card mode 13, ntsc 140*192 (regular DHGR)
   - RGB card mode 14, mix of modes 11 and 13 on the fly
 - Displays:
@@ -61,7 +63,7 @@ No installation required. [Download](https://github.com/ivanizag/apple2/releases
 
 Execute without parameters to have an emulated Apple //e Enhanced with 128kb booting DOS 3.3 ready to run Applesoft:
 
-``` shell
+``` terminal
 casa@servidor:~$ ./apple2sdl
 ```
 
@@ -71,7 +73,7 @@ casa@servidor:~$ ./apple2sdl
 
 Download a DSK or WOZ file or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source) with the `-disk` parameter:
 
-``` shell
+``` terminal
 casa@servidor:~$ ./apple2sdl -disk "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
 ```
 
@@ -82,7 +84,7 @@ casa@servidor:~$ ./apple2sdl -disk "https://www.apple.asimov.net/images/games/ac
 Download the excellent [Total Replay](https://archive.org/details/TotalReplay) compilation by
 [a2-4am](https://github.com/a2-4am/4cade). Run it with the `-hd` parameter:
 
-``` shell
+``` terminal
 casa@servidor:~$ ./apple2sdl -hd "Total Replay v3.0.2mg"
 ```
 
@@ -94,7 +96,7 @@ Displays super hi-res box art as seen with the VidHD card.
 
 To run text mode right on the terminal without the SDL2 dependency, use `apple2console`. It runs on the console using ANSI escape codes. Input is sent to the emulated Apple II one line at a time:
 
-``` shell
+``` terminal
 casa@servidor:~$ ./apple2console -model 2plus
 
 ############################################
@@ -145,7 +147,7 @@ Only valid on SDL mode
 
 ### Command line options
 
-``` shell
+```terminal
   -charRom string
         rom file for the character generator (default "<default>")
   -disk string
@@ -180,6 +182,8 @@ Only valid on SDL mode
         panic if a not implemented softswitch is used
   -profile
         generate profile trace to analyse with pprof
+  -ramworks int
+        memory to use with RAMWorks card, 0 for no card, max is 16384 (default 8192)
   -rgb
         emulate the RGB modes of the 80col RGB card for DHGR (default true)
   -rom string
@@ -212,7 +216,7 @@ The only dependency is having a working Go installation on any platform.
 
 Run:
 
-``` shell
+``` terminal
 go get github.com/ivanizag/apple2/apple2console
 go build github.com/ivanizag/apple2/apple2console
 ```
@@ -223,7 +227,7 @@ Besides having a working Go installation, install the SDL2 developer files. Vali
 
 Run:
 
-``` shell
+``` terminal
 go get github.com/ivanizag/apple2/apple2sdl
 go build github.com/ivanizag/apple2/apple2sdl
 ```
@@ -232,7 +236,7 @@ go build github.com/ivanizag/apple2/apple2sdl
 
 To create executables for Linux and Windows without installing Go, SDL2 or the Windows cross compilation toosl, run:
 
-``` shell
+``` terminal
 cd docker
 ./build.sh
 ```

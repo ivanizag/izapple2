@@ -69,6 +69,10 @@ func MainApple() *Apple2 {
 		"memoryExpSlot",
 		4,
 		"slot for the Memory Expansion card with 1GB. -1 for none")
+	ramWorksKb := flag.Int(
+		"ramworks",
+		8192,
+		"memory to use with RAMWorks card, 0 for no card, max is 16384")
 	thunderClockCardSlot := flag.Int(
 		"thunderClockCardSlot",
 		5,
@@ -251,6 +255,13 @@ func MainApple() *Apple2 {
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if *ramWorksKb != 0 {
+		if *ramWorksKb%64 != 0 {
+			panic("Ramworks size must be a multiple of 64")
+		}
+		a.AddRAMWorks(*ramWorksKb / 64)
 	}
 
 	if *rgbCard {

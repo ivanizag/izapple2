@@ -24,8 +24,10 @@ func snapshotSuperHiResMode(a *Apple2) *image.RGBA {
 	size := image.Rect(0, 0, shrWidth, shrHeight)
 	img := image.NewRGBA(size)
 
+	videoRAM := a.mmu.getVideoRAM(true)
+
 	// Load the palettes
-	paletteMem := a.mmu.physicalMainRAMAlt.subRange(shrColorPalettesAddress, shrColorPalettesAddressEnd)
+	paletteMem := videoRAM.subRange(shrColorPalettesAddress, shrColorPalettesAddressEnd)
 	colors := make([]color.Color, palettesCount)
 	iMem := 0
 	for i := 0; i < palettesCount; i++ {
@@ -46,13 +48,13 @@ func snapshotSuperHiResMode(a *Apple2) *image.RGBA {
 
 	// Build the lines
 	for y := 0; y < shrHeight; y++ {
-		controlByte := a.mmu.physicalMainRAMAlt.peek(shrScanLineControlAddress + uint16(y))
+		controlByte := videoRAM.peek(shrScanLineControlAddress + uint16(y))
 		is640Wide := (controlByte & 0x80) != 0
 		isColorFill := (controlByte & 0x20) != 0
 		paletteIndex := (controlByte & 0x0f) << 4
 
 		lineAddress := shrPixelDataAddress + uint16(shrWidthBytes*y)
-		lineBytes := a.mmu.physicalMainRAMAlt.subRange(lineAddress, uint16(lineAddress+shrWidthBytes))
+		lineBytes := videoRAM.subRange(lineAddress, uint16(lineAddress+shrWidthBytes))
 
 		if is640Wide {
 			// Line is 640 pixels, two bits per pixel

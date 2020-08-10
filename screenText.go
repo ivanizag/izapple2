@@ -20,7 +20,7 @@ const (
 )
 
 func snapshotText40Mode(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
-	text := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
+	text := getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
 	return renderTextMode(a, text, nil /*colorMap*/, light)
 }
 
@@ -30,13 +30,13 @@ func snapshotText80Mode(a *Apple2, isSecondPage bool, light color.Color) *image.
 }
 
 func snapshotText40RGBMode(a *Apple2, isSecondPage bool) *image.RGBA {
-	text := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
-	colorMap := getTextFromMemory(a.mmu.physicalMainRAMAlt, isSecondPage)
+	text := getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
+	colorMap := getTextFromMemory(a.mmu.getVideoRAM(true), isSecondPage)
 	return renderTextMode(a, text, colorMap, nil)
 }
 
 func snapshotText40RGBModeColors(a *Apple2, isSecondPage bool) *image.RGBA {
-	colorMap := getTextFromMemory(a.mmu.physicalMainRAMAlt, isSecondPage)
+	colorMap := getTextFromMemory(a.mmu.getVideoRAM(true), isSecondPage)
 	return renderTextMode(a, nil /*text*/, colorMap, nil)
 }
 
@@ -49,8 +49,8 @@ func getTextCharOffset(col int, line int) uint16 {
 }
 
 func getText80FromMemory(a *Apple2, isSecondPage bool) []uint8 {
-	text40Columns := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
-	text40ColumnsAlt := getTextFromMemory(a.mmu.physicalMainRAMAlt, isSecondPage)
+	text40Columns := getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
+	text40ColumnsAlt := getTextFromMemory(a.mmu.getVideoRAM(true), isSecondPage)
 
 	// Merge the two 40 cols to return 80 cols
 	text80Columns := make([]uint8, 2*len(text40Columns))
@@ -165,7 +165,7 @@ func DumpTextModeAnsi(a *Apple2) string {
 	if is80Columns {
 		text = getText80FromMemory(a, isSecondPage)
 	} else {
-		text = getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
+		text = getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
 	}
 	columns := len(text) / textLines
 

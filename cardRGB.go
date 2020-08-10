@@ -22,7 +22,7 @@ Modes by RGB flags 1 and 2:
 	0-0: 560*192 mono
 	1-1: 140*192 ntsc
 	0-1: Mixed mode
-	1-0: 160*192 ntsc (not supported)
+	1-0: 160*192 ntsc
 
 */
 

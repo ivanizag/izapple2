@@ -12,19 +12,23 @@ type memoryManager struct {
 	apple2 *Apple2
 
 	// Main RAM area: 0x0000 to 0xbfff
-	physicalMainRAM    *memoryRange // 0x0000 to 0xbfff, Up to 48 Kb
-	physicalMainRAMAlt *memoryRange // 0x0000 to 0xbfff, Up to 48 Kb. Additional
+	physicalMainRAM *memoryRange // 0x0000 to 0xbfff, Up to 48 Kb
 
 	// Slots area: 0xc000 to 0xcfff
-	cardsROM      [8]memoryHandler //0xcs00 to 0xcsff. 256 bytes for each card
+	cardsROM      [8]memoryHandler //0xcs00 to 0xcSff. 256 bytes for each card
 	cardsROMExtra [8]memoryHandler // 0xc800 to 0xcfff. 2048 bytes for each card
 	physicalROMe  memoryHandler    // 0xc100 to 0xcfff, Zero or 4kb in the Apple2e
 
-	// Upper area: 0xd000 to 0xffff
-	physicalROM     [4]memoryHandler // 0xd000 to 0xffff, 12 Kb. Up to four banks
-	physicalDRAM    []memoryHandler  // 0xd000 to 0xdfff, 4KB. Up to 8 banks.
-	physicalDAltRAM []memoryHandler  // 0xd000 to 0xdfff, 4KB. Up to 8 banks.
-	physicalEFRAM   []memoryHandler  // 0xe000 to 0xffff, 8KB. Up to 8 banks.
+	// Upper area ROM: 0xd000 to 0xffff
+	physicalROM [4]memoryHandler // 0xd000 to 0xffff, 12 Kb. Up to four
+
+	// Language card upper area RAM: 0xd000 to 0xffff. One bank for regular LC cards, up to 8 with Saturn
+	physicalLangRAM    []*memoryRange // 0xd000 to 0xffff, 12KB. Up to 8 banks.
+	physicalLangAltRAM []*memoryRange // 0xd000 to 0xdfff, 4KB. Up to 8 banks.
+
+	// Extended RAM: 0x0000 to 0xffff (with 4Kb moved from 0xc000 to 0xd000 alt). One bank for extended Apple 2e card, up to 256 with RamWorks
+	physicalExtRAM    []*memoryRange // 0x0000 to 0xffff. 60Kb, 0xc000 to 0xcfff not used. Up to 256 banks
+	physicalExtAltRAM []*memoryRange // 0xd000 to 0xdfff, 4Kb. Up to 256 banks.
 
 	// Configuration switches, Language cards
 	lcSelectedBlock uint8 // Language card block selected. Usually, allways 0. But Saturn has 8
@@ -40,6 +44,7 @@ type memoryManager struct {
 	slotC3ROMActive       bool  // Apple2e slot 3  ROM shadow
 	intCxROMActive        bool  // Apple2e slots internal ROM shadow
 	activeSlot            uint8 // Active slot owner of 0xc800 to 0xcfff
+	extendedRAMBlock      uint8 // Block used for entended memory for RAMWorks cards
 
 	// Configuration switches, Base64A
 	romPage uint8 // Active ROM page
@@ -97,23 +102,35 @@ func (mmu *memoryManager) accessCArea(address uint16) memoryHandler {
 	return mmu.cardsROMExtra[mmu.activeSlot]
 }
 
-func (mmu *memoryManager) accessLCArea(address uint16) memoryHandler {
-	block := mmu.lcSelectedBlock
+func (mmu *memoryManager) accessUpperRAMArea(address uint16) memoryHandler {
 	if mmu.altZeroPage {
-		block = 1
-	}
-	if address <= addressLimitDArea {
-		if mmu.lcAltBank {
-			return mmu.physicalDAltRAM[block]
+		// Use extended RAM
+		block := mmu.extendedRAMBlock
+		if mmu.lcAltBank && address <= addressLimitDArea {
+			return mmu.physicalExtAltRAM[block]
 		}
-		return mmu.physicalDRAM[block]
+		return mmu.physicalExtRAM[mmu.extendedRAMBlock]
 	}
-	return mmu.physicalEFRAM[block]
+
+	// Use language card
+	block := mmu.lcSelectedBlock
+	if mmu.lcAltBank && address <= addressLimitDArea {
+		return mmu.physicalLangAltRAM[block]
+	}
+	return mmu.physicalLangRAM[block]
 }
 
-func (mmu *memoryManager) getPhysicalMainRAM(alt bool) *memoryRange {
-	if alt {
-		return mmu.physicalMainRAMAlt
+func (mmu *memoryManager) getPhysicalMainRAM(ext bool) memoryHandler {
+	if ext {
+		return mmu.physicalExtRAM[mmu.extendedRAMBlock]
+	}
+	return mmu.physicalMainRAM
+}
+
+func (mmu *memoryManager) getVideoRAM(ext bool) *memoryRange {
+	if ext {
+		// The video memory uses the first extended RAM block, even with RAMWorks
+		return mmu.physicalExtRAM[0]
 	}
 	return mmu.physicalMainRAM
 }
@@ -142,7 +159,7 @@ func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 		return mmu.accessCArea(address)
 	}
 	if mmu.lcActiveRead {
-		return mmu.accessLCArea(address)
+		return mmu.accessUpperRAMArea(address)
 	}
 	return mmu.physicalROM[mmu.romPage]
 }
@@ -171,7 +188,7 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 		return mmu.accessCArea(address)
 	}
 	if mmu.lcActiveWrite {
-		return mmu.accessLCArea(address)
+		return mmu.accessUpperRAMArea(address)
 	}
 	return mmu.physicalROM[mmu.romPage]
 }
@@ -205,19 +222,24 @@ func (mmu *memoryManager) setCardROMExtra(slot int, mh memoryHandler) {
 	mmu.cardsROMExtra[slot] = mh
 }
 
-func (mmu *memoryManager) initLanguageRAM(groups int) {
-	mmu.physicalDRAM = make([]memoryHandler, groups)
-	mmu.physicalDAltRAM = make([]memoryHandler, groups)
-	mmu.physicalEFRAM = make([]memoryHandler, groups)
-	for i := 0; i < groups; i++ {
-		mmu.physicalDRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
-		mmu.physicalDAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
-		mmu.physicalEFRAM[i] = newMemoryRange(0xe000, make([]uint8, 0x2000))
+func (mmu *memoryManager) initLanguageRAM(groups uint8) {
+	// Apple II+ language card or Saturn (up to 8 groups)
+	mmu.physicalLangRAM = make([]*memoryRange, groups)
+	mmu.physicalLangAltRAM = make([]*memoryRange, groups)
+	for i := uint8(0); i < groups; i++ {
+		mmu.physicalLangRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x3000))
+		mmu.physicalLangAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
 	}
 }
 
-func (mmu *memoryManager) InitRAMalt() {
-	mmu.physicalMainRAMAlt = newMemoryRange(0, make([]uint8, 0xc000))
+func (mmu *memoryManager) initExtendedRAM(groups int) {
+	// Apple IIe 80 col card with 64Kb style RAM or RAMWorks (up to 256 banks)
+	mmu.physicalExtRAM = make([]*memoryRange, groups)
+	mmu.physicalExtAltRAM = make([]*memoryRange, groups)
+	for i := 0; i < groups; i++ {
+		mmu.physicalExtRAM[i] = newMemoryRange(0, make([]uint8, 0x10000))
+		mmu.physicalExtAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
+	}
 }
 
 // Memory configuration
@@ -235,9 +257,17 @@ func (mmu *memoryManager) setLanguageRAM(readActive bool, writeActive bool, altB
 	mmu.lcAltBank = altBank
 }
 
-func (mmu *memoryManager) setLanguageRAMBlock(block uint8) {
-	block = block % uint8(len(mmu.physicalDRAM))
+func (mmu *memoryManager) setLanguageRAMActiveBlock(block uint8) {
+	block = block % uint8(len(mmu.physicalLangRAM))
 	mmu.lcSelectedBlock = block
+}
+
+func (mmu *memoryManager) setExtendedRAMActiveBlock(block uint8) {
+	if int(block) >= len(mmu.physicalExtRAM) {
+		// How does the real hardware reacts?
+		block = 0
+	}
+	mmu.extendedRAMBlock = block
 }
 
 // TODO: complete save and load

@@ -114,7 +114,7 @@ func (c *cardSaturn) ssAction(ss uint8) {
 }
 
 func (c *cardSaturn) applyState() {
-	c.a.mmu.setLanguageRAMBlock(c.activeBlock)
+	c.a.mmu.setLanguageRAMActiveBlock(c.activeBlock)
 	c.a.mmu.setLanguageRAM(c.readState, c.writeState == lcWriteEnabled, c.altBank)
 }
 

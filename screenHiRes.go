@@ -31,7 +31,7 @@ func getHiResLine(a *Apple2, line int, isSecondPage bool, auxMem bool) []uint8 {
 	}
 
 	address += getHiResLineOffset(line)
-	return a.mmu.getPhysicalMainRAM(auxMem).subRange(address, address+hiResLineBytes)
+	return a.mmu.getVideoRAM(auxMem).subRange(address, address+hiResLineBytes)
 }
 
 func snapshotHiResModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {

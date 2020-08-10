@@ -24,7 +24,7 @@ func newApple2e() *Apple2 {
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
 	a.io = newIoC0Page(&a)
-	a.mmu.InitRAMalt()
+	a.mmu.initExtendedRAM(1)
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)
 
@@ -37,7 +37,7 @@ func newApple2eEnhanced() *Apple2 {
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewCMOS65c02(a.mmu)
 	a.io = newIoC0Page(&a)
-	a.mmu.InitRAMalt()
+	a.mmu.initExtendedRAM(1)
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)
 
@@ -192,6 +192,10 @@ func (a *Apple2) AddThunderClockPlusCard(slot int, romFile string) error {
 // AddRGBCard inserts an RBG option to the Apple IIe 80 col 64KB card
 func (a *Apple2) AddRGBCard() {
 	setupRGBCard(a)
+}
+
+func (a *Apple2) AddRAMWorks(banks int) {
+	setupRAMWorksCard(a, banks)
 }
 
 // AddCardLogger inserts a fake card that logs accesses
