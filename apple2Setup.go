@@ -108,7 +108,7 @@ func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage, diskBImage st
 	a.insertCard(&c, slot)
 
 	if diskImage != "" {
-		diskette, err := loadDisquette(diskImage)
+		diskette, err := loadDiskette(diskImage)
 		if err != nil {
 			return err
 		}
@@ -116,7 +116,7 @@ func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage, diskBImage st
 	}
 
 	if diskBImage != "" {
-		diskette, err := loadDisquette(diskBImage)
+		diskette, err := loadDiskette(diskBImage)
 		if err != nil {
 			return err
 		}
