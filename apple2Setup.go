@@ -126,14 +126,14 @@ func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage, diskBImage st
 	return nil
 }
 
-// AddHardDisk adds a ProDos hard dirve with a 2MG image
-func (a *Apple2) AddHardDisk(slot int, hdImage string, trace bool) error {
+// AddSmartPortDisk adds a smart port card and image
+func (a *Apple2) AddSmartPortDisk(slot int, hdImage string, trace bool) error {
 	var c cardHardDisk
 	c.setTrace(trace)
 	c.loadRom(buildHardDiskRom(slot))
 	a.insertCard(&c, slot)
 
-	hd, err := openHardDisk2mg(hdImage)
+	hd, err := openBlockDisk(hdImage)
 	if err != nil {
 		return err
 	}
@@ -194,6 +194,7 @@ func (a *Apple2) AddRGBCard() {
 	setupRGBCard(a)
 }
 
+// AddRAMWorks inserts adds RAMWorks style RAM to the Apple IIe 80 col 64KB card
 func (a *Apple2) AddRAMWorks(banks int) {
 	setupRAMWorksCard(a, banks)
 }

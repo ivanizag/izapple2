@@ -15,7 +15,7 @@ See:
 
 type cardHardDisk struct {
 	cardBase
-	disk      *hardDisk
+	disk      *blockDisk
 	mliParams uint16
 	trace     bool
 }
@@ -132,11 +132,11 @@ func (c *cardHardDisk) assign(a *Apple2, slot int) {
 	}, "HDCOMMAND")
 	c.addCardSoftSwitchR(1, func(*ioC0Page) uint8 {
 		// Blocks available, low byte
-		return uint8(c.disk.header.Blocks)
+		return uint8(c.disk.blocks)
 	}, "HDBLOCKSLO")
 	c.addCardSoftSwitchR(2, func(*ioC0Page) uint8 {
 		// Blocks available, high byte
-		return uint8(c.disk.header.Blocks >> 8)
+		return uint8(c.disk.blocks >> 8)
 	}, "HDBLOCKHI")
 
 	c.addCardSoftSwitchR(3, func(*ioC0Page) uint8 {
@@ -218,7 +218,7 @@ func (c *cardHardDisk) writeBlock(block uint16, source uint16) uint8 {
 	return proDosDeviceNoError
 }
 
-func (c *cardHardDisk) addDisk(disk *hardDisk) {
+func (c *cardHardDisk) addDisk(disk *blockDisk) {
 	c.disk = disk
 }
 

@@ -36,11 +36,15 @@ func MainApple() *Apple2 {
 	hardDiskImage := flag.String(
 		"hd",
 		"",
-		"file to load on the hard disk")
+		"file to load on the boot hard disk (slot 7)")
 	hardDiskSlot := flag.Int(
 		"hdSlot",
 		-1,
 		"slot for the hard drive if present. -1 for none.")
+	smartPortImage := flag.String(
+		"disk35",
+		"",
+		"file to load on the SmartPort disk (slot 5)")
 	cpuClock := flag.Float64(
 		"mhz",
 		CPUClockMhz,
@@ -104,7 +108,7 @@ func MainApple() *Apple2 {
 	traceHD := flag.Bool(
 		"traceHD",
 		false,
-		"dump to the console the hd commands")
+		"dump to the console the hd/smarport commands")
 	dumpChars := flag.Bool(
 		"dumpChars",
 		false,
@@ -237,6 +241,18 @@ func MainApple() *Apple2 {
 	if *vidHDCardSlot >= 0 {
 		a.AddVidHD(*vidHDCardSlot)
 	}
+
+	if *smartPortImage != "" {
+		err := a.AddSmartPortDisk(5, *smartPortImage, *traceHD)
+		if err != nil {
+			panic(err)
+		}
+		if *fastChipCardSlot == 5 {
+			// Don't use fastChipCard if the slot 5 is already in use
+			*fastChipCardSlot = 0
+		}
+	}
+
 	if *fastChipCardSlot >= 0 {
 		a.AddFastChip(*fastChipCardSlot)
 	}
@@ -251,7 +267,7 @@ func MainApple() *Apple2 {
 			// If there is a hard disk image, but no slot assigned, use slot 7.
 			*hardDiskSlot = 7
 		}
-		err := a.AddHardDisk(*hardDiskSlot, *hardDiskImage, *traceHD)
+		err := a.AddSmartPortDisk(*hardDiskSlot, *hardDiskImage, *traceHD)
 		if err != nil {
 			panic(err)
 		}

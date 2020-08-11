@@ -12,9 +12,10 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Apple //e enhanced with 128Kb of RAM
   - Base64A clone with 48Kb of base RAM and paginated ROM
 - Storage
-  - 16 Sector diskettes in NIB, DSK or PO format
-  - 16 Sector diskettes in WOZ 1.0 or 2.0 format (read only)
-  - Hard disk with ProDOS and SmartPort support
+  - 16 Sector 5 1/4 diskettes in NIB, DSK or PO format
+  - 16 Sector 5 1/4 diskettes in WOZ 1.0 or 2.0 format (read only)
+  - 3.5 disks in PO or 2MG format
+  - Hard disk in HDV or 2MG format with ProDOS and SmartPort support
 - Emulated extension cards:
   - DiskII controller
   - 16Kb Language Card
@@ -22,7 +23,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - 1Mb Memory Expansion Card (slinky)
   - RAMWorks style expansion Card (up to 16MB additional) (Apple //e only)
   - ThunderClock Plus real time clock
-  - Bootable hard disk card
+  - Bootable Smartport / ProDOS card
   - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
   - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
   - FASTChip, limited to what Total Replay needs to set and clear fast mode
@@ -154,6 +155,8 @@ Only valid on SDL mode
         file to load on the first disk drive (default "<internal>/dos33.dsk")
   -disk2Slot int
         slot for the disk driver. -1 for none. (default 6)
+  -disk35 string
+        file to load on the SmartPort disk (slot 5)
   -diskRom string
         rom file for the disk drive controller (default "<internal>/DISK2.rom")
   -diskb string
@@ -165,7 +168,7 @@ Only valid on SDL mode
   -fastDisk
         set fast mode when the disks are spinning (default true)
   -hd string
-        file to load on the hard disk
+        file to load on the boot hard disk
   -hdSlot int
         slot for the hard drive if present. -1 for none. (default -1)
   -languageCardSlot int
@@ -195,7 +198,7 @@ Only valid on SDL mode
   -traceCpu
         dump to the console the CPU execution. Use F11 to toggle.
   -traceHD
-        dump to the console the hd commands
+        dump to the console the hd/smartport commands
   -traceMLI
         dump to the console the calls to ProDOS machine language interface calls to $BF00
   -traceSS
