@@ -39,7 +39,7 @@ func getColorPatterns(light color.Color) [16][16]color.Color {
 }
 
 func snapshotLoResModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
-	data := getTextFromMemory(a.mmu.physicalMainRAM, isSecondPage)
+	data := getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
 	return renderGrMode(data, false /*isMeres*/, light)
 }
 

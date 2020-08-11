@@ -92,9 +92,9 @@ func getCurrentVideoMode(a *Apple2) uint16 {
 	if isMixMode {
 		if is80Columns {
 			mode |= videoMixText80
-		} else if isStore80Active {
+		} else /* if isStore80Active {
 			mode |= videoMixText40RGB
-		} else {
+		}  else */{
 			mode |= videoMixText40
 		}
 	}
@@ -171,7 +171,7 @@ func snapshotByMode(a *Apple2, videoMode uint16) *image.RGBA {
 			applyNTSCFilter = false
 		}
 		if applyNTSCFilter {
-			snap = filterNTSCColor(snap, ntscMask)
+			bottom = filterNTSCColor(bottom, ntscMask)
 		}
 		snap = mixSnapshots(snap, bottom)
 	}
