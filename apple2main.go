@@ -71,7 +71,7 @@ func MainApple() *Apple2 {
 		"slot for the FASTChip accelerator card, -1 for none")
 	memoryExpansionCardSlot := flag.Int(
 		"memoryExpSlot",
-		4,
+		1,
 		"slot for the Memory Expansion card with 1GB. -1 for none")
 	ramWorksKb := flag.Int(
 		"ramworks",
@@ -79,7 +79,7 @@ func MainApple() *Apple2 {
 		"memory to use with RAMWorks card, 0 for no card, max is 16384")
 	thunderClockCardSlot := flag.Int(
 		"thunderClockCardSlot",
-		5,
+		4,
 		"slot for the ThunderClock Plus card. -1 for none")
 	mono := flag.Bool(
 		"mono",
@@ -246,10 +246,6 @@ func MainApple() *Apple2 {
 		err := a.AddSmartPortDisk(5, *smartPortImage, *traceHD)
 		if err != nil {
 			panic(err)
-		}
-		if *fastChipCardSlot == 5 {
-			// Don't use fastChipCard if the slot 5 is already in use
-			*fastChipCardSlot = 0
 		}
 	}
 

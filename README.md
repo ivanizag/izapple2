@@ -56,6 +56,18 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Pause (thanks a2geek)
   - ProDOS MLI calls tracing
 
+By default the following configuration is launched:
+
+- Enhanced Apple //e with 65c02 processor
+- RAMworks card with 80 column, RGB (with Video7 modes) and 8Gb RAM is aux slot
+- Memory Expansion card with 1Gb in slot 1
+- VidHD card (SHR support) in slot 2
+- FASTChip Accelerator card in slot 3
+- ThunderClock Plus card in slot 4
+- SmartPort card with 1 device in slot 5 (if an image is provided with -disk35)
+- DiskII controller card in slot 6
+- SmartPort card with 1 device in slot 7 (if an image is provided with -hd)
+
 ## Running the emulator
 
 No installation required. [Download](https://github.com/ivanizag/apple2/releases) the single file executable `apple2xxx_xxx` for linux or Mac, SDL2 graphics or console. Build from source to get the latest features.
@@ -174,7 +186,7 @@ Only valid on SDL mode
   -languageCardSlot int
         slot for the 16kb language card. -1 for none
   -memoryExpSlot int
-        slot for the Memory Expansion card with 1GB. -1 for none (default 4)
+        slot for the Memory Expansion card with 1GB. -1 for none (default 1)
   -mhz float
         cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
   -model string
@@ -194,7 +206,7 @@ Only valid on SDL mode
   -saturnCardSlot int
         slot for the 256kb Saturn card. -1 for none (default -1)
   -thunderClockCardSlot int
-        slot for the ThunderClock Plus card. -1 for none (default 5)
+        slot for the ThunderClock Plus card. -1 for none (default 4)
   -traceCpu
         dump to the console the CPU execution. Use F11 to toggle.
   -traceHD

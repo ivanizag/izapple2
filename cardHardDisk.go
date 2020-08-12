@@ -9,6 +9,7 @@ See:
 	Beneath Prodos, section 6-6, 7-13 and 5-8. (http://www.apple-iigs.info/doc/fichiers/beneathprodos.pdf)
 	Apple IIc Technical Reference, 2nd Edition. Chapter 8. https://ia800207.us.archive.org/19/items/AppleIIcTechnicalReference2ndEd/Apple%20IIc%20Technical%20Reference%202nd%20ed.pdf
 	https://prodos8.com/docs/technote/21/
+	https://prodos8.com/docs/technote/20/
 
 
 */
@@ -29,8 +30,7 @@ func buildHardDiskRom(slot int) []uint8 {
 		0xa9, 0x20, // LDA #$20
 		0xa9, 0x00, // LDA #$00
 		0xa9, 0x03, // LDA #$03
-		0xa9, 0x3c, // LDA #$3c
-		// Alternate: 0xa9, 0x00, // LDA #$00 ; Not a Smartport device, but won't boot on ii+ ROM
+		0xa9, 0x00, // LDA #$00
 
 		// Boot code: SS will load block 0 in address $0800. The jump there.
 		// Note: after execution the first block expects $42 to $47 to have
@@ -49,6 +49,12 @@ func buildHardDiskRom(slot int) []uint8 {
 		0xa2, uint8(slot << 4), // LDX $s7 ; Slot on hign nibble of X
 		0x4c, 0x01, 0x08, // JMP $801 ; Jump to loaded boot sector
 	})
+
+	if slot == 7 {
+		// It should be 0 for SmartPort, but with 0 it's not bootable with the II+ ROM
+		// See http://www.1000bit.it/support/manuali/apple/technotes/udsk/tn.udsk.2.html
+		data[0x07] = 0x3c
+	}
 
 	// Entrypoints and Smartport body
 	copy(data[0x40:], []uint8{
@@ -115,12 +121,12 @@ func (c *cardHardDisk) assign(a *Apple2, slot int) {
 		address := uint16(a.mmu.Peek(0x44)) + uint16(a.mmu.Peek(0x45))<<8
 		block := uint16(a.mmu.Peek(0x46)) + uint16(a.mmu.Peek(0x47))<<8
 		if c.trace {
-			fmt.Printf("[CardHardDisk] Prodos command %v on unit $%x, block %v to $%x.\n", command, unit, block, address)
+			fmt.Printf("[CardHardDisk] Prodos command %v on slot %v, unit $%x, block %v to $%x.\n", command, slot, unit, block, address)
 		}
 
 		switch command {
 		case proDosDeviceCommandStatus:
-			return proDosDeviceNoError
+			return c.status(unit, address)
 		case proDosDeviceCommandRead:
 			return c.readBlock(block, address)
 		case proDosDeviceCommandWrite:
@@ -147,12 +153,12 @@ func (c *cardHardDisk) assign(a *Apple2, slot int) {
 		address := uint16(a.mmu.Peek(paramsAddress+2)) + uint16(a.mmu.Peek(paramsAddress+3))<<8
 		block := uint16(a.mmu.Peek(paramsAddress+4)) + uint16(a.mmu.Peek(paramsAddress+5))<<8
 		if c.trace {
-			fmt.Printf("[CardHardDisk] Smart port command %v on unit $%x, block %v to $%x.\n", command, unit, block, address)
+			fmt.Printf("[CardHardDisk] Smart port command %v on slot %v, unit $%x, block %v to $%x.\n", command, slot, unit, block, address)
 		}
 
 		switch command {
 		case proDosDeviceCommandStatus:
-			return proDosDeviceNoError
+			return c.status(unit, address)
 		case proDosDeviceCommandRead:
 			return c.readBlock(block, address)
 		case proDosDeviceCommandWrite:
@@ -214,6 +220,24 @@ func (c *cardHardDisk) writeBlock(block uint16, source uint16) uint8 {
 	if err != nil {
 		return proDosDeviceErrorIO
 	}
+
+	return proDosDeviceNoError
+}
+
+func (c *cardHardDisk) status(unit uint8, dest uint16) uint8 {
+	if c.trace {
+		fmt.Printf("[CardHardDisk] Status for %v into $%x.\n", unit, dest)
+	}
+
+	// See http://www.1000bit.it/support/manuali/apple/technotes/smpt/tn.smpt.2.html
+	c.a.mmu.Poke(dest+0, 0x02) // One device
+	c.a.mmu.Poke(dest+1, 0xff) // No interrupt
+	c.a.mmu.Poke(dest+2, 0x00)
+	c.a.mmu.Poke(dest+3, 0x00) // Unknown manufacturer
+	c.a.mmu.Poke(dest+4, 0x01)
+	c.a.mmu.Poke(dest+5, 0x00) // Versión 1.0 final
+	c.a.mmu.Poke(dest+6, 0x00)
+	c.a.mmu.Poke(dest+7, 0x00) // Reserved
 
 	return proDosDeviceNoError
 }
