@@ -33,7 +33,10 @@ const (
 	cpuClockEuroMhz = 14.238 / 14
 )
 
-const maxWaitDuration = 100 * time.Millisecond
+const (
+	maxWaitDuration = 100 * time.Millisecond
+	cpuSpinLoops    = 100
+)
 
 // Run starts the Apple2 emulation
 func (a *Apple2) Run() {
@@ -47,8 +50,10 @@ func (a *Apple2) Run() {
 	for {
 		// Run a 6502 step
 		if !a.paused {
-			a.cpu.ExecuteInstruction()
-			a.executionTrace()
+			for i := 0; i < cpuSpinLoops; i++ {
+				a.cpu.ExecuteInstruction()
+				a.executionTrace()
+			}
 		} else {
 			time.Sleep(200 * time.Millisecond)
 		}
