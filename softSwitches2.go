@@ -33,7 +33,7 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	io.addSoftSwitchR(0x30, speakerSoftSwitch, "SPEAKER")         // Speaker
 	io.addSoftSwitchR(0x40, notImplementedSoftSwitchR, "STROBE")  // Game connector Strobe
 	// Note: Some sources indicate that all these cover 16 positions
-	// for read and write. But the Apple2e take over some of them, with
+	// for read and write. But the Apple2e takes over some of them, with
 	// the prevention on acting only on writes.
 
 	io.addSoftSwitchRW(0x50, getSoftSwitch(ioFlagText, false), "TEXTOFF")
@@ -80,8 +80,9 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	io.softSwitchesData[ioFlag2RGBCard] = ssOn
 }
 
-func notImplementedSoftSwitchR(*ioC0Page) uint8 {
-	return 0
+func notImplementedSoftSwitchR(io *ioC0Page) uint8 {
+	// Return random info. Some games (Serpentine) used CASSETTE and get stuck if not changing.
+	return uint8(io.apple2.cpu.GetCycles())
 }
 
 func notImplementedSoftSwitchW(*ioC0Page, uint8) {
