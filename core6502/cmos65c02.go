@@ -57,6 +57,9 @@ func add65c02NOPs(opcodes *[256]opcode) {
 		opcodes[i+0x0b] = nop11
 		// BBR and BBS: opcodes[i+0x0f] = nop11
 	}
+
+	// Detection of 65c816
+	opcodes[0xbf].name = "XCE"
 }
 
 var opcodes65c02Delta = [256]opcode{
