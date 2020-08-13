@@ -1,10 +1,5 @@
 package apple2
 
-import (
-	"encoding/binary"
-	"io"
-)
-
 // See https://fabiensanglard.net/fd_proxy/prince_of_persia/Inside%20the%20Apple%20IIe.pdf
 // See https://i.stack.imgur.com/yn21s.gif
 
@@ -268,31 +263,4 @@ func (mmu *memoryManager) setExtendedRAMActiveBlock(block uint8) {
 		block = 0
 	}
 	mmu.extendedRAMBlock = block
-}
-
-// TODO: complete save and load
-func (mmu *memoryManager) save(w io.Writer) error {
-	err := mmu.physicalMainRAM.save(w)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, mmu.activeSlot)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (mmu *memoryManager) load(r io.Reader) error {
-	err := mmu.physicalMainRAM.load(r)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &mmu.activeSlot)
-	if err != nil {
-		return err
-	}
-	//	mmu.activateCardRomExtra(mmu.activeSlot)
-
-	return nil
 }

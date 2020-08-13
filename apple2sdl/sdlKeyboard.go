@@ -107,15 +107,9 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 			k.a.SendCommand(apple2.CommandToggleSpeed)
 		}
 	case sdl.K_F6:
-		if ctrl {
-			k.showPages = !k.showPages
-		} else {
-			k.a.SendCommand(apple2.CommandToggleColor)
-		}
+		k.a.SendCommand(apple2.CommandToggleColor)
 	case sdl.K_F7:
-		k.a.SendCommand(apple2.CommandSaveState)
-	case sdl.K_F8:
-		k.a.SendCommand(apple2.CommandLoadState)
+		k.showPages = !k.showPages
 	case sdl.K_F9:
 		k.a.SendCommand(apple2.CommandDumpDebugInfo)
 	case sdl.K_F10:

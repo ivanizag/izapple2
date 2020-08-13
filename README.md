@@ -148,9 +148,7 @@ Line:
 - F5: Toggle speed between real and fastest
 - Ctrl-F5: Show current speed in Mhz
 - F6: Toggle between NTSC color TV and green phosphor monochrome monitor
-- Ctrl-F6: Show the video mode and a split screen with the views for NTSC color TV, page 1, page 2 and extra info.
-- F7: Save current state to disk (incomplete)
-- F8: Restore state from disk (incomplete)
+- F7: Show the video mode and a split screen with the views for NTSC color TV, page 1, page 2 and extra info.
 - F10: Cycle character generator code pages. Only if the character generator ROM has more than one 2Kb page.
 - F11: Toggle on and off the trace to console of the CPU execution
 - F12: Save a screen snapshot to a file `snapshot.png`

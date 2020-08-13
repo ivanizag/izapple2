@@ -1,11 +1,7 @@
 package apple2
 
 import (
-	"bufio"
-	"encoding/binary"
 	"fmt"
-	"io"
-	"os"
 	"time"
 
 	"github.com/ivanizag/apple2/core6502"
@@ -127,10 +123,6 @@ const (
 	CommandShowSpeed
 	// CommandToggleColor toggles between NTSC color TV and Green phospor monitor
 	CommandToggleColor
-	// CommandSaveState stores the state to file
-	CommandSaveState
-	// CommandLoadState reload the last state
-	CommandLoadState
 	// CommandDumpDebugInfo dumps usefull info
 	CommandDumpDebugInfo
 	// CommandNextCharGenPage cycles the CharGen page if several
@@ -164,18 +156,6 @@ func (a *Apple2) executeCommand(command int) {
 		a.showSpeed = !a.showSpeed
 	case CommandToggleColor:
 		a.isColor = !a.isColor
-	case CommandSaveState:
-		fmt.Println("Saving state")
-		err := a.save("apple2.state")
-		if err != nil {
-			fmt.Printf("Error loadind state: %v.", err)
-		}
-	case CommandLoadState:
-		fmt.Println("Loading state")
-		err := a.load("apple2.state")
-		if err != nil {
-			fmt.Printf("Error loadind state: %v.", err)
-		}
 	case CommandDumpDebugInfo:
 		a.dumpDebugInfo()
 	case CommandNextCharGenPage:
@@ -205,102 +185,6 @@ func (a *Apple2) executionTrace() {
 	if a.traceMLI != nil {
 		a.traceMLI.inspect()
 	}
-}
-
-type persistent interface {
-	save(io.Writer) error
-	load(io.Reader) error
-}
-
-func (a *Apple2) save(filename string) error {
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	defer w.Flush()
-
-	err = a.cpu.Save(w)
-	if err != nil {
-		return err
-	}
-	err = a.mmu.save(w)
-	if err != nil {
-		return err
-	}
-	err = a.io.save(w)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, a.isColor)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, a.fastMode)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, a.fastRequestsCounter)
-	if err != nil {
-		return err
-	}
-
-	for _, c := range a.cards {
-		if c != nil {
-			err = c.save(w)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (a *Apple2) load(filename string) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	r := bufio.NewReader(f)
-
-	err = a.cpu.Load(r)
-	if err != nil {
-		return err
-	}
-	err = a.mmu.load(r)
-	if err != nil {
-		return err
-	}
-	err = a.io.load(r)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &a.isColor)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &a.fastMode)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &a.fastRequestsCounter)
-	if err != nil {
-		return err
-	}
-
-	for _, c := range a.cards {
-		if c != nil {
-			err = c.load(r)
-			if err != nil {
-				return err
-			}
-
-		}
-	}
-
-	return nil
 }
 
 func (a *Apple2) dumpDebugInfo() {

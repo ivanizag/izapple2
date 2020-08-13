@@ -1,10 +1,5 @@
 package apple2
 
-import (
-	"encoding/binary"
-	"io"
-)
-
 /*
 Language card with 16 extra kb for the Apple ][ and  ][+
 Manual: http://www.applelogic.org/files/LANGCARDMAN.pdf
@@ -103,37 +98,4 @@ func (c *cardLanguage) ssAction(ss uint8) {
 
 func (c *cardLanguage) applyState() {
 	c.a.mmu.setLanguageRAM(c.readState, c.writeState == lcWriteEnabled, c.altBank)
-}
-
-func (c *cardLanguage) save(w io.Writer) error {
-	err := binary.Write(w, binary.BigEndian, c.readState)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, c.writeState)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, c.altBank)
-	if err != nil {
-		return err
-	}
-	return c.cardBase.save(w)
-}
-
-func (c *cardLanguage) load(r io.Reader) error {
-	err := binary.Read(r, binary.BigEndian, &c.readState)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &c.writeState)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &c.altBank)
-	if err != nil {
-		return err
-	}
-	c.applyState()
-	return c.cardBase.load(r)
 }

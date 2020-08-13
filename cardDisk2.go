@@ -1,9 +1,7 @@
 package apple2
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
 )
 
 /*
@@ -247,92 +245,4 @@ func moveStep(phases uint8, prevStep int) int {
 
 func (d *cardDisk2Drive) insertDiskette(dt diskette) {
 	d.diskette = dt
-}
-
-func (c *cardDisk2) save(w io.Writer) error {
-	err := binary.Write(w, binary.BigEndian, c.selected)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, c.dataLatch)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, c.q6)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, c.q7)
-	if err != nil {
-		return err
-	}
-	err = c.drive[0].save(w)
-	if err != nil {
-		return err
-	}
-	err = c.drive[1].save(w)
-	if err != nil {
-		return err
-	}
-	return c.cardBase.save(w)
-}
-
-func (c *cardDisk2) load(r io.Reader) error {
-	err := binary.Read(r, binary.BigEndian, &c.selected)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &c.dataLatch)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &c.q6)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &c.q7)
-	if err != nil {
-		return err
-	}
-	err = c.drive[0].load(r)
-	if err != nil {
-		return err
-	}
-	err = c.drive[1].load(r)
-	if err != nil {
-		return err
-	}
-	return c.cardBase.load(r)
-}
-
-func (d *cardDisk2Drive) save(w io.Writer) error {
-	err := binary.Write(w, binary.BigEndian, d.power)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, d.phases)
-	if err != nil {
-		return err
-	}
-	err = binary.Write(w, binary.BigEndian, d.tracksStep)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d *cardDisk2Drive) load(r io.Reader) error {
-	err := binary.Read(r, binary.BigEndian, &d.power)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &d.phases)
-	if err != nil {
-		return err
-	}
-	err = binary.Read(r, binary.BigEndian, &d.tracksStep)
-	if err != nil {
-		return err
-	}
-	return nil
 }

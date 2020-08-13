@@ -1,16 +1,10 @@
 package apple2
 
-import (
-	"encoding/binary"
-	"io"
-)
-
 /*
-
 RAM card with 128Kb. It's like 8 language cards.
 
-http://www.applelogic.org/files/SATURN128MAN.pdf
-
+See:
+	http://www.applelogic.org/files/SATURN128MAN.pdf
 */
 
 type cardSaturn struct {
@@ -116,49 +110,4 @@ func (c *cardSaturn) ssAction(ss uint8) {
 func (c *cardSaturn) applyState() {
 	c.a.mmu.setLanguageRAMActiveBlock(c.activeBlock)
 	c.a.mmu.setLanguageRAM(c.readState, c.writeState == lcWriteEnabled, c.altBank)
-}
-
-func (c *cardSaturn) save(w io.Writer) error {
-	for i := 0; i < saturnBlocks; i++ {
-		err := binary.Write(w, binary.BigEndian, c.readState)
-		if err != nil {
-			return err
-		}
-		err = binary.Write(w, binary.BigEndian, c.writeState)
-		if err != nil {
-			return err
-		}
-		err = binary.Write(w, binary.BigEndian, c.altBank)
-		if err != nil {
-			return err
-		}
-		err = binary.Write(w, binary.BigEndian, c.activeBlock)
-		if err != nil {
-			return err
-		}
-	}
-	return c.cardBase.save(w)
-}
-
-func (c *cardSaturn) load(r io.Reader) error {
-	for i := 0; i < saturnBlocks; i++ {
-		err := binary.Read(r, binary.BigEndian, &c.readState)
-		if err != nil {
-			return err
-		}
-		err = binary.Read(r, binary.BigEndian, &c.writeState)
-		if err != nil {
-			return err
-		}
-		err = binary.Read(r, binary.BigEndian, &c.altBank)
-		if err != nil {
-			return err
-		}
-		err = binary.Read(r, binary.BigEndian, &c.activeBlock)
-		if err != nil {
-			return err
-		}
-		c.applyState()
-	}
-	return c.cardBase.load(r)
 }

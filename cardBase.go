@@ -1,13 +1,8 @@
 package apple2
 
-import (
-	"io"
-)
-
 type card interface {
 	loadRom(data []uint8)
 	assign(a *Apple2, slot int)
-	persistent
 }
 
 type cardBase struct {
@@ -75,14 +70,4 @@ func (c *cardBase) addCardSoftSwitchR(address uint8, ss softSwitchR, name string
 func (c *cardBase) addCardSoftSwitchW(address uint8, ss softSwitchW, name string) {
 	c._ssw[address] = ss
 	c._sswName[address] = name
-}
-
-func (c *cardBase) save(w io.Writer) error {
-	// Empty
-	return nil
-}
-
-func (c *cardBase) load(r io.Reader) error {
-	// Empty
-	return nil
 }
