@@ -6,6 +6,10 @@ import "io/ioutil"
 type Memory interface {
 	Peek(address uint16) uint8
 	Poke(address uint16, value uint8)
+
+	// PeekCode can bu used to optimize the memory manager to requests with more
+	// locality. It must return the same as a call to Peek()
+	PeekCode(address uint16) uint8
 }
 
 func getWord(m Memory, address uint16) uint16 {

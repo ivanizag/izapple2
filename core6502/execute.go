@@ -54,7 +54,7 @@ func (s *State) executeLine(line []uint8) {
 // ExecuteInstruction transforms the state given after a single instruction is executed.
 func (s *State) ExecuteInstruction() {
 	pc := s.reg.getPC()
-	opcodeID := s.mem.Peek(pc)
+	opcodeID := s.mem.PeekCode(pc)
 	opcode := s.opcodes[opcodeID]
 
 	if opcode.cycles == 0 {
@@ -65,7 +65,7 @@ func (s *State) ExecuteInstruction() {
 		s.lineCache = make([]uint8, maxInstructionSize)
 	}
 	for i := uint16(0); i < opcode.bytes; i++ {
-		s.lineCache[i] = s.mem.Peek(pc)
+		s.lineCache[i] = s.mem.PeekCode(pc)
 		pc++
 	}
 	s.reg.setPC(pc)

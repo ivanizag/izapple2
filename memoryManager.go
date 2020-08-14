@@ -12,10 +12,9 @@ type memoryManager struct {
 	// Slots area: 0xc000 to 0xcfff
 	cardsROM      [8]memoryHandler //0xcs00 to 0xcSff. 256 bytes for each card
 	cardsROMExtra [8]memoryHandler // 0xc800 to 0xcfff. 2048 bytes for each card
-	physicalROMe  memoryHandler    // 0xc100 to 0xcfff, Zero or 4kb in the Apple2e
 
-	// Upper area ROM: 0xd000 to 0xffff
-	physicalROM [4]memoryHandler // 0xd000 to 0xffff, 12 Kb. Up to four
+	// Upper area ROM: 0xc000 to 0xffff (or 0xd000 to 0xffff on the II+)
+	physicalROM [4]memoryHandler // 0xc000 (or 0xd000) to 0xffff, 16 (or 12) Kb. Up to four banks
 
 	// Language card upper area RAM: 0xd000 to 0xffff. One bank for regular LC cards, up to 8 with Saturn
 	physicalLangRAM    []*memoryRange // 0xd000 to 0xffff, 12KB. Up to 8 banks.
@@ -43,6 +42,10 @@ type memoryManager struct {
 
 	// Configuration switches, Base64A
 	romPage uint8 // Active ROM page
+
+	// Resolution cache
+	lastAddressPage    uint16 // The first byte is the page. The second is zero when the cached is valid.
+	lastAddressHandler memoryHandler
 }
 
 const (
@@ -57,6 +60,8 @@ const (
 	addressLimitSlots      uint16 = 0xc7ff
 	addressLimitSlotsExtra uint16 = 0xcfff
 	addressLimitDArea      uint16 = 0xdfff
+
+	invalidAddressPage uint16 = 0x0001
 )
 
 type memoryHandler interface {
@@ -74,14 +79,14 @@ func newMemoryManager(a *Apple2) *memoryManager {
 
 func (mmu *memoryManager) accessCArea(address uint16) memoryHandler {
 	if mmu.intCxROMActive {
-		return mmu.physicalROMe
+		return mmu.physicalROM[mmu.romPage]
 	}
 	// First slot area
 	if address <= addressLimitSlots {
 		slot := uint8((address >> 8) & 0x07)
 		mmu.activeSlot = slot
 		if !mmu.slotC3ROMActive && (slot == 3) {
-			return mmu.physicalROMe
+			return mmu.physicalROM[mmu.romPage]
 		}
 		return mmu.cardsROM[slot]
 	}
@@ -89,10 +94,11 @@ func (mmu *memoryManager) accessCArea(address uint16) memoryHandler {
 	if address == ioC8Off {
 		// Reset extra slot area owner
 		mmu.activeSlot = 0
+		mmu.lastAddressPage = invalidAddressPage
 	}
 
 	if !mmu.slotC3ROMActive && (mmu.activeSlot == 3) {
-		return mmu.physicalROMe
+		return mmu.physicalROM[mmu.romPage]
 	}
 	return mmu.cardsROMExtra[mmu.activeSlot]
 }
@@ -130,6 +136,23 @@ func (mmu *memoryManager) getVideoRAM(ext bool) *memoryRange {
 	return mmu.physicalMainRAM
 }
 
+func (mmu *memoryManager) accessReadCached(address uint16) memoryHandler {
+	page := address & 0xff00
+	if address&0xff00 == mmu.lastAddressPage {
+		//fmt.Printf("    hit %v\n", mmu.apple2.cpu.GetCycles())
+		return mmu.lastAddressHandler
+	}
+
+	//fmt.Printf("Not hit %v\n", mmu.apple2.cpu.GetCycles())
+	mh := mmu.accessRead(address)
+	if address&0xf000 != 0xc000 {
+		// Do not cache 0xC area as it may reconfigure the MMU
+		mmu.lastAddressPage = page
+		mmu.lastAddressHandler = mh
+	}
+	return mh
+}
+
 func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 	if address <= addressLimitZero {
 		return mmu.getPhysicalMainRAM(mmu.altZeroPage)
@@ -148,6 +171,7 @@ func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 		return mmu.getPhysicalMainRAM(mmu.altMainRAMActiveRead)
 	}
 	if address <= addressLimitIO {
+		mmu.lastAddressPage = invalidAddressPage
 		return mmu.apple2.io
 	}
 	if address <= addressLimitSlotsExtra {
@@ -192,7 +216,27 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 func (mmu *memoryManager) Peek(address uint16) uint8 {
 	mh := mmu.accessRead(address)
 	if mh == nil {
-		//fmt.Printf("Reading void addressing 0x%x\n", address)
+		return 0xf4 // Or some random number
+	}
+	return mh.peek(address)
+}
+
+// Peek returns the data on the given address optimized for more local requests
+func (mmu *memoryManager) PeekCode(address uint16) uint8 {
+	page := address & 0xff00
+	var mh memoryHandler
+	if page == mmu.lastAddressPage {
+		mh = mmu.lastAddressHandler
+	} else {
+		mh = mmu.accessRead(address)
+		if address&0xf000 != 0xc000 {
+			// Do not cache 0xC area as it may reconfigure the MMU
+			mmu.lastAddressPage = page
+			mmu.lastAddressHandler = mh
+		}
+	}
+
+	if mh == nil {
 		return 0xf4 // Or some random number
 	}
 	return mh.peek(address)
@@ -201,11 +245,9 @@ func (mmu *memoryManager) Peek(address uint16) uint8 {
 // Poke sets the data at the given address
 func (mmu *memoryManager) Poke(address uint16, value uint8) {
 	mh := mmu.accessWrite(address)
-	if mh == nil {
-		//fmt.Printf("Writing to void addressing 0x%x\n", address)
-		return
+	if mh != nil {
+		mh.poke(address, value)
 	}
-	mh.poke(address, value)
 }
 
 // Memory initialization

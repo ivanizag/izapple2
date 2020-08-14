@@ -21,6 +21,7 @@ func newApple2plus() *Apple2 {
 func newApple2e() *Apple2 {
 	var a Apple2
 	a.Name = "Apple IIe"
+	a.isApple2e = true
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
 	a.io = newIoC0Page(&a)
@@ -34,6 +35,7 @@ func newApple2e() *Apple2 {
 func newApple2eEnhanced() *Apple2 {
 	var a Apple2
 	a.Name = "Apple //e"
+	a.isApple2e = true
 	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewCMOS65c02(a.mmu)
 	a.io = newIoC0Page(&a)
@@ -82,18 +84,8 @@ func (a *Apple2) LoadRom(filename string) error {
 		return errors.New("Rom size not supported")
 	}
 
-	romStart := 0
-	mmu := a.mmu
-	if size == apple2eRomSize {
-		// The extra 4kb ROM is first in the rom file.
-		// It starts with 256 unused bytes not mapped to 0xc000.
-		a.isApple2e = true
-		extraRomSize := apple2eRomSize - apple2RomSize
-		mmu.physicalROMe = newMemoryRange(0xc000, data[0:extraRomSize])
-		romStart = extraRomSize
-	}
-
-	mmu.physicalROM[0] = newMemoryRange(0xd000, data[romStart:])
+	romBase := 0x10000 - size
+	a.mmu.physicalROM[0] = newMemoryRangeROM(uint16(romBase), data)
 	return nil
 }
 

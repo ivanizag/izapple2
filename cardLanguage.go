@@ -46,12 +46,7 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 	c.writeState = lcWriteEnabled
 	c.altBank = true // Start on bank2
 
-	if a.isApple2e {
-		// The Apple //e with 128kb has two blocks of language upper RAM
-		a.mmu.initLanguageRAM(2)
-	} else {
-		a.mmu.initLanguageRAM(1)
-	}
+	a.mmu.initLanguageRAM(1)
 	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
 		c.addCardSoftSwitchR(iCopy, func(*ioC0Page) uint8 {
