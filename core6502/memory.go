@@ -30,6 +30,11 @@ func (m *FlatMemory) Peek(address uint16) uint8 {
 	return m.data[address]
 }
 
+// PeekCode returns the data on the given address
+func (m *FlatMemory) PeekCode(address uint16) uint8 {
+	return m.data[address]
+}
+
 // Poke sets the data at the given address
 func (m *FlatMemory) Poke(address uint16, value uint8) {
 	m.data[address] = value
