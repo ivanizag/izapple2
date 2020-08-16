@@ -6,7 +6,6 @@ import (
 	"github.com/ivanizag/apple2/core6502"
 )
 
-// newApple2 instantiates an apple2
 func newApple2plus() *Apple2 {
 	var a Apple2
 	a.Name = "Apple ][+"
@@ -189,6 +188,12 @@ func (a *Apple2) AddRGBCard() {
 // AddRAMWorks inserts adds RAMWorks style RAM to the Apple IIe 80 col 64KB card
 func (a *Apple2) AddRAMWorks(banks int) {
 	setupRAMWorksCard(a, banks)
+}
+
+// AddNoSlotClock inserts a DS1215 no slot clock under the main ROM
+func (a *Apple2) AddNoSlotClock() {
+	nsc := newNoSlotClockDS1216(a, a.mmu.physicalROM[0])
+	a.mmu.physicalROM[0] = nsc
 }
 
 // AddCardLogger inserts a fake card that logs accesses

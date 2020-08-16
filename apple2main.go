@@ -81,6 +81,10 @@ func MainApple() *Apple2 {
 		"thunderClockCardSlot",
 		4,
 		"slot for the ThunderClock Plus card. -1 for none")
+	nsc := flag.Bool(
+		"nsc",
+		false,
+		"add a DS1216 No-Slot-Clock")
 	mono := flag.Bool(
 		"mono",
 		false,
@@ -278,6 +282,10 @@ func MainApple() *Apple2 {
 
 	if *rgbCard {
 		a.AddRGBCard()
+	}
+
+	if *nsc {
+		a.AddNoSlotClock()
 	}
 
 	//a.AddCardInOut(2)

@@ -27,6 +27,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
   - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
   - FASTChip, limited to what Total Replay needs to set and clear fast mode
+  - No Slot Clock based on the DS1216
 - Graphic modes:
   - Text 40 columns
   - Text 80 columns (Apple //e only)
