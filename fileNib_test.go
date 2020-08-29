@@ -12,7 +12,7 @@ func TestNibBackAndForth(t *testing.T) {
 	}
 
 	nib := nibEncodeTrack(data, 255, 0, &dos33SectorsLogicalOrder)
-	data2, err := nibDecodeTrack(nib, 0, &dos33SectorsLogicalOrder)
+	data2, err := nibDecodeTrack(nib, &dos33SectorsLogicalOrder)
 	if err != nil {
 		t.Error(err)
 	}
