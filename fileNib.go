@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 /*
@@ -26,6 +27,11 @@ const (
 
 type fileNib struct {
 	track [numberOfTracks][]byte
+
+	// Needed to write back
+	supportsWrite bool
+	filename      string
+	logicalOrder  *[16]int
 }
 
 func isFileNib(data []uint8) bool {
@@ -46,20 +52,48 @@ func isFileDsk(data []uint8) bool {
 	return len(data) == dskImageSize
 }
 
-func newFileDsk(data []uint8, isPO bool) *fileNib {
+func newFileDsk(data []uint8, filename string) *fileNib {
 	var f fileNib
 
-	logicalOrder := dos33SectorsLogicalOrder
+	isPO := strings.HasSuffix(strings.ToLower(filename), "po")
+	f.logicalOrder = &dos33SectorsLogicalOrder
 	if isPO {
-		logicalOrder = prodosSectorsLogicalOrder
+		f.logicalOrder = &prodosSectorsLogicalOrder
 	}
+
+	f.filename = filename
+	f.supportsWrite = true
 
 	for i := 0; i < numberOfTracks; i++ {
 		trackData := data[i*bytesPerTrack : (i+1)*bytesPerTrack]
-		f.track[i] = nibEncodeTrack(trackData, defaultVolumeTag, byte(i), &logicalOrder)
+		f.track[i] = nibEncodeTrack(trackData, defaultVolumeTag, byte(i), f.logicalOrder)
 	}
 
 	return &f
+}
+
+func (f *fileNib) saveTrack(track int) {
+	if f.supportsWrite {
+		file, err := os.OpenFile(f.filename, os.O_RDWR, 0)
+		if err != nil {
+			// We can't open the file for writing"
+			f.supportsWrite = false
+			fmt.Printf("Data can't be written for %v\n", f.filename)
+		}
+
+		data, err := nibDecodeTrack(f.track[track], f.logicalOrder)
+		if err != nil {
+			f.supportsWrite = false
+			fmt.Printf("Data written can't be decoded from nibbles\n")
+		}
+
+		offset := int64(track * bytesPerTrack)
+		_, err = file.WriteAt(data, offset)
+		if err != nil {
+			f.supportsWrite = false
+			fmt.Printf("Data can't be written\n")
+		}
+	}
 }
 
 func (f *fileNib) saveNib(filename string) error {
@@ -235,7 +269,7 @@ func findProlog(diskPrologByte3 uint8, data []byte, position int) int {
 	return -1
 }
 
-func nibDecodeTrack(data []byte, track byte, logicalOrder *[16]int) ([]byte, error) {
+func nibDecodeTrack(data []byte, logicalOrder *[16]int) ([]byte, error) {
 	b := make([]byte, bytesPerTrack) // Buffer slice with enough capacity
 
 	i := int(0)
@@ -247,15 +281,14 @@ func nibDecodeTrack(data []byte, track byte, logicalOrder *[16]int) ([]byte, err
 		if i == -1 {
 			break
 		}
+
 		// We just want the sector from the address field, we ignore the rest, no error detection
 		sector := oddEvenDecodeByte(data[(i+4)%l], data[(i+5)%l])
 		logicalSector := logicalOrder[sector]
 		dst := int(logicalSector) * bytesPerSector
-		fmt.Printf("Processing sector %v (%v), destination: %v\n", sector, logicalSector, dst)
-
-		i = (i + 8 + 3) % l // We skip the four two byte fields and the epilog
 
 		// Find data prolog
+		i = (i + 8 + 3) % l // We skip the four two byte fields and the epilog
 		i = findProlog(diskPrologByte3Data, data, i)
 
 		// Read secondary buffer

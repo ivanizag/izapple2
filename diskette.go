@@ -2,7 +2,6 @@ package apple2
 
 import (
 	"errors"
-	"strings"
 )
 
 type diskette interface {
@@ -25,9 +24,8 @@ func loadDiskette(filename string) (diskette, error) {
 	}
 
 	if isFileDsk(data) {
-		isPO := strings.HasSuffix(strings.ToLower(filename), "po")
-		var d diskette16sector
-		d.nib = newFileDsk(data, isPO)
+		var d diskette16sectorWritable
+		d.nib = newFileDsk(data, filename)
 		return &d, nil
 	}
 
