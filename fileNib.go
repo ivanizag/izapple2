@@ -1,6 +1,8 @@
 package apple2
 
 import (
+	"errors"
+	"fmt"
 	"os"
 )
 
@@ -100,6 +102,25 @@ var sixAndTwoTranslateTable = [0x40]byte{
 	0xf7, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
 }
 
+var sixAndTwoUntranslateTable = [256]int16{
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, 0, 1, -1, -1, 2, 3, -1, 4, 5, 6,
+	-1, -1, -1, -1, -1, -1, 7, 8, -1, -1, -1, 9, 10, 11, 12, 13,
+	-1, -1, 14, 15, 16, 17, 18, 19, -1, 20, 21, 22, 23, 24, 25, 26,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 27, -1, 28, 29, 30,
+	-1, -1, -1, 31, -1, -1, 32, 33, -1, 34, 35, 36, 37, 38, 39, 40,
+	-1, -1, -1, -1, -1, 41, 42, 43, -1, 44, 45, 46, 47, 48, 49, 50,
+	-1, -1, 51, 52, 53, 54, 55, 56, -1, 57, 58, 59, 60, 61, 62, 63,
+}
+
 const (
 	gap1Len             = 48
 	gap2Len             = 5
@@ -112,14 +133,32 @@ func oddEvenEncodeByte(b byte) []byte {
 		A byte is encoded in two bytes to make sure the bytes start with 1 and
 		does not have two consecutive zeros.
 		   Data byte: D7-D6-D5-D4-D3-D2-D1-D0
-		   resutl[0]:  1-D7- 1-D5- 1-D3-1 -D1
-		   resutl[1]:  1-D6- 1-D4- 1-D2-1 -D0
+		   result[0]:  1-D7- 1-D5- 1-D3- 1-D1
+		   result[1]:  1-D6- 1-D4- 1-D2- 1-D0
 	*/
 	e := make([]byte, 2)
 	e[0] = ((b >> 1) & 0x55) | 0xaa
 	e[1] = (b & 0x55) | 0xaa
 	return e
 }
+
+func oddEvenDecodeByte(b0, b1 byte) byte {
+	/*
+		A byte is encoded in two bytes to make sure the bytes start with 1 and
+		does not have two consecutive zeros.
+		   b0:      1-D7- 1-D5- 1-D3- 1-D1
+		   b1:      1-D6- 1-D4- 1-D2- 1-D0
+		   result: D7-D6-D5-D4-D3-D2-D1-D0
+	*/
+	return ((b0 & 0x55) << 1) | (b1 & 0x55)
+}
+
+const (
+	diskPrologByte1        = uint8(0xd5)
+	diskPrologByte2        = uint8(0xaa)
+	diskPrologByte3Address = uint8(0x96)
+	diskPrologByte3Data    = uint8(0xad)
+)
 
 func nibEncodeTrack(data []byte, volume byte, track byte, logicalOrder *[16]int) []byte {
 	b := make([]byte, 0, nibBytesPerTrack) // Buffer slice with enough capacity
@@ -135,7 +174,7 @@ func nibEncodeTrack(data []byte, volume byte, track byte, logicalOrder *[16]int)
 	for physicalSector := byte(0); physicalSector < numberOfSectors; physicalSector++ {
 		/* On the DSK file the sectors are in DOS3.3 logical order
 		but on the physical encoded track as well as in the nib
-		files they are in phisical order.
+		files they are in physical order.
 		*/
 		logicalSector := logicalOrder[physicalSector]
 		sectorData := data[logicalSector*bytesPerSector : (logicalSector+1)*bytesPerSector]
@@ -180,4 +219,77 @@ func nibEncodeTrack(data []byte, volume byte, track byte, logicalOrder *[16]int)
 	}
 
 	return b
+}
+
+func findProlog(diskPrologByte3 uint8, data []byte, position int) int {
+	l := len(data)
+	for i := position; i < l; i++ {
+		if (data[i] == diskPrologByte1) &&
+			(data[(i+1)%l] == diskPrologByte2) &&
+			(data[(i+2)%l] == diskPrologByte3) {
+
+			return (i + 3) % l
+		}
+	}
+
+	return -1
+}
+
+func nibDecodeTrack(data []byte, track byte, logicalOrder *[16]int) ([]byte, error) {
+	b := make([]byte, bytesPerTrack) // Buffer slice with enough capacity
+
+	i := int(0)
+	l := len(data)
+
+	for {
+		// Find address field prolog
+		i = findProlog(diskPrologByte3Address, data, i)
+		if i == -1 {
+			break
+		}
+		// We just want the sector from the address field, we ignore the rest, no error detection
+		sector := oddEvenDecodeByte(data[(i+4)%l], data[(i+5)%l])
+		logicalSector := logicalOrder[sector]
+		dst := int(logicalSector) * bytesPerSector
+		fmt.Printf("Processing sector %v (%v), destination: %v\n", sector, logicalSector, dst)
+
+		i = (i + 8 + 3) % l // We skip the four two byte fields and the epilog
+
+		// Find data prolog
+		i = findProlog(diskPrologByte3Data, data, i)
+
+		// Read secondary buffer
+		prevV := byte(0)
+		for j := 0; j < secondaryBufferSize; j++ {
+			w := sixAndTwoUntranslateTable[data[i%l]]
+			if w == -1 {
+				return nil, errors.New("Invalid byte from nib data")
+			}
+			v := byte(w) ^ prevV
+			prevV = v
+			for k := 0; k < 3; k++ {
+				// The elements of the secondary buffer add two bits to three bytes
+				offset := j + k*secondaryBufferSize
+				if offset < bytesPerSector {
+					b[dst+offset] |= ((v & 0x02) >> 1) | ((v & 0x01) << 1)
+				}
+				v >>= 2
+			}
+			i++
+		}
+
+		// Read primary buffer
+		for j := 0; j < primaryBufferSize; j++ {
+			w := sixAndTwoUntranslateTable[data[i%l]]
+			if w == -1 {
+				return nil, errors.New("Invalid byte from nib data")
+			}
+			v := byte(w) ^ prevV
+			b[dst+j] |= v << 2 // The elements of the secondary buffer are the 6 MSB bits
+			prevV = v
+			i++
+		}
+	}
+
+	return b, nil
 }

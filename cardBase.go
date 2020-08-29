@@ -44,7 +44,6 @@ func (c *cardBase) assign(a *Apple2, slot int) {
 	if slot != 0 {
 		if c.romCsxx != nil {
 			// Relocate to the assigned slot
-			//c.romCsxx.base = uint16(0xc000 + slot*0x100)
 			c.romCsxx.setBase(uint16(0xc000 + slot*0x100))
 			a.mmu.setCardROM(slot, c.romCsxx)
 		}

@@ -11,12 +11,6 @@ type diskette16sector struct {
 	position int
 }
 
-func newDisquette16Sector(f *fileNib) *diskette16sector {
-	var d diskette16sector
-	d.nib = f
-	return &d
-}
-
 func (d *diskette16sector) powerOn(cycle uint64) {
 	// Not used
 }

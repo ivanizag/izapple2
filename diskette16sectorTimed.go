@@ -5,12 +5,6 @@ type diskette16sectorTimed struct {
 	cycleOn uint64 // Cycle when the disk was last turned on
 }
 
-func newDisquette16SectorTimed(f *fileNib) *diskette16sectorTimed {
-	var d diskette16sectorTimed
-	d.nib = f
-	return &d
-}
-
 func (d *diskette16sectorTimed) powerOn(cycle uint64) {
 	d.cycleOn = cycle
 }
