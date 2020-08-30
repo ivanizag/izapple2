@@ -16,6 +16,7 @@ type ioC0Page struct {
 	joysticks           JoysticksProvider
 	apple2              *Apple2
 	trace               bool
+	traceRegistrations  bool
 	panicNotImplemented bool
 }
 
@@ -57,6 +58,10 @@ func (p *ioC0Page) setTrace(trace bool) {
 	p.trace = trace
 }
 
+func (p *ioC0Page) setTraceRegistrations(traceRegistrations bool) {
+	p.traceRegistrations = traceRegistrations
+}
+
 func (p *ioC0Page) setPanicNotImplemented(value bool) {
 	p.panicNotImplemented = value
 }
@@ -69,17 +74,17 @@ func (p *ioC0Page) addSoftSwitchRW(address uint8, ss softSwitchR, name string) {
 }
 
 func (p *ioC0Page) addSoftSwitchR(address uint8, ss softSwitchR, name string) {
-	//if p.softSwitchesR[address] != nil {
-	//	fmt.Printf("Addresss 0x0c%02x is already assigned for read\n", address)
-	//}
+	if p.traceRegistrations {
+		fmt.Printf("Softswitch registered in $c0%02x for reads as %s\n", address, name)
+	}
 	p.softSwitchesR[address] = ss
 	p.softSwitchesRName[address] = name
 }
 
 func (p *ioC0Page) addSoftSwitchW(address uint8, ss softSwitchW, name string) {
-	//if p.softSwitchesW[address] != nil {
-	//	fmt.Printf("Addresss 0x0c%02x is already assigned for write\n", address)
-	//}
+	if p.traceRegistrations {
+		fmt.Printf("Softswitch registered in $c0%02x for writes as %s\n", address, name)
+	}
 	p.softSwitchesW[address] = ss
 	p.softSwitchesWName[address] = name
 }

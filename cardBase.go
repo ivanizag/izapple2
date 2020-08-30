@@ -57,8 +57,12 @@ func (c *cardBase) assign(a *Apple2, slot int) {
 	}
 
 	for i := 0; i < 0x10; i++ {
-		a.io.addSoftSwitchR(uint8(0xC80+slot*0x10+i), c._ssr[i], c._ssrName[i])
-		a.io.addSoftSwitchW(uint8(0xC80+slot*0x10+i), c._ssw[i], c._sswName[i])
+		if c._ssr[i] != nil {
+			a.io.addSoftSwitchR(uint8(0xC80+slot*0x10+i), c._ssr[i], c._ssrName[i])
+		}
+		if c._ssw[i] != nil {
+			a.io.addSoftSwitchW(uint8(0xC80+slot*0x10+i), c._ssw[i], c._sswName[i])
+		}
 	}
 }
 

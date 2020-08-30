@@ -109,6 +109,10 @@ func MainApple() *Apple2 {
 		"traceSS",
 		false,
 		"dump to the console the sofswitches calls")
+	traceSSReg := flag.Bool(
+		"traceSSReg",
+		false,
+		"dump to the console the sofswitch registrations")
 	traceHD := flag.Bool(
 		"traceHD",
 		false,
@@ -142,12 +146,18 @@ func MainApple() *Apple2 {
 
 	}
 
-	var a *Apple2
+	a := newApple2()
+	a.setup(!*mono, *cpuClock, *fastDisk, *traceMLI)
+	a.io.setTrace(*traceSS)
+	a.io.setTraceRegistrations(*traceSSReg)
+	a.io.setPanicNotImplemented(*panicSS)
+	a.setProfiling(*profile)
+
 	var charGenMap charColumnMap
 	initialCharGenPage := 0
 	switch *model {
 	case "2plus":
-		a = newApple2plus()
+		setApple2plus(a)
 		if *romFile == defaultInternal {
 			*romFile = "<internal>/Apple2_Plus.rom"
 		}
@@ -158,7 +168,7 @@ func MainApple() *Apple2 {
 		*vidHDCardSlot = -1
 
 	case "2e":
-		a = newApple2e()
+		setApple2e(a)
 		if *romFile == defaultInternal {
 			*romFile = "<internal>/Apple2e.rom"
 		}
@@ -169,7 +179,7 @@ func MainApple() *Apple2 {
 		charGenMap = charGenColumnsMap2e
 
 	case "2enh":
-		a = newApple2eEnhanced()
+		setApple2eEnhanced(a)
 		if *romFile == defaultInternal {
 			*romFile = "<internal>/Apple2e_Enhanced.rom"
 		}
@@ -180,7 +190,7 @@ func MainApple() *Apple2 {
 		charGenMap = charGenColumnsMap2e
 
 	case "base64a":
-		a = newBase64a()
+		setBase64a(a)
 		if *romFile == defaultInternal {
 			err := loadBase64aRom(a)
 			if err != nil {
@@ -199,11 +209,7 @@ func MainApple() *Apple2 {
 		panic("Model not supported")
 	}
 
-	a.setup(!*mono, *cpuClock, *fastDisk, *traceMLI)
 	a.cpu.SetTrace(*traceCPU)
-	a.io.setTrace(*traceSS)
-	a.io.setPanicNotImplemented(*panicSS)
-	a.setProfiling(*profile)
 
 	// Load ROM if not loaded already
 	if *romFile != "" {

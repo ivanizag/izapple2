@@ -10,18 +10,11 @@ import (
 	Copam BASE64A adaptation.
 */
 
-// newBase64a instantiates an apple2
-func newBase64a() *Apple2 {
-	var a Apple2
-
+func setBase64a(a *Apple2) {
 	a.Name = "Base 64A"
-	a.mmu = newMemoryManager(&a)
 	a.cpu = core6502.NewNMOS6502(a.mmu)
-	a.io = newIoC0Page(&a)
 	addApple2SoftSwitches(a.io)
 	addBase64aSoftSwitches(a.io)
-
-	return &a
 }
 
 const (

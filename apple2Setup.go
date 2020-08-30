@@ -6,42 +6,12 @@ import (
 	"github.com/ivanizag/apple2/core6502"
 )
 
-func newApple2plus() *Apple2 {
+func newApple2() *Apple2 {
 	var a Apple2
-	a.Name = "Apple ][+"
+
+	a.Name = "Pending"
 	a.mmu = newMemoryManager(&a)
-	a.cpu = core6502.NewNMOS6502(a.mmu)
 	a.io = newIoC0Page(&a)
-	addApple2SoftSwitches(a.io)
-
-	return &a
-}
-
-func newApple2e() *Apple2 {
-	var a Apple2
-	a.Name = "Apple IIe"
-	a.isApple2e = true
-	a.mmu = newMemoryManager(&a)
-	a.cpu = core6502.NewNMOS6502(a.mmu)
-	a.io = newIoC0Page(&a)
-	a.mmu.initExtendedRAM(1)
-	addApple2SoftSwitches(a.io)
-	addApple2ESoftSwitches(a.io)
-
-	return &a
-}
-
-func newApple2eEnhanced() *Apple2 {
-	var a Apple2
-	a.Name = "Apple //e"
-	a.isApple2e = true
-	a.mmu = newMemoryManager(&a)
-	a.cpu = core6502.NewCMOS65c02(a.mmu)
-	a.io = newIoC0Page(&a)
-	a.mmu.initExtendedRAM(1)
-	addApple2SoftSwitches(a.io)
-	addApple2ESoftSwitches(a.io)
-
 	return &a
 }
 
@@ -59,6 +29,30 @@ func (a *Apple2) setup(isColor bool, clockMhz float64, fastMode bool, traceMLI b
 	} else {
 		a.cycleDurationNs = 1000.0 / clockMhz
 	}
+}
+
+func setApple2plus(a *Apple2) {
+	a.Name = "Apple ][+"
+	a.cpu = core6502.NewNMOS6502(a.mmu)
+	addApple2SoftSwitches(a.io)
+}
+
+func setApple2e(a *Apple2) {
+	a.Name = "Apple IIe"
+	a.isApple2e = true
+	a.cpu = core6502.NewNMOS6502(a.mmu)
+	a.mmu.initExtendedRAM(1)
+	addApple2SoftSwitches(a.io)
+	addApple2ESoftSwitches(a.io)
+}
+
+func setApple2eEnhanced(a *Apple2) {
+	a.Name = "Apple //e"
+	a.isApple2e = true
+	a.cpu = core6502.NewCMOS65c02(a.mmu)
+	a.mmu.initExtendedRAM(1)
+	addApple2SoftSwitches(a.io)
+	addApple2ESoftSwitches(a.io)
 }
 
 func (a *Apple2) insertCard(c card, slot int) {

@@ -214,6 +214,8 @@ Only valid on SDL mode
         dump to the console the calls to ProDOS machine language interface calls to $BF00
   -traceSS
         dump to the console the sofswitches calls
+  -traceSSReg
+        dump to the console the sofswitch registrations
   -vidHDSlot int
         slot for the VidHD card, only for //e models. -1 for none (default 2)
   -woz string
