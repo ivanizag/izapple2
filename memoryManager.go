@@ -74,6 +74,8 @@ func newMemoryManager(a *Apple2) *memoryManager {
 	mmu.apple2 = a
 	mmu.physicalMainRAM = newMemoryRange(0, make([]uint8, 0xc000))
 
+	mmu.slotC3ROMActive = true // For II+, this is the default behaviour
+
 	return &mmu
 }
 

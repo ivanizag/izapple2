@@ -23,6 +23,7 @@ func addApple2ESoftSwitches(io *ioC0Page) {
 	addSoftSwitchesMmu(io, 0x06, 0x07, 0x15, &mmu.intCxROMActive, "INTCXROM")
 	addSoftSwitchesMmu(io, 0x08, 0x09, 0x16, &mmu.altZeroPage, "ALTZP")
 	addSoftSwitchesMmu(io, 0x0a, 0x0b, 0x17, &mmu.slotC3ROMActive, "SLOTC3ROM")
+	mmu.slotC3ROMActive = false // Default behavior in II+ was true
 	addSoftSwitchesMmu(io, 0x00, 0x01, 0x18, &mmu.store80Active, "80STORE")
 
 	// New IOU read softswithes
