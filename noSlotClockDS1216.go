@@ -21,9 +21,9 @@ delegate to the replaced memoryHandler when needed.
 
 On the Apple IIe it is usually installed under the ROM CD (under CF on later models). Similar for the Apple IIc.
 It is usually not compatible with the ROMs of the Apple II+, but could be installed in a card with 28 pins ROM,
-working on different addresses. We will install it under the main ROM for all models.
+working on different addresses. We will install it under the main ROM for all models or under a card ROM.
 
-Actually software looks like it only uses: 0xC300, 0xC301 and 0xC304
+Actually software looks like it uses: 0xCs00, 0xCs01 and 0xCs04, usually slot 3
 */
 
 type noSlotClockDS1216 struct {

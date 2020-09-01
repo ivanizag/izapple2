@@ -190,6 +190,17 @@ func (a *Apple2) AddNoSlotClock() {
 	a.mmu.physicalROM[0] = nsc
 }
 
+// AddNoSlotClockInCard inserts a DS1215 no slot clock under a card ROM
+func (a *Apple2) AddNoSlotClockInCard(slot int) error {
+	cardRom := a.mmu.cardsROM[slot]
+	if cardRom == nil {
+		return errors.New("No ROM available on the slot to add a no slot clock")
+	}
+	nsc := newNoSlotClockDS1216(a, cardRom)
+	a.mmu.cardsROM[slot] = nsc
+	return nil
+}
+
 // AddCardLogger inserts a fake card that logs accesses
 func (a *Apple2) AddCardLogger(slot int) {
 	a.insertCard(&cardLogger{}, slot)
