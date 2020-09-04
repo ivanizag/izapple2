@@ -44,7 +44,7 @@ func SDLRun(a *apple2.Apple2) {
 	s.start()
 	a.SetSpeakerProvider(s)
 
-	j := newSDLJoysticks()
+	j := newSDLJoysticks(true)
 	a.SetJoysticksProvider(j)
 
 	go a.Run()
@@ -66,6 +66,11 @@ func SDLRun(a *apple2.Apple2) {
 				j.putAxisEvent(t)
 			case *sdl.JoyButtonEvent:
 				j.putButtonEvent(t)
+			case *sdl.MouseMotionEvent:
+				w, h := window.GetSize()
+				j.putMouseMotionEvent(t, w, h)
+			case *sdl.MouseButtonEvent:
+				j.putMouseButtonEvent(t)
 			}
 		}
 

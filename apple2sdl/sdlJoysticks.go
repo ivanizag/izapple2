@@ -15,13 +15,15 @@ joystick 1.
 */
 
 type sdlJoysticks struct {
-	paddle    [4]uint8
-	hasPaddle [4]bool
-	button    [4]bool
-	keys      [3]bool
+	paddle       [4]uint8
+	hasPaddle    [4]bool
+	button       [4]bool
+	keys         [3]bool
+	mousebuttons [3]bool
+	useMouse     bool
 }
 
-func newSDLJoysticks() *sdlJoysticks {
+func newSDLJoysticks(useMouseAlt bool) *sdlJoysticks {
 	var j sdlJoysticks
 
 	err := sdl.InitSubSystem(sdl.INIT_JOYSTICK)
@@ -43,6 +45,15 @@ func newSDLJoysticks() *sdlJoysticks {
 	j.paddle[1] = 255
 	j.paddle[2] = 255
 	j.paddle[3] = 255
+
+	if useMouseAlt && !j.hasPaddle[0] {
+		// Use the mouse as joystick
+		j.useMouse = true
+		j.hasPaddle[0] = true
+		j.hasPaddle[1] = true
+		j.paddle[0] = 127
+		j.paddle[1] = 127
+	}
 
 	// To enter Apple IIe on self test mode
 	//j.keys[1] = true
@@ -66,6 +77,46 @@ func (j *sdlJoysticks) putButtonEvent(e *sdl.JoyButtonEvent) {
 	}
 
 	j.button[uint8(e.Which)*2+e.Button] = (e.State != 0)
+}
+
+func mouseToJoyFull(x int32, w int32) uint8 {
+	return uint8(256 * x / (w + 1))
+}
+
+func mouseToJoyCentered(x int32, w int32) uint8 {
+	r := x - (w / 2) + 127
+	if r >= 255 {
+		r = 255
+	}
+	if r < 0 {
+		r = 0
+	}
+	return uint8(r)
+
+}
+
+func (j *sdlJoysticks) putMouseMotionEvent(e *sdl.MouseMotionEvent, width int32, height int32) {
+	if j.useMouse {
+		// The mouse moves on all the window
+		//j.paddle[0] = mouseToJoyFull(e.X, width)
+		//j.paddle[1] = mouseToJoyFull(e.Y, height)
+
+		// The mouse moves around the center of the window
+		j.paddle[0] = mouseToJoyCentered(e.X, width)
+		j.paddle[1] = mouseToJoyCentered(e.Y, height)
+	}
+}
+
+func (j *sdlJoysticks) putMouseButtonEvent(e *sdl.MouseButtonEvent) {
+	pressed := e.State == sdl.PRESSED
+	switch e.Button {
+	case 1: //BUTTON_LEFT
+		j.mousebuttons[0] = pressed
+	case 3: //BUTTON_RIGHT
+		j.mousebuttons[1] = pressed
+	case 2: //BUTTON_MIDDLE
+		j.mousebuttons[2] = pressed
+	}
 }
 
 func (j *sdlJoysticks) putKey(keyEvent *sdl.KeyboardEvent) {
@@ -92,12 +143,12 @@ func (j *sdlJoysticks) ReadButton(i int) bool {
 	var value bool
 	switch i {
 	case 0:
-		value = j.button[0] || j.keys[0]
+		value = j.button[0] || j.keys[0] || j.mousebuttons[0]
 	case 1:
 		// It can be secondary of first or primary of second
-		value = j.button[1] || j.button[2] || j.keys[1]
+		value = j.button[1] || j.button[2] || j.keys[1] || j.mousebuttons[1]
 	case 2:
-		value = j.button[3] || j.keys[2]
+		value = j.button[3] || j.keys[2] || j.mousebuttons[2]
 	}
 	return value
 }
