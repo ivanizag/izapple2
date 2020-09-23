@@ -66,7 +66,7 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 			drive.tracksStep = moveStep(drive.phases, drive.tracksStep)
 
 			return 0
-		}, fmt.Sprintf("PHASE%vOFF", phase))
+		}, fmt.Sprintf("PHASE%vON", phase))
 	}
 
 	// Q4, power switch
