@@ -39,6 +39,7 @@ type memoryManager struct {
 	store80Active         bool  // Special pagination for text and graphics areas
 	slotC3ROMActive       bool  // Apple2e slot 3  ROM shadow
 	intCxROMActive        bool  // Apple2e slots internal ROM shadow
+	intC8ROMActive        bool  // C8Rom associated to the internal slot 3. Softswitch not directly accessible. See UtA2e 5-28
 	activeSlot            uint8 // Active slot owner of 0xc800 to 0xcfff
 	extendedRAMBlock      uint8 // Block used for entended memory for RAMWorks cards
 
@@ -82,26 +83,35 @@ func newMemoryManager(a *Apple2) *memoryManager {
 }
 
 func (mmu *memoryManager) accessCArea(address uint16) memoryHandler {
+	slot := uint8((address >> 8) & 0x0f)
+
+	// Internal IIe slot 3
+	if (address <= addressLimitSlots) && !mmu.slotC3ROMActive && (slot == 3) {
+		mmu.intC8ROMActive = true
+		return mmu.physicalROM[mmu.romPage]
+	}
+
+	// Internal IIe CxROM
 	if mmu.intCxROMActive {
 		return mmu.physicalROM[mmu.romPage]
 	}
+
 	// First slot area
-	if address <= addressLimitSlots {
-		slot := uint8((address >> 8) & 0x07)
+	if slot <= 7 {
 		mmu.activeSlot = slot
-		if !mmu.slotC3ROMActive && (slot == 3) {
-			return mmu.physicalROM[mmu.romPage]
-		}
+		mmu.intC8ROMActive = false
 		return mmu.cardsROM[slot]
 	}
-	// Extra slot area
+
+	// Extra slot area reset
 	if address == ioC8Off {
 		// Reset extra slot area owner
 		mmu.activeSlot = 0
-		mmu.lastAddressPage = invalidAddressPage
+		mmu.intC8ROMActive = false
 	}
 
-	if !mmu.slotC3ROMActive && (mmu.activeSlot == 3) {
+	// Extra slot area
+	if mmu.intC8ROMActive {
 		return mmu.physicalROM[mmu.romPage]
 	}
 	return mmu.cardsROMExtra[mmu.activeSlot]
