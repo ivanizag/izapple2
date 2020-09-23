@@ -21,8 +21,10 @@ const (
 	ioDataPaddle2  uint8 = 0x66
 	ioDataPaddle3  uint8 = 0x67
 
-	ioFlag1RGBCard uint8 = 0x7e // Not real softSwitches. Using the numbers to store the flags somewhere.
-	ioFlag2RGBCard uint8 = 0x7f
+	// Not real softSwitches. Using the numbers to store the flags somewhere.
+	ioFlagRGBCardActive uint8 = 0x7d
+	ioFlag1RGBCard      uint8 = 0x7e
+	ioFlag2RGBCard      uint8 = 0x7f
 )
 
 func addApple2SoftSwitches(io *ioC0Page) {
