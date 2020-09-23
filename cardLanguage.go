@@ -50,11 +50,11 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
 		c.addCardSoftSwitchR(iCopy, func(*ioC0Page) uint8 {
-			c.ssAction(iCopy)
+			c.ssAction(iCopy, false)
 			return 0
 		}, "LANGCARDR")
 		c.addCardSoftSwitchW(iCopy, func(*ioC0Page, uint8) {
-			c.ssAction(iCopy)
+			c.ssAction(iCopy, true)
 		}, "LANGCARDW")
 	}
 
@@ -62,7 +62,7 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 	c.applyState()
 }
 
-func (c *cardLanguage) ssAction(ss uint8) {
+func (c *cardLanguage) ssAction(ss uint8, write bool) {
 	c.altBank = ((ss >> 3) & 1) == 0
 	action := ss & 0x3
 	switch action {
@@ -73,7 +73,9 @@ func (c *cardLanguage) ssAction(ss uint8) {
 	case 1:
 		// ROM read, RAM write
 		c.readState = false
-		c.writeState++
+		if !write {
+			c.writeState++
+		}
 	case 2:
 		// ROM read, no writes
 		c.readState = false
@@ -81,7 +83,15 @@ func (c *cardLanguage) ssAction(ss uint8) {
 	case 3:
 		//RAM read, RAM write
 		c.readState = true
-		c.writeState++
+		if !write {
+			c.writeState++
+		}
+	}
+
+	if write && c.writeState == lcWriteHalfEnabled {
+		// UtA2e, 5-23. It is reset by even read access or any write acccess in the $C08x range
+		// And https://github.com/zellyn/a2audit/issues/3
+		c.writeState = lcWriteDisabled
 	}
 
 	if c.writeState > lcWriteEnabled {
