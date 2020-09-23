@@ -13,6 +13,10 @@ func buildOpTransfer(regSrc int, regDst int) opFunc {
 func buildOpIncDec(inc bool) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
 		value := resolveValue(s, line, opcode)
+		if opcode.addressMode == modeAbsoluteX || opcode.addressMode == modeAbsoluteY {
+			// Double read, needed to pass A2Audit for the Language Card
+			value = resolveValue(s, line, opcode)
+		}
 		if inc {
 			value++
 		} else {
