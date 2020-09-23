@@ -56,6 +56,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Single file executable with embedded ROMs and DOS 3.3
   - Pause (thanks a2geek)
   - ProDOS MLI calls tracing
+  - Passes the [A2AUDIT 1.06](https://github.com/zellyn/a2audit) tests as II+, //e, and //e Enhanced.
 
 By default the following configuration is launched:
 
