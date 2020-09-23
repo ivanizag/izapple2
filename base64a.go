@@ -47,7 +47,7 @@ func loadBase64aRom(a *Apple2) error {
 
 	// Create banks
 	for j := range romBanksBytes {
-		a.mmu.physicalROM[j] = newMemoryRange(0xd000, romBanksBytes[j])
+		a.mmu.physicalROM[j] = newMemoryRange(0xd000, romBanksBytes[j], fmt.Sprintf("Base64 ROM page %v", j))
 	}
 
 	// Start with first bank active

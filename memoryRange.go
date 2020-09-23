@@ -1,28 +1,40 @@
 package apple2
 
+import (
+	"fmt"
+)
+
 type memoryRange struct {
 	base    uint16
 	data    []uint8
-	basePtr uintptr
+	name    string
+	address string
+	//basePtr uintptr
 }
 
 type memoryRangeROM struct {
 	memoryRange
 }
 
-func newMemoryRange(base uint16, data []uint8) *memoryRange {
+func newMemoryRange(base uint16, data []uint8, name string) *memoryRange {
 	var m memoryRange
 	m.base = base
 	m.data = data
 	m.setBase(base)
+
+	m.name = name
+	m.address = fmt.Sprintf("%p", &m)
 	return &m
 }
 
-func newMemoryRangeROM(base uint16, data []uint8) *memoryRangeROM {
+func newMemoryRangeROM(base uint16, data []uint8, name string) *memoryRangeROM {
 	var m memoryRangeROM
 	m.base = base
 	m.data = data
 	m.setBase(base)
+
+	m.name = name
+	m.address = fmt.Sprintf("%p", &m)
 	return &m
 }
 
@@ -55,4 +67,18 @@ func (m *memoryRange) subRange(a, b uint16) []uint8 {
 
 func (m *memoryRangeROM) poke(address uint16, value uint8) {
 	// Ignore
+}
+
+func identifyMemory(m memoryHandler) string {
+	ram, ok := m.(*memoryRange)
+	if ok {
+		return fmt.Sprintf("RAM 0x%04x %s at %s", ram.base, ram.name, ram.address)
+	}
+
+	rom, ok := m.(*memoryRangeROM)
+	if ok {
+		return fmt.Sprintf("ROM 0x%04x %s at %s", rom.base, ram.name, rom.address)
+	}
+
+	return ("Unknown memory")
 }

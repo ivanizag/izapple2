@@ -71,10 +71,10 @@ func (c *cardInOut) assign(a *Apple2, slot int) {
 		}
 	}
 
-	c.romCsxx = newMemoryRangeROM(0xC200, data[0:255])
+	c.romCsxx = newMemoryRangeROM(0xC200, data[0:255], "InOUt card")
 
 	if slot != 2 {
-		// To make ifwork on other slots, patch C2, A0 and A1
+		// To make it work on other slots, patch C2, A0 and A1
 		panic("Assert failed. Only slot 2 supported for the InOut card")
 	}
 	c.cardBase.assign(a, slot)

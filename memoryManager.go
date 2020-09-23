@@ -1,5 +1,7 @@
 package apple2
 
+import "fmt"
+
 // See https://fabiensanglard.net/fd_proxy/prince_of_persia/Inside%20the%20Apple%20IIe.pdf
 // See https://i.stack.imgur.com/yn21s.gif
 
@@ -72,7 +74,7 @@ type memoryHandler interface {
 func newMemoryManager(a *Apple2) *memoryManager {
 	var mmu memoryManager
 	mmu.apple2 = a
-	mmu.physicalMainRAM = newMemoryRange(0, make([]uint8, 0xc000))
+	mmu.physicalMainRAM = newMemoryRange(0, make([]uint8, 0xc000), "Main RAM")
 
 	mmu.slotC3ROMActive = true // For II+, this is the default behaviour
 
@@ -136,23 +138,6 @@ func (mmu *memoryManager) getVideoRAM(ext bool) *memoryRange {
 		return mmu.physicalExtRAM[0]
 	}
 	return mmu.physicalMainRAM
-}
-
-func (mmu *memoryManager) accessReadCached(address uint16) memoryHandler {
-	page := address & 0xff00
-	if address&0xff00 == mmu.lastAddressPage {
-		//fmt.Printf("    hit %v\n", mmu.apple2.cpu.GetCycles())
-		return mmu.lastAddressHandler
-	}
-
-	//fmt.Printf("Not hit %v\n", mmu.apple2.cpu.GetCycles())
-	mh := mmu.accessRead(address)
-	if address&0xf000 != 0xc000 {
-		// Do not cache 0xC area as it may reconfigure the MMU
-		mmu.lastAddressPage = page
-		mmu.lastAddressHandler = mh
-	}
-	return mh
 }
 
 func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
@@ -266,8 +251,8 @@ func (mmu *memoryManager) initLanguageRAM(groups uint8) {
 	mmu.physicalLangRAM = make([]*memoryRange, groups)
 	mmu.physicalLangAltRAM = make([]*memoryRange, groups)
 	for i := uint8(0); i < groups; i++ {
-		mmu.physicalLangRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x3000))
-		mmu.physicalLangAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
+		mmu.physicalLangRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x3000), fmt.Sprintf("LC RAM block %v", i))
+		mmu.physicalLangAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000), fmt.Sprintf("LC RAM Alt block %v", i))
 	}
 }
 
@@ -276,8 +261,8 @@ func (mmu *memoryManager) initExtendedRAM(groups int) {
 	mmu.physicalExtRAM = make([]*memoryRange, groups)
 	mmu.physicalExtAltRAM = make([]*memoryRange, groups)
 	for i := 0; i < groups; i++ {
-		mmu.physicalExtRAM[i] = newMemoryRange(0, make([]uint8, 0x10000))
-		mmu.physicalExtAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000))
+		mmu.physicalExtRAM[i] = newMemoryRange(0, make([]uint8, 0x10000), fmt.Sprintf("Extra RAM block %v", i))
+		mmu.physicalExtAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000), fmt.Sprintf("Extra RAM Alt block %v", i))
 	}
 }
 

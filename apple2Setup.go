@@ -78,7 +78,7 @@ func (a *Apple2) LoadRom(filename string) error {
 	}
 
 	romBase := 0x10000 - size
-	a.mmu.physicalROM[0] = newMemoryRangeROM(uint16(romBase), data)
+	a.mmu.physicalROM[0] = newMemoryRangeROM(uint16(romBase), data, "Main ROM")
 	return nil
 }
 
