@@ -188,6 +188,7 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 		return mmu.getPhysicalMainRAM(mmu.altMainRAMActiveWrite)
 	}
 	if address <= addressLimitIO {
+		mmu.lastAddressPage = invalidAddressPage
 		return mmu.apple2.io
 	}
 	if address <= addressLimitSlotsExtra {
