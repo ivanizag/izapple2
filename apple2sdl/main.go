@@ -12,13 +12,13 @@ import (
 
 func main() {
 	a := apple2.MainApple()
-	if a.IsProfiling() {
-		// See the log with:
-		//    go tool pprof --pdf ~/go/bin/apple2sdl /tmp/profile329536248/cpu.pprof > profile.pdf
-		defer profile.Start().Stop()
-	}
-
 	if a != nil {
+		if a.IsProfiling() {
+			// See the log with:
+			//    go tool pprof --pdf ~/go/bin/apple2sdl /tmp/profile329536248/cpu.pprof > profile.pdf
+			defer profile.Start().Stop()
+		}
+
 		SDLRun(a)
 	}
 }
