@@ -35,6 +35,8 @@ func setupRGBCard(a *Apple2) *cardRGB {
 	var c cardRGB
 	c.step = 0
 
+	a.io.softSwitchesData[ioFlagRGBCardActive] = ssOn
+
 	// Does not have ROM or private softswitches. It spies on the softswitches
 	a.io.addSoftSwitchRW(0x50, func(io *ioC0Page) uint8 {
 		io.softSwitchesData[ioFlagText] = ssOff

@@ -49,6 +49,7 @@ func getCurrentVideoMode(a *Apple2) uint16 {
 	isDoubleResMode := !isTextMode && is80Columns && !a.io.isSoftSwitchActive(ioFlagAnnunciator3)
 	isSuperHighResMode := a.io.isSoftSwitchActive(ioDataNewVideo)
 
+	isRGBCard := a.io.isSoftSwitchActive(ioFlagRGBCardActive)
 	rgbFlag1 := a.io.isSoftSwitchActive(ioFlag1RGBCard)
 	rgbFlag2 := a.io.isSoftSwitchActive(ioFlag2RGBCard)
 	isMono560 := isDoubleResMode && !rgbFlag1 && !rgbFlag2
@@ -64,7 +65,7 @@ func getCurrentVideoMode(a *Apple2) uint16 {
 	} else if isTextMode {
 		if is80Columns {
 			mode = videoText80
-		} else if isStore80Active {
+		} else if isRGBCard && isStore80Active {
 			mode = videoText40RGB
 		} else {
 			mode = videoText40
