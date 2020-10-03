@@ -136,6 +136,18 @@ func MainApple() *Apple2 {
 
 	flag.Parse()
 
+	// Process a filename with autodetection
+	filename := flag.Arg(0)
+	diskImageFinal := *diskImage
+	hardDiskImageFinal := *hardDiskImage
+	if filename != "" {
+		if isDiskette(filename) {
+			diskImageFinal = filename
+		} else {
+			hardDiskImageFinal = filename
+		}
+	}
+
 	if *wozImage != "" {
 		f, err := loadFileWoz(*wozImage)
 		if err != nil {
@@ -263,17 +275,17 @@ func MainApple() *Apple2 {
 		a.AddFastChip(*fastChipCardSlot)
 	}
 	if *disk2Slot > 0 {
-		err := a.AddDisk2(*disk2Slot, *disk2RomFile, *diskImage, *diskBImage)
+		err := a.AddDisk2(*disk2Slot, *disk2RomFile, diskImageFinal, *diskBImage)
 		if err != nil {
 			panic(err)
 		}
 	}
-	if *hardDiskImage != "" {
+	if hardDiskImageFinal != "" {
 		if *hardDiskSlot <= 0 {
 			// If there is a hard disk image, but no slot assigned, use slot 7.
 			*hardDiskSlot = 7
 		}
-		err := a.AddSmartPortDisk(*hardDiskSlot, *hardDiskImage, *traceHD)
+		err := a.AddSmartPortDisk(*hardDiskSlot, hardDiskImageFinal, *traceHD)
 		if err != nil {
 			panic(err)
 		}

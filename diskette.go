@@ -11,6 +11,15 @@ type diskette interface {
 	write(quarterTrack int, value uint8, cycle uint64)
 }
 
+func isDiskette(filename string) bool {
+	data, err := loadResource(filename)
+	if err != nil {
+		return false
+	}
+
+	return isFileNib(data) || isFileDsk(data) || isFileWoz(data)
+}
+
 func loadDiskette(filename string) (diskette, error) {
 	data, err := loadResource(filename)
 	if err != nil {
