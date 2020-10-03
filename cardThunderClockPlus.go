@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 /*
 ThunderClock`, real time clock card.

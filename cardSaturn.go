@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 /*
 RAM card with 128Kb. It's like 8 language cards.

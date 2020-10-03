@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/ivanizag/apple2"
+	"github.com/ivanizag/izapple2"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -18,7 +18,7 @@ const (
 	samplingHz = 48000
 	bufferSize = 1000
 	// bufferSize/samplingHz will be the max delay of the sound
-	sampleDurationCycles = 1000000 * apple2.CPUClockMhz / samplingHz
+	sampleDurationCycles = 1000000 * izapple2.CPUClockMhz / samplingHz
 	// each sample on the sound stream is 21.31 cpu cycles approx
 	maxOutOfSyncMs = 2000
 	decayLevel     = 128
@@ -49,10 +49,10 @@ func newSDLSpeaker() *sdlSpeaker {
 // Click receives a speaker click. The argument is the CPU cycle when it is generated
 func (s *sdlSpeaker) Click(cycle uint64) {
 	select {
-		case s.clickChannel <- cycle:
-			// Sent
-		default:
-			// The channel is full, the click is lost.
+	case s.clickChannel <- cycle:
+		// Sent
+	default:
+		// The channel is full, the click is lost.
 	}
 }
 
@@ -88,7 +88,7 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	}
 
 	// Verify that we are not too long behind
-	var maxOutOfSyncCyclesFloat = 1000 * apple2.CPUClockMhz * maxOutOfSyncMs
+	var maxOutOfSyncCyclesFloat = 1000 * izapple2.CPUClockMhz * maxOutOfSyncMs
 	var maxOutOfSyncCycles = uint64(maxOutOfSyncCyclesFloat)
 	for _, pc := range s.pendingClicks {
 		if pc-s.lastCycle > maxOutOfSyncCycles {

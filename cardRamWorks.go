@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 /*
 RAMWorks style card on the Apple IIe aus slot.

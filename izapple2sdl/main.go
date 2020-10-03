@@ -5,17 +5,18 @@ import (
 	"image"
 	"unsafe"
 
-	"github.com/ivanizag/apple2"
+	"github.com/ivanizag/izapple2"
+
 	"github.com/pkg/profile"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 func main() {
-	a := apple2.MainApple()
+	a := izapple2.MainApple()
 	if a != nil {
 		if a.IsProfiling() {
 			// See the log with:
-			//    go tool pprof --pdf ~/go/bin/apple2sdl /tmp/profile329536248/cpu.pprof > profile.pdf
+			//    go tool pprof --pdf ~/go/bin/izapple2sdl /tmp/profile329536248/cpu.pprof > profile.pdf
 			defer profile.Start().Stop()
 		}
 
@@ -24,7 +25,7 @@ func main() {
 }
 
 // SDLRun starts the Apple2 emulator on SDL
-func SDLRun(a *apple2.Apple2) {
+func SDLRun(a *izapple2.Apple2) {
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(4*40*7, 4*24*8,
 		sdl.WINDOW_SHOWN)
@@ -35,7 +36,7 @@ func SDLRun(a *apple2.Apple2) {
 
 	defer window.Destroy()
 	defer renderer.Destroy()
-	window.SetTitle(a.Name)
+	window.SetTitle("iz-" + a.Name)
 
 	kp := newSDLKeyBoard(a)
 	a.SetKeyboardProvider(kp)
@@ -55,7 +56,7 @@ func SDLRun(a *apple2.Apple2) {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch t := event.(type) {
 			case *sdl.QuitEvent:
-				a.SendCommand(apple2.CommandKill)
+				a.SendCommand(izapple2.CommandKill)
 				running = false
 			case *sdl.KeyboardEvent:
 				kp.putKey(t)
@@ -76,9 +77,9 @@ func SDLRun(a *apple2.Apple2) {
 
 		if paused != a.IsPaused() {
 			if a.IsPaused() {
-				window.SetTitle(a.Name + " - PAUSED!")
+				window.SetTitle("iz-" + a.Name + " - PAUSED!")
 			} else {
-				window.SetTitle(a.Name)
+				window.SetTitle("iz-" + a.Name)
 			}
 			paused = a.IsPaused()
 		}

@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/ivanizag/apple2"
+	"github.com/ivanizag/izapple2"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 type sdlKeyboard struct {
 	keyChannel chan uint8
-	a          *apple2.Apple2
+	a          *izapple2.Apple2
 
 	showPages bool
 }
 
-func newSDLKeyBoard(a *apple2.Apple2) *sdlKeyboard {
+func newSDLKeyBoard(a *izapple2.Apple2) *sdlKeyboard {
 	var k sdlKeyboard
 	k.keyChannel = make(chan uint8, 100)
 	k.a = a
@@ -98,33 +98,33 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	// Control of the emulator
 	case sdl.K_F1:
 		if ctrl {
-			k.a.SendCommand(apple2.CommandReset)
+			k.a.SendCommand(izapple2.CommandReset)
 		}
 	case sdl.K_F5:
 		if ctrl {
-			k.a.SendCommand(apple2.CommandShowSpeed)
+			k.a.SendCommand(izapple2.CommandShowSpeed)
 		} else {
-			k.a.SendCommand(apple2.CommandToggleSpeed)
+			k.a.SendCommand(izapple2.CommandToggleSpeed)
 		}
 	case sdl.K_F6:
-		k.a.SendCommand(apple2.CommandToggleColor)
+		k.a.SendCommand(izapple2.CommandToggleColor)
 	case sdl.K_F7:
 		k.showPages = !k.showPages
 	case sdl.K_F9:
-		k.a.SendCommand(apple2.CommandDumpDebugInfo)
+		k.a.SendCommand(izapple2.CommandDumpDebugInfo)
 	case sdl.K_F10:
-		k.a.SendCommand(apple2.CommandNextCharGenPage)
+		k.a.SendCommand(izapple2.CommandNextCharGenPage)
 	case sdl.K_F11:
-		k.a.SendCommand(apple2.CommandToggleCPUTrace)
+		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case sdl.K_F12:
-		err := apple2.SaveSnapshot(k.a, "snapshot.png")
+		err := izapple2.SaveSnapshot(k.a, "snapshot.png")
 		if err != nil {
 			fmt.Printf("Error saving snapshoot: %v.\n.", err)
 		} else {
 			fmt.Println("Saving snapshot")
 		}
 	case sdl.K_PAUSE:
-		k.a.SendCommand(apple2.CommandPauseUnpauseEmulator)
+		k.a.SendCommand(izapple2.CommandPauseUnpauseEmulator)
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_

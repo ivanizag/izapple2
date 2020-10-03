@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 /*
 Extended 80-Column Text AppleColor Card or Video7 RGB-SL7 card

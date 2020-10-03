@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 import (
 	"io"
@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ivanizag/apple2/romdumps"
+	"github.com/ivanizag/izapple2/romdumps"
 )
 
 const (

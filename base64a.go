@@ -1,9 +1,9 @@
-package apple2
+package izapple2
 
 import (
 	"fmt"
 
-	"github.com/ivanizag/apple2/core6502"
+	"github.com/ivanizag/izapple2/core6502"
 )
 
 /*

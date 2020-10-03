@@ -1,8 +1,8 @@
-# Apple ][+, //e emulator
+# izapple2 - Apple ][+, //e emulator
 
 Portable emulator of an Apple II+ or //e. Written in Go.
 
-[![CircleCI](https://circleci.com/gh/ivanizag/apple2/tree/master.svg?style=svg)](https://circleci.com/gh/ivanizag/apple2/tree/master)
+[![CircleCI](https://circleci.com/gh/ivanizag/izapple2/tree/master.svg?style=svg)](https://circleci.com/gh/ivanizag/izapple2/tree/master)
 
 ## Features
 
@@ -72,14 +72,14 @@ By default the following configuration is launched:
 
 ## Running the emulator
 
-No installation required. [Download](https://github.com/ivanizag/apple2/releases) the single file executable `apple2xxx_xxx` for linux or Mac, SDL2 graphics or console. Build from source to get the latest features.
+No installation required. [Download](https://github.com/ivanizag/izapple2/releases) the single file executable `izapple2xxx_xxx` for linux or Mac, SDL2 graphics or console. Build from source to get the latest features.
 
 ### Default mode
 
 Execute without parameters to have an emulated Apple //e Enhanced with 128kb booting DOS 3.3 ready to run Applesoft:
 
 ``` terminal
-casa@servidor:~$ ./apple2sdl
+casa@servidor:~$ ./izapple2sdl
 ```
 
 ![DOS 3.3 started](doc/dos33.png)
@@ -89,7 +89,7 @@ casa@servidor:~$ ./apple2sdl
 Download a DSK or WOZ file or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source) with the `-disk` parameter:
 
 ``` terminal
-casa@servidor:~$ ./apple2sdl -disk "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
+casa@servidor:~$ ./izapple2sdl -disk "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
 ```
 
 ![Karateka](doc/karateka.png)
@@ -100,7 +100,7 @@ Download the excellent [Total Replay](https://archive.org/details/TotalReplay) c
 [a2-4am](https://github.com/a2-4am/4cade). Run it with the `-hd` parameter:
 
 ``` terminal
-casa@servidor:~$ ./apple2sdl -hd "Total Replay v3.0.2mg"
+casa@servidor:~$ ./izapple2sdl -hd "Total Replay v3.0.2mg"
 ```
 
 Displays super hi-res box art as seen with the VidHD card.
@@ -109,10 +109,10 @@ Displays super hi-res box art as seen with the VidHD card.
 
 ### Terminal mode
 
-To run text mode right on the terminal without the SDL2 dependency, use `apple2console`. It runs on the console using ANSI escape codes. Input is sent to the emulated Apple II one line at a time:
+To run text mode right on the terminal without the SDL2 dependency, use `izapple2console`. It runs on the console using ANSI escape codes. Input is sent to the emulated Apple II one line at a time:
 
 ``` terminal
-casa@servidor:~$ ./apple2console -model 2plus
+casa@servidor:~$ ./izapple2console -model 2plus
 
 ############################################
 #                                          #
@@ -229,26 +229,26 @@ Only valid on SDL mode
 
 ## Building from source
 
-### apple2console
+### izapple2console
 
 The only dependency is having a working Go installation on any platform.
 
 Run:
 
 ``` terminal
-go get github.com/ivanizag/apple2/apple2console
-go build github.com/ivanizag/apple2/apple2console
+go get github.com/ivanizag/izapple2/izapple2console
+go build github.com/ivanizag/izapple2/izapple2console
 ```
 
-### apple2sdl
+### izapple2sdl
 
 Besides having a working Go installation, install the SDL2 developer files. Valid for any platform
 
 Run:
 
 ``` terminal
-go get github.com/ivanizag/apple2/apple2sdl
-go build github.com/ivanizag/apple2/apple2sdl
+go get github.com/ivanizag/izapple2/izapple2sdl
+go build github.com/ivanizag/izapple2/izapple2sdl
 ```
 
 ### Use docker to cross compile for Linux and Windows
@@ -260,4 +260,4 @@ cd docker
 ./build.sh
 ```
 
-To run in Windows, copy the file `SDL2.dll` on the same folder as `apple2sdl.exe`. The latest `SDL2.dll` can be found in the [Runtime binary for Windows 64-bit](https://www.libsdl.org/download-2.0.php).
+To run in Windows, copy the file `SDL2.dll` on the same folder as `izapple2sdl.exe`. The latest `SDL2.dll` can be found in the [Runtime binary for Windows 64-bit](https://www.libsdl.org/download-2.0.php).

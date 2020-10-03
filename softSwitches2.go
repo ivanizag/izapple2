@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 const (
 	ioDataKeyboard uint8 = 0x10

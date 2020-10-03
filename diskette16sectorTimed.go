@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 type diskette16sectorTimed struct {
 	nib     *fileNib

@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 /*
 Language card with 16 extra kb for the Apple ][ and  ][+

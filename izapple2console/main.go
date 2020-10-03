@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	apple2 "github.com/ivanizag/apple2"
+	apple2 "github.com/ivanizag/izapple2"
 )
 
 func main() {

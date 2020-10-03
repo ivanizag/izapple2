@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 /*
 Apple II Memory Expansion Card

@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 type card interface {
 	loadRom(data []uint8)

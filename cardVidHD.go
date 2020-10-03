@@ -1,4 +1,4 @@
-package apple2
+package izapple2
 
 /*
 Simulates just what is needed to make Total Replay use the GS modes if the VidHD card is found

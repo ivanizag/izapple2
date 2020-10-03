@@ -1,10 +1,10 @@
-package apple2
+package izapple2
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/ivanizag/apple2/core6502"
+	"github.com/ivanizag/izapple2/core6502"
 )
 
 // Apple2 represents all the components and state of the emulated machine
