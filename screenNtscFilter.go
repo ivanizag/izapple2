@@ -1,6 +1,7 @@
 package izapple2
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 )
@@ -64,6 +65,10 @@ func filterNTSCColor(in *image.RGBA, mask *image.Alpha) *image.RGBA {
 	height := b.Dy()
 	size := image.Rect(0, 0, width+4, height)
 	out := image.NewRGBA(size)
+
+	if width < 2*hiResWidth {
+		panic(fmt.Sprintf("The image has width %v. We can't apply the NTSC filter.", width))
+	}
 
 	for y := 0; y < height; y++ {
 		// We store the last four bits. We start with 0000

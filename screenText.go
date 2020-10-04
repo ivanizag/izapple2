@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	charWidth   = 7
-	charHeight  = 8
-	textColumns = 40
-	textLines   = 24
+	charWidth     = 7
+	charHeight    = 8
+	text40Columns = 40
+	textLines     = 24
 
 	textPage1Address = uint16(0x0400)
 	textPage2Address = uint16(0x0800)
@@ -70,11 +70,11 @@ func getTextFromMemory(mem *memoryRange, isSecondPage bool) []uint8 {
 	addressEnd := addressStart + textPageSize
 	data := mem.subRange(addressStart, addressEnd)
 
-	text := make([]uint8, textLines*textColumns)
+	text := make([]uint8, textLines*text40Columns)
 	for l := 0; l < textLines; l++ {
-		for c := 0; c < textColumns; c++ {
+		for c := 0; c < text40Columns; c++ {
 			char := data[getTextCharOffset(c, l)]
-			text[textColumns*l+c] = char
+			text[text40Columns*l+c] = char
 		}
 	}
 	return text
@@ -96,11 +96,12 @@ func renderTextMode(a *Apple2, text []uint8, colorMap []uint8, light color.Color
 
 	columns := len(text) / textLines
 	if text == nil {
-		columns = textColumns
+		columns = text40Columns
 	}
 	width := columns * charWidth
 	height := textLines * charHeight
-	size := image.Rect(0, 0, width, height)
+
+	size := image.Rect(0, 0, 2*hiResWidth, hiResHeight)
 	img := image.NewRGBA(size)
 
 	for x := 0; x < width; x++ {
@@ -147,7 +148,12 @@ func renderTextMode(a *Apple2, text []uint8, colorMap []uint8, light color.Color
 				colour = color.Black
 			}
 
-			img.Set(x, y, colour)
+			if columns == text40Columns {
+				img.Set(x*2, y, colour)
+				img.Set(x*2+1, y, colour)
+			} else {
+				img.Set(x, y, colour)
+			}
 		}
 	}
 

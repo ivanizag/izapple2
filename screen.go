@@ -194,17 +194,13 @@ func (a *Apple2) Snapshot() *image.RGBA {
 }
 
 func mixSnapshots(top, bottom *image.RGBA) *image.RGBA {
-	topWidth := top.Bounds().Dx()
 	bottomWidth := bottom.Bounds().Dx()
-	factor := (topWidth - 4) / (bottomWidth - 4)
 
-	// Copy bottom's bottom on top's bottom, applying the factor
+	// Copy bottom's bottom on top's bottom
 	for y := hiResHeightMixed; y < hiResHeight; y++ {
-		for x := 0; x < topWidth; x++ {
+		for x := 0; x < bottomWidth; x++ {
 			c := bottom.At(x, y)
-			for f := 0; f < factor; f++ {
-				top.Set(x*factor+f, y, c)
-			}
+			top.Set(x, y, c)
 		}
 	}
 
