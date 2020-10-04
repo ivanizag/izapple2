@@ -25,3 +25,6 @@ cd /tmp/izapple2/izapple2sdl
 env CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows CGO_LDFLAGS="-L/usr/x86_64-w64-mingw32/lib -lSDL2" CGO_FLAGS="-I/usr/x86_64-w64-mingw32/include -D_REENTRANT" go build -o izapple2sdl.exe .
 chown --reference /build izapple2sdl.exe
 cp izapple2sdl.exe /build
+
+# Copy SDL2 Runtime
+cp /sdl2runtime/* /build
