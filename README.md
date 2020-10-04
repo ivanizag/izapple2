@@ -86,10 +86,10 @@ casa@servidor:~$ ./izapple2sdl
 
 ### Play games
 
-Download a DSK or WOZ file or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source) with the `-disk` parameter:
+Download a DSK or WOZ file or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source):
 
 ``` terminal
-casa@servidor:~$ ./izapple2sdl -disk "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
+casa@servidor:~$ ./izapple2sdl "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
 ```
 
 ![Karateka](doc/karateka.png)
@@ -97,10 +97,10 @@ casa@servidor:~$ ./izapple2sdl -disk "https://www.apple.asimov.net/images/games/
 ### Play the Total Replay collection
 
 Download the excellent [Total Replay](https://archive.org/details/TotalReplay) compilation by
-[a2-4am](https://github.com/a2-4am/4cade). Run it with the `-hd` parameter:
+[a2-4am](https://github.com/a2-4am/4cade):
 
 ``` terminal
-casa@servidor:~$ ./izapple2sdl -hd "Total Replay v3.0.2mg"
+casa@servidor:~$ ./izapple2sdl Total\ Replay\ v4.0-alpha.3.hdv
 ```
 
 Displays super hi-res box art as seen with the VidHD card.

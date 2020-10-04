@@ -27,7 +27,7 @@ func main() {
 // SDLRun starts the Apple2 emulator on SDL
 func SDLRun(a *izapple2.Apple2) {
 
-	window, renderer, err := sdl.CreateWindowAndRenderer(4*40*7, 4*24*8,
+	window, renderer, err := sdl.CreateWindowAndRenderer(4*40*7+8, 4*24*8,
 		sdl.WINDOW_SHOWN)
 	if err != nil {
 		panic("Failed to create window")
