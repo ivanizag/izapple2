@@ -110,10 +110,8 @@ func SDLRun(a *izapple2.Apple2) {
 				}
 
 				renderer.Clear()
-				w, h := window.GetSize()
-				renderer.Copy(texture, nil, &sdl.Rect{X: 0, Y: 0, W: w, H: h})
+				renderer.Copy(texture, nil, nil)
 				renderer.Present()
-
 				surface.Free()
 				texture.Destroy()
 			}
