@@ -50,6 +50,14 @@ var rgbColorMap = [16]color.Color{
 
 func filterNTSCColor(in *image.RGBA, mask *image.Alpha) *image.RGBA {
 	colorMap := ntscColorMap // or rgbColorMap
+	attenuatedColorMap := make([]color.Color, 16, 16)
+	for i := 0; i < len(colorMap); i++ {
+		r, g, b, _ := colorMap[i].RGBA()
+		attenuatedColorMap[i] = color.RGBA64{
+			uint16(r / 2), uint16(g / 2), uint16(b / 2),
+			65535,
+		}
+	}
 
 	b := in.Bounds()
 	width := b.Dx()
@@ -71,9 +79,14 @@ func filterNTSCColor(in *image.RGBA, mask *image.Alpha) *image.RGBA {
 				v &^= pos
 			}
 
-			cOut := colorMap[v]
+			var cOut color.Color
+			if r != 0 {
+				cOut = colorMap[v]
+			} else {
+				cOut = attenuatedColorMap[v]
+			}
 			if mask != nil {
-				// RGM mode7
+				// RGB mode7
 				_, _, _, a := mask.At(x, y).RGBA()
 				if a > 0 {
 					cOut = cIn
