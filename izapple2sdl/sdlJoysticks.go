@@ -71,12 +71,12 @@ func (j *sdlJoysticks) putAxisEvent(e *sdl.JoyAxisEvent) {
 }
 
 func (j *sdlJoysticks) putButtonEvent(e *sdl.JoyButtonEvent) {
-	if e.Which >= 2 || e.Button >= 2 {
-		// Process only the first two buttons of the first two joysticks
+	if e.Which >= 2 {
+		// Process only the buttons of the first two joysticks
 		return
 	}
 
-	j.button[uint8(e.Which)*2+e.Button] = (e.State != 0)
+	j.button[uint8(e.Which)*2+(e.Button%2)] = (e.State != 0)
 }
 
 func mouseToJoyFull(x int32, w int32) uint8 {
