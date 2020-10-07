@@ -173,10 +173,10 @@ line of groups of magnets, each group on the same configuration. We call phase e
 magnets. The cog is attracted to the enabled magnets, and can stay aligned to a magnet or
 between two.
 
-Phases (magents):                       3   2   1   0   3   2   1   0   3   2   1   0
-Cog direction (step withn a group):   7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0
+Phases (magnets):                       3   2   1   0   3   2   1   0   3   2   1   0
+Cog direction (step within a group):   7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0
 
-We will consider that the cog would go to the prefferred postion if there is one. Independenly
+We will consider that the cog would go to the prefferred position if there is one. Independently
 of the previous position. The previous position is only used to know if it goes up or down
 a full group.
 */
@@ -231,7 +231,7 @@ func moveStep(phases uint8, prevStep int) int {
 			nextStep = maxStep
 		}
 	} else if delta == 4 {
-		// Don't move if magnets push on the oposite direction
+		// Don't move if magnets push on the opposite direction
 		nextStep = prevStep
 	} else { // delta > 4
 		// Steps down

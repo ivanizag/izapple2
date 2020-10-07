@@ -11,7 +11,7 @@ Note also that language cards for the Apple ][ had ROM on
 board to replace the main board F8 ROM with Autostart. That
 was not used/needed on the Apple ][+. As this emulates the
 Apple ][+, it is not considered. For the Plus it is often
-refered as Language card but it is really a 16 KB Ram card,
+referred as Language card but it is really a 16 KB Ram card,
 
 
 "When RAM is deselected, the ROM on the Language card is selected for

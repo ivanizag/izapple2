@@ -128,7 +128,7 @@ const (
 	CommandShowSpeed
 	// CommandToggleColor toggles between NTSC color TV and Green phospor monitor
 	CommandToggleColor
-	// CommandDumpDebugInfo dumps usefull info
+	// CommandDumpDebugInfo dumps useful info
 	CommandDumpDebugInfo
 	// CommandNextCharGenPage cycles the CharGen page if several
 	CommandNextCharGenPage

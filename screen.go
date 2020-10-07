@@ -58,7 +58,7 @@ func getCurrentVideoMode(a *Apple2) uint16 {
 
 	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
 
-	mode := uint16(0)
+	var mode uint16
 	if isSuperHighResMode {
 		mode = videoSHR
 		isMixMode = false

@@ -7,7 +7,7 @@ import (
 
 const defaultInternal = "<default>"
 
-// MainApple is a device independant main. Video, keyboard and speaker won't be defined
+// MainApple is a device independent main. Video, keyboard and speaker won't be defined
 func MainApple() *Apple2 {
 	romFile := flag.String(
 		"rom",

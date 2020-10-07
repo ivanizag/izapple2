@@ -76,8 +76,9 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	case sdl.K_LEFT:
 		if ctrl {
 			result = 31 // Base64A
+		} else {
+			result = 8
 		}
-		result = 8
 	case sdl.K_RIGHT:
 		result = 21
 

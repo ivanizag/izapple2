@@ -33,7 +33,7 @@ func (t *traceProDOS) inspect() {
 		*/
 		if t.callPending {
 			if t.functionCode == 0x65 {
-				// QUIT when successfull does not return
+				// QUIT when successful does not return
 				fmt.Printf("Ok \n")
 			} else {
 				fmt.Print("<there was a call pending>\n")
