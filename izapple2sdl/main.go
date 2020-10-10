@@ -20,12 +20,11 @@ func main() {
 			defer profile.Start().Stop()
 		}
 
-		SDLRun(a)
+		sdlRun(a)
 	}
 }
 
-// SDLRun starts the Apple2 emulator on SDL
-func SDLRun(a *izapple2.Apple2) {
+func sdlRun(a *izapple2.Apple2) {
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(4*40*7+8, 4*24*8,
 		sdl.WINDOW_SHOWN)
@@ -39,7 +38,6 @@ func SDLRun(a *izapple2.Apple2) {
 	window.SetTitle("iz-" + a.Name)
 
 	kp := newSDLKeyBoard(a)
-	a.SetKeyboardProvider(kp)
 
 	s := newSDLSpeaker()
 	s.start()
@@ -62,7 +60,7 @@ func SDLRun(a *izapple2.Apple2) {
 				kp.putKey(t)
 				j.putKey(t)
 			case *sdl.TextInputEvent:
-				kp.putText(t)
+				kp.putText(t.GetText())
 			case *sdl.JoyAxisEvent:
 				j.putAxisEvent(t)
 			case *sdl.JoyButtonEvent:
