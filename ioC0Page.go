@@ -23,11 +23,6 @@ type ioC0Page struct {
 type softSwitchR func(io *ioC0Page) uint8
 type softSwitchW func(io *ioC0Page, value uint8)
 
-// KeyboardProvider provides a keyboard implementation
-type KeyboardProvider interface {
-	GetKey(strobe bool) (key uint8, ok bool)
-}
-
 // SpeakerProvider provides a speaker implementation
 type SpeakerProvider interface {
 	// Click receives a speaker click. The argument is the CPU cycle when it is generated
