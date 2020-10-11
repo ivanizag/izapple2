@@ -9,18 +9,17 @@ import (
 )
 
 type keyboard struct {
-	a          *izapple2.Apple2
+	s          *state
 	keyChannel *izapple2.KeyboardChannel
 
 	controlLeft  bool
 	controlRight bool
-	showPages    bool
 }
 
-func newKeyboard(a *izapple2.Apple2) *keyboard {
+func newKeyboard(s *state) *keyboard {
 	var k keyboard
-	k.a = a
-	k.keyChannel = izapple2.NewKeyboardChannel(a)
+	k.s = s
+	k.keyChannel = izapple2.NewKeyboardChannel(s.a)
 	return &k
 }
 
@@ -95,34 +94,34 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 	// Control of the emulator
 	case fyne.KeyF1:
 		if ctrl {
-			k.a.SendCommand(izapple2.CommandReset)
+			k.s.a.SendCommand(izapple2.CommandReset)
 		}
 	case fyne.KeyF5:
 		if ctrl {
-			k.a.SendCommand(izapple2.CommandShowSpeed)
+			k.s.a.SendCommand(izapple2.CommandShowSpeed)
 		} else {
-			k.a.SendCommand(izapple2.CommandToggleSpeed)
+			k.s.a.SendCommand(izapple2.CommandToggleSpeed)
 		}
 	case fyne.KeyF6:
-		k.a.SendCommand(izapple2.CommandToggleColor)
+		k.s.a.SendCommand(izapple2.CommandToggleColor)
 	case fyne.KeyF7:
-		k.showPages = !k.showPages
+		k.s.showPages = !k.s.showPages
 	case fyne.KeyF9:
-		k.a.SendCommand(izapple2.CommandDumpDebugInfo)
+		k.s.a.SendCommand(izapple2.CommandDumpDebugInfo)
 	case fyne.KeyF10:
-		k.a.SendCommand(izapple2.CommandNextCharGenPage)
+		k.s.a.SendCommand(izapple2.CommandNextCharGenPage)
 	case fyne.KeyF11:
-		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
+		k.s.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case fyne.KeyF12:
 	case fyne.KeyPrintScreen:
-		err := izapple2.SaveSnapshot(k.a, "snapshot.png")
+		err := izapple2.SaveSnapshot(k.s.a, "snapshot.png")
 		if err != nil {
 			fmt.Printf("Error saving snapshoot: %v.\n.", err)
 		} else {
 			fmt.Println("Saving snapshot")
 		}
 	case fyne.KeyPause:
-		k.a.SendCommand(izapple2.CommandPauseUnpauseEmulator)
+		k.s.a.SendCommand(izapple2.CommandPauseUnpauseEmulator)
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_

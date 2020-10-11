@@ -1,7 +1,6 @@
 package izapple2
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -225,7 +224,6 @@ func SaveSnapshot(a *Apple2, filename string) error {
 func squarishPixelsFilter(in *image.RGBA) *image.RGBA {
 	b := in.Bounds()
 	factor := 1200 / b.Dx()
-	fmt.Println(factor)
 	size := image.Rect(0, 0, factor*b.Dx(), b.Dy())
 	out := image.NewRGBA(size)
 	for x := b.Min.X; x < b.Max.X; x++ {
