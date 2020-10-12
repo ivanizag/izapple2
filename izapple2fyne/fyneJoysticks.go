@@ -28,13 +28,15 @@ type joystickInfo struct {
 }
 
 type joysticks struct {
+	s    *state
 	info [2]*joystickInfo
 }
 
 const unplugged = uint8(255) // Max resistance when unplugged
 
-func newJoysticks() *joysticks {
+func newJoysticks(s *state) *joysticks {
 	var j joysticks
+	j.s = s
 	return &j
 }
 
@@ -48,6 +50,9 @@ func (j *joysticks) start() {
 			case <-pool.C:
 				j.info[0] = j.queryJoystick(glfw.Joystick1)
 				j.info[1] = j.queryJoystick(glfw.Joystick2)
+
+				j.s.devices.joystick.updateJoy1(j.info[0])
+				j.s.devices.joystick.updateJoy2(j.info[1])
 			}
 		}
 	}()

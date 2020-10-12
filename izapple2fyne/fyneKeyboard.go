@@ -113,19 +113,16 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 	case fyne.KeyF11:
 		k.s.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case fyne.KeyF12:
-	case fyne.KeyPrintScreen:
+		//case fyne.KeyPrintScreen:
 		err := izapple2.SaveSnapshot(k.s.a, "snapshot.png")
 		if err != nil {
 			fmt.Printf("Error saving snapshoot: %v.\n.", err)
 		} else {
 			fmt.Println("Saving snapshot")
 		}
-	case fyne.KeyPause:
-		k.s.a.SendCommand(izapple2.CommandPauseUnpauseEmulator)
+		//case fyne.KeyPause:
+		//	k.s.a.SendCommand(izapple2.CommandPauseUnpauseEmulator)
 	}
-
-	// Missing values 91 to 95. Usually control for [\]^_
-	// On the Base64A it's control for \]./
 
 	if result != 0 {
 		k.keyChannel.PutChar(result)
