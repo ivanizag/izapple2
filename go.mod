@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	fyne.io/fyne v1.3.3
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200625191551-73d3c3675aa3
 	github.com/pkg/profile v1.4.0
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
