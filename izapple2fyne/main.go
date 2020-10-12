@@ -23,6 +23,8 @@ type state struct {
 	app fyne.App
 	win fyne.Window
 
+	devices *panelDevices
+
 	showPages bool
 }
 
@@ -42,11 +44,66 @@ func main() {
 
 func fyneRun(s *state) {
 	s.app = app.New()
-	// app.SetIcon(xxx)
+	s.app.SetIcon(resourceApple2Png)
 	s.win = s.app.NewWindow("iz-" + s.a.Name)
-	// window.SetIcon(xxx)
+	s.win.SetIcon(resourceApple2Png)
 
-	bottom := widget.NewToolbar(
+	s.devices = newPanelDevices(s)
+	toolbar := buildToolbar(s)
+	screen := canvas.NewImageFromImage(nil)
+	//screen.SetMinSize(fyne.NewSize(380, 192))
+	screen.SetMinSize(fyne.NewSize(280*2, 192*2))
+
+	container := fyne.NewContainerWithLayout(
+		layout.NewBorderLayout(nil, toolbar, nil, s.devices.w),
+		screen, toolbar, s.devices.w,
+	)
+	s.win.SetContent(container)
+	s.win.SetPadded(false)
+
+	registerKeyboardEvents(s)
+	j := newJoysticks(s)
+	j.start()
+	s.a.SetJoysticksProvider(j)
+
+	go s.a.Run()
+
+	ticker := time.NewTicker(60 * time.Millisecond)
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				if !s.a.IsPaused() {
+					var img *image.RGBA
+					if s.showPages {
+						img = s.a.SnapshotParts()
+						s.win.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, s.a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
+					} else {
+						img = s.a.Snapshot()
+					}
+					screen.Image = img
+					canvas.Refresh(screen)
+				}
+			}
+		}
+	}()
+
+	s.win.SetOnClosed(func() {
+		done <- true
+	})
+
+	s.win.Show()
+
+	fmt.Printf("%v\n", s.win.Canvas().Scale())
+
+	s.app.Run()
+}
+
+func buildToolbar(s *state) *widget.Toolbar {
+	return widget.NewToolbar(
 		widget.NewToolbarAction(
 			theme.NewThemedResource(resourceRestartSvg, nil), func() {
 				s.a.SendCommand(izapple2.CommandReset)
@@ -88,54 +145,16 @@ func fyneRun(s *state) {
 		widget.NewToolbarAction(theme.ViewFullScreenIcon(), func() {
 			s.win.SetFullScreen(!s.win.FullScreen())
 		}),
-	)
-
-	screen := canvas.NewImageFromImage(nil)
-	screen.SetMinSize(fyne.NewSize(380, 192))
-	container := fyne.NewContainerWithLayout(
-		layout.NewBorderLayout(nil, bottom, nil, nil),
-		screen, bottom,
-	)
-	s.win.SetContent(container)
-	s.win.SetPadded(false)
-
-	registerKeyboardEvents(s)
-	j := newJoysticks()
-	j.start()
-	s.a.SetJoysticksProvider(j)
-
-	go s.a.Run()
-
-	ticker := time.NewTicker(60 * time.Millisecond)
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case <-ticker.C:
-				if !s.a.IsPaused() {
-					var img *image.RGBA
-					if s.showPages {
-						img = s.a.SnapshotParts()
-						s.win.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, s.a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
-					} else {
-						img = s.a.Snapshot()
-					}
-					screen.Image = img
-					canvas.Refresh(screen)
+		widget.NewToolbarAction(
+			theme.NewThemedResource(resourcePageLayoutSidebarRightSvg, nil), func() {
+				w := s.devices.w
+				if w.Visible() {
+					w.Hide()
+				} else {
+					w.Show()
 				}
-			}
-		}
-	}()
-
-	s.win.SetOnClosed(func() {
-		done <- true
-	})
-
-	s.win.Show()
-	s.app.Run()
-
+			}),
+	)
 }
 
 func registerKeyboardEvents(s *state) {

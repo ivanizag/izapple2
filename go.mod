@@ -11,6 +11,5 @@ require (
 	github.com/veandco/go-sdl2 v0.4.0
 )
 
-replace fyne.io/fyne => github.com/ivanizag/fyne v1.3.4-0.20201010160818-ed5402384cff
-
+//replace fyne.io/fyne => github.com/ivanizag/fyne v1.3.4-0.20201010160818-ed5402384cff
 // replace fyne.io/fyne => ../../fyne/fyne
