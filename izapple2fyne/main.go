@@ -19,7 +19,9 @@ import (
 )
 
 type state struct {
-	a *izapple2.Apple2
+	a   *izapple2.Apple2
+	app fyne.App
+	win fyne.Window
 
 	showPages bool
 }
@@ -39,9 +41,9 @@ func main() {
 }
 
 func fyneRun(s *state) {
-	app := app.New()
+	s.app = app.New()
 	// app.SetIcon(xxx)
-	window := app.NewWindow("iz-" + s.a.Name)
+	s.win = s.app.NewWindow("iz-" + s.a.Name)
 	// window.SetIcon(xxx)
 
 	bottom := widget.NewToolbar(
@@ -66,23 +68,25 @@ func fyneRun(s *state) {
 			theme.NewThemedResource(resourceLayersTripleSvg, nil), func() {
 				s.showPages = !s.showPages
 				if !s.showPages {
-					window.SetTitle("iz-" + s.a.Name)
+					s.win.SetTitle("iz-" + s.a.Name)
 				}
 			}),
 		widget.NewToolbarAction(
 			theme.NewThemedResource(resourceCameraSvg, nil), func() {
 				err := izapple2.SaveSnapshot(s.a, "snapshot.png")
 				if err != nil {
-					app.SendNotification(fyne.NewNotification(window.Title(),
+					s.app.SendNotification(fyne.NewNotification(
+						s.win.Title(),
 						fmt.Sprintf("Error saving snapshoot: %v.\n.", err)))
 				} else {
-					app.SendNotification(fyne.NewNotification(window.Title(),
+					s.app.SendNotification(fyne.NewNotification(
+						s.win.Title(),
 						"Saving snapshot on 'snapshot.png'"))
 				}
 			}),
 		widget.NewToolbarSpacer(),
 		widget.NewToolbarAction(theme.ViewFullScreenIcon(), func() {
-			window.SetFullScreen(!window.FullScreen())
+			s.win.SetFullScreen(!s.win.FullScreen())
 		}),
 	)
 
@@ -92,10 +96,13 @@ func fyneRun(s *state) {
 		layout.NewBorderLayout(nil, bottom, nil, nil),
 		screen, bottom,
 	)
-	window.SetContent(container)
-	window.SetPadded(false)
+	s.win.SetContent(container)
+	s.win.SetPadded(false)
 
-	registerKeyboardEvents(s, window.Canvas())
+	registerKeyboardEvents(s)
+	j := newJoysticks()
+	j.start()
+	s.a.SetJoysticksProvider(j)
 
 	go s.a.Run()
 
@@ -111,7 +118,7 @@ func fyneRun(s *state) {
 					var img *image.RGBA
 					if s.showPages {
 						img = s.a.SnapshotParts()
-						window.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, s.a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
+						s.win.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, s.a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
 					} else {
 						img = s.a.Snapshot()
 					}
@@ -122,19 +129,20 @@ func fyneRun(s *state) {
 		}
 	}()
 
-	window.SetOnClosed(func() {
+	s.win.SetOnClosed(func() {
 		done <- true
 	})
 
-	window.Show()
-	app.Run()
+	s.win.Show()
+	s.app.Run()
 
 }
 
-func registerKeyboardEvents(s *state, canvas fyne.Canvas) {
+func registerKeyboardEvents(s *state) {
 	kp := newKeyboard(s)
+	canvas := s.win.Canvas()
 
-	// Koyboard events
+	// Events
 	canvas.SetOnTypedKey(func(ke *fyne.KeyEvent) {
 		//fmt.Printf("Event: %v\n", ke.Name)
 		kp.putKey(ke)
