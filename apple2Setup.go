@@ -55,9 +55,14 @@ func setApple2eEnhanced(a *Apple2) {
 	addApple2ESoftSwitches(a.io)
 }
 
-func (a *Apple2) insertCard(c card, slot int) {
+func (a *Apple2) insertCard(c Card, slot int) {
 	c.assign(a, slot)
 	a.cards[slot] = c
+}
+
+// GetCards returns the array of inserted cards
+func (a *Apple2) GetCards() [8]Card {
+	return a.cards
 }
 
 const (
@@ -113,24 +118,20 @@ func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage, diskBImage st
 
 // AddSmartPortDisk adds a smart port card and image
 func (a *Apple2) AddSmartPortDisk(slot int, hdImage string, trace bool) error {
-	var c cardHardDisk
-	c.setTrace(trace)
-	c.loadRom(buildHardDiskRom(slot))
-	a.insertCard(&c, slot)
-
-	hd, err := openBlockDisk(hdImage)
+	c := NewCardHardDisk()
+	c.trace = trace
+	err := c.LoadImage(hdImage)
 	if err != nil {
 		return err
 	}
-	c.addDisk(hd)
+	a.insertCard(c, slot)
 	return nil
 }
 
 // AddVidHD adds a card with the signature of VidHD
 func (a *Apple2) AddVidHD(slot int) {
-	var c cardVidHD
-	c.loadRom(buildVidHDRom())
-	a.insertCard(&c, slot)
+	c := NewCardVidHD()
+	a.insertCard(c, slot)
 }
 
 // AddFastChip adds a card with the signature of VidHD
@@ -164,13 +165,8 @@ func (a *Apple2) AddMemoryExpansionCard(slot int, romFile string) error {
 
 // AddThunderClockPlusCard inserts a ThunderClock Plus clock card
 func (a *Apple2) AddThunderClockPlusCard(slot int, romFile string) error {
-	var c cardThunderClockPlus
-	data, err := loadResource(romFile)
-	if err != nil {
-		return err
-	}
-	c.loadRom(data)
-	a.insertCard(&c, slot)
+	c := NewCardThunderClockPlus()
+	a.insertCard(c, slot)
 	return nil
 }
 

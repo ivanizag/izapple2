@@ -1,6 +1,9 @@
 package izapple2
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 /*
 To implement a hard drive we just have to support boot from #PR7 and the PRODOS expextations.
@@ -14,11 +17,193 @@ See:
 
 */
 
-type cardHardDisk struct {
+// CardHardDisk represents a SmartPort card
+type CardHardDisk struct {
 	cardBase
+
+	filename string
+	trace    bool
+
+	config    CardHardDiskConfig
 	disk      *blockDisk
 	mliParams uint16
-	trace     bool
+}
+
+// CardHardDiskConfig represents a SmartPort card configuration
+type CardHardDiskConfig struct {
+	Filename string
+	Trace    bool
+}
+
+// NewCardHardDisk creates a new SmartPort card
+func NewCardHardDisk() *CardHardDisk {
+	var c CardHardDisk
+	c.name = "Smartport Card"
+	return &c
+}
+
+// GetInfo return smartport info
+func (c *CardHardDisk) GetInfo() map[string]string {
+	info := make(map[string]string)
+	info["filename"] = c.filename
+	info["trace"] = strconv.FormatBool(c.trace)
+	return info
+}
+
+// LoadImage loads a disk image
+func (c *CardHardDisk) LoadImage(filename string) error {
+	hd, err := openBlockDisk(filename)
+	if err != nil {
+		return err
+	}
+	c.disk = hd
+	c.filename = filename
+	return nil
+}
+
+const (
+	proDosDeviceCommandStatus = 0
+	proDosDeviceCommandRead   = 1
+	proDosDeviceCommandWrite  = 2
+	proDosDeviceCommandFormat = 3
+)
+
+const (
+	proDosDeviceNoError             = uint8(0)
+	proDosDeviceErrorIO             = uint8(0x27)
+	proDosDeviceErrorNoDevice       = uint8(0x28)
+	proDosDeviceErrorWriteProtected = uint8(0x2b)
+)
+
+func (c *CardHardDisk) assign(a *Apple2, slot int) {
+	c.loadRom(buildHardDiskRom(slot))
+
+	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
+		// Prodos entry point
+		command := a.mmu.Peek(0x42)
+		unit := a.mmu.Peek(0x43)
+		address := uint16(a.mmu.Peek(0x44)) + uint16(a.mmu.Peek(0x45))<<8
+		block := uint16(a.mmu.Peek(0x46)) + uint16(a.mmu.Peek(0x47))<<8
+		if c.config.Trace {
+			fmt.Printf("[CardHardDisk] Prodos command %v on slot %v, unit $%x, block %v to $%x.\n", command, slot, unit, block, address)
+		}
+
+		switch command {
+		case proDosDeviceCommandStatus:
+			return c.status(unit, address)
+		case proDosDeviceCommandRead:
+			return c.readBlock(block, address)
+		case proDosDeviceCommandWrite:
+			return c.writeBlock(block, address)
+		default:
+			// Prodos device command not supported
+			return proDosDeviceErrorIO
+		}
+	}, "HDCOMMAND")
+	c.addCardSoftSwitchR(1, func(*ioC0Page) uint8 {
+		// Blocks available, low byte
+		return uint8(c.disk.blocks)
+	}, "HDBLOCKSLO")
+	c.addCardSoftSwitchR(2, func(*ioC0Page) uint8 {
+		// Blocks available, high byte
+		return uint8(c.disk.blocks >> 8)
+	}, "HDBLOCKHI")
+
+	c.addCardSoftSwitchR(3, func(*ioC0Page) uint8 {
+		// Smart port entry point
+		command := c.a.mmu.Peek(c.mliParams + 1)
+		paramsAddress := uint16(c.a.mmu.Peek(c.mliParams+2)) + uint16(c.a.mmu.Peek(c.mliParams+3))<<8
+		unit := a.mmu.Peek(paramsAddress + 1)
+		address := uint16(a.mmu.Peek(paramsAddress+2)) + uint16(a.mmu.Peek(paramsAddress+3))<<8
+		block := uint16(a.mmu.Peek(paramsAddress+4)) + uint16(a.mmu.Peek(paramsAddress+5))<<8
+		if c.config.Trace {
+			fmt.Printf("[CardHardDisk] Smart port command %v on slot %v, unit $%x, block %v to $%x.\n", command, slot, unit, block, address)
+		}
+
+		switch command {
+		case proDosDeviceCommandStatus:
+			return c.status(unit, address)
+		case proDosDeviceCommandRead:
+			return c.readBlock(block, address)
+		case proDosDeviceCommandWrite:
+			return c.writeBlock(block, address)
+		default:
+			// Smartport device command not supported
+			return proDosDeviceErrorIO
+		}
+	}, "HDSMARTPORT")
+	c.addCardSoftSwitchW(4, func(_ *ioC0Page, value uint8) {
+		c.mliParams = (c.mliParams & 0xff00) + uint16(value)
+		if c.config.Trace {
+			fmt.Printf("[CardHardDisk] Smart port LO: 0x%x.\n", c.mliParams)
+		}
+	}, "HDSMARTPORTLO")
+	c.addCardSoftSwitchW(5, func(_ *ioC0Page, value uint8) {
+		c.mliParams = (c.mliParams & 0x00ff) + (uint16(value) << 8)
+		if c.config.Trace {
+			fmt.Printf("[CardHardDisk] Smart port HI: 0x%x.\n", c.mliParams)
+		}
+	}, "HDSMARTPORTHI")
+
+	c.cardBase.assign(a, slot)
+}
+
+func (c *CardHardDisk) readBlock(block uint16, dest uint16) uint8 {
+	if c.config.Trace {
+		fmt.Printf("[CardHardDisk] Read block %v into $%x.\n", block, dest)
+	}
+
+	data, err := c.disk.read(uint32(block))
+	if err != nil {
+		return proDosDeviceErrorIO
+	}
+	// Byte by byte transfer to memory using the full Poke code path
+	for i := uint16(0); i < uint16(proDosBlockSize); i++ {
+		c.a.mmu.Poke(dest+i, data[i])
+	}
+
+	return proDosDeviceNoError
+}
+
+func (c *CardHardDisk) writeBlock(block uint16, source uint16) uint8 {
+	if c.config.Trace {
+		fmt.Printf("[CardHardDisk] Write block %v from $%x.\n", block, source)
+	}
+
+	if c.disk.readOnly {
+		return proDosDeviceErrorWriteProtected
+	}
+
+	// Byte by byte transfer from memory using the full Peek code path
+	buf := make([]uint8, proDosBlockSize)
+	for i := uint16(0); i < uint16(proDosBlockSize); i++ {
+		buf[i] = c.a.mmu.Peek(source + i)
+	}
+
+	err := c.disk.write(uint32(block), buf)
+	if err != nil {
+		return proDosDeviceErrorIO
+	}
+
+	return proDosDeviceNoError
+}
+
+func (c *CardHardDisk) status(unit uint8, dest uint16) uint8 {
+	if c.config.Trace {
+		fmt.Printf("[CardHardDisk] Status for %v into $%x.\n", unit, dest)
+	}
+
+	// See http://www.1000bit.it/support/manuali/apple/technotes/smpt/tn.smpt.2.html
+	c.a.mmu.Poke(dest+0, 0x02) // One device
+	c.a.mmu.Poke(dest+1, 0xff) // No interrupt
+	c.a.mmu.Poke(dest+2, 0x00)
+	c.a.mmu.Poke(dest+3, 0x00) // Unknown manufacturer
+	c.a.mmu.Poke(dest+4, 0x01)
+	c.a.mmu.Poke(dest+5, 0x00) // Versión 1.0 final
+	c.a.mmu.Poke(dest+6, 0x00)
+	c.a.mmu.Poke(dest+7, 0x00) // Reserved
+
+	return proDosDeviceNoError
 }
 
 func buildHardDiskRom(slot int) []uint8 {
@@ -97,155 +282,4 @@ func buildHardDiskRom(slot int) []uint8 {
 	data[0xff] = 0x40 // Driver entry point
 
 	return data
-}
-
-const (
-	proDosDeviceCommandStatus = 0
-	proDosDeviceCommandRead   = 1
-	proDosDeviceCommandWrite  = 2
-	proDosDeviceCommandFormat = 3
-)
-
-const (
-	proDosDeviceNoError             = uint8(0)
-	proDosDeviceErrorIO             = uint8(0x27)
-	proDosDeviceErrorNoDevice       = uint8(0x28)
-	proDosDeviceErrorWriteProtected = uint8(0x2b)
-)
-
-func (c *cardHardDisk) assign(a *Apple2, slot int) {
-	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
-		// Prodos entry point
-		command := a.mmu.Peek(0x42)
-		unit := a.mmu.Peek(0x43)
-		address := uint16(a.mmu.Peek(0x44)) + uint16(a.mmu.Peek(0x45))<<8
-		block := uint16(a.mmu.Peek(0x46)) + uint16(a.mmu.Peek(0x47))<<8
-		if c.trace {
-			fmt.Printf("[CardHardDisk] Prodos command %v on slot %v, unit $%x, block %v to $%x.\n", command, slot, unit, block, address)
-		}
-
-		switch command {
-		case proDosDeviceCommandStatus:
-			return c.status(unit, address)
-		case proDosDeviceCommandRead:
-			return c.readBlock(block, address)
-		case proDosDeviceCommandWrite:
-			return c.writeBlock(block, address)
-		default:
-			// Prodos device command not supported
-			return proDosDeviceErrorIO
-		}
-	}, "HDCOMMAND")
-	c.addCardSoftSwitchR(1, func(*ioC0Page) uint8 {
-		// Blocks available, low byte
-		return uint8(c.disk.blocks)
-	}, "HDBLOCKSLO")
-	c.addCardSoftSwitchR(2, func(*ioC0Page) uint8 {
-		// Blocks available, high byte
-		return uint8(c.disk.blocks >> 8)
-	}, "HDBLOCKHI")
-
-	c.addCardSoftSwitchR(3, func(*ioC0Page) uint8 {
-		// Smart port entry point
-		command := c.a.mmu.Peek(c.mliParams + 1)
-		paramsAddress := uint16(c.a.mmu.Peek(c.mliParams+2)) + uint16(c.a.mmu.Peek(c.mliParams+3))<<8
-		unit := a.mmu.Peek(paramsAddress + 1)
-		address := uint16(a.mmu.Peek(paramsAddress+2)) + uint16(a.mmu.Peek(paramsAddress+3))<<8
-		block := uint16(a.mmu.Peek(paramsAddress+4)) + uint16(a.mmu.Peek(paramsAddress+5))<<8
-		if c.trace {
-			fmt.Printf("[CardHardDisk] Smart port command %v on slot %v, unit $%x, block %v to $%x.\n", command, slot, unit, block, address)
-		}
-
-		switch command {
-		case proDosDeviceCommandStatus:
-			return c.status(unit, address)
-		case proDosDeviceCommandRead:
-			return c.readBlock(block, address)
-		case proDosDeviceCommandWrite:
-			return c.writeBlock(block, address)
-		default:
-			// Smartport device command not supported
-			return proDosDeviceErrorIO
-		}
-	}, "HDSMARTPORT")
-	c.addCardSoftSwitchW(4, func(_ *ioC0Page, value uint8) {
-		c.mliParams = (c.mliParams & 0xff00) + uint16(value)
-		if c.trace {
-			fmt.Printf("[CardHardDisk] Smart port LO: 0x%x.\n", c.mliParams)
-		}
-	}, "HDSMARTPORTLO")
-	c.addCardSoftSwitchW(5, func(_ *ioC0Page, value uint8) {
-		c.mliParams = (c.mliParams & 0x00ff) + (uint16(value) << 8)
-		if c.trace {
-			fmt.Printf("[CardHardDisk] Smart port HI: 0x%x.\n", c.mliParams)
-		}
-	}, "HDSMARTPORTHI")
-
-	c.cardBase.assign(a, slot)
-}
-
-func (c *cardHardDisk) readBlock(block uint16, dest uint16) uint8 {
-	if c.trace {
-		fmt.Printf("[CardHardDisk] Read block %v into $%x.\n", block, dest)
-	}
-
-	data, err := c.disk.read(uint32(block))
-	if err != nil {
-		return proDosDeviceErrorIO
-	}
-	// Byte by byte transfer to memory using the full Poke code path
-	for i := uint16(0); i < uint16(proDosBlockSize); i++ {
-		c.a.mmu.Poke(dest+i, data[i])
-	}
-
-	return proDosDeviceNoError
-}
-
-func (c *cardHardDisk) writeBlock(block uint16, source uint16) uint8 {
-	if c.trace {
-		fmt.Printf("[CardHardDisk] Write block %v from $%x.\n", block, source)
-	}
-
-	if c.disk.readOnly {
-		return proDosDeviceErrorWriteProtected
-	}
-
-	// Byte by byte transfer from memory using the full Peek code path
-	buf := make([]uint8, proDosBlockSize)
-	for i := uint16(0); i < uint16(proDosBlockSize); i++ {
-		buf[i] = c.a.mmu.Peek(source + i)
-	}
-
-	err := c.disk.write(uint32(block), buf)
-	if err != nil {
-		return proDosDeviceErrorIO
-	}
-
-	return proDosDeviceNoError
-}
-
-func (c *cardHardDisk) status(unit uint8, dest uint16) uint8 {
-	if c.trace {
-		fmt.Printf("[CardHardDisk] Status for %v into $%x.\n", unit, dest)
-	}
-
-	// See http://www.1000bit.it/support/manuali/apple/technotes/smpt/tn.smpt.2.html
-	c.a.mmu.Poke(dest+0, 0x02) // One device
-	c.a.mmu.Poke(dest+1, 0xff) // No interrupt
-	c.a.mmu.Poke(dest+2, 0x00)
-	c.a.mmu.Poke(dest+3, 0x00) // Unknown manufacturer
-	c.a.mmu.Poke(dest+4, 0x01)
-	c.a.mmu.Poke(dest+5, 0x00) // Versión 1.0 final
-	c.a.mmu.Poke(dest+6, 0x00)
-	c.a.mmu.Poke(dest+7, 0x00) // Reserved
-
-	return proDosDeviceNoError
-}
-
-func (c *cardHardDisk) addDisk(disk *blockDisk) {
-	c.disk = disk
-}
-
-func (c *cardHardDisk) setTrace(trace bool) {
-	c.trace = trace
 }

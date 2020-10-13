@@ -18,7 +18,6 @@ func newPanelJoystick() *panelJoystick {
 
 	pj.labelJoy1 = widget.NewLabel("")
 	pj.labelJoy2 = widget.NewLabel("")
-	widget.NewForm()
 	pj.w = widget.NewGroup(
 		"Joysticks",
 		widget.NewForm(
