@@ -1,12 +1,17 @@
 package izapple2
 
-type card interface {
+// Card represents an Apple II card to be inserted in a slot
+type Card interface {
 	loadRom(data []uint8)
 	assign(a *Apple2, slot int)
+
+	GetName() string
+	GetInfo() map[string]string
 }
 
 type cardBase struct {
 	a        *Apple2
+	name     string
 	romCsxx  *memoryRangeROM
 	romC8xx  *memoryRangeROM
 	romCxxx  *memoryRangeROM
@@ -15,6 +20,14 @@ type cardBase struct {
 	_ssw     [16]softSwitchW
 	_ssrName [16]string
 	_sswName [16]string
+}
+
+func (c *cardBase) GetName() string {
+	return c.name
+}
+
+func (c *cardBase) GetInfo() map[string]string {
+	return nil
 }
 
 func (c *cardBase) loadRom(data []uint8) {
@@ -27,7 +40,7 @@ func (c *cardBase) loadRom(data []uint8) {
 	} else if len(data) == 0x800 {
 		// The file has C800 to C8FF
 		// The 256 bytes in Cx00 are copied from the first page in C800
-		c.romCsxx = newMemoryRangeROM(0, data, "Slor ROM")
+		c.romCsxx = newMemoryRangeROM(0, data, "Slot ROM")
 		c.romC8xx = newMemoryRangeROM(0xc800, data, "Slot C8 ROM")
 	} else if len(data) == 0x1000 {
 		// The file covers the full Cxxx range. Only showing the page

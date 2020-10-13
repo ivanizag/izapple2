@@ -14,7 +14,7 @@ type Apple2 struct {
 	mmu                 *memoryManager
 	io                  *ioC0Page
 	cg                  *CharacterGenerator
-	cards               [8]card
+	cards               [8]Card
 	isApple2e           bool
 	commandChannel      chan int
 	cycleDurationNs     float64 // Current speed. Inverse of the cpu clock in Ghz

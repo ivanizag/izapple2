@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"runtime"
 	"time"
 
@@ -109,6 +108,5 @@ func (j *joysticks) ReadPaddle(i int) (uint8, bool) {
 	if info != nil {
 		value = info.paddles[i%2]
 	}
-	fmt.Printf("%v, %v, %v\n", i, j.info[0], value)
 	return value, value != unplugged
 }

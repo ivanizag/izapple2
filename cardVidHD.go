@@ -8,8 +8,16 @@ See:
 	http://www.applelogic.org/files/GSHARDWAREREF.pdf, page 89
 */
 
-type cardVidHD struct {
+// CardVidHD represents a VidHD card
+type CardVidHD struct {
 	cardBase
+}
+
+// NewCardVidHD creates a new VidHD card
+func NewCardVidHD() *CardVidHD {
+	var c CardVidHD
+	c.name = "VidHD Card"
+	return &c
 }
 
 func buildVidHDRom() []uint8 {
@@ -26,7 +34,9 @@ const (
 	ioDataNewVideo uint8 = 0x29
 )
 
-func (c *cardVidHD) assign(a *Apple2, slot int) {
+func (c *CardVidHD) assign(a *Apple2, slot int) {
+	c.loadRom(buildVidHDRom())
+
 	// The softswitches are outside the card reserved ss
 	a.io.addSoftSwitchR(0x22, notImplementedSoftSwitchR, "VIDHD-TBCOLOR")
 	a.io.addSoftSwitchW(0x22, notImplementedSoftSwitchW, "VIDHD-TBCOLOR")

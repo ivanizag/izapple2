@@ -19,12 +19,27 @@ uPD1990AC hookup:
 	bit 7 = data out
 */
 
-type cardThunderClockPlus struct {
-	microPD1990ac
+// CardThunderClockPlus represents a ThunderClock+ card
+type CardThunderClockPlus struct {
 	cardBase
+	microPD1990ac
 }
 
-func (c *cardThunderClockPlus) assign(a *Apple2, slot int) {
+// NewCardThunderClockPlus creates a new CardThunderClockPlus
+func NewCardThunderClockPlus() *CardThunderClockPlus {
+	var c CardThunderClockPlus
+	c.name = "ThunderClock+ Card"
+
+	data, err := loadResource("<internal>/ThunderclockPlusROM.bin")
+	if err != nil {
+		panic(err)
+	}
+	c.loadRom(data)
+
+	return &c
+}
+
+func (c *CardThunderClockPlus) assign(a *Apple2, slot int) {
 	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
 		bit := c.microPD1990ac.out()
 		// Get the next data bit from uPD1990AC on the MSB
