@@ -16,7 +16,8 @@ type CardVidHD struct {
 // NewCardVidHD creates a new VidHD card
 func NewCardVidHD() *CardVidHD {
 	var c CardVidHD
-	c.name = "VidHD Card"
+	c.name = "VidHD Card - limited"
+	c.loadRom(buildVidHDRom())
 	return &c
 }
 
@@ -35,8 +36,6 @@ const (
 )
 
 func (c *CardVidHD) assign(a *Apple2, slot int) {
-	c.loadRom(buildVidHDRom())
-
 	// The softswitches are outside the card reserved ss
 	a.io.addSoftSwitchR(0x22, notImplementedSoftSwitchR, "VIDHD-TBCOLOR")
 	a.io.addSoftSwitchW(0x22, notImplementedSoftSwitchW, "VIDHD-TBCOLOR")

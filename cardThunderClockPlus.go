@@ -29,13 +29,7 @@ type CardThunderClockPlus struct {
 func NewCardThunderClockPlus() *CardThunderClockPlus {
 	var c CardThunderClockPlus
 	c.name = "ThunderClock+ Card"
-
-	data, err := loadResource("<internal>/ThunderclockPlusROM.bin")
-	if err != nil {
-		panic(err)
-	}
-	c.loadRom(data)
-
+	c.loadRomFromResource("<internal>/ThunderclockPlusROM.bin")
 	return &c
 }
 

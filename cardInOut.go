@@ -13,12 +13,20 @@ See:
 
 */
 
-type cardInOut struct {
+// CardInOut is an experimental card to bridge with the host
+type CardInOut struct {
 	cardBase
 	i int
 }
 
-func (c *cardInOut) assign(a *Apple2, slot int) {
+// NewCardInOut creates CardInOut
+func NewCardInOut() *CardInOut {
+	var c CardInOut
+	c.name = "Card to test I/O"
+	return &c
+}
+
+func (c *CardInOut) assign(a *Apple2, slot int) {
 	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
 		c.addCardSoftSwitchR(i, func(*ioC0Page) uint8 {

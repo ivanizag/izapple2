@@ -7,7 +7,8 @@ See:
 	http://www.applelogic.org/files/SATURN128MAN.pdf
 */
 
-type cardSaturn struct {
+// CardSaturn is a Saturn128 card
+type CardSaturn struct {
 	cardBase
 	readState   bool
 	writeState  uint8
@@ -15,11 +16,18 @@ type cardSaturn struct {
 	activeBlock uint8
 }
 
+// NewCardSaturn creates a new CardSaturn
+func NewCardSaturn() *CardSaturn {
+	var c CardSaturn
+	c.name = "Saturn 128KB Ram Card"
+	return &c
+}
+
 const (
 	saturnBlocks = 8
 )
 
-func (c *cardSaturn) assign(a *Apple2, slot int) {
+func (c *CardSaturn) assign(a *Apple2, slot int) {
 	c.readState = false
 	c.writeState = lcWriteEnabled
 	c.altBank = true
@@ -40,7 +48,7 @@ func (c *cardSaturn) assign(a *Apple2, slot int) {
 	c.applyState()
 }
 
-func (c *cardSaturn) ssAction(ss uint8) {
+func (c *CardSaturn) ssAction(ss uint8) {
 	switch ss {
 	case 0:
 		// RAM read, no writes
@@ -107,7 +115,7 @@ func (c *cardSaturn) ssAction(ss uint8) {
 	c.applyState()
 }
 
-func (c *cardSaturn) applyState() {
+func (c *CardSaturn) applyState() {
 	c.a.mmu.setLanguageRAMActiveBlock(c.activeBlock)
 	c.a.mmu.setLanguageRAM(c.readState, c.writeState == lcWriteEnabled, c.altBank)
 }

@@ -51,7 +51,7 @@ func fyneRun(s *state) {
 	s.devices = newPanelDevices(s)
 	toolbar := buildToolbar(s)
 	screen := canvas.NewImageFromImage(nil)
-	//screen.SetMinSize(fyne.NewSize(380, 192))
+	screen.ScaleMode = canvas.ImageScalePixels // Looks worst but loads less.
 	screen.SetMinSize(fyne.NewSize(280*2, 192*2))
 
 	container := fyne.NewContainerWithLayout(
@@ -138,9 +138,11 @@ func buildToolbar(s *state) *widget.Toolbar {
 				} else {
 					s.app.SendNotification(fyne.NewNotification(
 						s.win.Title(),
-						"Saving snapshot on 'snapshot.png'"))
+						"Snapshot saved on 'snapshot.png'"))
 				}
 			}),
+		//widget.NewToolbarSeparator(),
+		//newToolbarDisk("S6D1"),
 		widget.NewToolbarSpacer(),
 		widget.NewToolbarAction(theme.ViewFullScreenIcon(), func() {
 			s.win.SetFullScreen(!s.win.FullScreen())
