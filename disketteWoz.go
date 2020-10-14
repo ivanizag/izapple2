@@ -47,10 +47,9 @@ type disketteWoz struct {
 	cycleOn uint64 // Cycle when the disk was last turned on
 	turning bool
 
-	latch     uint8
-	position  uint32
-	cycle     uint64
-	trackSize uint32
+	latch    uint8
+	position uint32
+	cycle    uint64
 
 	mc3470Buffer uint8 // Four bit buffer to detect weak bits and to add latency
 
@@ -95,7 +94,7 @@ func (d *disketteWoz) read(quarterTrack int, cycle uint64) uint8 {
 		d.mc3470Buffer = (d.mc3470Buffer<<1 + fluxBit) & 0x0f
 		bit := (d.mc3470Buffer >> 1) & 0x1 // Use the previous to last bit to add latency
 		if d.mc3470Buffer == 0 && rand.Intn(100) < 3 {
-			// Four consecutive zeros.It'a a fake bit.
+			// Four consecutive zeros. It'a a fake bit.
 			// Output a random value. 70% zero, 30% one
 			bit = 1
 		}

@@ -8,11 +8,19 @@ import (
 Logger card. It never existed, I use it to trace accesses to the card.
 */
 
-type cardLogger struct {
+// CardLogger is a fake card to log soft switch invocations
+type CardLogger struct {
 	cardBase
 }
 
-func (c *cardLogger) assign(a *Apple2, slot int) {
+// NewCardLogger creates a new VidHD card
+func NewCardLogger() *CardLogger {
+	var c CardLogger
+	c.name = "Softswitch log card"
+	return &c
+}
+
+func (c *CardLogger) assign(a *Apple2, slot int) {
 	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
 		c.addCardSoftSwitchR(i, func(*ioC0Page) uint8 {

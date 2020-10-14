@@ -1,5 +1,7 @@
 package izapple2
 
+import "fmt"
+
 /*
 Apple II Memory Expansion Card
 
@@ -37,13 +39,30 @@ const (
 	memoryExpansionMask     = 0x000fffff // 10 bits, 1MB
 )
 
-type cardMemoryExpansion struct {
+// CardMemoryExpansion is a Memory Expansion card
+type CardMemoryExpansion struct {
+	cardBase
 	ram   [memoryExpansionSize1024]uint8
 	index int
-	cardBase
 }
 
-func (c *cardMemoryExpansion) assign(a *Apple2, slot int) {
+// NewCardMemoryExpansion creates a new VidHD card
+func NewCardMemoryExpansion() *CardMemoryExpansion {
+	var c CardMemoryExpansion
+	c.name = "Memory Expansion Card"
+	c.loadRomFromResource("<internal>/MemoryExpansionCard-341-0344a.bin")
+
+	return &c
+}
+
+// GetInfo returns smartport info
+func (c *CardMemoryExpansion) GetInfo() map[string]string {
+	info := make(map[string]string)
+	info["size"] = fmt.Sprintf("%vKB", len(c.ram)/1024)
+	return info
+}
+
+func (c *CardMemoryExpansion) assign(a *Apple2, slot int) {
 
 	// Read pointer position
 	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {

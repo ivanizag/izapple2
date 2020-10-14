@@ -13,10 +13,6 @@ func MainApple() *Apple2 {
 		"rom",
 		defaultInternal,
 		"main rom file")
-	disk2RomFile := flag.String(
-		"diskRom",
-		"<internal>/DISK2.rom",
-		"rom file for the disk drive controller")
 	disk2Slot := flag.Int(
 		"disk2Slot",
 		6,
@@ -247,11 +243,7 @@ func MainApple() *Apple2 {
 		a.AddSaturnCard(*saturnCardSlot)
 	}
 	if *memoryExpansionCardSlot >= 0 {
-		err := a.AddMemoryExpansionCard(*memoryExpansionCardSlot,
-			"<internal>/MemoryExpansionCard-341-0344a.bin")
-		if err != nil {
-			panic(err)
-		}
+		a.AddMemoryExpansionCard(*memoryExpansionCardSlot)
 	}
 	if *thunderClockCardSlot > 0 {
 		err := a.AddThunderClockPlusCard(*thunderClockCardSlot,
@@ -275,7 +267,7 @@ func MainApple() *Apple2 {
 		a.AddFastChip(*fastChipCardSlot)
 	}
 	if *disk2Slot > 0 {
-		err := a.AddDisk2(*disk2Slot, *disk2RomFile, diskImageFinal, *diskBImage)
+		err := a.AddDisk2(*disk2Slot, diskImageFinal, *diskBImage)
 		if err != nil {
 			panic(err)
 		}
@@ -312,8 +304,8 @@ func MainApple() *Apple2 {
 
 	}
 
-	//a.AddCardInOut(2)
-	//a.AddCardLogger(4)
+	// a.AddCardInOut(2)
+	// a.AddCardLogger(4)
 
 	if *dumpChars {
 		a.cg.Dump()

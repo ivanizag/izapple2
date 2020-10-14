@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"fmt"
+	"strconv"
 )
 
 /*
@@ -18,9 +19,8 @@ http://yesterbits.com/media/pubs/AppleOrchard/articles/disk-ii-part-1-1983-apr.p
 NIB: 35 tracks 6656 bytes, 232960 bytes
 
 */
-const maxHalfTrack = 68
 
-type cardDisk2 struct {
+type CardDisk2 struct {
 	cardBase
 	selected int // q5, Only 0 and 1 supported
 	drive    [2]cardDisk2Drive
@@ -31,6 +31,7 @@ type cardDisk2 struct {
 }
 
 type cardDisk2Drive struct {
+	name       string
 	diskette   diskette
 	power      bool  // q4
 	phases     uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
@@ -38,6 +39,7 @@ type cardDisk2Drive struct {
 }
 
 const (
+	maxHalfTrack           = 68
 	diskBitCycle           = 4   // There is a dataLatch bit transferred every 4 cycles
 	diskLatchReadCycles    = 7   // Loaded data is available for a little more than 7ns
 	diskWriteByteCycle     = 32  // Load data to write every 32 cycles
@@ -46,7 +48,30 @@ const (
 
 )
 
-func (c *cardDisk2) assign(a *Apple2, slot int) {
+// NewCardDisk2 creates a new CardDisk2
+func NewCardDisk2() *CardDisk2 {
+	var c CardDisk2
+	c.name = "Disk II"
+	c.loadRomFromResource("<internal>/DISK2.rom")
+	return &c
+}
+
+// GetInfo returns smartport info
+func (c *CardDisk2) GetInfo() map[string]string {
+	info := make(map[string]string)
+	info["rom"] = "16 sector"
+
+	info["D1 name"] = c.drive[0].name
+	info["D1 track"] = strconv.FormatFloat(float64(c.drive[0].tracksStep)/4, 'f', 2, 64)
+	info["D1 power"] = strconv.FormatBool(c.drive[0].power)
+
+	info["D2 name"] = c.drive[1].name
+	info["D2 track"] = strconv.FormatFloat(float64(c.drive[1].tracksStep)/4, 'f', 2, 64)
+	info["D1 power"] = strconv.FormatBool(c.drive[1].power)
+	return info
+}
+
+func (c *CardDisk2) assign(a *Apple2, slot int) {
 	// Q1, Q2, Q3 and Q4 phase control soft switches,
 	for i := uint8(0); i < 4; i++ {
 		phase := i
@@ -120,7 +145,7 @@ func (c *cardDisk2) assign(a *Apple2, slot int) {
 // Q6: shift/load
 // Q7: read/write
 
-func (c *cardDisk2) softSwitchQ6Q7(index uint8, in uint8) uint8 {
+func (c *CardDisk2) softSwitchQ6Q7(index uint8, in uint8) uint8 {
 	switch index {
 	case 0xC: // Q6L
 		c.q6 = false
@@ -140,7 +165,7 @@ func (c *cardDisk2) softSwitchQ6Q7(index uint8, in uint8) uint8 {
 	return 0
 }
 
-func (c *cardDisk2) processQ6Q7(in uint8) {
+func (c *CardDisk2) processQ6Q7(in uint8) {
 	d := &c.drive[c.selected]
 	if d.diskette == nil {
 		return
@@ -243,6 +268,7 @@ func moveStep(phases uint8, prevStep int) int {
 	return nextStep
 }
 
-func (d *cardDisk2Drive) insertDiskette(dt diskette) {
+func (d *cardDisk2Drive) insertDiskette(name string, dt diskette) {
+	d.name = name
 	d.diskette = dt
 }

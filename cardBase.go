@@ -10,11 +10,12 @@ type Card interface {
 }
 
 type cardBase struct {
-	a        *Apple2
-	name     string
-	romCsxx  *memoryRangeROM
-	romC8xx  *memoryRangeROM
-	romCxxx  *memoryRangeROM
+	a       *Apple2
+	name    string
+	romCsxx *memoryRangeROM
+	romC8xx *memoryRangeROM
+	romCxxx *memoryRangeROM
+
 	slot     int
 	_ssr     [16]softSwitchR
 	_ssw     [16]softSwitchW
@@ -28,6 +29,15 @@ func (c *cardBase) GetName() string {
 
 func (c *cardBase) GetInfo() map[string]string {
 	return nil
+}
+
+func (c *cardBase) loadRomFromResource(resource string) {
+	data, err := loadResource(resource)
+	if err != nil {
+		// The resource should be internal and never fail
+		panic(err)
+	}
+	c.loadRom(data)
 }
 
 func (c *cardBase) loadRom(data []uint8) {

@@ -88,21 +88,16 @@ func (a *Apple2) LoadRom(filename string) error {
 }
 
 // AddDisk2 inserts a DiskII controller
-func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage, diskBImage string) error {
-	var c cardDisk2
-	data, err := loadResource(diskRomFile)
-	if err != nil {
-		return err
-	}
-	c.loadRom(data)
-	a.insertCard(&c, slot)
+func (a *Apple2) AddDisk2(slot int, diskImage, diskBImage string) error {
+	c := NewCardDisk2()
+	a.insertCard(c, slot)
 
 	if diskImage != "" {
 		diskette, err := loadDiskette(diskImage)
 		if err != nil {
 			return err
 		}
-		c.drive[0].insertDiskette(diskette)
+		c.drive[0].insertDiskette(diskImage, diskette)
 	}
 
 	if diskBImage != "" {
@@ -110,7 +105,7 @@ func (a *Apple2) AddDisk2(slot int, diskRomFile string, diskImage, diskBImage st
 		if err != nil {
 			return err
 		}
-		c.drive[1].insertDiskette(diskette)
+		c.drive[1].insertDiskette(diskImage, diskette)
 	}
 
 	return nil
@@ -130,37 +125,27 @@ func (a *Apple2) AddSmartPortDisk(slot int, hdImage string, trace bool) error {
 
 // AddVidHD adds a card with the signature of VidHD
 func (a *Apple2) AddVidHD(slot int) {
-	c := NewCardVidHD()
-	a.insertCard(c, slot)
+	a.insertCard(NewCardVidHD(), slot)
 }
 
 // AddFastChip adds a card with the signature of VidHD
 func (a *Apple2) AddFastChip(slot int) {
-	var c cardFastChip
-	c.loadRom(buildFastChipRom())
-	a.insertCard(&c, slot)
+	a.insertCard(NewCardFastChip(), slot)
 }
 
 // AddLanguageCard inserts a 16Kb card
 func (a *Apple2) AddLanguageCard(slot int) {
-	a.insertCard(&cardLanguage{}, slot)
+	a.insertCard(NewCardLanguage(), slot)
 }
 
 // AddSaturnCard inserts a 128Kb card
 func (a *Apple2) AddSaturnCard(slot int) {
-	a.insertCard(&cardSaturn{}, slot)
+	a.insertCard(NewCardSaturn(), slot)
 }
 
 // AddMemoryExpansionCard inserts an Apple II Memory Expansion card with 1GB
-func (a *Apple2) AddMemoryExpansionCard(slot int, romFile string) error {
-	var c cardMemoryExpansion
-	data, err := loadResource(romFile)
-	if err != nil {
-		return err
-	}
-	c.loadRom(data)
-	a.insertCard(&c, slot)
-	return nil
+func (a *Apple2) AddMemoryExpansionCard(slot int) {
+	a.insertCard(NewCardMemoryExpansion(), slot)
 }
 
 // AddThunderClockPlusCard inserts a ThunderClock Plus clock card
@@ -199,12 +184,14 @@ func (a *Apple2) AddNoSlotClockInCard(slot int) error {
 
 // AddCardLogger inserts a fake card that logs accesses
 func (a *Apple2) AddCardLogger(slot int) {
-	a.insertCard(&cardLogger{}, slot)
+	c := NewCardLogger()
+	a.insertCard(c, slot)
 }
 
 // AddCardInOut inserts a fake card that interfaces with the emulator host
 func (a *Apple2) AddCardInOut(slot int) {
-	a.insertCard(&cardInOut{}, slot)
+	c := NewCardInOut()
+	a.insertCard(c, slot)
 }
 
 // SetKeyboardProvider attaches an external keyboard provider

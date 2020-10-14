@@ -24,15 +24,8 @@ type CardHardDisk struct {
 	filename string
 	trace    bool
 
-	config    CardHardDiskConfig
 	disk      *blockDisk
 	mliParams uint16
-}
-
-// CardHardDiskConfig represents a SmartPort card configuration
-type CardHardDiskConfig struct {
-	Filename string
-	Trace    bool
 }
 
 // NewCardHardDisk creates a new SmartPort card
@@ -42,7 +35,7 @@ func NewCardHardDisk() *CardHardDisk {
 	return &c
 }
 
-// GetInfo return smartport info
+// GetInfo returns smartport info
 func (c *CardHardDisk) GetInfo() map[string]string {
 	info := make(map[string]string)
 	info["filename"] = c.filename
@@ -84,7 +77,7 @@ func (c *CardHardDisk) assign(a *Apple2, slot int) {
 		unit := a.mmu.Peek(0x43)
 		address := uint16(a.mmu.Peek(0x44)) + uint16(a.mmu.Peek(0x45))<<8
 		block := uint16(a.mmu.Peek(0x46)) + uint16(a.mmu.Peek(0x47))<<8
-		if c.config.Trace {
+		if c.trace {
 			fmt.Printf("[CardHardDisk] Prodos command %v on slot %v, unit $%x, block %v to $%x.\n", command, slot, unit, block, address)
 		}
 
@@ -116,7 +109,7 @@ func (c *CardHardDisk) assign(a *Apple2, slot int) {
 		unit := a.mmu.Peek(paramsAddress + 1)
 		address := uint16(a.mmu.Peek(paramsAddress+2)) + uint16(a.mmu.Peek(paramsAddress+3))<<8
 		block := uint16(a.mmu.Peek(paramsAddress+4)) + uint16(a.mmu.Peek(paramsAddress+5))<<8
-		if c.config.Trace {
+		if c.trace {
 			fmt.Printf("[CardHardDisk] Smart port command %v on slot %v, unit $%x, block %v to $%x.\n", command, slot, unit, block, address)
 		}
 
@@ -134,13 +127,13 @@ func (c *CardHardDisk) assign(a *Apple2, slot int) {
 	}, "HDSMARTPORT")
 	c.addCardSoftSwitchW(4, func(_ *ioC0Page, value uint8) {
 		c.mliParams = (c.mliParams & 0xff00) + uint16(value)
-		if c.config.Trace {
+		if c.trace {
 			fmt.Printf("[CardHardDisk] Smart port LO: 0x%x.\n", c.mliParams)
 		}
 	}, "HDSMARTPORTLO")
 	c.addCardSoftSwitchW(5, func(_ *ioC0Page, value uint8) {
 		c.mliParams = (c.mliParams & 0x00ff) + (uint16(value) << 8)
-		if c.config.Trace {
+		if c.trace {
 			fmt.Printf("[CardHardDisk] Smart port HI: 0x%x.\n", c.mliParams)
 		}
 	}, "HDSMARTPORTHI")
@@ -149,7 +142,7 @@ func (c *CardHardDisk) assign(a *Apple2, slot int) {
 }
 
 func (c *CardHardDisk) readBlock(block uint16, dest uint16) uint8 {
-	if c.config.Trace {
+	if c.trace {
 		fmt.Printf("[CardHardDisk] Read block %v into $%x.\n", block, dest)
 	}
 
@@ -166,7 +159,7 @@ func (c *CardHardDisk) readBlock(block uint16, dest uint16) uint8 {
 }
 
 func (c *CardHardDisk) writeBlock(block uint16, source uint16) uint8 {
-	if c.config.Trace {
+	if c.trace {
 		fmt.Printf("[CardHardDisk] Write block %v from $%x.\n", block, source)
 	}
 
@@ -189,7 +182,7 @@ func (c *CardHardDisk) writeBlock(block uint16, source uint16) uint8 {
 }
 
 func (c *CardHardDisk) status(unit uint8, dest uint16) uint8 {
-	if c.config.Trace {
+	if c.trace {
 		fmt.Printf("[CardHardDisk] Status for %v into $%x.\n", unit, dest)
 	}
 

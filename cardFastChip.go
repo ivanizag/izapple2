@@ -12,13 +12,22 @@ See:
 
 */
 
-type cardFastChip struct {
+// CardFastChip represents a
+type CardFastChip struct {
 	cardBase
 	unlocked       bool
 	unlockCounter  uint8
 	enabled        bool
 	accelerated    bool
 	configRegister uint8
+}
+
+// NewCardFastChip creates a new CardFastChip
+func NewCardFastChip() *CardFastChip {
+	var c CardFastChip
+	c.name = "FASTChip IIe Card - limited"
+	c.loadRom(buildFastChipRom())
+	return &c
 }
 
 func buildFastChipRom() []uint8 {
@@ -32,7 +41,7 @@ const (
 	fastChipNormalSpeed   = uint8(9)
 )
 
-func (c *cardFastChip) assign(a *Apple2, slot int) {
+func (c *CardFastChip) assign(a *Apple2, slot int) {
 	// The softswitches are outside the card reserved ss
 	// Only writes are implemented to avoid conflicts with the joysticks
 	a.io.addSoftSwitchW(0x6a, func(_ *ioC0Page, value uint8) {
@@ -75,7 +84,7 @@ func (c *cardFastChip) assign(a *Apple2, slot int) {
 	c.cardBase.assign(a, slot)
 }
 
-func (c *cardFastChip) setSpeed(a *Apple2, value uint8) {
+func (c *CardFastChip) setSpeed(a *Apple2, value uint8) {
 	newAccelerated := (value > fastChipNormalSpeed)
 	if newAccelerated == c.accelerated {
 		// No change requested

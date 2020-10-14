@@ -21,17 +21,25 @@ for $D000-$F7FF.
 Power on RESET initializes ROM to read mode and RAM to write mode,
 and selects the second 4K bank to map $D000-$DFFF."
 
-Writing to the softswtich disables writing in LC? Saw that
+Writing to the softswitch disables writing in LC? Saw that
 somewhere but doing so fails IIe self check.
 
 
 */
 
-type cardLanguage struct {
+// CardLanguage is an Language Card
+type CardLanguage struct {
 	cardBase
 	readState  bool
 	writeState uint8
 	altBank    bool // false is bank1, true is bank2
+}
+
+// NewCardLanguage creates a new CardLanguage
+func NewCardLanguage() *CardLanguage {
+	var c CardLanguage
+	c.name = "16KB Language Card"
+	return &c
 }
 
 const (
@@ -41,7 +49,7 @@ const (
 	lcWriteEnabled     = 2
 )
 
-func (c *cardLanguage) assign(a *Apple2, slot int) {
+func (c *CardLanguage) assign(a *Apple2, slot int) {
 	c.readState = false
 	c.writeState = lcWriteEnabled
 	c.altBank = true // Start on bank2
@@ -62,7 +70,7 @@ func (c *cardLanguage) assign(a *Apple2, slot int) {
 	c.applyState()
 }
 
-func (c *cardLanguage) ssAction(ss uint8, write bool) {
+func (c *CardLanguage) ssAction(ss uint8, write bool) {
 	c.altBank = ((ss >> 3) & 1) == 0
 	action := ss & 0x3
 	switch action {
@@ -101,6 +109,6 @@ func (c *cardLanguage) ssAction(ss uint8, write bool) {
 	c.applyState()
 }
 
-func (c *cardLanguage) applyState() {
+func (c *CardLanguage) applyState() {
 	c.a.mmu.setLanguageRAM(c.readState, c.writeState == lcWriteEnabled, c.altBank)
 }
