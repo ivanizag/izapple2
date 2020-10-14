@@ -30,4 +30,4 @@ require (
 )
 
 //replace fyne.io/fyne => github.com/ivanizag/fyne v1.3.4-0.20201010160818-ed5402384cff
-replace fyne.io/fyne => ../fyne/fyne
+//replace fyne.io/fyne => ../fyne/fyne
