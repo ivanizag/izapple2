@@ -14,8 +14,6 @@ import (
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/driver/desktop"
 	"fyne.io/fyne/layout"
-	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
 )
 
 type state struct {
@@ -25,7 +23,8 @@ type state struct {
 
 	devices *panelDevices
 
-	showPages bool
+	showPages  bool
+	screenMode int
 }
 
 func main() {
@@ -43,12 +42,15 @@ func main() {
 }
 
 func fyneRun(s *state) {
+	s.screenMode = izapple2.ScreenModeNTSC
+
 	s.app = app.New()
 	s.app.SetIcon(resourceApple2Png)
 	s.win = s.app.NewWindow("iz-" + s.a.Name)
 	s.win.SetIcon(resourceApple2Png)
 
 	s.devices = newPanelDevices(s)
+	s.devices.w.Hide()
 	toolbar := buildToolbar(s)
 	screen := canvas.NewImageFromImage(nil)
 	screen.ScaleMode = canvas.ImageScalePixels // Looks worst but loads less.
@@ -82,7 +84,7 @@ func fyneRun(s *state) {
 						img = s.a.SnapshotParts()
 						s.win.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, s.a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
 					} else {
-						img = s.a.Snapshot()
+						img = s.a.Snapshot(s.screenMode)
 					}
 					screen.Image = img
 					canvas.Refresh(screen)
@@ -100,63 +102,6 @@ func fyneRun(s *state) {
 	fmt.Printf("%v\n", s.win.Canvas().Scale())
 
 	s.app.Run()
-}
-
-func buildToolbar(s *state) *widget.Toolbar {
-	return widget.NewToolbar(
-		widget.NewToolbarAction(
-			theme.NewThemedResource(resourceRestartSvg, nil), func() {
-				s.a.SendCommand(izapple2.CommandReset)
-			}),
-		widget.NewToolbarAction(
-			theme.NewThemedResource(resourcePauseSvg, nil), func() {
-				s.a.SendCommand(izapple2.CommandPauseUnpauseEmulator)
-			}),
-		widget.NewToolbarAction(
-			theme.NewThemedResource(resourceFastForwardSvg, nil), func() {
-				s.a.SendCommand(izapple2.CommandToggleSpeed)
-			}),
-		widget.NewToolbarSeparator(),
-		widget.NewToolbarAction(
-			theme.NewThemedResource(resourcePaletteSvg, nil), func() {
-				s.a.SendCommand(izapple2.CommandToggleColor)
-			}),
-		widget.NewToolbarAction(
-			theme.NewThemedResource(resourceLayersTripleSvg, nil), func() {
-				s.showPages = !s.showPages
-				if !s.showPages {
-					s.win.SetTitle("iz-" + s.a.Name)
-				}
-			}),
-		widget.NewToolbarAction(
-			theme.NewThemedResource(resourceCameraSvg, nil), func() {
-				err := izapple2.SaveSnapshot(s.a, "snapshot.png")
-				if err != nil {
-					s.app.SendNotification(fyne.NewNotification(
-						s.win.Title(),
-						fmt.Sprintf("Error saving snapshoot: %v.\n.", err)))
-				} else {
-					s.app.SendNotification(fyne.NewNotification(
-						s.win.Title(),
-						"Snapshot saved on 'snapshot.png'"))
-				}
-			}),
-		//widget.NewToolbarSeparator(),
-		//newToolbarDisk("S6D1"),
-		widget.NewToolbarSpacer(),
-		widget.NewToolbarAction(theme.ViewFullScreenIcon(), func() {
-			s.win.SetFullScreen(!s.win.FullScreen())
-		}),
-		widget.NewToolbarAction(
-			theme.NewThemedResource(resourcePageLayoutSidebarRightSvg, nil), func() {
-				w := s.devices.w
-				if w.Visible() {
-					w.Hide()
-				} else {
-					w.Show()
-				}
-			}),
-	)
 }
 
 func registerKeyboardEvents(s *state) {
