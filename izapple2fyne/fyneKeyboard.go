@@ -103,7 +103,11 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 			k.s.a.SendCommand(izapple2.CommandToggleSpeed)
 		}
 	case fyne.KeyF6:
-		k.s.a.SendCommand(izapple2.CommandToggleColor)
+		if k.s.screenMode != izapple2.ScreenModeGreen {
+			k.s.screenMode = izapple2.ScreenModeGreen
+		} else {
+			k.s.screenMode = izapple2.ScreenModeNTSC
+		}
 	case fyne.KeyF7:
 		k.s.showPages = !k.s.showPages
 	case fyne.KeyF9:
@@ -114,7 +118,7 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 		k.s.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case fyne.KeyF12:
 		//case fyne.KeyPrintScreen:
-		err := izapple2.SaveSnapshot(k.s.a, "snapshot.png")
+		err := izapple2.SaveSnapshot(k.s.a, k.s.screenMode, "snapshot.png")
 		if err != nil {
 			fmt.Printf("Error saving snapshoot: %v.\n.", err)
 		} else {
