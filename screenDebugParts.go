@@ -12,9 +12,9 @@ func (a *Apple2) SnapshotParts() *image.RGBA {
 	mixMode := videoMode & videoMixTextMask
 	modifiers := videoMode & videoModifiersMask
 
-	snapScreen := snapshotByMode(a, videoMode)
-	snapPage1 := snapshotByMode(a, videoMode&^videoSecondPage)
-	snapPage2 := snapshotByMode(a, videoMode|videoSecondPage)
+	snapScreen := snapshotByMode(a, videoMode, ScreenModePlain)
+	snapPage1 := snapshotByMode(a, videoMode&^videoSecondPage, ScreenModePlain)
+	snapPage2 := snapshotByMode(a, videoMode|videoSecondPage, ScreenModePlain)
 	var snapAux *image.RGBA
 
 	/*
@@ -28,11 +28,11 @@ func (a *Apple2) SnapshotParts() *image.RGBA {
 	} else {
 		switch mixMode {
 		case videoMixText80:
-			snapAux = snapshotByMode(a, videoText80|modifiers)
+			snapAux = snapshotByMode(a, videoText80|modifiers, ScreenModePlain)
 		case videoMixText40RGB:
-			snapAux = snapshotByMode(a, videoText40RGB|modifiers)
+			snapAux = snapshotByMode(a, videoText40RGB|modifiers, ScreenModePlain)
 		default:
-			snapAux = snapshotByMode(a, videoText40|modifiers)
+			snapAux = snapshotByMode(a, videoText40|modifiers, ScreenModePlain)
 		}
 	}
 
@@ -46,18 +46,14 @@ func (a *Apple2) VideoModeName() string {
 	mixMode := videoMode & videoMixTextMask
 
 	var name string
-	applyNTSCFilter := a.isColor
 
 	switch videoBase {
 	case videoText40:
 		name = "TEXT40COL"
-		applyNTSCFilter = false
 	case videoText80:
 		name = "TEXT80COL"
-		applyNTSCFilter = false
 	case videoText40RGB:
 		name = "TEXT40COLRGB"
-		applyNTSCFilter = false
 	case videoGR:
 		name = "GR"
 	case videoDGR:
@@ -68,14 +64,12 @@ func (a *Apple2) VideoModeName() string {
 		name = "DHGR"
 	case videoMono560:
 		name = "Mono560"
-		applyNTSCFilter = false
 	case videoRGBMix:
 		name = "RGMMIX"
 	case videoRGB160:
 		name = "RGB160"
 	case videoSHR:
 		name = "SHR"
-		applyNTSCFilter = false
 	default:
 		name = "Unknown video mode"
 	}
@@ -93,9 +87,6 @@ func (a *Apple2) VideoModeName() string {
 		name += "-MIX40RGB"
 	}
 
-	if applyNTSCFilter {
-		name += "-NTSC"
-	}
 	return name
 }
 
