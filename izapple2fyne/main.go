@@ -81,7 +81,7 @@ func fyneRun(s *state) {
 				if !s.a.IsPaused() {
 					var img *image.RGBA
 					if s.showPages {
-						img = s.a.SnapshotParts()
+						img = s.a.SnapshotParts(s.screenMode)
 						s.win.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, s.a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
 					} else {
 						img = s.a.Snapshot(s.screenMode)
