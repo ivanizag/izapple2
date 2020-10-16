@@ -5,16 +5,16 @@ import (
 )
 
 // SnapshotParts the currently visible screen
-func (a *Apple2) SnapshotParts() *image.RGBA {
+func (a *Apple2) SnapshotParts(screenMode int) *image.RGBA {
 	videoMode := getCurrentVideoMode(a)
 	isSecondPage := (videoMode & videoSecondPage) != 0
 	videoBase := videoMode & videoBaseMask
 	mixMode := videoMode & videoMixTextMask
 	modifiers := videoMode & videoModifiersMask
 
-	snapScreen := snapshotByMode(a, videoMode, ScreenModePlain)
-	snapPage1 := snapshotByMode(a, videoMode&^videoSecondPage, ScreenModePlain)
-	snapPage2 := snapshotByMode(a, videoMode|videoSecondPage, ScreenModePlain)
+	snapScreen := snapshotByMode(a, videoMode, screenMode)
+	snapPage1 := snapshotByMode(a, videoMode&^videoSecondPage, screenMode)
+	snapPage2 := snapshotByMode(a, videoMode|videoSecondPage, screenMode)
 	var snapAux *image.RGBA
 
 	/*
@@ -28,11 +28,11 @@ func (a *Apple2) SnapshotParts() *image.RGBA {
 	} else {
 		switch mixMode {
 		case videoMixText80:
-			snapAux = snapshotByMode(a, videoText80|modifiers, ScreenModePlain)
+			snapAux = snapshotByMode(a, videoText80|modifiers, screenMode)
 		case videoMixText40RGB:
-			snapAux = snapshotByMode(a, videoText40RGB|modifiers, ScreenModePlain)
+			snapAux = snapshotByMode(a, videoText40RGB|modifiers, screenMode)
 		default:
-			snapAux = snapshotByMode(a, videoText40|modifiers, ScreenModePlain)
+			snapAux = snapshotByMode(a, videoText40|modifiers, screenMode)
 		}
 	}
 

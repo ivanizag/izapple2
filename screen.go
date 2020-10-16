@@ -190,7 +190,7 @@ func (a *Apple2) Snapshot(screenMode int) *image.RGBA {
 	videoMode := getCurrentVideoMode(a)
 	snap := snapshotByMode(a, videoMode, screenMode)
 
-	if screenMode == ScreenModeNTSC && snap.Bounds().Dy() == hiResHeight {
+	if screenMode != ScreenModePlain && snap.Bounds().Dy() == hiResHeight {
 		// Apply the filter to regular CRT snapshots with 192 lines. Not to SHR
 		snap = linesSeparatedFilter(snap)
 	}

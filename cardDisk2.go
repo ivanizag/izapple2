@@ -20,6 +20,7 @@ NIB: 35 tracks 6656 bytes, 232960 bytes
 
 */
 
+// CardDisk2 is a DiskII interface card
 type CardDisk2 struct {
 	cardBase
 	selected int // q5, Only 0 and 1 supported

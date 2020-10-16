@@ -85,7 +85,7 @@ func sdlRun(a *izapple2.Apple2) {
 		if !a.IsPaused() {
 			var img *image.RGBA
 			if kp.showPages {
-				img = a.SnapshotParts()
+				img = a.SnapshotParts(izapple2.ScreenModeNTSC)
 				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
 			} else {
 				img = a.Snapshot(izapple2.ScreenModeNTSC)
