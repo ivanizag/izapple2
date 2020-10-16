@@ -191,8 +191,6 @@ Only valid on SDL mode
         cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
   -model string
         set base model. Models available 2plus, 2e, 2enh, base64a (default "2enh")
-  -mono
-        emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.
   -nsc int
         add a DS1216 No-Slot-Clock on the main ROM (use 0) or a slot ROM. -1 for none (default -1)
   -panicSS

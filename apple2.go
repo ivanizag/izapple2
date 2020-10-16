@@ -18,7 +18,6 @@ type Apple2 struct {
 	isApple2e           bool
 	commandChannel      chan int
 	cycleDurationNs     float64 // Current speed. Inverse of the cpu clock in Ghz
-	isColor             bool
 	fastMode            bool
 	fastRequestsCounter int
 	profile             bool
@@ -126,8 +125,6 @@ const (
 	CommandToggleSpeed = iota + 1
 	// CommandShowSpeed toggles printinf the current freq in Mhz
 	CommandShowSpeed
-	// CommandToggleColor toggles between NTSC color TV and Green phospor monitor
-	CommandToggleColor
 	// CommandDumpDebugInfo dumps useful info
 	CommandDumpDebugInfo
 	// CommandNextCharGenPage cycles the CharGen page if several
@@ -159,8 +156,6 @@ func (a *Apple2) executeCommand(command int) {
 		}
 	case CommandShowSpeed:
 		a.showSpeed = !a.showSpeed
-	case CommandToggleColor:
-		a.isColor = !a.isColor
 	case CommandDumpDebugInfo:
 		a.dumpDebugInfo()
 	case CommandNextCharGenPage:

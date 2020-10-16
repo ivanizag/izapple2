@@ -40,6 +40,15 @@ const (
 	videoSecondPage    uint16 = 0x1000
 )
 
+const (
+	// ScreenModeGreen to render as a green phosphor monitor
+	ScreenModeGreen = iota
+	// ScreenModePlain to render in color with filled areas
+	ScreenModePlain
+	//ScreenModeNTSC shows spaces between pixels
+	ScreenModeNTSC
+)
+
 func getCurrentVideoMode(a *Apple2) uint16 {
 	isTextMode := a.io.isSoftSwitchActive(ioFlagText)
 	isHiResMode := a.io.isSoftSwitchActive(ioFlagHiRes)
@@ -106,22 +115,19 @@ func getCurrentVideoMode(a *Apple2) uint16 {
 	return mode
 }
 
-func snapshotByMode(a *Apple2, videoMode uint16) *image.RGBA {
+func snapshotByMode(a *Apple2, videoMode uint16, screenMode int) *image.RGBA {
 	videoBase := videoMode & videoBaseMask
 	mixMode := videoMode & videoMixTextMask
 	isSecondPage := (videoMode & videoSecondPage) != 0
 
-	var lightColor color.Color
-	if a.isColor {
-		lightColor = color.White
-	} else {
+	var lightColor color.Color = color.White
+	if screenMode == ScreenModeGreen {
 		// Color for typical Apple ][ period green P1 phosphor monitors
 		// See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
 		lightColor = color.RGBA{65, 255, 0, 255}
-
 	}
 
-	applyNTSCFilter := a.isColor
+	applyNTSCFilter := screenMode != ScreenModeGreen
 	var snap *image.RGBA
 	var ntscMask *image.Alpha
 	switch videoBase {
@@ -155,12 +161,12 @@ func snapshotByMode(a *Apple2, videoMode uint16) *image.RGBA {
 	}
 
 	if applyNTSCFilter {
-		snap = filterNTSCColor(snap, ntscMask)
+		snap = filterNTSCColor(snap, ntscMask, screenMode)
 	}
 
 	if mixMode != 0 {
 		var bottom *image.RGBA
-		applyNTSCFilter := a.isColor
+		applyNTSCFilter := screenMode != ScreenModeGreen
 		switch mixMode {
 		case videoMixText40:
 			bottom = snapshotText40Mode(a, isSecondPage, lightColor)
@@ -171,7 +177,7 @@ func snapshotByMode(a *Apple2, videoMode uint16) *image.RGBA {
 			applyNTSCFilter = false
 		}
 		if applyNTSCFilter {
-			bottom = filterNTSCColor(bottom, ntscMask)
+			bottom = filterNTSCColor(bottom, ntscMask, screenMode)
 		}
 		snap = mixSnapshots(snap, bottom)
 	}
@@ -180,11 +186,11 @@ func snapshotByMode(a *Apple2, videoMode uint16) *image.RGBA {
 }
 
 // Snapshot the currently visible screen
-func (a *Apple2) Snapshot() *image.RGBA {
+func (a *Apple2) Snapshot(screenMode int) *image.RGBA {
 	videoMode := getCurrentVideoMode(a)
-	snap := snapshotByMode(a, videoMode)
+	snap := snapshotByMode(a, videoMode, screenMode)
 
-	if snap.Bounds().Dy() == hiResHeight {
+	if screenMode == ScreenModeNTSC && snap.Bounds().Dy() == hiResHeight {
 		// Apply the filter to regular CRT snapshots with 192 lines. Not to SHR
 		snap = linesSeparatedFilter(snap)
 	}
@@ -207,8 +213,8 @@ func mixSnapshots(top, bottom *image.RGBA) *image.RGBA {
 }
 
 // SaveSnapshot saves a snapshot of the screen to a png file
-func SaveSnapshot(a *Apple2, filename string) error {
-	img := a.Snapshot()
+func SaveSnapshot(a *Apple2, screenMode int, filename string) error {
+	img := a.Snapshot(screenMode)
 	img = squarishPixelsFilter(img)
 
 	f, err := os.Create(filename)

@@ -81,10 +81,6 @@ func MainApple() *Apple2 {
 		"nsc",
 		-1,
 		"add a DS1216 No-Slot-Clock on the main ROM (use 0) or a slot ROM. -1 for none")
-	mono := flag.Bool(
-		"mono",
-		false,
-		"emulate a green phosphor monitor instead of a NTSC color TV. Use F6 to toggle.")
 	rgbCard := flag.Bool(
 		"rgb",
 		true,
@@ -155,7 +151,7 @@ func MainApple() *Apple2 {
 	}
 
 	a := newApple2()
-	a.setup(!*mono, *cpuClock, *fastDisk, *traceMLI)
+	a.setup(*cpuClock, *fastDisk, *traceMLI)
 	a.io.setTrace(*traceSS)
 	a.io.setTraceRegistrations(*traceSSReg)
 	a.io.setPanicNotImplemented(*panicSS)

@@ -88,7 +88,7 @@ func sdlRun(a *izapple2.Apple2) {
 				img = a.SnapshotParts()
 				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
 			} else {
-				img = a.Snapshot()
+				img = a.Snapshot(izapple2.ScreenModeNTSC)
 			}
 			if img != nil {
 				surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]),
