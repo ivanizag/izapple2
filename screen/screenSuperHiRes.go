@@ -1,4 +1,4 @@
-package izapple2
+package screen
 
 import (
 	"image"
@@ -11,29 +11,28 @@ const (
 	shrHeight     = 200
 	palettesCount = 256
 
-	shrPixelDataAddress        = uint16(0x2000)
-	shrScanLineControlAddress  = uint16(0x9d00)
-	shrColorPalettesAddress    = uint16(0x9e00)
-	shrColorPalettesAddressEnd = uint16(0xa000)
+	shrScanLineControlOffset = uint16(0x7d00)
+	shrColorPalettesOffset   = uint16(0x7e00)
 )
 
-func snapshotSuperHiResMode(a *Apple2) *image.RGBA {
+func snapshotSuperHiRes(vs VideoSource) *image.RGBA {
+	data := vs.GetSuperVideoMemory()
+	return renderSuperHiRes(data)
+}
+
+func renderSuperHiRes(data []uint8) *image.RGBA {
 	// See "Apple IIGS Hardware Reference", chapter 4, page 91
 	// http://www.applelogic.org/files/GSHARDWAREREF.pdf
-
 	size := image.Rect(0, 0, shrWidth, shrHeight)
 	img := image.NewRGBA(size)
 
-	videoRAM := a.mmu.getVideoRAM(true)
-
 	// Load the palettes
-	paletteMem := videoRAM.subRange(shrColorPalettesAddress, shrColorPalettesAddressEnd)
 	colors := make([]color.Color, palettesCount)
-	iMem := 0
+	iMem := uint16(0)
 	for i := 0; i < palettesCount; i++ {
-		b0 := paletteMem[iMem]
+		b0 := data[iMem+shrColorPalettesOffset]
 		iMem++
-		b1 := paletteMem[iMem]
+		b1 := data[iMem+shrColorPalettesOffset]
 		iMem++
 
 		red := (b1 & 0x0f) << 4
@@ -48,14 +47,13 @@ func snapshotSuperHiResMode(a *Apple2) *image.RGBA {
 
 	// Build the lines
 	for y := 0; y < shrHeight; y++ {
-		controlByte := videoRAM.peek(shrScanLineControlAddress + uint16(y))
+		controlByte := data[uint16(y)+shrScanLineControlOffset]
 		is640Wide := (controlByte & 0x80) != 0
 		isColorFill := (controlByte & 0x20) != 0
 		paletteIndex := (controlByte & 0x0f) << 4
 
-		lineAddress := shrPixelDataAddress + uint16(shrWidthBytes*y)
-		lineBytes := videoRAM.subRange(lineAddress, uint16(lineAddress+shrWidthBytes))
-
+		lineAddress := uint16(shrWidthBytes * y)
+		lineBytes := data[lineAddress : lineAddress+shrWidthBytes]
 		if is640Wide {
 			// Line is 640 pixels, two bits per pixel
 			x := 0

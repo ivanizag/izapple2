@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/screen"
 
 	"github.com/pkg/profile"
 	"github.com/veandco/go-sdl2/sdl"
@@ -85,10 +86,10 @@ func sdlRun(a *izapple2.Apple2) {
 		if !a.IsPaused() {
 			var img *image.RGBA
 			if kp.showPages {
-				img = a.SnapshotParts(izapple2.ScreenModeNTSC)
-				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
+				img = screen.SnapshotParts(a, screen.ScreenModeNTSC)
+				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, screen.VideoModeName(a), img.Rect.Dx()/2, img.Rect.Dy()/2))
 			} else {
-				img = a.Snapshot(izapple2.ScreenModeNTSC)
+				img = screen.Snapshot(a, screen.ScreenModeNTSC)
 			}
 			if img != nil {
 				surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]),

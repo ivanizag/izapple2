@@ -1,4 +1,4 @@
-package izapple2
+package screen
 
 import (
 	"image"
@@ -10,7 +10,14 @@ const (
 	rgb160Width      = 4 * 160
 )
 
-func snapshotDoubleHiResModeMono(a *Apple2, isSecondPage bool, getNTSCMask bool, light color.Color) (*image.RGBA, *image.Alpha) {
+func snapshotDoubleHiRes(vs VideoSource, isSecondPage bool, getNTSCMask bool, light color.Color) (*image.RGBA, *image.Alpha) {
+	dataMain := vs.GetVideoMemory(isSecondPage, false)
+	dataAux := vs.GetVideoMemory(isSecondPage, true)
+	return renderDoubleHiRes(dataMain, dataAux, getNTSCMask, light)
+}
+
+func renderDoubleHiRes(dataMain []uint8, dataAux []uint8, getNTSCMask bool, light color.Color) (*image.RGBA, *image.Alpha) {
+
 	// As described in "Inside the Apple IIe"
 	size := image.Rect(0, 0, doubleHiResWidth, hiResHeight)
 	img := image.NewRGBA(size)
@@ -23,9 +30,10 @@ func snapshotDoubleHiResModeMono(a *Apple2, isSecondPage bool, getNTSCMask bool,
 	}
 
 	for y := 0; y < hiResHeight; y++ {
+		offset := getHiResLineOffset(y)
 		lineParts := [][]uint8{
-			getHiResLine(a, y, isSecondPage, true /*auxmem*/),
-			getHiResLine(a, y, isSecondPage, false /*auxmem*/),
+			dataAux[offset : offset+hiResLineBytes],
+			dataMain[offset : offset+hiResLineBytes],
 		}
 		x := 0
 		// For the NTSC filter to work we have to insert an initial black pixel and skip the last one ¿?
@@ -64,14 +72,21 @@ func snapshotDoubleHiResModeMono(a *Apple2, isSecondPage bool, getNTSCMask bool,
 	return img, ntscMask
 }
 
-func snapshotDoubleHiRes160ModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
+func snapshotDoubleHiRes160(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
+	dataMain := vs.GetVideoMemory(isSecondPage, false)
+	dataAux := vs.GetVideoMemory(isSecondPage, true)
+	return renderDoubleHiRes160(dataMain, dataAux, light)
+}
+
+func renderDoubleHiRes160(dataMain []uint8, dataAux []uint8, light color.Color) *image.RGBA {
 	size := image.Rect(0, 0, rgb160Width, hiResHeight)
 	img := image.NewRGBA(size)
 
 	for y := 0; y < hiResHeight; y++ {
+		offset := getHiResLineOffset(y)
 		lineParts := [][]uint8{
-			getHiResLine(a, y, isSecondPage, true /*auxmem*/),
-			getHiResLine(a, y, isSecondPage, false /*auxmem*/),
+			dataAux[offset : offset+hiResLineBytes],
+			dataMain[offset : offset+hiResLineBytes],
 		}
 		x := 0
 		for iByte := 0; iByte < hiResLineBytes; iByte++ {

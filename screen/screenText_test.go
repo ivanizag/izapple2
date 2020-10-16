@@ -1,4 +1,4 @@
-package izapple2
+package screen
 
 import (
 	"testing"

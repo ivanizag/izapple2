@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/screen"
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/theme"
@@ -34,7 +35,7 @@ func buildToolbar(s *state) *widget.Toolbar {
 		}))
 	tb.Append(widget.NewToolbarAction(
 		theme.NewThemedResource(resourceCameraSvg, nil), func() {
-			err := izapple2.SaveSnapshot(s.a, s.screenMode, "snapshot.png")
+			err := screen.SaveSnapshot(s.a, s.screenMode, "snapshot.png")
 			if err != nil {
 				s.app.SendNotification(fyne.NewNotification(
 					s.win.Title(),

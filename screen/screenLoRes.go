@@ -1,4 +1,4 @@
-package izapple2
+package screen
 
 import (
 	"image"
@@ -38,17 +38,17 @@ func getColorPatterns(light color.Color) [16][16]color.Color {
 
 }
 
-func snapshotLoResModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
-	data := getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
-	return renderGrMode(data, false /*isMeres*/, light)
+func snapshotLoRes(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
+	data := getTextFromMemory(vs, isSecondPage, false)
+	return renderGr(data, false /*isMeres*/, light)
 }
 
-func snapshotMeResModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
-	data := getText80FromMemory(a, isSecondPage)
-	return renderGrMode(data, true /*isMeres*/, light)
+func snapshotMeRes(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
+	data := getText80FromMemory(vs, isSecondPage)
+	return renderGr(data, true /*isMeres*/, light)
 }
 
-func renderGrMode(data []uint8, isDoubleResMode bool, light color.Color) *image.RGBA {
+func renderGr(data []uint8, isDoubleResMode bool, light color.Color) *image.RGBA {
 	grLines := textLines * 2
 	columns := len(data) / textLines
 	pixelWidth := loResPixelWidth

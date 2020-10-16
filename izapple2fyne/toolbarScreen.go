@@ -4,7 +4,7 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/theme"
 	"fyne.io/fyne/widget"
-	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/screen"
 )
 
 type toolbarScreen struct {
@@ -25,7 +25,7 @@ func newToolbarScreen(s *state) *toolbarScreen {
 	tbs.ntsc = widget.NewButtonWithIcon("",
 		theme.NewThemedResource(resourceTelevisionClassicSvg, nil),
 		func() {
-			tbs.setScreenMode(izapple2.ScreenModeNTSC)
+			tbs.setScreenMode(screen.ScreenModeNTSC)
 		})
 	tbs.ntscDisabled = widget.NewIcon(
 		theme.NewDisabledResource(resourceTelevisionClassicSvg))
@@ -33,7 +33,7 @@ func newToolbarScreen(s *state) *toolbarScreen {
 	tbs.plain = widget.NewButtonWithIcon("",
 		theme.NewThemedResource(resourceTelevisionSvg, nil),
 		func() {
-			tbs.setScreenMode(izapple2.ScreenModePlain)
+			tbs.setScreenMode(screen.ScreenModePlain)
 		})
 	tbs.plainDisabled = widget.NewIcon(
 		theme.NewDisabledResource(resourceTelevisionSvg))
@@ -41,7 +41,7 @@ func newToolbarScreen(s *state) *toolbarScreen {
 	tbs.green = widget.NewButtonWithIcon("",
 		theme.NewThemedResource(resourceMonitorSvg, nil),
 		func() {
-			tbs.setScreenMode(izapple2.ScreenModeGreen)
+			tbs.setScreenMode(screen.ScreenModeGreen)
 		})
 	tbs.greenDisabled = widget.NewIcon(
 		theme.NewDisabledResource(resourceMonitorSvg))
@@ -61,13 +61,13 @@ func newToolbarScreen(s *state) *toolbarScreen {
 
 func (tbs *toolbarScreen) setScreenMode(screenMode int) {
 	switch tbs.s.screenMode {
-	case izapple2.ScreenModeNTSC:
+	case screen.ScreenModeNTSC:
 		tbs.ntsc.Show()
 		tbs.ntscDisabled.Hide()
-	case izapple2.ScreenModePlain:
+	case screen.ScreenModePlain:
 		tbs.plain.Show()
 		tbs.plainDisabled.Hide()
-	case izapple2.ScreenModeGreen:
+	case screen.ScreenModeGreen:
 		tbs.green.Show()
 		tbs.greenDisabled.Hide()
 	}
@@ -75,13 +75,13 @@ func (tbs *toolbarScreen) setScreenMode(screenMode int) {
 	tbs.s.screenMode = screenMode
 
 	switch screenMode {
-	case izapple2.ScreenModeNTSC:
+	case screen.ScreenModeNTSC:
 		tbs.ntsc.Hide()
 		tbs.ntscDisabled.Show()
-	case izapple2.ScreenModePlain:
+	case screen.ScreenModePlain:
 		tbs.plain.Hide()
 		tbs.plainDisabled.Show()
-	case izapple2.ScreenModeGreen:
+	case screen.ScreenModeGreen:
 		tbs.green.Hide()
 		tbs.greenDisabled.Show()
 	}

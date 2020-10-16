@@ -1,11 +1,10 @@
-package izapple2
+package screen
 
 import (
 	"fmt"
 	"image"
 	"image/color"
 	"strings"
-	"time"
 )
 
 const (
@@ -13,44 +12,32 @@ const (
 	charHeight    = 8
 	text40Columns = 40
 	textLines     = 24
-
-	textPage1Address = uint16(0x0400)
-	textPage2Address = uint16(0x0800)
-	textPageSize     = uint16(0x0400)
 )
 
-func snapshotText40Mode(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
-	text := getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
-	return renderTextMode(a, text, nil /*colorMap*/, light)
+func snapshotText40(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
+	text := getTextFromMemory(vs, isSecondPage, false)
+	return renderText(vs, text, nil /*colorMap*/, light)
 }
 
-func snapshotText80Mode(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
-	text := getText80FromMemory(a, isSecondPage)
-	return renderTextMode(a, text, nil /*colorMap*/, light)
+func snapshotText80(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
+	text := getText80FromMemory(vs, isSecondPage)
+	return renderText(vs, text, nil /*colorMap*/, light)
 }
 
-func snapshotText40RGBMode(a *Apple2, isSecondPage bool) *image.RGBA {
-	text := getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
-	colorMap := getTextFromMemory(a.mmu.getVideoRAM(true), isSecondPage)
-	return renderTextMode(a, text, colorMap, nil)
+func snapshotText40RGB(vs VideoSource, isSecondPage bool) *image.RGBA {
+	text := getTextFromMemory(vs, isSecondPage, false)
+	colorMap := getTextFromMemory(vs, isSecondPage, true)
+	return renderText(vs, text, colorMap, nil)
 }
 
-func snapshotText40RGBModeColors(a *Apple2, isSecondPage bool) *image.RGBA {
-	colorMap := getTextFromMemory(a.mmu.getVideoRAM(true), isSecondPage)
-	return renderTextMode(a, nil /*text*/, colorMap, nil)
+func snapshotText40RGBColors(vs VideoSource, isSecondPage bool) *image.RGBA {
+	colorMap := getTextFromMemory(vs, isSecondPage, true)
+	return renderText(vs, nil /*text*/, colorMap, nil)
 }
 
-func getTextCharOffset(col int, line int) uint16 {
-	// See "Understanding the Apple II", page 5-10
-	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
-	section := line / 8 // Top, middle and bottom
-	eighth := line % 8
-	return uint16(section*40 + eighth*0x80 + col)
-}
-
-func getText80FromMemory(a *Apple2, isSecondPage bool) []uint8 {
-	text40Columns := getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
-	text40ColumnsAlt := getTextFromMemory(a.mmu.getVideoRAM(true), isSecondPage)
+func getText80FromMemory(vs VideoSource, isSecondPage bool) []uint8 {
+	text40Columns := getTextFromMemory(vs, isSecondPage, false)
+	text40ColumnsAlt := getTextFromMemory(vs, isSecondPage, true)
 
 	// Merge the two 40 cols to return 80 cols
 	text80Columns := make([]uint8, 2*len(text40Columns))
@@ -62,13 +49,8 @@ func getText80FromMemory(a *Apple2, isSecondPage bool) []uint8 {
 	return text80Columns
 }
 
-func getTextFromMemory(mem *memoryRange, isSecondPage bool) []uint8 {
-	addressStart := textPage1Address
-	if isSecondPage {
-		addressStart = textPage2Address
-	}
-	addressEnd := addressStart + textPageSize
-	data := mem.subRange(addressStart, addressEnd)
+func getTextFromMemory(vs VideoSource, isSecondPage bool, isExt bool) []uint8 {
+	data := vs.GetTextMemory(isSecondPage, isExt)
 
 	text := make([]uint8, textLines*text40Columns)
 	for l := 0; l < textLines; l++ {
@@ -80,6 +62,14 @@ func getTextFromMemory(mem *memoryRange, isSecondPage bool) []uint8 {
 	return text
 }
 
+func getTextCharOffset(col int, line int) uint16 {
+	// See "Understanding the Apple II", page 5-10
+	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
+	section := line / 8 // Top, middle and bottom
+	eighth := line % 8
+	return uint16(section*40 + eighth*0x80 + col)
+}
+
 func getRGBTextColor(pixel bool, colorKey uint8) color.Color {
 	if pixel {
 		colorKey >>= 4
@@ -89,11 +79,7 @@ func getRGBTextColor(pixel bool, colorKey uint8) color.Color {
 
 }
 
-func renderTextMode(a *Apple2, text []uint8, colorMap []uint8, light color.Color) *image.RGBA {
-	// Flash mode is 2Hz (host time)
-	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
-	isAltText := a.io.isSoftSwitchActive(ioFlagAltChar)
-
+func renderText(vs VideoSource, text []uint8, colorMap []uint8, light color.Color) *image.RGBA {
 	columns := len(text) / textLines
 	if text == nil {
 		columns = text40Columns
@@ -118,26 +104,7 @@ func renderTextMode(a *Apple2, text []uint8, colorMap []uint8, light color.Color
 				char = 79 + 128 // Debug screen filed with O
 			}
 
-			var pixel bool
-			if a.isApple2e {
-				vid6 := (char & 0x40) != 0
-				vid7 := (char & 0x80) != 0
-				char := char & 0x3f
-				if vid6 && (vid7 || isAltText) {
-					char += 0x40
-				}
-				if vid7 || (vid6 && isFlashedFrame && !isAltText) {
-					char += 0x80
-				}
-				pixel = !a.cg.getPixel(char, rowInChar, colInChar)
-			} else {
-				pixel = a.cg.getPixel(char, rowInChar, colInChar)
-				topBits := char >> 6
-				isInverse := topBits == 0
-				isFlash := topBits == 1
-
-				pixel = pixel != (isInverse || (isFlash && isFlashedFrame))
-			}
+			pixel := vs.GetCharacterPixel(char, rowInChar, colInChar)
 
 			var colour color.Color
 			if colorMap != nil {
@@ -160,18 +127,18 @@ func renderTextMode(a *Apple2, text []uint8, colorMap []uint8, light color.Color
 	return img
 }
 
-// DumpTextModeAnsi returns the text mode contents using ANSI escape codes
-// for reverse and flash
-func DumpTextModeAnsi(a *Apple2) string {
-	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
-	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
-	isAltText := a.isApple2e && a.io.isSoftSwitchActive(ioFlagAltChar)
+// RenderTextModeAnsi returns the text mode contents using ANSI escape codes for reverse and flash
+func RenderTextModeAnsi(vs VideoSource, is80Columns bool, isSecondPage bool, isAltText bool) string {
+	//func DumpTextModeAnsi(a *Apple2) string {
+	//	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
+	//	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
+	//	isAltText := a.isApple2e && a.io.isSoftSwitchActive(ioFlagAltChar)
 
 	var text []uint8
 	if is80Columns {
-		text = getText80FromMemory(a, isSecondPage)
+		text = getText80FromMemory(vs, isSecondPage)
 	} else {
-		text = getTextFromMemory(a.mmu.getVideoRAM(false), isSecondPage)
+		text = getTextFromMemory(vs, isSecondPage, false)
 	}
 	columns := len(text) / textLines
 

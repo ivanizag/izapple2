@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/screen"
 
 	"github.com/pkg/profile"
 
@@ -42,7 +43,7 @@ func main() {
 }
 
 func fyneRun(s *state) {
-	s.screenMode = izapple2.ScreenModeNTSC
+	s.screenMode = screen.ScreenModeNTSC
 
 	s.app = app.New()
 	s.app.SetIcon(resourceApple2Png)
@@ -52,13 +53,13 @@ func fyneRun(s *state) {
 	s.devices = newPanelDevices(s)
 	s.devices.w.Hide()
 	toolbar := buildToolbar(s)
-	screen := canvas.NewImageFromImage(nil)
-	screen.ScaleMode = canvas.ImageScalePixels // Looks worst but loads less.
-	screen.SetMinSize(fyne.NewSize(280*2, 192*2))
+	display := canvas.NewImageFromImage(nil)
+	display.ScaleMode = canvas.ImageScalePixels // Looks worst but loads less.
+	display.SetMinSize(fyne.NewSize(280*2, 192*2))
 
 	container := fyne.NewContainerWithLayout(
 		layout.NewBorderLayout(nil, toolbar, nil, s.devices.w),
-		screen, toolbar, s.devices.w,
+		display, toolbar, s.devices.w,
 	)
 	s.win.SetContent(container)
 	s.win.SetPadded(false)
@@ -81,13 +82,13 @@ func fyneRun(s *state) {
 				if !s.a.IsPaused() {
 					var img *image.RGBA
 					if s.showPages {
-						img = s.a.SnapshotParts(s.screenMode)
-						s.win.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, s.a.VideoModeName(), img.Rect.Dx()/2, img.Rect.Dy()/2))
+						img = screen.SnapshotParts(s.a, s.screenMode)
+						s.win.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, screen.VideoModeName(s.a), img.Rect.Dx()/2, img.Rect.Dy()/2))
 					} else {
-						img = s.a.Snapshot(s.screenMode)
+						img = screen.Snapshot(s.a, s.screenMode)
 					}
-					screen.Image = img
-					canvas.Refresh(screen)
+					display.Image = img
+					canvas.Refresh(display)
 				}
 			}
 		}
