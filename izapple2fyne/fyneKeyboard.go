@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/driver/desktop"
 	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/screen"
 )
 
 type keyboard struct {
@@ -103,10 +104,10 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 			k.s.a.SendCommand(izapple2.CommandToggleSpeed)
 		}
 	case fyne.KeyF6:
-		if k.s.screenMode != izapple2.ScreenModeGreen {
-			k.s.screenMode = izapple2.ScreenModeGreen
+		if k.s.screenMode != screen.ScreenModeGreen {
+			k.s.screenMode = screen.ScreenModeGreen
 		} else {
-			k.s.screenMode = izapple2.ScreenModeNTSC
+			k.s.screenMode = screen.ScreenModeNTSC
 		}
 	case fyne.KeyF7:
 		k.s.showPages = !k.s.showPages
@@ -118,7 +119,7 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 		k.s.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case fyne.KeyF12:
 		//case fyne.KeyPrintScreen:
-		err := izapple2.SaveSnapshot(k.s.a, k.s.screenMode, "snapshot.png")
+		err := screen.SaveSnapshot(k.s.a, k.s.screenMode, "snapshot.png")
 		if err != nil {
 			fmt.Printf("Error saving snapshoot: %v.\n.", err)
 		} else {

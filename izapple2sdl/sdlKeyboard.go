@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/screen"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -104,7 +105,7 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case sdl.K_F12:
 	case sdl.K_PRINTSCREEN:
-		err := izapple2.SaveSnapshot(k.a, izapple2.ScreenModeNTSC, "snapshot.png")
+		err := screen.SaveSnapshot(k.a, screen.ScreenModeNTSC, "snapshot.png")
 		if err != nil {
 			fmt.Printf("Error saving snapshoot: %v.\n.", err)
 		} else {

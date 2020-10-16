@@ -1,4 +1,4 @@
-package izapple2
+package screen
 
 import (
 	"image"
@@ -6,16 +6,18 @@ import (
 )
 
 const (
-	hiResWidth        = 280
-	hiResLineBytes    = hiResWidth / 7
-	hiResHeight       = 192
-	hiResHeightMixed  = 160
-	hiResPage1Address = uint16(0x2000)
-	hiResPage2Address = uint16(0x4000)
+	hiResWidth       = 280
+	hiResLineBytes   = hiResWidth / 7
+	hiResHeight      = 192
+	hiResHeightMixed = 160
 )
 
-func getHiResLineOffset(line int) uint16 {
+func snapshotHiRes(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
+	data := vs.GetVideoMemory(isSecondPage, false)
+	return renderHiRes(data, light)
+}
 
+func getHiResLineOffset(line int) uint16 {
 	// See "Understanding the Apple II", page 5-14
 	// http://www.applelogic.org/files/UNDERSTANDINGTHEAII.pdf
 	section := line >> 6 // Top, middle and bottom
@@ -24,23 +26,14 @@ func getHiResLineOffset(line int) uint16 {
 	return uint16(section*40 + outerEighth*0x80 + innerEighth*0x400)
 }
 
-func getHiResLine(a *Apple2, line int, isSecondPage bool, auxMem bool) []uint8 {
-	address := hiResPage1Address
-	if isSecondPage {
-		address = hiResPage2Address
-	}
-
-	address += getHiResLineOffset(line)
-	return a.mmu.getVideoRAM(auxMem).subRange(address, address+hiResLineBytes)
-}
-
-func snapshotHiResModeMono(a *Apple2, isSecondPage bool, light color.Color) *image.RGBA {
+func renderHiRes(data []uint8, light color.Color) *image.RGBA {
 	// As described in "Undertanding the Apple II", with half pixel shifts
 	size := image.Rect(0, 0, 2*hiResWidth, hiResHeight)
 	img := image.NewRGBA(size)
 
 	for y := 0; y < hiResHeight; y++ {
-		bytes := getHiResLine(a, y, isSecondPage, false /*auxMem*/)
+		offset := getHiResLineOffset(y)
+		bytes := data[offset : offset+hiResLineBytes]
 		x := 0
 		var previousColour color.Color = color.Black
 		for _, b := range bytes {

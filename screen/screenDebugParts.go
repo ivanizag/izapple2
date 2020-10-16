@@ -1,20 +1,20 @@
-package izapple2
+package screen
 
 import (
 	"image"
 )
 
 // SnapshotParts the currently visible screen
-func (a *Apple2) SnapshotParts(screenMode int) *image.RGBA {
-	videoMode := getCurrentVideoMode(a)
-	isSecondPage := (videoMode & videoSecondPage) != 0
-	videoBase := videoMode & videoBaseMask
-	mixMode := videoMode & videoMixTextMask
-	modifiers := videoMode & videoModifiersMask
+func SnapshotParts(vs VideoSource, screenMode int) *image.RGBA {
+	videoMode := vs.GetCurrentVideoMode()
+	isSecondPage := (videoMode & VideoSecondPage) != 0
+	videoBase := videoMode & VideoBaseMask
+	mixMode := videoMode & VideoMixTextMask
+	modifiers := videoMode & VideoModifiersMask
 
-	snapScreen := snapshotByMode(a, videoMode, screenMode)
-	snapPage1 := snapshotByMode(a, videoMode&^videoSecondPage, screenMode)
-	snapPage2 := snapshotByMode(a, videoMode|videoSecondPage, screenMode)
+	snapScreen := snapshotByMode(vs, videoMode, screenMode)
+	snapPage1 := snapshotByMode(vs, videoMode&^VideoSecondPage, screenMode)
+	snapPage2 := snapshotByMode(vs, videoMode|VideoSecondPage, screenMode)
 	var snapAux *image.RGBA
 
 	/*
@@ -23,16 +23,16 @@ func (a *Apple2) SnapshotParts(screenMode int) *image.RGBA {
 		snapAux = filterMask(mask)
 	}*/
 
-	if videoBase == videoText40RGB {
-		snapAux = snapshotText40RGBModeColors(a, isSecondPage)
+	if videoBase == VideoText40RGB {
+		snapAux = snapshotText40RGBColors(vs, isSecondPage)
 	} else {
 		switch mixMode {
-		case videoMixText80:
-			snapAux = snapshotByMode(a, videoText80|modifiers, screenMode)
-		case videoMixText40RGB:
-			snapAux = snapshotByMode(a, videoText40RGB|modifiers, screenMode)
+		case VideoMixText80:
+			snapAux = snapshotByMode(vs, VideoText80|modifiers, screenMode)
+		case VideoMixText40RGB:
+			snapAux = snapshotByMode(vs, VideoText40RGB|modifiers, screenMode)
 		default:
-			snapAux = snapshotByMode(a, videoText40|modifiers, screenMode)
+			snapAux = snapshotByMode(vs, VideoText40|modifiers, screenMode)
 		}
 	}
 
@@ -40,50 +40,50 @@ func (a *Apple2) SnapshotParts(screenMode int) *image.RGBA {
 }
 
 // VideoModeName returns the name of the current video mode
-func (a *Apple2) VideoModeName() string {
-	videoMode := getCurrentVideoMode(a)
-	videoBase := videoMode & videoBaseMask
-	mixMode := videoMode & videoMixTextMask
+func VideoModeName(vs VideoSource) string {
+	videoMode := vs.GetCurrentVideoMode()
+	videoBase := videoMode & VideoBaseMask
+	mixMode := videoMode & VideoMixTextMask
 
 	var name string
 
 	switch videoBase {
-	case videoText40:
+	case VideoText40:
 		name = "TEXT40COL"
-	case videoText80:
+	case VideoText80:
 		name = "TEXT80COL"
-	case videoText40RGB:
+	case VideoText40RGB:
 		name = "TEXT40COLRGB"
-	case videoGR:
+	case VideoGR:
 		name = "GR"
-	case videoDGR:
+	case VideoDGR:
 		name = "DGR"
-	case videoHGR:
+	case VideoHGR:
 		name = "HGR"
-	case videoDHGR:
+	case VideoDHGR:
 		name = "DHGR"
-	case videoMono560:
+	case VideoMono560:
 		name = "Mono560"
-	case videoRGBMix:
+	case VideoRGBMix:
 		name = "RGMMIX"
-	case videoRGB160:
+	case VideoRGB160:
 		name = "RGB160"
-	case videoSHR:
+	case VideoSHR:
 		name = "SHR"
 	default:
 		name = "Unknown video mode"
 	}
 
-	if (videoMode & videoSecondPage) != 0 {
+	if (videoMode & VideoSecondPage) != 0 {
 		name += "-PAGE2"
 	}
 
 	switch mixMode {
-	case videoMixText40:
+	case VideoMixText40:
 		name += "-MIX40"
-	case videoMixText80:
+	case VideoMixText80:
 		name += "-MIX80"
-	case videoMixText40RGB:
+	case VideoMixText40RGB:
 		name += "-MIX40RGB"
 	}
 
