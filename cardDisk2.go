@@ -3,6 +3,8 @@ package izapple2
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/ivanizag/izapple2/storage"
 )
 
 /*
@@ -33,7 +35,7 @@ type CardDisk2 struct {
 
 type cardDisk2Drive struct {
 	name       string
-	diskette   diskette
+	diskette   storage.Diskette
 	power      bool  // q4
 	phases     uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
 	tracksStep int   // Stepmotor for tracks position. 4 steps per track
@@ -102,7 +104,7 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 			drive.power = false
 			c.a.releaseFastMode()
 			if drive.diskette != nil {
-				drive.diskette.powerOff(c.a.cpu.GetCycles())
+				drive.diskette.PowerOff(c.a.cpu.GetCycles())
 			}
 		}
 		return c.dataLatch
@@ -113,7 +115,7 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 			drive.power = true
 			c.a.requestFastMode()
 			if drive.diskette != nil {
-				drive.diskette.powerOn(c.a.cpu.GetCycles())
+				drive.diskette.PowerOn(c.a.cpu.GetCycles())
 			}
 		}
 		return 0
@@ -173,9 +175,9 @@ func (c *CardDisk2) processQ6Q7(in uint8) {
 	}
 	if !c.q6 { // shift
 		if !c.q7 { // Q6L-Q7L: Read
-			c.dataLatch = d.diskette.read(d.tracksStep, c.a.cpu.GetCycles())
+			c.dataLatch = d.diskette.Read(d.tracksStep, c.a.cpu.GetCycles())
 		} else { // Q6L-Q7H: Write the dataLatch value to disk. Shift data out
-			d.diskette.write(d.tracksStep, c.dataLatch, c.a.cpu.GetCycles())
+			d.diskette.Write(d.tracksStep, c.dataLatch, c.a.cpu.GetCycles())
 		}
 	} else { // load
 		if !c.q7 { // Q6H-Q7L: Sense write protect / prewrite state
@@ -269,7 +271,7 @@ func moveStep(phases uint8, prevStep int) int {
 	return nextStep
 }
 
-func (d *cardDisk2Drive) insertDiskette(name string, dt diskette) {
+func (d *cardDisk2Drive) insertDiskette(name string, dt storage.Diskette) {
 	d.name = name
 	d.diskette = dt
 }

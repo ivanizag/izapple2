@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ivanizag/izapple2/core6502"
+	"github.com/ivanizag/izapple2/storage"
 )
 
 /*
@@ -35,7 +36,7 @@ func loadBase64aRom(a *Apple2) error {
 
 	for i := 0; i < base64aRomChipCount; i++ {
 		filename := fmt.Sprintf("<internal>/BASE64A_%X.BIN", 0xd0+i*0x08)
-		data, err := loadResource(filename)
+		data, err := storage.LoadResource(filename)
 		if err != nil {
 			return err
 		}

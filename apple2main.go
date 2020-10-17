@@ -3,6 +3,8 @@ package izapple2
 import (
 	"flag"
 	"os"
+
+	"github.com/ivanizag/izapple2/storage"
 )
 
 const defaultInternal = "<default>"
@@ -25,10 +27,6 @@ func MainApple() *Apple2 {
 		"diskb",
 		"",
 		"file to load on the second disk drive")
-	wozImage := flag.String(
-		"woz",
-		"",
-		"show WOZ file information")
 	hardDiskImage := flag.String(
 		"hd",
 		"",
@@ -133,21 +131,11 @@ func MainApple() *Apple2 {
 	diskImageFinal := *diskImage
 	hardDiskImageFinal := *hardDiskImage
 	if filename != "" {
-		if isDiskette(filename) {
+		if storage.IsDiskette(filename) {
 			diskImageFinal = filename
 		} else {
 			hardDiskImageFinal = filename
 		}
-	}
-
-	if *wozImage != "" {
-		f, err := loadFileWoz(*wozImage)
-		if err != nil {
-			panic(err)
-		}
-		f.dump()
-		return nil
-
 	}
 
 	a := newApple2()

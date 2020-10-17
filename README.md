@@ -219,8 +219,6 @@ Only valid on SDL mode
         dump to the console the sofswitch registrations
   -vidHDSlot int
         slot for the VidHD card, only for //e models. -1 for none (default 2)
-  -woz string
-        show WOZ file information
 
 
 ```

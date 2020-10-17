@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/ivanizag/izapple2/core6502"
+	"github.com/ivanizag/izapple2/storage"
 )
 
 func newApple2() *Apple2 {
@@ -71,7 +72,7 @@ const (
 
 // LoadRom loads a standard Apple2+ or 2e ROM
 func (a *Apple2) LoadRom(filename string) error {
-	data, err := loadResource(filename)
+	data, err := storage.LoadResource(filename)
 	if err != nil {
 		return err
 	}
@@ -92,7 +93,7 @@ func (a *Apple2) AddDisk2(slot int, diskImage, diskBImage string) error {
 	a.insertCard(c, slot)
 
 	if diskImage != "" {
-		diskette, err := loadDiskette(diskImage)
+		diskette, err := storage.LoadDiskette(diskImage)
 		if err != nil {
 			return err
 		}
@@ -100,7 +101,7 @@ func (a *Apple2) AddDisk2(slot int, diskImage, diskBImage string) error {
 	}
 
 	if diskBImage != "" {
-		diskette, err := loadDiskette(diskBImage)
+		diskette, err := storage.LoadDiskette(diskBImage)
 		if err != nil {
 			return err
 		}

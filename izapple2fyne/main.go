@@ -99,9 +99,6 @@ func fyneRun(s *state) {
 	})
 
 	s.win.Show()
-
-	fmt.Printf("%v\n", s.win.Canvas().Scale())
-
 	s.app.Run()
 }
 

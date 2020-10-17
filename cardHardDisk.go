@@ -3,6 +3,8 @@ package izapple2
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/ivanizag/izapple2/storage"
 )
 
 /*
@@ -24,7 +26,7 @@ type CardHardDisk struct {
 	filename string
 	trace    bool
 
-	disk      *blockDisk
+	disk      *storage.BlockDisk
 	mliParams uint16
 }
 
@@ -45,7 +47,7 @@ func (c *CardHardDisk) GetInfo() map[string]string {
 
 // LoadImage loads a disk image
 func (c *CardHardDisk) LoadImage(filename string) error {
-	hd, err := openBlockDisk(filename)
+	hd, err := storage.OpenBlockDisk(filename)
 	if err != nil {
 		return err
 	}
@@ -95,11 +97,11 @@ func (c *CardHardDisk) assign(a *Apple2, slot int) {
 	}, "HDCOMMAND")
 	c.addCardSoftSwitchR(1, func(*ioC0Page) uint8 {
 		// Blocks available, low byte
-		return uint8(c.disk.blocks)
+		return uint8(c.disk.GetSizeInBlocks())
 	}, "HDBLOCKSLO")
 	c.addCardSoftSwitchR(2, func(*ioC0Page) uint8 {
 		// Blocks available, high byte
-		return uint8(c.disk.blocks >> 8)
+		return uint8(c.disk.GetSizeInBlocks() >> 8)
 	}, "HDBLOCKHI")
 
 	c.addCardSoftSwitchR(3, func(*ioC0Page) uint8 {
@@ -146,12 +148,12 @@ func (c *CardHardDisk) readBlock(block uint16, dest uint16) uint8 {
 		fmt.Printf("[CardHardDisk] Read block %v into $%x.\n", block, dest)
 	}
 
-	data, err := c.disk.read(uint32(block))
+	data, err := c.disk.Read(uint32(block))
 	if err != nil {
 		return proDosDeviceErrorIO
 	}
 	// Byte by byte transfer to memory using the full Poke code path
-	for i := uint16(0); i < uint16(proDosBlockSize); i++ {
+	for i := uint16(0); i < uint16(len(data)); i++ {
 		c.a.mmu.Poke(dest+i, data[i])
 	}
 
@@ -163,17 +165,17 @@ func (c *CardHardDisk) writeBlock(block uint16, source uint16) uint8 {
 		fmt.Printf("[CardHardDisk] Write block %v from $%x.\n", block, source)
 	}
 
-	if c.disk.readOnly {
+	if c.disk.IsReadOnly() {
 		return proDosDeviceErrorWriteProtected
 	}
 
 	// Byte by byte transfer from memory using the full Peek code path
-	buf := make([]uint8, proDosBlockSize)
-	for i := uint16(0); i < uint16(proDosBlockSize); i++ {
+	buf := make([]uint8, storage.ProDosBlockSize)
+	for i := uint16(0); i < uint16(len(buf)); i++ {
 		buf[i] = c.a.mmu.Peek(source + i)
 	}
 
-	err := c.disk.write(uint32(block), buf)
+	err := c.disk.Write(uint32(block), buf)
 	if err != nil {
 		return proDosDeviceErrorIO
 	}

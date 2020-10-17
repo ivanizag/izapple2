@@ -1,5 +1,7 @@
 package izapple2
 
+import "github.com/ivanizag/izapple2/storage"
+
 // Card represents an Apple II card to be inserted in a slot
 type Card interface {
 	loadRom(data []uint8)
@@ -32,7 +34,7 @@ func (c *cardBase) GetInfo() map[string]string {
 }
 
 func (c *cardBase) loadRomFromResource(resource string) {
-	data, err := loadResource(resource)
+	data, err := storage.LoadResource(resource)
 	if err != nil {
 		// The resource should be internal and never fail
 		panic(err)
