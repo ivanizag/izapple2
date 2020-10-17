@@ -45,6 +45,16 @@ func (k *keyboard) putKeyAction(keyEvent *fyne.KeyEvent, press bool) {
 		}
 	}
 
+	if press && ctrl {
+		// F keys with ctrl do not generate events in putKey()
+		switch keyEvent.Name {
+		case fyne.KeyF1:
+			k.s.a.SendCommand(izapple2.CommandReset)
+		case fyne.KeyF12:
+			screen.AddScenario(k.s.a, "../screen/test_resources/")
+		}
+	}
+
 	switch keyEvent.Name {
 	case desktop.KeyControlLeft:
 		k.controlLeft = press
@@ -62,7 +72,10 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 		20 PRINT A, A - 128
 		30 GOTO 10
 	*/
-	ctrl := k.controlLeft || k.controlRight
+
+	// Keys with control are not generating events in putKey()
+	//ctrl := k.controlLeft || k.controlRight
+
 	result := uint8(0)
 	switch keyEvent.Name {
 	case fyne.KeyEscape:
@@ -94,15 +107,11 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 
 	// Control of the emulator
 	case fyne.KeyF1:
-		if ctrl {
+		/*if ctrl {
 			k.s.a.SendCommand(izapple2.CommandReset)
-		}
+		}*/
 	case fyne.KeyF5:
-		if ctrl {
-			k.s.a.SendCommand(izapple2.CommandShowSpeed)
-		} else {
-			k.s.a.SendCommand(izapple2.CommandToggleSpeed)
-		}
+		k.s.a.SendCommand(izapple2.CommandShowSpeed)
 	case fyne.KeyF6:
 		if k.s.screenMode != screen.ScreenModeGreen {
 			k.s.screenMode = screen.ScreenModeGreen

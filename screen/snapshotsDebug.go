@@ -65,7 +65,7 @@ func VideoModeName(vs VideoSource) string {
 	case VideoMono560:
 		name = "Mono560"
 	case VideoRGBMix:
-		name = "RGMMIX"
+		name = "RGBMIX"
 	case VideoRGB160:
 		name = "RGB160"
 	case VideoSHR:
