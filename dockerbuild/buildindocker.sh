@@ -26,5 +26,18 @@ env CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows CGO_LDFLAGS="-L/usr/x86
 chown --reference /build izapple2sdl.exe
 cp izapple2sdl.exe /build
 
+# Build izapple2fyne for Linux
+cd /tmp/izapple2/frontend/a2fyne
+go build .
+chown --reference /build a2fyne
+cp a2fyne /build/izapple2fyne
+
+# Build izapple2fyne.exe for Windows
+cd /tmp/izapple2/frontend/a2fyne
+env CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows CGO_LDFLAGS="-L/usr/x86_64-w64-mingw32/lib " CGO_FLAGS="-I/usr/x86_64-w64-mingw32/include -D_REENTRANT" go build -o izapple2fyne.exe .
+chown --reference /build izapple2fyne.exe
+cp izapple2fyne.exe /build
+
+
 # Copy SDL2 Runtime
 cp /sdl2runtime/* /build
