@@ -1,7 +1,7 @@
 package screen
 
+// Base Video Modes
 const (
-	// Base Video Mode
 	VideoBaseMask  uint16 = 0x1f
 	VideoText40    uint16 = 0x01
 	VideoGR        uint16 = 0x02
@@ -14,14 +14,18 @@ const (
 	VideoRGBMix    uint16 = 0x12
 	VideoRGB160    uint16 = 0x13
 	VideoSHR       uint16 = 0x14
+)
 
-	// Mix text modifiers
+// Mix text video mdes modifiers
+const (
 	VideoMixTextMask  uint16 = 0x0f00
 	VideoMixText40    uint16 = 0x0100
 	VideoMixText80    uint16 = 0x0200
 	VideoMixText40RGB uint16 = 0x0300
+)
 
-	// Other modifiers
+// Other video mode modifiers
+const (
 	VideoModifiersMask uint16 = 0xf000
 	VideoSecondPage    uint16 = 0x1000
 )
