@@ -144,5 +144,5 @@ func DumpTextModeAnsi(a *Apple2) string {
 	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
 	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
 	isAltText := a.isApple2e && a.io.isSoftSwitchActive(ioFlagAltChar)
-	return screen.RenderTextModeAnsi(a, is80Columns, isSecondPage, isAltText)
+	return screen.RenderTextModeAnsi(a, is80Columns, isSecondPage, isAltText, a.isApple2e)
 }
