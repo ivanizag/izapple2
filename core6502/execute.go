@@ -103,6 +103,11 @@ func (s *State) GetTrace() bool {
 	return s.trace
 }
 
+// SetMemory changes the memory provider
+func (s *State) SetMemory(mem Memory) {
+	s.mem = mem
+}
+
 // GetPCAndSP returns the current program counter and stack pointer. Used to trace MLI calls
 func (s *State) GetPCAndSP() (uint16, uint8) {
 	return s.reg.getPC(), s.reg.getSP()

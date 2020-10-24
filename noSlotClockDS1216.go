@@ -135,7 +135,6 @@ func (nsc *noSlotClockDS1216) peek(address uint16) uint8 {
 }
 
 func (nsc *noSlotClockDS1216) poke(address uint16, value uint8) {
-	// This should not happen as we are dealing with ROM
 	nsc.memory.poke(address, value)
 }
 

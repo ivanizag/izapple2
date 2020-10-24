@@ -288,6 +288,7 @@ func MainApple() *Apple2 {
 
 	}
 
+	// a.AddRomX()
 	// a.AddCardInOut(2)
 	// a.AddCardLogger(4)
 

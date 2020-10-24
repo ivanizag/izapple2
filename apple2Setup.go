@@ -171,6 +171,12 @@ func (a *Apple2) AddNoSlotClock() {
 	a.mmu.physicalROM[0] = nsc
 }
 
+// AddRomX inserts a RomX. It intercepts all memory accesses
+func (a *Apple2) AddRomX() {
+	rx := newRomX(a, a.mmu)
+	a.cpu.SetMemory(rx)
+}
+
 // AddNoSlotClockInCard inserts a DS1215 no slot clock under a card ROM
 func (a *Apple2) AddNoSlotClockInCard(slot int) error {
 	cardRom := a.mmu.cardsROM[slot]

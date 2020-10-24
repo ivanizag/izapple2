@@ -50,7 +50,14 @@ func (a *Apple2) Run() {
 		// Run a 6502 step
 		if !a.paused {
 			for i := 0; i < cpuSpinLoops; i++ {
+				// Conditional tracing
+				//pc, _ := a.cpu.GetPCAndSP()
+				//a.cpu.SetTrace(pc >= 0x300 && pc <= 0x400)
+
+				// Execution
 				a.cpu.ExecuteInstruction()
+
+				// Special tracing
 				a.executionTrace()
 			}
 		} else {
