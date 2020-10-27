@@ -16,6 +16,13 @@ See:
 
 It is not enough to intercept the ROM accesses. RomX intercept the 74LS138 in
 position F12, that has access to the full 0xc000-0xf000 on the Apple II+
+
+Firmware:
+	- It first copies $D000-$DFFF to $6000 and runs there.
+
+go run *.go -rom ROMX.FIRM.dump -disk ROM\ X\ 20-10-22.dsk
+
+
 */
 
 type romX struct {

@@ -304,3 +304,25 @@ func (mmu *memoryManager) setExtendedRAMActiveBlock(block uint8) {
 	}
 	mmu.extendedRAMBlock = block
 }
+
+func (mmu *memoryManager) reset() {
+	if mmu.apple2.isApple2e {
+		// MMU UtA2e 4-14, 5-22
+		mmu.altZeroPage = false
+		mmu.altMainRAMActiveRead = false
+		mmu.altMainRAMActiveWrite = false
+		mmu.store80Active = false
+		mmu.slotC3ROMActive = false
+		mmu.intCxROMActive = false
+		mmu.intC8ROMActive = false
+
+		// IOU UtaA2e 7-3
+		// "All softswitches except KEYSTROKE, TEXT and MIXED are reset
+		// when the RESET line drops low"
+		mmu.apple2.io.softSwitchesData[ioFlagSecondPage] = ssOff
+		mmu.apple2.io.softSwitchesData[ioFlagHiRes] = ssOff
+		mmu.apple2.io.softSwitchesData[ioFlag80Col] = ssOff
+		mmu.apple2.io.softSwitchesData[ioDataNewVideo] = ssOff
+		// ioFlagText ?
+	}
+}

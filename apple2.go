@@ -113,6 +113,16 @@ func (a *Apple2) Run() {
 	}
 }
 
+func (a *Apple2) reset() {
+	a.cpu.Reset()
+	a.mmu.reset()
+	for _, c := range a.cards {
+		if c != nil {
+			c.reset()
+		}
+	}
+}
+
 // IsPaused returns true when emulator is paused
 func (a *Apple2) IsPaused() bool {
 	return a.paused
@@ -171,7 +181,7 @@ func (a *Apple2) executeCommand(command int) {
 	case CommandToggleCPUTrace:
 		a.cpu.SetTrace(!a.cpu.GetTrace())
 	case CommandReset:
-		a.cpu.Reset()
+		a.reset()
 	}
 }
 

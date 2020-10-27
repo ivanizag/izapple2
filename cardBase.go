@@ -6,6 +6,7 @@ import "github.com/ivanizag/izapple2/storage"
 type Card interface {
 	loadRom(data []uint8)
 	assign(a *Apple2, slot int)
+	reset()
 
 	GetName() string
 	GetInfo() map[string]string
@@ -31,6 +32,10 @@ func (c *cardBase) GetName() string {
 
 func (c *cardBase) GetInfo() map[string]string {
 	return nil
+}
+
+func (c *cardBase) reset() {
+	// nothing
 }
 
 func (c *cardBase) loadRomFromResource(resource string) {

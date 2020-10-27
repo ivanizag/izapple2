@@ -49,6 +49,17 @@ const (
 	lcWriteEnabled     = 2
 )
 
+func (c *CardLanguage) reset() {
+	if c.a.isApple2e {
+		// UtA2e 1-3, 5-23
+		c.readState = false
+		c.writeState = lcWriteEnabled
+		c.altBank = true // Start on bank2
+		c.applyState()
+	}
+
+}
+
 func (c *CardLanguage) assign(a *Apple2, slot int) {
 	c.readState = false
 	c.writeState = lcWriteEnabled

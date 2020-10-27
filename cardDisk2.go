@@ -74,6 +74,16 @@ func (c *CardDisk2) GetInfo() map[string]string {
 	return info
 }
 
+func (c *CardDisk2) reset() {
+	// UtA2e 9-12, all sowtches forced to off
+	drive := &c.drive[c.selected]
+	drive.phases = 0      // q0, q1, q2, q3
+	c.softSwitchQ4(false) // q4
+	c.selected = 0        // q5
+	c.q6 = false
+	c.q7 = false
+}
+
 func (c *CardDisk2) assign(a *Apple2, slot int) {
 	// Q1, Q2, Q3 and Q4 phase control soft switches,
 	for i := uint8(0); i < 4; i++ {
@@ -99,17 +109,11 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 
 	// Q4, power switch
 	c.addCardSoftSwitchR(0x8, func(_ *ioC0Page) uint8 {
-		drive := &c.drive[c.selected]
-		if drive.power {
-			drive.power = false
-			c.a.releaseFastMode()
-			if drive.diskette != nil {
-				drive.diskette.PowerOff(c.a.cpu.GetCycles())
-			}
-		}
+		c.softSwitchQ4(false)
 		return c.dataLatch
 	}, "Q4DRIVEOFF")
 	c.addCardSoftSwitchR(0x9, func(_ *ioC0Page) uint8 {
+		c.softSwitchQ4(true)
 		drive := &c.drive[c.selected]
 		if !drive.power {
 			drive.power = true
@@ -143,6 +147,25 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 	}
 
 	c.cardBase.assign(a, slot)
+}
+
+func (c *CardDisk2) softSwitchQ4(value bool) {
+	drive := &c.drive[c.selected]
+	if !value && drive.power {
+		// Turn off
+		drive.power = false
+		c.a.releaseFastMode()
+		if drive.diskette != nil {
+			drive.diskette.PowerOff(c.a.cpu.GetCycles())
+		}
+	} else if value && !drive.power {
+		// Turn on
+		drive.power = true
+		c.a.requestFastMode()
+		if drive.diskette != nil {
+			drive.diskette.PowerOn(c.a.cpu.GetCycles())
+		}
+	}
 }
 
 // Q6: shift/load
