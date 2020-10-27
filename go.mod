@@ -10,7 +10,7 @@ require (
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/stretchr/testify v1.6.1 // indirect
-	github.com/veandco/go-sdl2 v0.4.0
+	github.com/veandco/go-sdl2 v0.4.4
 	golang.org/x/net v0.0.0-20201010224723-4f7140c49acb // indirect
 	golang.org/x/sys v0.0.0-20201014080544-cc95f250f6bc // indirect
 	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
