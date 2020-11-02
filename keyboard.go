@@ -1,5 +1,7 @@
 package izapple2
 
+import "unicode"
+
 // KeyboardProvider provides a keyboard implementation
 type KeyboardProvider interface {
 	GetKey(strobe bool) (key uint8, ok bool)
@@ -31,6 +33,9 @@ func (k *KeyboardChannel) PutText(text string) {
 func (k *KeyboardChannel) PutRune(ch rune) {
 	// We will use computed text only for printable ASCII chars
 	if ch >= ' ' && ch <= '~' {
+		if k.a.IsForceCaps() && ch >= 'a' && ch <= 'z' {
+			ch = unicode.ToUpper(ch)
+		}
 		k.PutChar(uint8(ch))
 	}
 }

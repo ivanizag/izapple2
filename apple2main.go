@@ -123,6 +123,10 @@ func MainApple() *Apple2 {
 		"traceMLI",
 		false,
 		"dump to the console the calls to ProDOS machine language interface calls to $BF00")
+	forceCaps := flag.Bool(
+		"forceCaps",
+		false,
+		"force all letters to be uppercased (no need for caps lock!)")
 
 	flag.Parse()
 
@@ -144,6 +148,7 @@ func MainApple() *Apple2 {
 	a.io.setTraceRegistrations(*traceSSReg)
 	a.io.setPanicNotImplemented(*panicSS)
 	a.setProfiling(*profile)
+	a.setForceCaps(*forceCaps)
 
 	var charGenMap charColumnMap
 	initialCharGenPage := 0
