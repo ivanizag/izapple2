@@ -1,6 +1,9 @@
 package storage
 
 import (
+	"archive/zip"
+	"bytes"
+	"compress/gzip"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -59,5 +62,40 @@ func LoadResource(filename string) ([]uint8, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	contentType := http.DetectContentType(data)
+	if contentType == "application/x-gzip" {
+		gz, err := gzip.NewReader(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		defer gz.Close()
+		data, err = ioutil.ReadAll(gz)
+		if err != nil {
+			return nil, err
+		}
+
+	} else if contentType == "application/zip" {
+		z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+		if err != nil {
+			return nil, err
+		}
+		for _, zf := range z.File {
+			f, err := zf.Open()
+			if err != nil {
+				return nil, err
+			}
+			defer f.Close()
+			bytes, err := ioutil.ReadAll(f)
+			if err != nil {
+				return nil, err
+			}
+			if isFileDsk(bytes) || isFileNib(bytes) || isFileWoz(bytes) {
+				data = bytes
+				break
+			}
+		}
+	}
+
 	return data, nil
 }
