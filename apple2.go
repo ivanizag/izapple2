@@ -138,7 +138,8 @@ func (a *Apple2) IsProfiling() bool {
 	return a.profile
 }
 
-func (a *Apple2) setForceCaps(value bool) {
+// SetForceCaps allows the caps state to be toggled at runtime
+func (a *Apple2) SetForceCaps(value bool) {
 	a.forceCaps = value
 }
 

@@ -30,7 +30,7 @@ func buildToolbar(s *state) *widget.Toolbar {
 		theme.NewThemedResource(resourceLayersTripleSvg, nil), func() {
 			s.showPages = !s.showPages
 			if !s.showPages {
-				s.win.SetTitle("iz-" + s.a.Name)
+				s.win.SetTitle(s.DefaultTitle())
 			}
 		}))
 	tb.Append(widget.NewToolbarAction(
@@ -45,6 +45,12 @@ func buildToolbar(s *state) *widget.Toolbar {
 					s.win.Title(),
 					"Snapshot saved on 'snapshot.png'"))
 			}
+		}))
+	tb.Append(widget.NewToolbarSeparator())
+	tb.Append(widget.NewToolbarAction(
+		theme.NewThemedResource(resourceCapsLockSvg, nil), func() {
+			s.a.SetForceCaps(!s.a.IsForceCaps())
+			s.win.SetTitle(s.DefaultTitle())
 		}))
 	//tb.Append(widget.NewToolbarSeparator())
 	//tb.Append(newToolbarDisk("S6D1")

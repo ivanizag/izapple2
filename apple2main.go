@@ -148,7 +148,7 @@ func MainApple() *Apple2 {
 	a.io.setTraceRegistrations(*traceSSReg)
 	a.io.setPanicNotImplemented(*panicSS)
 	a.setProfiling(*profile)
-	a.setForceCaps(*forceCaps)
+	a.SetForceCaps(*forceCaps)
 
 	var charGenMap charColumnMap
 	initialCharGenPage := 0
