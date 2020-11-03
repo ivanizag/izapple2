@@ -39,7 +39,7 @@ func (c *cardBase) reset() {
 }
 
 func (c *cardBase) loadRomFromResource(resource string) {
-	data, err := storage.LoadResource(resource)
+	data, _, err := storage.LoadResource(resource)
 	if err != nil {
 		// The resource should be internal and never fail
 		panic(err)

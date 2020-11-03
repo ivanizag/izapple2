@@ -45,7 +45,7 @@ func newCharacterGenerator(filename string, order charColumnMap) (*CharacterGene
 }
 
 func (cg *CharacterGenerator) load(filename string) error {
-	bytes, err := storage.LoadResource(filename)
+	bytes, _, err := storage.LoadResource(filename)
 	if err != nil {
 		return err
 	}
