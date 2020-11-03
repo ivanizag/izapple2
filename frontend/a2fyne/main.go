@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image"
+	"strings"
 	"time"
 
 	"github.com/ivanizag/izapple2"
@@ -28,6 +29,14 @@ type state struct {
 	screenMode int
 }
 
+func (s *state) DefaultTitle() string {
+	title := "iz-" + s.a.Name
+	if s.a.IsForceCaps() {
+		title = strings.ToUpper(title)
+	}
+	return title
+}
+
 func main() {
 	var s state
 	s.a = izapple2.MainApple()
@@ -47,7 +56,7 @@ func fyneRun(s *state) {
 
 	s.app = app.New()
 	s.app.SetIcon(resourceApple2Png)
-	s.win = s.app.NewWindow("iz-" + s.a.Name)
+	s.win = s.app.NewWindow(s.DefaultTitle())
 	s.win.SetIcon(resourceApple2Png)
 
 	s.devices = newPanelDevices(s)
