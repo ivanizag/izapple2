@@ -32,7 +32,6 @@ func LoadDiskette(filename string) (Diskette, error) {
 	if isFileNib(data) {
 		var d diskette16sector
 		d.nib = newFileNib(data)
-		d.nib.supportsWrite = d.nib.supportsWrite && writeable
 		return &d, nil
 	}
 

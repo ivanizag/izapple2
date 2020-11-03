@@ -3,7 +3,7 @@ module github.com/ivanizag/izapple2
 go 1.12
 
 require (
-	fyne.io/fyne v1.4.0-rc1
+	fyne.io/fyne v1.4.0
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200625191551-73d3c3675aa3
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pkg/profile v1.5.0

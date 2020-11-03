@@ -10,10 +10,13 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Apple ][+ with 48Kb of base RAM
   - Apple //e with 128Kb of RAM
   - Apple //e enhanced with 128Kb of RAM
-  - Base64A clone with 48Kb of base RAM and paginated ROM
+  - Base64A clone with 48Kb of base RAM and paged ROM
 - Storage
-  - 16 Sector 5 1/4 diskettes in NIB, DSK or PO format
-  - 16 Sector 5 1/4 diskettes in WOZ 1.0 or 2.0 format (read only)
+  - 16 Sector 5 1/4 diskettes. Uncompressed or compressed witth gzip or zip. Supported formats:
+    - NIB (read only)
+    - DSK
+    - PO
+    - WOZ 1.0 or 2.0 (read only)
   - 3.5 disks in PO or 2MG format
   - Hard disk in HDV or 2MG format with ProDOS and SmartPort support
 - Emulated extension cards:
@@ -61,7 +64,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
 By default the following configuration is launched:
 
 - Enhanced Apple //e with 65c02 processor
-- RAMworks card with 80 column, RGB (with Video7 modes) and 8Gb RAM is aux slot
+- RAMWorks card with 80 column, RGB (with Video7 modes) and 8Gb RAM in aux slot
 - Memory Expansion card with 1Gb in slot 1
 - VidHD card (SHR support) in slot 2
 - FASTChip Accelerator card in slot 3
@@ -177,6 +180,8 @@ Only valid on SDL mode
         shows the character map
   -fastChipSlot int
         slot for the FASTChip accelerator card, -1 for none (default 3)
+  -forceCaps
+        force all letters to be uppercased (no need for caps lock!)
   -fastDisk
         set fast mode when the disks are spinning (default true)
   -hd string

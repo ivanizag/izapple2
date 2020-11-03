@@ -46,6 +46,8 @@ func renderHiRes(data []uint8, light color.Color) *image.RGBA {
 				}
 
 				if shifted {
+					// "The general rule of all these HIRES interference patterns is that delayed extends
+					// undelayed, and undelayed cuts off delayed"
 					img.Set(x, y, previousColour)
 				} else {
 					img.Set(x, y, colour)
