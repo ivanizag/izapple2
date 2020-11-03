@@ -72,7 +72,7 @@ const (
 
 // LoadRom loads a standard Apple2+ or 2e ROM
 func (a *Apple2) LoadRom(filename string) error {
-	data, err := storage.LoadResource(filename)
+	data, _, err := storage.LoadResource(filename)
 	if err != nil {
 		return err
 	}
