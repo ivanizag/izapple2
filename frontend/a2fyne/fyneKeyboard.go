@@ -96,7 +96,7 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 		result = 11 // 31 in the Base64A
 	case fyne.KeyDown:
 		result = 10
-	case fyne.KeyTab:
+	case fyne.KeyTab: // The Tab is not reaching here
 		result = 9
 	case fyne.KeyDelete:
 		result = 127 // 24 in the Base64A

@@ -2,6 +2,11 @@ package izapple2
 
 import "fmt"
 
+/*
+See:
+	https://prodos8.com/docs/techref/calls-to-the-mli/
+*/
+
 type traceProDOS struct {
 	a              *Apple2
 	callPending    bool // We assume MLI is not reentrant
@@ -57,8 +62,7 @@ func (t *traceProDOS) inspect() {
 	} else if pc == biAddress {
 		t.dumpBIExec()
 	} else if /*t.callPending &&*/ t.isDriverAddress(pc) {
-		fmt.Printf(" <<< Calling a driver in $%04x >>> ", pc)
-
+		t.dumpDriverCall()
 	}
 }
 
@@ -172,9 +176,9 @@ func (t *traceProDOS) dumpMLIReturn() {
 		case 0xc8: // Open file
 			fmt.Printf("ref: %v\n", t.paramByte(5))
 		case 0xca: // Read
-			fmt.Printf("%v bytes read \n", t.paramByte(6))
+			fmt.Printf("%v bytes read \n", t.paramWord(6))
 		case 0xcb: // Write
-			fmt.Printf("%v bytes written \n", t.paramByte(6))
+			fmt.Printf("%v bytes written \n", t.paramWord(6))
 		case 0xcf: // File position
 			fmt.Printf("%v\n", t.paramLen(2))
 		case 0xd1: // File size
@@ -195,6 +199,22 @@ func (t *traceProDOS) dumpBIExec() {
 		s += string(ch)
 	}
 	fmt.Printf("Prodos BI exec: \"%s\".\n", s)
+}
+
+var proDosCommandNames = []string{"STATUS", "READ", "WRITE", "FORMAT"}
+
+func (t *traceProDOS) dumpDriverCall() {
+	pc, _ := t.a.cpu.GetPCAndSP()
+	command := t.a.mmu.Peek(0x42)
+	unit := t.a.mmu.Peek(0x43)
+	address := uint16(t.a.mmu.Peek(0x44)) + uint16(t.a.mmu.Peek(0x45))<<8
+	block := uint16(t.a.mmu.Peek(0x46)) + uint16(t.a.mmu.Peek(0x47))<<8
+
+	commandName := "OTHER"
+	if int(command) < len(proDosCommandNames) {
+		commandName = proDosCommandNames[command]
+	}
+	fmt.Printf("\n  Prodos driver $%04x command %02x-%s on unit $%x, block %v to $%04x ==> ", pc, command, commandName, unit, block, address)
 }
 
 func (t *traceProDOS) dumpDevices() {
@@ -228,11 +248,14 @@ func (t *traceProDOS) dumpDevices() {
 			fmt.Printf("  S%vD%v: $%04x\n", slot, drive+1, value)
 		}
 	}
+	// Datetime
+	value := uint16(mem.peek(deviceDateTimeVector)) + 0x100*uint16(mem.peek(deviceDateTimeVector+1))
+	fmt.Printf("  Datetime: $%04x\n", value)
 }
 
 func (t *traceProDOS) refreshDeviceDrives() {
 	mem := t.a.mmu.getPhysicalMainRAM(false)
-	drivers := make([]uint16, 0, 14)
+	drivers := make([]uint16, 0, 15)
 	for i := uint16(0); i < 16; i++ {
 		address := deviceDriverVectors + i*2
 		value := uint16(mem.peek(address)) + 0x100*uint16(mem.peek(address+1))
