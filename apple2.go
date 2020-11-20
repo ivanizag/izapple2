@@ -229,4 +229,8 @@ func (a *Apple2) dumpDebugInfo() {
 		d := a.mmu.physicalMainRAM.data[k]
 		fmt.Printf("  %v(0x%x): 0x%02x\n", pageZeroSymbols[k], k, d)
 	}
+
+	if a.traceMLI != nil {
+		a.traceMLI.dumpDevices()
+	}
 }

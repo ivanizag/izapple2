@@ -8,21 +8,28 @@ type traceProDOS struct {
 	functionCode   uint8
 	paramsAdddress uint16
 	returnAddress  uint16
+	deviceDrivers  []uint16
 }
 
 const (
 	mliAddress uint16 = 0xbf00
 	biAddress  uint16 = 0xbe03
+
+	deviceCountAddress   uint16 = 0xbf31 // DEVCNT
+	deviceListAddress    uint16 = 0xbf32
+	deviceDriverVectors  uint16 = 0xbf10 // DEVADR01
+	deviceDateTimeVector uint16 = 0xbf07 // DATETIME+1
 )
 
 func newTraceProDOS(a *Apple2) *traceProDOS {
 	var t traceProDOS
 	t.a = a
+	t.deviceDrivers = make([]uint16, 0)
 	return &t
 }
 
 func (t *traceProDOS) inspect() {
-	pc, ps := t.a.cpu.GetPCAndSP()
+	pc, _ := t.a.cpu.GetPCAndSP()
 	if pc == mliAddress {
 		/*
 			MLI has been called (provided we are running proDOS and the proper page)
@@ -39,137 +46,213 @@ func (t *traceProDOS) inspect() {
 				fmt.Print("<there was a call pending>\n")
 			}
 		}
-		caller := uint16(t.a.mmu.Peek(0x100+uint16(ps+1))) +
-			uint16(t.a.mmu.Peek(0x100+uint16(ps+2)))<<8 - 2
-		t.functionCode = t.a.mmu.Peek(caller + 3)
-		t.paramsAdddress = uint16(t.a.mmu.Peek(caller+4)) + uint16(t.a.mmu.Peek(caller+5))<<8
-		t.returnAddress = caller + 6
-		fmt.Printf("MLI call $%02x from $%04x", t.functionCode, caller)
-		switch t.functionCode {
-		case 0x40:
-			fmt.Printf(" ALLOC_INTERRUPT()")
-		case 0x41:
-			fmt.Printf(" DEALLOC_INTERRUPT()")
-		case 0x65:
-			fmt.Printf(" QUIT()")
-		case 0x80:
-			fmt.Printf(" READ_BLOCK(unit=%s, block=$%04x)", parseUnit(t.paramByte(1)), t.paramWord(4))
-		case 0x81:
-			fmt.Printf(" WRITE_BLOCK(unit=%s, block=$%04x)", parseUnit(t.paramByte(1)), t.paramWord(4))
-		case 0x82:
-			fmt.Printf(" GET_TIME()")
-		case 0xc0:
-			fmt.Printf(" CREATE(\"%s\")", t.paramString(1))
-		case 0xc1:
-			fmt.Printf(" DESTROY(\"%s\")", t.paramString(1))
-		case 0xc2:
-			fmt.Printf(" RENAME(old=\"%s\", new=\"%s\")", t.paramString(1), t.paramString(3))
-		case 0xc3:
-			fmt.Printf(" GET_FILE_INFO(\"%s\")", t.paramString(1))
-		case 0xc4:
-			fmt.Printf(" SET_FILE_INFO(\"%s\")", t.paramString(1))
-		case 0xc5:
-			fmt.Printf(" ONLINE(unit=%s)", parseUnit(t.paramByte(1)))
-		case 0xc6:
-			fmt.Printf(" SET_PREFIX(\"%s\")", t.paramString(1))
-		case 0xc7:
-			fmt.Printf(" GET_PREFIX()")
-		case 0xc8:
-			fmt.Printf(" OPEN(\"%s\")", t.paramString(1))
-		case 0xc9:
-			fmt.Printf(" NEWLINE(ref=%v, mask=$%02x, char=$%02x)", t.paramByte(1), t.paramByte(2), t.paramByte(3))
-		case 0xca:
-			fmt.Printf(" READ(ref=%v, len=%v)", t.paramByte(1), t.paramWord(4))
-		case 0xcb:
-			fmt.Printf(" WRITE(ref=%v, len=%v)", t.paramByte(1), t.paramWord(4))
-		case 0xcc:
-			fmt.Printf(" CLOSE(ref=%v)", t.paramByte(1))
-		case 0xcd:
-			fmt.Printf(" FLUSH(ref=%v)", t.paramByte(1))
-		case 0xce:
-			fmt.Printf(" SET_MARK(ref=%v, pos=%v)", t.paramByte(1), t.paramLen(2))
-		case 0xcf:
-			fmt.Printf(" GET_MARK(ref=%v)", t.paramByte(1))
-		case 0xd1:
-			fmt.Printf(" GET_EOF(ref=%v)", t.paramByte(1))
-		case 0xd2:
-			fmt.Printf(" SET_BUF(ref=%v)", t.paramByte(1))
-		case 0xd3:
-			fmt.Printf(" GET_BUF(ref=%v)", t.paramByte(1))
-		}
-		fmt.Printf(" => ")
-
+		t.dumpMLICall()
+		t.refreshDeviceDrives()
 		t.callPending = true
+		//t.a.cpu.SetTrace(true)
 	} else if t.callPending && pc == t.returnAddress {
-		error, acc := t.a.cpu.GetCarryAndAcc()
-		if error {
-			fmt.Printf("error $%02x: %v\n", acc, getMliErrorText(acc))
-		} else {
-			switch t.functionCode {
-			case 0x82: // Get Time
-				// Globals will be updated
-				date := uint16(t.a.mmu.Peek(0xbf90)) + uint16(t.a.mmu.Peek(0xbf91))<<8
-				minute := t.a.mmu.Peek(0xbf92)
-				hour := t.a.mmu.Peek(0xbf93)
-				fmt.Printf("%04v-%02v-%02v %02v:%02v\n",
-					date>>9+1900, (date>>5)&0x1f, date&0x1f, // Review Y2K
-					hour, minute)
-			case 0xc5: // Online
-				dataAddress := t.paramWord(2)
-				for {
-					b := t.a.mmu.Peek(dataAddress)
-					dataAddress++
-					if b == 0 {
-						fmt.Printf("\n")
-						break
-					}
-					unit := parseUnit(b)
-					size := b & 0xf
-					if size != 0 {
-						// No error
-						name := ""
-						for i := uint8(0); i < size; i++ {
-							name += string(t.a.mmu.Peek(dataAddress+uint16(i)) & 0x7f)
-						}
-						fmt.Printf("%s: \"%s\" ", unit, name)
-					} else {
-						err := t.a.mmu.Peek(dataAddress)
-						fmt.Printf("%s: error $%02x ", unit, err)
-					}
-					if t.paramByte(1) != 0 {
-						fmt.Printf("\n")
-						break // Only one entry requested
-					}
-					dataAddress += 15
-				}
-			case 0xc7: // Get prefix
-				fmt.Printf("\"%v\"\n", t.paramString(1))
-			case 0xc8: // Open file
-				fmt.Printf("ref: %v\n", t.paramByte(5))
-			case 0xca: // Read
-				fmt.Printf("%v bytes read \n", t.paramByte(6))
-			case 0xcb: // Write
-				fmt.Printf("%v bytes written \n", t.paramByte(6))
-			case 0xcf: // File position
-				fmt.Printf("%v\n", t.paramLen(2))
-			case 0xd1: // File size
-				fmt.Printf("%v bytes\n", t.paramLen(2))
-			default:
-				fmt.Printf("Ok\n")
-			}
-		}
+		t.dumpMLIReturn()
 		t.callPending = false
+		//t.a.cpu.SetTrace(false)
 	} else if pc == biAddress {
-		s := ""
-		for i := uint16(1); i < 256; i++ {
-			ch := t.a.mmu.Peek(0x200 + i)
-			if ch == 0 || ch == 0x8d {
-				break
-			}
-			s += string(ch)
-		}
-		fmt.Printf("Prodos BI exec: \"%s\".\n", s)
+		t.dumpBIExec()
+	} else if /*t.callPending &&*/ t.isDriverAddress(pc) {
+		fmt.Printf(" <<< Calling a driver in $%04x >>> ", pc)
+
 	}
+}
+
+func (t *traceProDOS) dumpMLICall() {
+	_, ps := t.a.cpu.GetPCAndSP()
+	caller := uint16(t.a.mmu.Peek(0x100+uint16(ps+1))) +
+		uint16(t.a.mmu.Peek(0x100+uint16(ps+2)))<<8 - 2
+	t.functionCode = t.a.mmu.Peek(caller + 3)
+	t.paramsAdddress = uint16(t.a.mmu.Peek(caller+4)) + uint16(t.a.mmu.Peek(caller+5))<<8
+	t.returnAddress = caller + 6
+	fmt.Printf("MLI call $%02x from $%04x", t.functionCode, caller)
+	switch t.functionCode {
+	case 0x40:
+		fmt.Printf(" ALLOC_INTERRUPT()")
+	case 0x41:
+		fmt.Printf(" DEALLOC_INTERRUPT()")
+	case 0x65:
+		fmt.Printf(" QUIT()")
+	case 0x80:
+		fmt.Printf(" READ_BLOCK(unit=%s, block=$%04x)", parseUnit(t.paramByte(1)), t.paramWord(4))
+	case 0x81:
+		fmt.Printf(" WRITE_BLOCK(unit=%s, block=$%04x)", parseUnit(t.paramByte(1)), t.paramWord(4))
+	case 0x82:
+		fmt.Printf(" GET_TIME()")
+	case 0xc0:
+		fmt.Printf(" CREATE(\"%s\")", t.paramString(1))
+	case 0xc1:
+		fmt.Printf(" DESTROY(\"%s\")", t.paramString(1))
+	case 0xc2:
+		fmt.Printf(" RENAME(old=\"%s\", new=\"%s\")", t.paramString(1), t.paramString(3))
+	case 0xc3:
+		fmt.Printf(" GET_FILE_INFO(\"%s\")", t.paramString(1))
+	case 0xc4:
+		fmt.Printf(" SET_FILE_INFO(\"%s\")", t.paramString(1))
+	case 0xc5:
+		fmt.Printf(" ONLINE(unit=%s)", parseUnit(t.paramByte(1)))
+	case 0xc6:
+		fmt.Printf(" SET_PREFIX(\"%s\")", t.paramString(1))
+	case 0xc7:
+		fmt.Printf(" GET_PREFIX()")
+	case 0xc8:
+		fmt.Printf(" OPEN(\"%s\")", t.paramString(1))
+	case 0xc9:
+		fmt.Printf(" NEWLINE(ref=%v, mask=$%02x, char=$%02x)", t.paramByte(1), t.paramByte(2), t.paramByte(3))
+	case 0xca:
+		fmt.Printf(" READ(ref=%v, len=%v)", t.paramByte(1), t.paramWord(4))
+	case 0xcb:
+		fmt.Printf(" WRITE(ref=%v, len=%v)", t.paramByte(1), t.paramWord(4))
+	case 0xcc:
+		fmt.Printf(" CLOSE(ref=%v)", t.paramByte(1))
+	case 0xcd:
+		fmt.Printf(" FLUSH(ref=%v)", t.paramByte(1))
+	case 0xce:
+		fmt.Printf(" SET_MARK(ref=%v, pos=%v)", t.paramByte(1), t.paramLen(2))
+	case 0xcf:
+		fmt.Printf(" GET_MARK(ref=%v)", t.paramByte(1))
+	case 0xd1:
+		fmt.Printf(" GET_EOF(ref=%v)", t.paramByte(1))
+	case 0xd2:
+		fmt.Printf(" SET_BUF(ref=%v)", t.paramByte(1))
+	case 0xd3:
+		fmt.Printf(" GET_BUF(ref=%v)", t.paramByte(1))
+	}
+	fmt.Printf(" => ")
+}
+
+func (t *traceProDOS) dumpMLIReturn() {
+	error, acc := t.a.cpu.GetCarryAndAcc()
+	if error {
+		fmt.Printf("error $%02x: %v\n", acc, getMliErrorText(acc))
+	} else {
+		switch t.functionCode {
+		case 0x82: // Get Time
+			// Globals will be updated
+			date := uint16(t.a.mmu.Peek(0xbf90)) + uint16(t.a.mmu.Peek(0xbf91))<<8
+			minute := t.a.mmu.Peek(0xbf92)
+			hour := t.a.mmu.Peek(0xbf93)
+			fmt.Printf("%04v-%02v-%02v %02v:%02v\n",
+				date>>9+1900, (date>>5)&0x1f, date&0x1f, // Review Y2K
+				hour, minute)
+		case 0xc5: // Online
+			dataAddress := t.paramWord(2)
+			for {
+				b := t.a.mmu.Peek(dataAddress)
+				dataAddress++
+				if b == 0 {
+					fmt.Printf("\n")
+					break
+				}
+				unit := parseUnit(b)
+				size := b & 0xf
+				if size != 0 {
+					// No error
+					name := ""
+					for i := uint8(0); i < size; i++ {
+						name += string(t.a.mmu.Peek(dataAddress+uint16(i)) & 0x7f)
+					}
+					fmt.Printf("%s: \"%s\" ", unit, name)
+				} else {
+					err := t.a.mmu.Peek(dataAddress)
+					fmt.Printf("%s: error $%02x ", unit, err)
+				}
+				if t.paramByte(1) != 0 {
+					fmt.Printf("\n")
+					break // Only one entry requested
+				}
+				dataAddress += 15
+			}
+		case 0xc7: // Get prefix
+			fmt.Printf("\"%v\"\n", t.paramString(1))
+		case 0xc8: // Open file
+			fmt.Printf("ref: %v\n", t.paramByte(5))
+		case 0xca: // Read
+			fmt.Printf("%v bytes read \n", t.paramByte(6))
+		case 0xcb: // Write
+			fmt.Printf("%v bytes written \n", t.paramByte(6))
+		case 0xcf: // File position
+			fmt.Printf("%v\n", t.paramLen(2))
+		case 0xd1: // File size
+			fmt.Printf("%v bytes\n", t.paramLen(2))
+		default:
+			fmt.Printf("Ok\n")
+		}
+	}
+}
+
+func (t *traceProDOS) dumpBIExec() {
+	s := ""
+	for i := uint16(1); i < 256; i++ {
+		ch := t.a.mmu.Peek(0x200 + i)
+		if ch == 0 || ch == 0x8d {
+			break
+		}
+		s += string(ch)
+	}
+	fmt.Printf("Prodos BI exec: \"%s\".\n", s)
+}
+
+func (t *traceProDOS) dumpDevices() {
+
+	// Active disk devices
+	// 		See https://prodos8.com/docs/techref/writing-a-prodos-system-program/#page94
+	//      See https://prodos8.com/docs/technote/21/
+	mem := t.a.mmu.getPhysicalMainRAM(false)
+	count := mem.peek(deviceCountAddress) + 1
+	fmt.Printf("Prodos disk devices: \n")
+	for i := uint8(0); i < count; i++ {
+		value := mem.peek(deviceListAddress + uint16(i))
+		id := "unknown"
+		switch value & 0xf {
+		case 0x0:
+			id = "DiskII"
+		case 0x4:
+			id = "ProFile" // Used also be the Memory Expansion Ram disk
+		case 0xf:
+			id = "RAM"
+		}
+		fmt.Printf(("  S%vD%v %s($%02x)\n"), (value>>4)&7, (value>>7)+1, id, value)
+	}
+
+	// Device drivers
+	fmt.Printf("ProDOS device drivers:\n")
+	for slot := uint16(0); slot <= 7; slot++ {
+		for drive := uint16(0); drive < 2; drive++ {
+			address := deviceDriverVectors + (slot+drive*8)*2
+			value := uint16(mem.peek(address)) + 0x100*uint16(mem.peek(address+1))
+			fmt.Printf("  S%vD%v: $%04x\n", slot, drive+1, value)
+		}
+	}
+}
+
+func (t *traceProDOS) refreshDeviceDrives() {
+	mem := t.a.mmu.getPhysicalMainRAM(false)
+	drivers := make([]uint16, 0, 14)
+	for i := uint16(0); i < 16; i++ {
+		address := deviceDriverVectors + i*2
+		value := uint16(mem.peek(address)) + 0x100*uint16(mem.peek(address+1))
+		drivers = append(drivers, value)
+	}
+
+	// Datetime
+	value := uint16(mem.peek(deviceDateTimeVector)) + 0x100*uint16(mem.peek(deviceDateTimeVector+1))
+	drivers = append(drivers, value)
+
+	t.deviceDrivers = drivers
+}
+
+func (t *traceProDOS) isDriverAddress(pc uint16) bool {
+	for _, vector := range t.deviceDrivers {
+		if vector == pc {
+			return true
+		}
+	}
+	return false
 }
 
 func (t *traceProDOS) paramByte(pos uint16) uint8 {
