@@ -22,7 +22,7 @@ Emulation status for the disk used on the reference:
 		- Stargate: Working
 	- Cross track sync
 		- *** Blazing Paddles: Not working
-		- *** Take 1: Not working
+		- Take 1: Working
 		- *** Hard Hat Mack: Not working
 	- Half tracks
 		- The Bilestoad: Working

@@ -291,6 +291,9 @@ func moveStep(phases uint8, prevStep int) int {
 			nextStep = 0
 		}
 	}
+
+	//fmt.Printf("[DiskII] 1/4 track: %03d %vO\n", nextStep, strings.Repeat(" ", nextStep))
+
 	return nextStep
 }
 
