@@ -24,8 +24,9 @@ type State struct {
 	mem    Memory
 	cycles uint64
 
-	extraCycle bool
-	lineCache  []uint8
+	extraCycleCrossingBoundaries bool
+	extraCycleBranchTaken        bool
+	lineCache                    []uint8
 	// We cache the allocation of a line to avoid a malloc per instruction. To be used only
 	// by ExecuteInstruction(). 2x speedup on the emulation!!
 }
@@ -79,10 +80,16 @@ func (s *State) ExecuteInstruction() {
 	}
 	opcode.action(s, s.lineCache, opcode)
 	s.cycles += uint64(opcode.cycles)
-	if s.extraCycle {
+
+	if s.extraCycleBranchTaken {
 		s.cycles++
-		s.extraCycle = false
+		s.extraCycleBranchTaken = false
 	}
+	if s.extraCycleCrossingBoundaries {
+		s.cycles++
+		s.extraCycleCrossingBoundaries = false
+	}
+
 	if s.trace {
 		fmt.Printf("%v, [%02x]\n", s.reg, s.lineCache[0:opcode.bytes])
 	}

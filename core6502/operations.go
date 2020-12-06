@@ -76,7 +76,7 @@ func buildOpUpdateFlag(flag uint8, value bool) opFunc {
 func buildOpBranch(flag uint8, test bool) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
 		if s.reg.getFlag(flag) == test {
-			s.extraCycle = true
+			s.extraCycleBranchTaken = true
 			address := resolveAddress(s, line, opcode)
 			s.reg.setPC(address)
 		}
@@ -92,6 +92,7 @@ func buildOpBranchOnBit(bit uint8, test bool) opFunc {
 		bitValue := ((value >> bit) & 1) == 1
 
 		if bitValue == test {
+			s.extraCycleBranchTaken = true
 			address := resolveAddress(s, line, opcode)
 			s.reg.setPC(address)
 		}

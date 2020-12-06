@@ -61,10 +61,15 @@ func resolveSetValue(s *State, line []uint8, opcode opcode, value uint8) {
 	// The value is in memory
 	address := resolveAddress(s, line, opcode)
 	s.mem.Poke(address, value)
+
+	// On writes, the possible extra cycle crossing page boundaries is
+	// always added and already accounted for.
+	s.extraCycleCrossingBoundaries = false
 }
 
 func resolveAddress(s *State, line []uint8, opcode opcode) uint16 {
 	var address uint16
+	extraCycle := false
 
 	switch opcode.addressMode {
 	case modeZeroPage:
@@ -76,18 +81,20 @@ func resolveAddress(s *State, line []uint8, opcode opcode) uint16 {
 	case modeAbsolute:
 		address = getWordInLine(line)
 	case modeAbsoluteX:
-		address = getWordInLine(line) + uint16(s.reg.getX())
+		base := getWordInLine(line)
+		address, extraCycle = addOffset(base, s.reg.getX())
 	case modeAbsoluteY:
-		address = getWordInLine(line) + uint16(s.reg.getY())
+		base := getWordInLine(line)
+		address, extraCycle = addOffset(base, s.reg.getY())
 	case modeIndexedIndirectX:
-		addressAddress := uint8(line[1] + s.reg.getX())
+		addressAddress := line[1] + s.reg.getX()
 		address = getZeroPageWord(s.mem, addressAddress)
 	case modeIndirect:
 		addressAddress := getWordInLine(line)
 		address = getWord(s.mem, addressAddress)
 	case modeIndirectIndexedY:
-		address = getZeroPageWord(s.mem, line[1]) +
-			uint16(s.reg.getY())
+		base := getZeroPageWord(s.mem, line[1])
+		address, extraCycle = addOffset(base, s.reg.getY())
 	// 65c02 additions
 	case modeIndirectZeroPage:
 		address = getZeroPageWord(s.mem, line[1])
@@ -96,15 +103,55 @@ func resolveAddress(s *State, line []uint8, opcode opcode) uint16 {
 		address = getWord(s.mem, addressAddress)
 	case modeRelative:
 		// This assumes that PC is already pointing to the next instruction
-		address = s.reg.getPC() + uint16(int8(line[1])) // Note: line[1] is signed
+		base := s.reg.getPC()
+		address, extraCycle = addOffsetRelative(base, line[1])
 	case modeZeroPageAndRelative:
 		// Two addressing modes combined. We refer to the second one, relative,
 		// placed one byte after the zeropage reference
-		address = s.reg.getPC() + uint16(int8(line[2])) // Note: line[2] is signed
+		base := s.reg.getPC()
+		address, extraCycle = addOffsetRelative(base, line[2])
 	default:
 		panic("Assert failed. Missing addressing mode")
 	}
+
+	if extraCycle {
+		s.extraCycleCrossingBoundaries = true
+	}
+
 	return address
+}
+
+/*
+Note: extra cycle on reads when crossing page boundaries.
+
+Only for:
+	modeAbsoluteX
+	modeAbsoluteY
+	modeIndirectIndexedY
+	modeRelative
+	modeZeroPageAndRelative
+That is when we add a 8 bit offset to a 16 bit base. The reason is
+that if don't have a page crossing the CPU optimizes one cycle assuming
+that the MSB addition won't change. If it does we spend this extra cycle.
+
+Note that for writes we don't add a cycle in this case. There is no
+optimization that could make a double write. The regular cycle count
+is alwaus the same with no optimization.
+*/
+func addOffset(base uint16, offset uint8) (uint16, bool) {
+	dest := base + uint16(offset)
+	if (base & 0xff00) != (dest & 0xff00) {
+		return dest, true
+	}
+	return dest, false
+}
+
+func addOffsetRelative(base uint16, offset uint8) (uint16, bool) {
+	dest := base + uint16(int8(offset))
+	if (base & 0xff00) != (dest & 0xff00) {
+		return dest, true
+	}
+	return dest, false
 }
 
 func lineString(line []uint8, opcode opcode) string {

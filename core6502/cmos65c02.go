@@ -73,18 +73,18 @@ var opcodes65c02Delta = [256]opcode{
 	0x65: {"ADC", 2, 3, modeZeroPage, opADCAlt},
 	0x75: {"ADC", 2, 4, modeZeroPageX, opADCAlt},
 	0x6D: {"ADC", 3, 4, modeAbsolute, opADCAlt},
-	0x7D: {"ADC", 3, 4, modeAbsoluteX, opADCAlt},
-	0x79: {"ADC", 3, 4, modeAbsoluteY, opADCAlt},
+	0x7D: {"ADC", 3, 4, modeAbsoluteX, opADCAlt}, // Extra cycles
+	0x79: {"ADC", 3, 4, modeAbsoluteY, opADCAlt}, // Extra cycles
 	0x61: {"ADC", 2, 6, modeIndexedIndirectX, opADCAlt},
-	0x71: {"ADC", 2, 5, modeIndirectIndexedY, opADCAlt},
+	0x71: {"ADC", 2, 5, modeIndirectIndexedY, opADCAlt}, // Extra cycles
 	0xE9: {"SBC", 2, 2, modeImmediate, opSBCAlt},
 	0xE5: {"SBC", 2, 3, modeZeroPage, opSBCAlt},
 	0xF5: {"SBC", 2, 4, modeZeroPageX, opSBCAlt},
 	0xED: {"SBC", 3, 4, modeAbsolute, opSBCAlt},
-	0xFD: {"SBC", 3, 4, modeAbsoluteX, opSBCAlt},
-	0xF9: {"SBC", 3, 4, modeAbsoluteY, opSBCAlt},
+	0xFD: {"SBC", 3, 4, modeAbsoluteX, opSBCAlt}, // Extra cycles
+	0xF9: {"SBC", 3, 4, modeAbsoluteY, opSBCAlt}, // Extra cycles
 	0xE1: {"SBC", 2, 6, modeIndexedIndirectX, opSBCAlt},
-	0xF1: {"SBC", 2, 5, modeIndirectIndexedY, opSBCAlt},
+	0xF1: {"SBC", 2, 5, modeIndirectIndexedY, opSBCAlt}, // Extra cycles
 
 	// Different cycle count
 	0x1e: {"ASL", 3, 6, modeAbsoluteX, buildOpShift(true, false)},
@@ -105,7 +105,7 @@ var opcodes65c02Delta = [256]opcode{
 	// New addressing options
 	0x89: {"BIT", 2, 2, modeImmediate, opBIT},
 	0x34: {"BIT", 2, 4, modeZeroPageX, opBIT},
-	0x3c: {"BIT", 3, 4, modeAbsoluteX, opBIT},
+	0x3c: {"BIT", 3, 4, modeAbsoluteX, opBIT}, // Extra cycles
 	0x1a: {"INC", 1, 2, modeAccumulator, buildOpIncDec(true)},
 	0x3a: {"DEC", 1, 2, modeAccumulator, buildOpIncDec(false)},
 	0x7c: {"JMP", 3, 6, modeAbsoluteIndexedIndirectX, opJMP},
@@ -115,7 +115,7 @@ var opcodes65c02Delta = [256]opcode{
 	0x5a: {"PHY", 1, 3, modeImplicit, buildOpPush(regY)},
 	0xfa: {"PLX", 1, 4, modeImplicit, buildOpPull(regX)},
 	0x7a: {"PLY", 1, 4, modeImplicit, buildOpPull(regY)},
-	0x80: {"BRA", 2, 4, modeRelative, opJMP},
+	0x80: {"BRA", 2, 4, modeRelative, opJMP}, // Extra cycles
 
 	0x64: {"STZ", 2, 3, modeZeroPage, opSTZ},
 	0x74: {"STZ", 2, 4, modeZeroPageX, opSTZ},
@@ -130,22 +130,22 @@ var opcodes65c02Delta = [256]opcode{
 
 	// Additional in Rockwell 65c02 and WDC 65c02?
 	// They have a double addressing mode: zeropage and relative.
-	0x0f: {"BBR0", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(0, false)},
-	0x1f: {"BBR1", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(1, false)},
-	0x2f: {"BBR2", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(2, false)},
-	0x3f: {"BBR3", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(3, false)},
-	0x4f: {"BBR4", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(4, false)},
-	0x5f: {"BBR5", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(5, false)},
-	0x6f: {"BBR6", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(6, false)},
-	0x7f: {"BBR7", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(7, false)},
-	0x8f: {"BBS0", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(0, true)},
-	0x9f: {"BBS1", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(1, true)},
-	0xaf: {"BBS2", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(2, true)},
-	0xbf: {"BBS3", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(3, true)},
-	0xcf: {"BBS4", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(4, true)},
-	0xdf: {"BBS5", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(5, true)},
-	0xef: {"BBS6", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(6, true)},
-	0xff: {"BBS7", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(7, true)},
+	0x0f: {"BBR0", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(0, false)}, // Extra cycles
+	0x1f: {"BBR1", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(1, false)}, // Extra cycles
+	0x2f: {"BBR2", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(2, false)}, // Extra cycles
+	0x3f: {"BBR3", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(3, false)}, // Extra cycles
+	0x4f: {"BBR4", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(4, false)}, // Extra cycles
+	0x5f: {"BBR5", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(5, false)}, // Extra cycles
+	0x6f: {"BBR6", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(6, false)}, // Extra cycles
+	0x7f: {"BBR7", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(7, false)}, // Extra cycles
+	0x8f: {"BBS0", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(0, true)},  // Extra cycles
+	0x9f: {"BBS1", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(1, true)},  // Extra cycles
+	0xaf: {"BBS2", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(2, true)},  // Extra cycles
+	0xbf: {"BBS3", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(3, true)},  // Extra cycles
+	0xcf: {"BBS4", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(4, true)},  // Extra cycles
+	0xdf: {"BBS5", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(5, true)},  // Extra cycles
+	0xef: {"BBS6", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(6, true)},  // Extra cycles
+	0xff: {"BBS7", 3, 2, modeZeroPageAndRelative, buildOpBranchOnBit(7, true)},  // Extra cycles
 
 	0x07: {"RMB0", 2, 5, modeZeroPage, buildOpSetBit(0, false)},
 	0x17: {"RMB1", 2, 5, modeZeroPage, buildOpSetBit(1, false)},
