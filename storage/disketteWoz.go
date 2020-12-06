@@ -18,7 +18,7 @@ Emulation status for the disk used on the reference:
 		- *** Commando: Not working
 		- Planetfall: Working
 		- Rescue Raiders: Working
-		- *** Sammy Lightfoot: Not working
+		- Sammy Lightfoot: Working (failed if no 6502 extra cycle is added on branches done)
 		- Stargate: Working
 	- Cross track sync
 		- *** Blazing Paddles: Not working

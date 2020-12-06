@@ -76,6 +76,7 @@ func buildOpUpdateFlag(flag uint8, value bool) opFunc {
 func buildOpBranch(flag uint8, test bool) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
 		if s.reg.getFlag(flag) == test {
+			s.extraCycle = true
 			address := resolveAddress(s, line, opcode)
 			s.reg.setPC(address)
 		}

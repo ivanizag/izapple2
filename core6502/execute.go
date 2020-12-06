@@ -17,12 +17,15 @@ const (
 
 // State represents the state of the simulated device
 type State struct {
-	reg       registers
-	mem       Memory
-	cycles    uint64
-	opcodes   *[256]opcode
-	trace     bool
-	lineCache []uint8
+	opcodes *[256]opcode
+	trace   bool
+
+	reg    registers
+	mem    Memory
+	cycles uint64
+
+	extraCycle bool
+	lineCache  []uint8
 	// We cache the allocation of a line to avoid a malloc per instruction. To be used only
 	// by ExecuteInstruction(). 2x speedup on the emulation!!
 }
@@ -76,6 +79,10 @@ func (s *State) ExecuteInstruction() {
 	}
 	opcode.action(s, s.lineCache, opcode)
 	s.cycles += uint64(opcode.cycles)
+	if s.extraCycle {
+		s.cycles++
+		s.extraCycle = false
+	}
 	if s.trace {
 		fmt.Printf("%v, [%02x]\n", s.reg, s.lineCache[0:opcode.bytes])
 	}
