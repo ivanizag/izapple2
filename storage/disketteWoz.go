@@ -9,7 +9,7 @@ import (
 See:
 	https://applesaucefdc.com/woz/
 
-Emulation status for the disk used on the reference:
+Emulation status for the disks used on the reference:
 	- How to begin
 		- DOS 3.3: Works
 		- * DOS 3.2: Not working, 13 sector disks can't boot
@@ -18,12 +18,12 @@ Emulation status for the disk used on the reference:
 		- *** Commando: Not working
 		- Planetfall: Working
 		- Rescue Raiders: Working
-		- Sammy Lightfoot: Working (failed if no 6502 extra cycle is added on branches done)
+		- Sammy Lightfoot: Working
 		- Stargate: Working
 	- Cross track sync
-		- *** Blazing Paddles: Not working
+		- Blazing Paddles: Working
 		- Take 1: Working
-		- *** Hard Hat Mack: Not working
+		- Hard Hat Mack: Working
 	- Half tracks
 		- The Bilestoad: Working
 	- Even more bit fiddling
@@ -47,9 +47,10 @@ type disketteWoz struct {
 	cycleOn uint64 // Cycle when the disk was last turned on
 	turning bool
 
-	latch    uint8
-	position uint32
-	cycle    uint64
+	latch            uint8
+	position         uint32
+	cycle            uint64
+	lastQuarterTrack int
 
 	mc3470Buffer uint8 // Four bit buffer to detect weak bits and to add latency
 
@@ -89,8 +90,9 @@ func (d *disketteWoz) Read(quarterTrack int, cycle uint64) uint8 {
 	// TODO: avoid processing too many bits if delta is big
 	for i := uint64(0); i < deltaBits; i++ {
 		// Get next bit taking into account the MC3470 latency and weak bits
-		d.position++
-		fluxBit := d.data.getBit(d.position, quarterTrack)
+		var fluxBit uint8
+		fluxBit, d.position = d.data.getNextBitAndPosition(d.position, quarterTrack, d.lastQuarterTrack)
+		d.lastQuarterTrack = quarterTrack
 		d.mc3470Buffer = (d.mc3470Buffer<<1 + fluxBit) & 0x0f
 		bit := (d.mc3470Buffer >> 1) & 0x1 // Use the previous to last bit to add latency
 		if d.mc3470Buffer == 0 && rand.Intn(100) < 3 {

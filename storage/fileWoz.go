@@ -80,10 +80,20 @@ const (
 var headerWoz1 = []uint8{0x57, 0x4f, 0x5A, 0x31, 0xFF, 0x0A, 0x0D, 0x0A}
 var headerWoz2 = []uint8{0x57, 0x4f, 0x5A, 0x32, 0xFF, 0x0A, 0x0D, 0x0A}
 
-func (f *fileWoz) getBit(position uint32, quarterTrack int) uint8 {
+func (f *fileWoz) getNextBitAndPosition(position uint32, quarterTrack int, prevQuarterTrack int) (uint8, uint32) {
 	trackWoz := f.tracks[f.trackMap[quarterTrack]]
+
+	if prevQuarterTrack != quarterTrack {
+		// Adjust position as tracks may have different length
+		prevTrackWoz := f.tracks[f.trackMap[prevQuarterTrack]]
+		newPosition := position * trackWoz.bitCount / prevTrackWoz.bitCount
+		//fmt.Printf("%03d to %03d: adjustmend %d\n", prevQuarterTrack, quarterTrack, int64(newPosition)-int64(position))
+		position = newPosition
+	}
+
+	position++
 	position %= trackWoz.bitCount
-	return trackWoz.data[position/8] >> (7 - position%8) & 1
+	return trackWoz.data[position/8] >> (7 - position%8) & 1, position
 }
 
 func isFileWoz(data []uint8) bool {
