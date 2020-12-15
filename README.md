@@ -2,8 +2,6 @@
 
 Portable emulator of an Apple II+ or //e. Written in Go.
 
-[![CircleCI](https://circleci.com/gh/ivanizag/izapple2/tree/master.svg?style=svg)](https://circleci.com/gh/ivanizag/izapple2/tree/master)
-
 ## Features
 
 - Models:
