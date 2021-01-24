@@ -24,11 +24,14 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - 1Mb Memory Expansion Card (slinky)
   - RAMWorks style expansion Card (up to 16MB additional) (Apple //e only)
   - ThunderClock Plus real time clock
-  - Bootable Smartport / ProDOS card
   - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
+  - No Slot Clock based on the DS1216
+- Useful cards not emulating a real card
+  - Bootable Smartport / ProDOS card
   - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
   - FASTChip, limited to what Total Replay needs to set and clear fast mode
-  - No Slot Clock based on the DS1216
+  - Host console card. Maps the host STDIN and STDOUT to PR# and IN#
+
 - Graphic modes:
   - Text 40 columns
   - Text 80 columns (Apple //e only)
@@ -164,6 +167,8 @@ Only valid on SDL mode
 ```terminal
   -charRom string
         rom file for the character generator (default "<default>")
+  -consoleCardSlot int
+    	  slot for the host console card. -1 for none (default -1)
   -disk string
         file to load on the first disk drive (default "<internal>/dos33.dsk")
   -disk2Slot int

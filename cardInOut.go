@@ -1,7 +1,9 @@
 package izapple2
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 )
 
 /*
@@ -11,12 +13,15 @@ See:
 	"Apple II Monitors peeled."
 	http://mysite.du.edu/~etuttle/math/acia.htm
 
+
+	PR#n stores Cn00 in CSWL and CSWH
+	IN#n stores Cn00 in KSWL and KSWH
 */
 
-// CardInOut is an experimental card to bridge with the host
+// CardInOut is an experimental card to bridge with the host console
 type CardInOut struct {
 	cardBase
-	i int
+	reader *bufio.Reader
 }
 
 // NewCardInOut creates CardInOut
@@ -27,129 +32,137 @@ func NewCardInOut() *CardInOut {
 }
 
 func (c *CardInOut) assign(a *Apple2, slot int) {
-	for i := uint8(0x0); i <= 0xf; i++ {
-		iCopy := i
-		c.addCardSoftSwitchR(i, func(*ioC0Page) uint8 {
-			value := []uint8{0xc1, 0xc1, 0x93, 0x0}[c.i%4]
-			c.i++
-			fmt.Printf("[cardInOut] Read access to softswith 0x%x for slot %v, value %x.\n", iCopy, slot, value)
-			//return 0x41 + 0x80
-			return []uint8{0x41, 0x41, 0x13}[i%3] + 0x80
-		}, "INOUTR")
-		c.addCardSoftSwitchW(i, func(_ *ioC0Page, value uint8) {
-			fmt.Printf("[cardInOut] Write access to softswith 0x%x for slot %v, value 0x%x.\n", iCopy, slot, value)
-		}, "INOUTW")
-	}
+	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
+		if c.reader == nil {
+			c.reader = bufio.NewReader(os.Stdin)
+		}
+		value, err := c.reader.ReadByte()
 
-	in := true
-	out := false
+		if err != nil {
+			panic(err)
+		}
+		value += 0x80
+		if value&0x7f == 10 {
+			value = 13 + 0x80
+		}
+		//fmt.Printf("[cardInOut] Read access to softswith 0x%x for slot %v, value %x.\n", 0, slot, value)
+		return value
+	}, "INOUTR")
+	c.addCardSoftSwitchW(1, func(_ *ioC0Page, value uint8) {
+		//fmt.Printf("[cardInOut] Write access to softswith 0x%x for slot %v, value 0x%x: %v, %v.\n", 1, slot, value, value&0x7f, string(value&0x7f))
+		if value&0x7f == 13 {
+			fmt.Printf("\n")
+		} else {
+			fmt.Printf("%v", string(value&0x7f))
+		}
+
+	}, "INOUTW")
 
 	data := [256]uint8{
 		// Register
-		0xA9, 0xC2,
-		0x85, 0x37,
-		0x85, 0x39,
-		0xA9, 0x10,
-		0x85, 0x36,
-		0xA9, 0x15,
-		0x85, 0x38,
-		0x60, 0xEA,
+		0x4c, 0x40, 0xc2, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
 
-		// Out char
-		0x8D, 0xA1, 0xC0,
-		0x60, 0xEA,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
-		// Get char
-		0x91, 0x28,
-		0xAD, 0xA0, 0xC0,
-		0x60,
+		0x48, 0xA5, 0x38, 0xD0, 0x12, 0xA9, 0xC2, 0xC5,
+		0x39, 0xD0, 0x0C, 0xAD, 0x50, 0x00, 0x85, 0x38,
+		0x68, 0x91, 0x28, 0xAD, 0xA0, 0xC0, 0x60, 0x68,
+		0x8D, 0xA1, 0xC0, 0x60,
 	}
 
-	if !out {
-		// NOP the CSWL,H change
-		for _, v := range []uint8{2, 3, 8, 9} {
-			data[v] = 0xEA
-		}
-	}
+	c.romCsxx = newMemoryRangeROM(0xC200, data[:], "InOUt card")
 
-	if !in {
-		// NOP the KSWL,H change
-		for _, v := range []uint8{4, 5, 12, 13} {
-			data[v] = 0xEA
-		}
-	}
+	// Fix slot dependant addresses
+	data[0x02] = uint8(0xc0 + slot)
+	data[0x46] = uint8(0xc0 + slot)
+	data[0x54] = uint8(0x80 + slot<<4)
+	data[0x59] = uint8(0x81 + slot<<4)
 
-	c.romCsxx = newMemoryRangeROM(0xC200, data[0:255], "InOUt card")
-
-	if slot != 2 {
-		// To make it work on other slots, patch C2, A0 and A1
-		panic("Assert failed. Only slot 2 supported for the InOut card")
-	}
 	c.cardBase.assign(a, slot)
 }
 
 /*
 The ROM code was assembled using https://www.masswerk.at/6502/assembler.html
 
+We will have $Cn00 as the entry point for CSWL/H. But before doing
+anything we have to check that we are not in $Cn00 because of an IN#.
+To da that we check id KSWL/H is $Cn00, it is it we wif it to INEntry.
+
 src:
 	BASL = $28
-	CSWL = $36
-	CSWH = $37
 	KSWL = $38
 	KSWH = $39
 
 	* = $C200
-	Register:
+	Entry:
+		JMP SkipHeader
+
+	* = $C240
+	SkipHeader:
+		PHA
+		LDA *KSWL
+		BNE PREntry
 		LDA #$C2
-		STA *CSWH
-		STA *KSWH
-		LDA #$10
-		STA *CSWL
-		LDA #$15
+		CMP *KSWH
+		BNE PREntry
+	FixKSWL:
+		LDA <INEntry
 		STA *KSWL
-		RTS
-		NOP
-	OutChar:
-		STA $C0A1
-		RTS
-		NOP
-	GetChar:
+	INEntry:
+		PLA
 		STA (BASL),Y
 		LDA $C0A0
 		RTS
+	PREntry:
+		PLA
+		STA $C0A1
+		RTS
 
 
-assembled as:
+
+Listing:
+pass 2
+
 0000 BASL   = 0028
-0000 CSWL   = 0036
-0000 CSWH   = 0037
 0000 KSWL   = 0038
 0000 KSWH   = 0039
 
-* = $C200
-C200 REGIST
-C200        LDA #$C2        A9 C2
-C202        STA *CSWH       85 37
-C204        STA *KSWH       85 39
-C206        LDA #$10        A9 10
-C208        STA *CSWL       85 36
-C20A        LDA #$15        A9 15
-C20C        STA *KSWL       85 38
-C20E        RTS             60
-C20F        NOP             EA
-C210 OUTCHA
-C210        STA $C0A1       8D A1 C0
-C213        RTS             60
-C214        NOP             EA
-C215 GETCHA
-C215        STA (BASL),Y    91 28
-C217        LDA $C0A0       AD A0 C0
-C21A        RTS
+	* = $C200
+	C200 ENTRY:
+	C200        JMP SKIPHE      4C 40 C2
 
-object code:
-A9 C2 85 37 85 39 A9 10
-85 36 A9 15 85 38 60 EA
-8D A1 C0 60 EA 91 28 AD
-A0 C0 60
+	* = $C240
+	C240 SKIPHE
+	C240        PHA             48
+	C241        LDA *KSWL       A5 38
+	C243        BNE PRENTR      D0 12
+	C245        LDA #$C2        A9 C2
+	C247        CMP *KSWH       C5 39
+	C249        BNE PRENTR      D0 0C
+	C24B FIXKSW
+	C24B        LDA <INENTR     AD 50 00
+	C24E        STA *KSWL       85 38
+	C250 INENTR
+	C250        PLA             68
+	C251        STA (BASL),Y    91 28
+	C253        LDA $C0A0       AD A0 C0
+	C256        RTS             60
+	C257 PRENTR
+	C257        PLA             68
+	C258        STA $C0A1       8D A1 C0
+	C25B        RTS             60
 
+	done.
+
+Object Code:
+c200:
+4C 40 C2
+c240:
+48 A5 38 D0 12
+A9 C2 C5 39 D0 0C AD 50
+00 85 38 68 91 28 AD A0
+C0 60 68 8D A1 C0 60
 */

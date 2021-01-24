@@ -149,10 +149,8 @@ func (a *Apple2) AddMemoryExpansionCard(slot int) {
 }
 
 // AddThunderClockPlusCard inserts a ThunderClock Plus clock card
-func (a *Apple2) AddThunderClockPlusCard(slot int, romFile string) error {
-	c := NewCardThunderClockPlus()
-	a.insertCard(c, slot)
-	return nil
+func (a *Apple2) AddThunderClockPlusCard(slot int) {
+	a.insertCard(NewCardThunderClockPlus(), slot)
 }
 
 // AddRGBCard inserts an RBG option to the Apple IIe 80 col 64KB card

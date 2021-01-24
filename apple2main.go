@@ -75,6 +75,10 @@ func MainApple() *Apple2 {
 		"thunderClockCardSlot",
 		4,
 		"slot for the ThunderClock Plus card. -1 for none")
+	consoleCardSlot := flag.Int(
+		"consoleCardSlot",
+		-1,
+		"slot for the host console card. -1 for none")
 	nsc := flag.Int(
 		"nsc",
 		-1,
@@ -235,14 +239,13 @@ func MainApple() *Apple2 {
 		a.AddMemoryExpansionCard(*memoryExpansionCardSlot)
 	}
 	if *thunderClockCardSlot > 0 {
-		err := a.AddThunderClockPlusCard(*thunderClockCardSlot,
-			"<internal>/ThunderclockPlusROM.bin")
-		if err != nil {
-			panic(err)
-		}
+		a.AddThunderClockPlusCard(*thunderClockCardSlot)
 	}
 	if *vidHDCardSlot >= 0 {
 		a.AddVidHD(*vidHDCardSlot)
+	}
+	if *consoleCardSlot >= 0 {
+		a.AddCardInOut(*consoleCardSlot)
 	}
 
 	if *smartPortImage != "" {
@@ -294,7 +297,6 @@ func MainApple() *Apple2 {
 	}
 
 	// a.AddRomX()
-	// a.AddCardInOut(2)
 	// a.AddCardLogger(4)
 
 	if *dumpChars {
