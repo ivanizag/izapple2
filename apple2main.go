@@ -73,12 +73,16 @@ func MainApple() *Apple2 {
 		"memory to use with RAMWorks card, 0 for no card, max is 16384")
 	thunderClockCardSlot := flag.Int(
 		"thunderClockCardSlot",
-		4,
+		-1,
 		"slot for the ThunderClock Plus card. -1 for none")
 	consoleCardSlot := flag.Int(
 		"consoleCardSlot",
 		-1,
 		"slot for the host console card. -1 for none")
+	mouseCardSlot := flag.Int(
+		"mouseCardSlot",
+		4,
+		"slot for the Mouse card. -1 for none")
 	nsc := flag.Int(
 		"nsc",
 		-1,
@@ -246,6 +250,9 @@ func MainApple() *Apple2 {
 	}
 	if *consoleCardSlot >= 0 {
 		a.AddCardInOut(*consoleCardSlot)
+	}
+	if *mouseCardSlot > 0 {
+		a.AddMouseCard(*mouseCardSlot)
 	}
 
 	if *smartPortImage != "" {

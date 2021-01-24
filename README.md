@@ -30,6 +30,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Bootable Smartport / ProDOS card
   - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
   - FASTChip, limited to what Total Replay needs to set and clear fast mode
+  - Mouse Card, emulates the entry points, not the softswitches. Experimental.
   - Host console card. Maps the host STDIN and STDOUT to PR# and IN#
 
 - Graphic modes:
@@ -55,6 +56,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
 - Other features:
   - Sound
   - Joystick support. Up to two joysticks or four paddles
+  - Mouse support. No mouse capture needed
   - Adjustable speed
   - Fast disk mode to set max speed while using the disks
   - Single file executable with embedded ROMs and DOS 3.3
@@ -69,7 +71,7 @@ By default the following configuration is launched:
 - Memory Expansion card with 1Gb in slot 1
 - VidHD card (SHR support) in slot 2
 - FASTChip Accelerator card in slot 3
-- ThunderClock Plus card in slot 4
+- Mouse card in slot 4
 - SmartPort card with 1 device in slot 5 (if an image is provided with -disk35)
 - DiskII controller card in slot 6
 - SmartPort card with 1 device in slot 7 (if an image is provided with -hd)
@@ -199,6 +201,8 @@ Only valid on SDL mode
         cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
   -model string
         set base model. Models available 2plus, 2e, 2enh, base64a (default "2enh")
+  -mouseCardSlot int
+    	  slot for the Mouse card. -1 for none (default 4)
   -nsc int
         add a DS1216 No-Slot-Clock on the main ROM (use 0) or a slot ROM. -1 for none (default -1)
   -panicSS

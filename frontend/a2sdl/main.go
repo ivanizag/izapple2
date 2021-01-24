@@ -47,6 +47,9 @@ func sdlRun(a *izapple2.Apple2) {
 	j := newSDLJoysticks(true)
 	a.SetJoysticksProvider(j)
 
+	m := newSDLMouse()
+	a.SetMouseProvider(m)
+
 	go a.Run()
 
 	paused := false
@@ -69,8 +72,10 @@ func sdlRun(a *izapple2.Apple2) {
 			case *sdl.MouseMotionEvent:
 				w, h := window.GetSize()
 				j.putMouseMotionEvent(t, w, h)
+				m.putMouseMotionEvent(t, w, h)
 			case *sdl.MouseButtonEvent:
 				j.putMouseButtonEvent(t)
+				m.putMouseButtonEvent(t)
 			}
 		}
 

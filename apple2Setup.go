@@ -153,6 +153,11 @@ func (a *Apple2) AddThunderClockPlusCard(slot int) {
 	a.insertCard(NewCardThunderClockPlus(), slot)
 }
 
+// AddMouseCard inserts a Mouse card
+func (a *Apple2) AddMouseCard(slot int) {
+	a.insertCard(NewCardMouse(), slot)
+}
+
 // AddRGBCard inserts an RBG option to the Apple IIe 80 col 64KB card
 func (a *Apple2) AddRGBCard() {
 	setupRGBCard(a)
@@ -211,4 +216,9 @@ func (a *Apple2) SetSpeakerProvider(s SpeakerProvider) {
 // SetJoysticksProvider attaches an external joysticks provider
 func (a *Apple2) SetJoysticksProvider(j JoysticksProvider) {
 	a.io.setJoysticksProvider(j)
+}
+
+// SetMouseProvider attaches an external joysticks provider
+func (a *Apple2) SetMouseProvider(m MouseProvider) {
+	a.io.setMouseProvider(m)
 }

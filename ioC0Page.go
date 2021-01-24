@@ -14,6 +14,7 @@ type ioC0Page struct {
 	speaker             SpeakerProvider
 	paddlesStrobeCycle  uint64
 	joysticks           JoysticksProvider
+	mouse               MouseProvider
 	apple2              *Apple2
 	trace               bool
 	traceRegistrations  bool
@@ -29,10 +30,15 @@ type SpeakerProvider interface {
 	Click(cycle uint64)
 }
 
-// JoysticksProvider declares de the joysticks
+// JoysticksProvider abstracts the joysticks
 type JoysticksProvider interface {
 	ReadButton(i int) bool
 	ReadPaddle(i int) (uint8, bool)
+}
+
+// MouseProvider abstracts the mouse
+type MouseProvider interface {
+	ReadMouse() (x uint16, y uint16, pressed bool)
 }
 
 // See https://www.kreativekorp.com/miscpages/a2info/iomemory.shtml
@@ -98,6 +104,10 @@ func (p *ioC0Page) setSpeakerProvider(s SpeakerProvider) {
 
 func (p *ioC0Page) setJoysticksProvider(j JoysticksProvider) {
 	p.joysticks = j
+}
+
+func (p *ioC0Page) setMouseProvider(m MouseProvider) {
+	p.mouse = m
 }
 
 func (p *ioC0Page) peek(address uint16) uint8 {

@@ -216,7 +216,12 @@ func (mmu *memoryManager) Peek(address uint16) uint8 {
 	if mh == nil {
 		return 0xf4 // Or some random number
 	}
-	return mh.peek(address)
+	value := mh.peek(address)
+	//if address >= 0xc400 && address < 0xc500 {
+	//	fmt.Printf("[MMU] Peek at %04x: %02x\n", address, value)
+	//}
+
+	return value
 }
 
 // Peek returns the data on the given address optimized for more local requests
@@ -237,7 +242,13 @@ func (mmu *memoryManager) PeekCode(address uint16) uint8 {
 	if mh == nil {
 		return 0xf4 // Or some random number
 	}
-	return mh.peek(address)
+
+	value := mh.peek(address)
+	//if address >= 0xc400 && address < 0xc500 {
+	//	fmt.Printf("[MMU] PeekCode at %04x: %02x\n", address, value)
+	//}
+
+	return value
 }
 
 // Poke sets the data at the given address
@@ -246,6 +257,10 @@ func (mmu *memoryManager) Poke(address uint16, value uint8) {
 	if mh != nil {
 		mh.poke(address, value)
 	}
+
+	//if address >= 0x0036 && address <= 0x0039 {
+	//	fmt.Printf("[MMU] Poke at %04x: %02x\n", address, value)
+	//}
 }
 
 // Memory initialization

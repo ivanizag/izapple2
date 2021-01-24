@@ -194,7 +194,7 @@ func (c *CardHardDisk) status(unit uint8, dest uint16) uint8 {
 	c.a.mmu.Poke(dest+2, 0x00)
 	c.a.mmu.Poke(dest+3, 0x00) // Unknown manufacturer
 	c.a.mmu.Poke(dest+4, 0x01)
-	c.a.mmu.Poke(dest+5, 0x00) // Versión 1.0 final
+	c.a.mmu.Poke(dest+5, 0x00) // Version 1.0 final
 	c.a.mmu.Poke(dest+6, 0x00)
 	c.a.mmu.Poke(dest+7, 0x00) // Reserved
 
