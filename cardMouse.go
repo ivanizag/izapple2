@@ -26,8 +26,9 @@ type CardMouse struct {
 	minX, minY, maxX, maxY uint16
 	mode                   uint8
 
-	iIn int
-	i   int
+	response string
+	iOut     int
+	iIn      int
 
 	trace bool
 }
@@ -36,10 +37,9 @@ type CardMouse struct {
 func NewCardMouse() *CardMouse {
 	var c CardMouse
 	c.name = "Mouse Card"
-	c.trace = true
+	c.trace = false
 	c.maxX = 0x3ff
 	c.maxY = 0x3ff
-	//c.loadRomFromResource("<internal>//Apple Mouse Interface Card ROM - 342-0270-C.bin")
 	return &c
 }
 
@@ -60,10 +60,12 @@ const (
 )
 
 func (c *CardMouse) set(field uint16, value uint8) {
+	// Update the card screen-holes
 	c.a.mmu.Poke(field+uint16(c.slot), value)
 }
 
 func (c *CardMouse) get(field uint16) uint8 {
+	// Read from the card screen-holes
 	return c.a.mmu.Peek(field /*+ uint16(c.slot)*/)
 }
 
@@ -82,26 +84,53 @@ func (c *CardMouse) setMode(mode uint8) {
 	}
 }
 
+func (c *CardMouse) readMouse() (uint16, uint16, bool) {
+	x, y, pressed := c.a.io.mouse.ReadMouse()
+	xTrans := uint16(uint64(c.maxX-c.minX) * uint64(x) / 65536)
+	yTrans := uint16(uint64(c.maxY-c.minY) * uint64(y) / 65536)
+	return xTrans, yTrans, pressed
+}
+
 const mouseReponse = "10,10,+4\n"
 
 func (c *CardMouse) assign(a *Apple2, slot int) {
 	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
-		// TODO
-		value := uint8(mouseReponse[c.i])
-		c.i = (c.i + 1) % len(mouseReponse)
-		value += 0x80
-		if value&0x7f == 10 {
-			value = 13 + 0x80
+		if c.iOut == 0 {
+			// Create a new response
+			x, y, pressed := c.readMouse()
+
+			button := 1
+			if !pressed {
+				button += 2
+			}
+			if !c.lastPressed {
+				button++
+			}
+
+			keyboard := "+"
+			strobed := (c.a.io.softSwitchesData[ioDataKeyboard] & (1 << 7)) == 0
+			if !strobed {
+				keyboard = "-"
+			}
+
+			c.response = fmt.Sprintf("%v,%v,%v%v\r", x, y, keyboard, button)
 		}
+		value := uint8(c.response[c.iOut])
+		c.iOut++
+		if c.iOut == len(c.response) {
+			c.iOut = 0
+		}
+
+		value += 0x80
 		if c.trace {
-			fmt.Printf("[cardMouse] Read access to softswith 0x%x for slot %v, value %x.\n", 0, slot, value)
+			fmt.Printf("[cardMouse] IN#%v -> %02x.\n", slot, value)
 		}
 		return value
 	}, "MOUSEOUT")
 
 	c.addCardSoftSwitchW(1, func(_ *ioC0Page, value uint8) {
 		if c.trace {
-			fmt.Printf("[cardMouse] Write access to softswith 0x%x for slot %v, value 0x%x: %v, %v.\n", 1, slot, value, value&0x7f, string(value&0x7f))
+			fmt.Printf("[cardMouse] PR#%v <- %02x\n", slot, value)
 		}
 		if c.iIn == 0 {
 			// We care only about the first byte
@@ -122,16 +151,14 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 
 	c.addCardSoftSwitchW(3, func(_ *ioC0Page, value uint8) {
 		if c.trace {
-			fmt.Printf("[cardMouse] ServeMouse(0x%02v)\n", value)
+			fmt.Printf("[cardMouse] ServeMouse() NOT IMPLEMENTED\n")
 		}
+		panic("Mouse interrupts not implemented")
 	}, "SERVEMOUSE")
 
 	c.addCardSoftSwitchW(4, func(_ *ioC0Page, value uint8) {
 		if c.mode&mouseModeEnabled == 1 {
-			x, y, pressed := a.io.mouse.ReadMouse()
-
-			xTrans := uint16(uint64(c.maxX-c.minX) * uint64(x) / 65536)
-			yTrans := uint16(uint64(c.maxY-c.minY) * uint64(y) / 65536)
+			x, y, pressed := c.readMouse()
 
 			status := uint8(0)
 			if pressed {
@@ -140,30 +167,30 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 			if c.lastPressed {
 				status |= 1 << 6
 			}
-			if (xTrans != c.lastX) || (yTrans != c.lastY) {
+			if (x != c.lastX) || (y != c.lastY) {
 				status |= 1 << 5
 			}
 
-			c.set(mouseXHi, uint8(xTrans>>8))
-			c.set(mouseYHi, uint8(yTrans>>8))
-			c.set(mouseXLo, uint8(xTrans))
-			c.set(mouseYLo, uint8(yTrans))
+			c.set(mouseXHi, uint8(x>>8))
+			c.set(mouseYHi, uint8(y>>8))
+			c.set(mouseXLo, uint8(x))
+			c.set(mouseYLo, uint8(y))
 			c.set(mouseStatus, status)
 			c.set(mouseMode, c.mode)
 			if c.trace && ((status&(1<<5) != 0) || (pressed != c.lastPressed)) {
 				fmt.Printf("[cardMouse] ReadMouse(): x: %v, y: %v, pressed: %v\n",
-					xTrans, yTrans, pressed)
+					x, y, pressed)
 			}
 
-			c.lastX = xTrans
-			c.lastY = yTrans
+			c.lastX = x
+			c.lastY = y
 			c.lastPressed = pressed
 		}
 	}, "READMOUSE")
 
 	c.addCardSoftSwitchW(5, func(_ *ioC0Page, value uint8) {
 		if c.trace {
-			fmt.Printf("[cardMouse] ClearMouse()\n")
+			fmt.Printf("[cardMouse] ClearMouse() NOT IMPLEMENTED\n")
 		}
 		c.set(mouseXHi, 0)
 		c.set(mouseYHi, 0)
@@ -172,7 +199,7 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 	}, "CLEARMOUSE")
 	c.addCardSoftSwitchW(6, func(_ *ioC0Page, value uint8) {
 		if c.trace {
-			fmt.Printf("[cardMouse] PosMouse(0x%02v)\n", value)
+			fmt.Printf("[cardMouse] PosMouse() NOT IMPLEMENTED\n")
 		}
 	}, "POSMOUSE")
 
@@ -182,11 +209,9 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 		}
 
 		if value == 0 {
-			//c.a.cpu.SetTrace(false)
 			c.minX = uint16(c.get(mouseXLo)) + uint16(c.get(mouseXHi))<<8
 			c.maxX = uint16(c.get(mouseYLo)) + uint16(c.get(mouseYHi))<<8
 		} else if value == 1 {
-			//c.a.cpu.SetTrace(true)
 			c.minY = uint16(c.get(mouseXLo)) + uint16(c.get(mouseXHi))<<8
 			c.maxY = uint16(c.get(mouseYLo)) + uint16(c.get(mouseYHi))<<8
 		}
@@ -198,7 +223,7 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 
 	c.addCardSoftSwitchW(8, func(_ *ioC0Page, value uint8) {
 		if c.trace {
-			fmt.Printf("[cardMouse] HomeMouse(0x%02x)\n", value)
+			fmt.Printf("[cardMouse] HomeMouse() NOT IMPLEMENTED\n")
 		}
 	}, "HOMEMOUSE")
 
@@ -215,7 +240,7 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 
 	c.addCardSoftSwitchW(8, func(_ *ioC0Page, value uint8) {
 		if c.trace {
-			fmt.Printf("[cardMouse] TimeData(%v)\n", value)
+			fmt.Printf("[cardMouse] TimeData(%v) NOT IMPLEMENTED\n", value)
 		}
 	}, "TIMEDATEMOUSE")
 

@@ -30,7 +30,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Bootable Smartport / ProDOS card
   - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
   - FASTChip, limited to what Total Replay needs to set and clear fast mode
-  - Mouse Card, emulates the entry points, not the softswitches. Experimental.
+  - Mouse Card, emulates the entry points, not the softswitches.
   - Host console card. Maps the host STDIN and STDOUT to PR# and IN#
 
 - Graphic modes:
