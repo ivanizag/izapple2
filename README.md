@@ -106,7 +106,7 @@ Download the excellent [Total Replay](https://archive.org/details/TotalReplay) c
 [a2-4am](https://github.com/a2-4am/4cade):
 
 ``` terminal
-casa@servidor:~$ ./izapple2sdl Total\ Replay\ v4.0-alpha.3.hdv
+casa@servidor:~$ ./izapple2sdl Total\ Replay\ v4.0.hdv
 ```
 
 Displays super hi-res box art as seen with the VidHD card.
