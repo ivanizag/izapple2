@@ -2,6 +2,7 @@ package screen
 
 import (
 	"image"
+	"image/color"
 )
 
 // SnapshotParts the currently visible screen
@@ -126,4 +127,22 @@ func doubleWidthFilter(in *image.RGBA) *image.RGBA {
 		}
 	}
 	return out
+}
+
+// SnapshotCharacterGenerator shows the current character set
+func SnapshotCharacterGenerator(vs VideoSource) *image.RGBA {
+	text := make([]uint8, textLines*text40Columns)
+	for l := 0; l < textLines; l++ {
+		for c := 0; c < text40Columns; c++ {
+			text[text40Columns*l+c] = 0x20 + 0x80 // Space
+		}
+	}
+
+	for l := 0; l < 8; l++ {
+		for c := 0; c < 32; c++ {
+			text[text40Columns*(2*l+4)+c+4] = uint8(l*32 + c)
+		}
+	}
+
+	return renderText(vs, text, nil, color.White)
 }

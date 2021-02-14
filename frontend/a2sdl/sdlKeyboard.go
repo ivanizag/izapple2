@@ -12,7 +12,8 @@ type sdlKeyboard struct {
 	a          *izapple2.Apple2
 	keyChannel *izapple2.KeyboardChannel
 
-	showPages bool
+	showPages   bool
+	showCharGen bool
 }
 
 func newSDLKeyBoard(a *izapple2.Apple2) *sdlKeyboard {
@@ -100,7 +101,11 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	case sdl.K_F9:
 		k.a.SendCommand(izapple2.CommandDumpDebugInfo)
 	case sdl.K_F10:
-		k.a.SendCommand(izapple2.CommandNextCharGenPage)
+		if ctrl {
+			k.showCharGen = !k.showCharGen
+		} else {
+			k.a.SendCommand(izapple2.CommandNextCharGenPage)
+		}
 	case sdl.K_F11:
 		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case sdl.K_F12:

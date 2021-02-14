@@ -158,6 +158,7 @@ Line:
 - F6: Toggle between NTSC color TV and green phosphor monochrome monitor
 - F7: Show the video mode and a split screen with the views for NTSC color TV, page 1, page 2 and extra info.
 - F10: Cycle character generator code pages. Only if the character generator ROM has more than one 2Kb page.
+- Ctrl-F10: Show the charater map for the current character generator page.
 - F11: Toggle on and off the trace to console of the CPU execution
 - F12: Save a screen snapshot to a file `snapshot.png`
 - Pause: Pause the emulation
@@ -181,8 +182,6 @@ Only valid on SDL mode
         rom file for the disk drive controller (default "<internal>/DISK2.rom")
   -diskb string
         file to load on the second disk drive
-  -dumpChars
-        shows the character map
   -fastChipSlot int
         slot for the FASTChip accelerator card, -1 for none (default 3)
   -forceCaps

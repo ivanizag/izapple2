@@ -90,7 +90,10 @@ func sdlRun(a *izapple2.Apple2) {
 
 		if !a.IsPaused() {
 			var img *image.RGBA
-			if kp.showPages {
+			if kp.showCharGen {
+				img = screen.SnapshotCharacterGenerator(a)
+				window.SetTitle(fmt.Sprintf("%v character map", a.Name))
+			} else if kp.showPages {
 				img = screen.SnapshotParts(a, screen.ScreenModeNTSC)
 				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, screen.VideoModeName(a), img.Rect.Dx()/2, img.Rect.Dy()/2))
 			} else {

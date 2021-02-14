@@ -2,7 +2,6 @@ package izapple2
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/ivanizag/izapple2/storage"
 )
@@ -72,50 +71,4 @@ func (cg *CharacterGenerator) getPixel(char uint8, row int, column int) bool {
 	bit := cg.columnMap(column)
 	value := bits >> uint(bit) & 1
 	return value == 1
-}
-
-func (cg *CharacterGenerator) dumpCharRaw(char int) {
-	base := int(char) * 8
-	fmt.Printf("Char: %v\n---------\n", char)
-	for i := 0; i < 8; i++ {
-		fmt.Print("|")
-		b := cg.data[base+i]
-		for j := 0; j < 8; j++ {
-			if (b>>uint(j))&1 == 1 {
-				fmt.Print("#")
-			} else {
-				fmt.Print(" ")
-			}
-		}
-		fmt.Println("|")
-	}
-	fmt.Println("---------")
-}
-
-func (cg *CharacterGenerator) dumpChar(char uint8) {
-	fmt.Printf("Char: %v\n---------\n", char)
-	for row := 0; row < 8; row++ {
-		fmt.Print("|")
-		for col := 0; col < 7; col++ {
-			if cg.getPixel(char, row, col) {
-				fmt.Print("#")
-			} else {
-				fmt.Print(" ")
-			}
-		}
-		fmt.Println("|")
-	}
-	fmt.Println("---------")
-}
-
-// Dump to sdtout all the character maps
-func (cg *CharacterGenerator) Dump() {
-	pages := len(cg.data) / charGenPageSize
-	for p := 0; p < pages; p++ {
-		cg.setPage(p)
-		for i := 0; i < 256; i++ {
-			cg.dumpChar(uint8(i))
-			//cg.dumpCharRaw(int(i))
-		}
-	}
 }

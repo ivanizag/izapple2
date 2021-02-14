@@ -2,7 +2,6 @@ package izapple2
 
 import (
 	"flag"
-	"os"
 
 	"github.com/ivanizag/izapple2/storage"
 )
@@ -115,10 +114,6 @@ func MainApple() *Apple2 {
 		"traceHD",
 		false,
 		"dump to the console the hd/smarport commands")
-	dumpChars := flag.Bool(
-		"dumpChars",
-		false,
-		"shows the character map")
 	model := flag.String(
 		"model",
 		"2enh",
@@ -305,12 +300,6 @@ func MainApple() *Apple2 {
 
 	// a.AddRomX()
 	// a.AddCardLogger(4)
-
-	if *dumpChars {
-		a.cg.Dump()
-		os.Exit(0)
-		return nil
-	}
 
 	return a
 }
