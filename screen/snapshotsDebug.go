@@ -79,6 +79,10 @@ func VideoModeName(vs VideoSource) string {
 		name += "-PAGE2"
 	}
 
+	if (videoMode & VideoAltText) != 0 {
+		name += "-ALT"
+	}
+
 	switch mixMode {
 	case VideoMixText40:
 		name += "-MIX40"
@@ -130,7 +134,7 @@ func doubleWidthFilter(in *image.RGBA) *image.RGBA {
 }
 
 // SnapshotCharacterGenerator shows the current character set
-func SnapshotCharacterGenerator(vs VideoSource) *image.RGBA {
+func SnapshotCharacterGenerator(vs VideoSource, isAltText bool) *image.RGBA {
 	text := make([]uint8, textLines*text40Columns)
 	for l := 0; l < textLines; l++ {
 		for c := 0; c < text40Columns; c++ {
@@ -144,5 +148,5 @@ func SnapshotCharacterGenerator(vs VideoSource) *image.RGBA {
 		}
 	}
 
-	return renderText(vs, text, nil, color.White)
+	return renderText(vs, text, isAltText, nil, color.White)
 }

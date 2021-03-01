@@ -40,6 +40,7 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 	videoBase := videoMode & VideoBaseMask
 	mixMode := videoMode & VideoMixTextMask
 	isSecondPage := (videoMode & VideoSecondPage) != 0
+	isAltText := (videoMode & VideoAltText) != 0
 
 	var lightColor color.Color = color.White
 	if screenMode == ScreenModeGreen {
@@ -53,13 +54,13 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 	var ntscMask *image.Alpha
 	switch videoBase {
 	case VideoText40:
-		snap = snapshotText40(vs, isSecondPage, lightColor)
+		snap = snapshotText40(vs, isSecondPage, isAltText, lightColor)
 		applyNTSCFilter = false
 	case VideoText80:
-		snap = snapshotText80(vs, isSecondPage, lightColor)
+		snap = snapshotText80(vs, isSecondPage, isAltText, lightColor)
 		applyNTSCFilter = false
 	case VideoText40RGB:
-		snap = snapshotText40RGB(vs, isSecondPage)
+		snap = snapshotText40RGB(vs, isSecondPage, isAltText)
 		applyNTSCFilter = false
 	case VideoGR:
 		snap = snapshotLoRes(vs, isSecondPage, lightColor)
@@ -90,11 +91,11 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 		applyNTSCFilter := screenMode != ScreenModeGreen
 		switch mixMode {
 		case VideoMixText40:
-			bottom = snapshotText40(vs, isSecondPage, lightColor)
+			bottom = snapshotText40(vs, isSecondPage, isAltText, lightColor)
 		case VideoMixText80:
-			bottom = snapshotText80(vs, isSecondPage, lightColor)
+			bottom = snapshotText80(vs, isSecondPage, isAltText, lightColor)
 		case VideoMixText40RGB:
-			bottom = snapshotText40RGB(vs, isSecondPage)
+			bottom = snapshotText40RGB(vs, isSecondPage, isAltText)
 			applyNTSCFilter = false
 		}
 		if applyNTSCFilter {

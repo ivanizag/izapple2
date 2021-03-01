@@ -3,6 +3,7 @@ package screen
 import (
 	"image"
 	"image/color"
+	"time"
 )
 
 const (
@@ -12,25 +13,25 @@ const (
 	textLines     = 24
 )
 
-func snapshotText40(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
+func snapshotText40(vs VideoSource, isSecondPage bool, isAltText bool, light color.Color) *image.RGBA {
 	text := getTextFromMemory(vs, isSecondPage, false)
-	return renderText(vs, text, nil /*colorMap*/, light)
+	return renderText(vs, text, isAltText, nil /*colorMap*/, light)
 }
 
-func snapshotText80(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
+func snapshotText80(vs VideoSource, isSecondPage bool, isAltText bool, light color.Color) *image.RGBA {
 	text := getText80FromMemory(vs, isSecondPage)
-	return renderText(vs, text, nil /*colorMap*/, light)
+	return renderText(vs, text, isAltText, nil /*colorMap*/, light)
 }
 
-func snapshotText40RGB(vs VideoSource, isSecondPage bool) *image.RGBA {
+func snapshotText40RGB(vs VideoSource, isSecondPage bool, isAltText bool) *image.RGBA {
 	text := getTextFromMemory(vs, isSecondPage, false)
 	colorMap := getTextFromMemory(vs, isSecondPage, true)
-	return renderText(vs, text, colorMap, nil)
+	return renderText(vs, text, isAltText, colorMap, nil)
 }
 
 func snapshotText40RGBColors(vs VideoSource, isSecondPage bool) *image.RGBA {
 	colorMap := getTextFromMemory(vs, isSecondPage, true)
-	return renderText(vs, nil /*text*/, colorMap, nil)
+	return renderText(vs, nil /*text*/, false, colorMap, nil)
 }
 
 func getText80FromMemory(vs VideoSource, isSecondPage bool) []uint8 {
@@ -77,7 +78,10 @@ func getRGBTextColor(pixel bool, colorKey uint8) color.Color {
 
 }
 
-func renderText(vs VideoSource, text []uint8, colorMap []uint8, light color.Color) *image.RGBA {
+func renderText(vs VideoSource, text []uint8, isAltText bool, colorMap []uint8, light color.Color) *image.RGBA {
+	// Flash mode is 2Hz (host time)
+	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
+
 	columns := len(text) / textLines
 	if text == nil {
 		columns = text40Columns
@@ -102,7 +106,7 @@ func renderText(vs VideoSource, text []uint8, colorMap []uint8, light color.Colo
 				char = 79 + 128 // Debug screen filed with O
 			}
 
-			pixel := vs.GetCharacterPixel(char, rowInChar, colInChar)
+			pixel := vs.GetCharacterPixel(char, rowInChar, colInChar, isAltText, isFlashedFrame)
 
 			var colour color.Color
 			if colorMap != nil {

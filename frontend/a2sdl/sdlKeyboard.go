@@ -14,6 +14,7 @@ type sdlKeyboard struct {
 
 	showPages   bool
 	showCharGen bool
+	showAltText bool
 }
 
 func newSDLKeyBoard(a *izapple2.Apple2) *sdlKeyboard {
@@ -43,6 +44,7 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 
 	key := keyEvent.Keysym
 	ctrl := key.Mod&sdl.KMOD_CTRL != 0
+	shift := key.Mod&sdl.KMOD_SHIFT != 0
 
 	if ctrl {
 		if key.Sym >= 'a' && key.Sym <= 'z' {
@@ -103,6 +105,8 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	case sdl.K_F10:
 		if ctrl {
 			k.showCharGen = !k.showCharGen
+		} else if shift {
+			k.showAltText = !k.showAltText
 		} else {
 			k.a.SendCommand(izapple2.CommandNextCharGenPage)
 		}

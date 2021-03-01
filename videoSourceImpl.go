@@ -1,8 +1,6 @@
 package izapple2
 
 import (
-	"time"
-
 	"github.com/ivanizag/izapple2/screen"
 )
 
@@ -34,6 +32,8 @@ func (a *Apple2) GetCurrentVideoMode() uint16 {
 	isRGB160Mode := isDoubleResMode && rgbFlag1 && !rgbFlag2
 
 	isMixMode := a.io.isSoftSwitchActive(ioFlagMixed)
+	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
+	isAltText := a.isApple2e && a.io.isSoftSwitchActive(ioFlagAltChar)
 
 	var mode uint16
 	if isSuperHighResMode {
@@ -76,9 +76,11 @@ func (a *Apple2) GetCurrentVideoMode() uint16 {
 			mode |= screen.VideoMixText40
 		}
 	}
-	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
 	if isSecondPage {
 		mode |= screen.VideoSecondPage
+	}
+	if isAltText {
+		mode |= screen.VideoAltText
 	}
 
 	return mode
@@ -111,11 +113,7 @@ func (a *Apple2) GetSuperVideoMemory() []uint8 {
 }
 
 // GetCharacterPixel returns the pixel as output by the character generator
-func (a *Apple2) GetCharacterPixel(char uint8, rowInChar int, colInChar int) bool {
-	// Flash mode is 2Hz (host time)
-	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
-	isAltText := a.io.isSoftSwitchActive(ioFlagAltChar)
-
+func (a *Apple2) GetCharacterPixel(char uint8, rowInChar int, colInChar int, isAltText bool, isFlashedFrame bool) bool {
 	var pixel bool
 	if a.isApple2e {
 		vid6 := (char & 0x40) != 0

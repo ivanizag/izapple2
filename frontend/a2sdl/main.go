@@ -91,7 +91,7 @@ func sdlRun(a *izapple2.Apple2) {
 		if !a.IsPaused() {
 			var img *image.RGBA
 			if kp.showCharGen {
-				img = screen.SnapshotCharacterGenerator(a)
+				img = screen.SnapshotCharacterGenerator(a, kp.showAltText)
 				window.SetTitle(fmt.Sprintf("%v character map", a.Name))
 			} else if kp.showPages {
 				img = screen.SnapshotParts(a, screen.ScreenModeNTSC)

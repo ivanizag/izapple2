@@ -28,6 +28,7 @@ const (
 const (
 	VideoModifiersMask uint16 = 0xf000
 	VideoSecondPage    uint16 = 0x1000
+	VideoAltText       uint16 = 0x2000
 )
 
 // VideoSource provides the info to build the video output
@@ -39,7 +40,7 @@ type VideoSource interface {
 	// GetVideoMemory returns a slice to the video memory pages
 	GetVideoMemory(secondPage bool, ext bool) []uint8
 	// GetCharactePixel returns the pixel as output by the character generator
-	GetCharacterPixel(char uint8, rowInChar int, colInChar int) bool
+	GetCharacterPixel(char uint8, rowInChar int, colInChar int, isAltText bool, isFlashedFrame bool) bool
 	// GetSuperVideoMemory returns a slice to the SHR video memory
 	GetSuperVideoMemory() []uint8
 }

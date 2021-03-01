@@ -114,7 +114,7 @@ func (ts *TestScenario) GetVideoMemory(secondPage bool, ext bool) []uint8 {
 }
 
 // GetCharacterPixel returns the pixel as output by the character generator
-func (ts *TestScenario) GetCharacterPixel(char uint8, rowInChar int, colInChar int) bool {
+func (ts *TestScenario) GetCharacterPixel(char uint8, rowInChar int, colInChar int, isAltText bool, isFlashedFrame bool) bool {
 	// We don't have a character generator. We will return a square or blank for spaces
 	if char&0x3f == 0x20 {
 		return false // Space char
