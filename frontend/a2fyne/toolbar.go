@@ -6,14 +6,14 @@ import (
 	"github.com/ivanizag/izapple2"
 	"github.com/ivanizag/izapple2/screen"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 func buildCommandToolbar(s *state, icon fyne.Resource, command int) widget.ToolbarItem {
 	return widget.NewToolbarAction(
-		theme.NewThemedResource(icon, nil), func() {
+		theme.NewThemedResource(icon), func() {
 			s.a.SendCommand(command)
 		})
 }
@@ -27,14 +27,14 @@ func buildToolbar(s *state) *widget.Toolbar {
 	tb.Append(newToolbarScreen(s))
 	tb.Append(widget.NewToolbarSeparator())
 	tb.Append(widget.NewToolbarAction(
-		theme.NewThemedResource(resourceLayersTripleSvg, nil), func() {
+		theme.NewThemedResource(resourceLayersTripleSvg), func() {
 			s.showPages = !s.showPages
 			if !s.showPages {
 				s.win.SetTitle(s.DefaultTitle())
 			}
 		}))
 	tb.Append(widget.NewToolbarAction(
-		theme.NewThemedResource(resourceCameraSvg, nil), func() {
+		theme.NewThemedResource(resourceCameraSvg), func() {
 			err := screen.SaveSnapshot(s.a, s.screenMode, "snapshot.png")
 			if err != nil {
 				s.app.SendNotification(fyne.NewNotification(
@@ -48,7 +48,7 @@ func buildToolbar(s *state) *widget.Toolbar {
 		}))
 	tb.Append(widget.NewToolbarSeparator())
 	tb.Append(widget.NewToolbarAction(
-		theme.NewThemedResource(resourceCapsLockSvg, nil), func() {
+		theme.NewThemedResource(resourceCapsLockSvg), func() {
 			s.a.SetForceCaps(!s.a.IsForceCaps())
 			s.win.SetTitle(s.DefaultTitle())
 		}))
@@ -61,7 +61,7 @@ func buildToolbar(s *state) *widget.Toolbar {
 			s.win.SetFullScreen(!s.win.FullScreen())
 		}))
 	tb.Append(widget.NewToolbarAction(
-		theme.NewThemedResource(resourcePageLayoutSidebarRightSvg, nil),
+		theme.NewThemedResource(resourcePageLayoutSidebarRightSvg),
 		func() {
 			w := s.devices.w
 			if w.Visible() {

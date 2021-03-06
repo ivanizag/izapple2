@@ -3,8 +3,8 @@ package main
 import (
 	"strconv"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
 	"github.com/ivanizag/izapple2"
 )
 
@@ -25,6 +25,6 @@ func newPanelCard(slot int, card izapple2.Card) *panelCard {
 		}
 	}
 
-	pc.w = widget.NewGroup(card.GetName(), form)
+	pc.w = widget.NewCard(card.GetName(), "", form)
 	return &pc
 }

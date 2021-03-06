@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fyne.io/fyne"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
 )
 
 type panelJoystick struct {
@@ -18,8 +18,9 @@ func newPanelJoystick() *panelJoystick {
 
 	pj.labelJoy1 = widget.NewLabel("")
 	pj.labelJoy2 = widget.NewLabel("")
-	pj.w = widget.NewGroup(
+	pj.w = widget.NewCard(
 		"Joysticks",
+		"",
 		widget.NewForm(
 			widget.NewFormItem("Joystick 1", pj.labelJoy1),
 			widget.NewFormItem("Joystick 2", pj.labelJoy2),

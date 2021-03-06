@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/driver/desktop"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/driver/desktop"
 	"github.com/ivanizag/izapple2"
 	"github.com/ivanizag/izapple2/screen"
 )

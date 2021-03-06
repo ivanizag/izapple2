@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fyne.io/fyne"
-	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 	"github.com/ivanizag/izapple2/screen"
 )
 
@@ -23,7 +24,7 @@ func newToolbarScreen(s *state) *toolbarScreen {
 	tbs.s = s
 
 	tbs.ntsc = widget.NewButtonWithIcon("",
-		theme.NewThemedResource(resourceTelevisionClassicSvg, nil),
+		theme.NewThemedResource(resourceTelevisionClassicSvg),
 		func() {
 			tbs.setScreenMode(screen.ScreenModeNTSC)
 		})
@@ -31,7 +32,7 @@ func newToolbarScreen(s *state) *toolbarScreen {
 		theme.NewDisabledResource(resourceTelevisionClassicSvg))
 
 	tbs.plain = widget.NewButtonWithIcon("",
-		theme.NewThemedResource(resourceTelevisionSvg, nil),
+		theme.NewThemedResource(resourceTelevisionSvg),
 		func() {
 			tbs.setScreenMode(screen.ScreenModePlain)
 		})
@@ -39,14 +40,14 @@ func newToolbarScreen(s *state) *toolbarScreen {
 		theme.NewDisabledResource(resourceTelevisionSvg))
 
 	tbs.green = widget.NewButtonWithIcon("",
-		theme.NewThemedResource(resourceMonitorSvg, nil),
+		theme.NewThemedResource(resourceMonitorSvg),
 		func() {
 			tbs.setScreenMode(screen.ScreenModeGreen)
 		})
 	tbs.greenDisabled = widget.NewIcon(
 		theme.NewDisabledResource(resourceMonitorSvg))
 
-	tbs.w = widget.NewHBox(
+	tbs.w = container.NewHBox(
 		tbs.ntsc, tbs.ntscDisabled,
 		tbs.plain, tbs.plainDisabled,
 		tbs.green, tbs.greenDisabled)

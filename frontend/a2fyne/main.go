@@ -11,11 +11,11 @@ import (
 
 	"github.com/pkg/profile"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/app"
-	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/driver/desktop"
-	"fyne.io/fyne/layout"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/layout"
 )
 
 type state struct {
@@ -64,7 +64,7 @@ func fyneRun(s *state) {
 	toolbar := buildToolbar(s)
 	display := canvas.NewImageFromImage(nil)
 	display.ScaleMode = canvas.ImageScalePixels // Looks worst but loads less.
-	display.SetMinSize(fyne.NewSize(280*2*2, 192*2*2))
+	display.SetMinSize(fyne.NewSize(280, 192))
 
 	container := fyne.NewContainerWithLayout(
 		layout.NewBorderLayout(nil, toolbar, nil, s.devices.w),
