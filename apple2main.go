@@ -82,6 +82,10 @@ func MainApple() *Apple2 {
 		"mouseCardSlot",
 		4,
 		"slot for the Mouse card. -1 for none")
+	videxCardSlot := flag.Int(
+		"videxCardSlot",
+		3,
+		"slot for the Videx Videoterm 80 columns card. For pre-2e models. -1 for none")
 	nsc := flag.Int(
 		"nsc",
 		-1,
@@ -204,9 +208,15 @@ func MainApple() *Apple2 {
 		}
 		charGenMap = charGenColumnsMapBase64a
 		*vidHDCardSlot = -1
+		*videxCardSlot = -1 // The videx firmware crashes the BASE64A, probably by use of ANN0
 
 	default:
 		panic("Model not supported")
+	}
+
+	if a.isApple2e {
+		// Videx not used on Apple IIe
+		*videxCardSlot = -1
 	}
 
 	a.cpu.SetTrace(*traceCPU)
@@ -248,6 +258,9 @@ func MainApple() *Apple2 {
 	}
 	if *mouseCardSlot > 0 {
 		a.AddMouseCard(*mouseCardSlot)
+	}
+	if *videxCardSlot > 0 {
+		a.AddVidexCard(*videxCardSlot)
 	}
 
 	if *smartPortImage != "" {

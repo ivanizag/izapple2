@@ -80,6 +80,9 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 	case VideoSHR:
 		snap = snapshotSuperHiRes(vs)
 		applyNTSCFilter = false
+	case VideoVidex:
+		snap = vs.GetCardImage(lightColor)
+		applyNTSCFilter = false
 	}
 
 	if applyNTSCFilter {

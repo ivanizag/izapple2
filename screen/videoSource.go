@@ -1,5 +1,10 @@
 package screen
 
+import (
+	"image"
+	"image/color"
+)
+
 // Base Video Modes
 const (
 	VideoBaseMask  uint16 = 0x1f
@@ -14,6 +19,7 @@ const (
 	VideoRGBMix    uint16 = 0x12
 	VideoRGB160    uint16 = 0x13
 	VideoSHR       uint16 = 0x14
+	VideoVidex     uint16 = 0x15
 )
 
 // Mix text video mdes modifiers
@@ -43,4 +49,6 @@ type VideoSource interface {
 	GetCharacterPixel(char uint8, rowInChar int, colInChar int, isAltText bool, isFlashedFrame bool) bool
 	// GetSuperVideoMemory returns a slice to the SHR video memory
 	GetSuperVideoMemory() []uint8
+	// GetCardImage returns an image provided by a card, like the videx card
+	GetCardImage(light color.Color) *image.RGBA
 }

@@ -3,6 +3,8 @@ package screen
 import (
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/color"
 	"image/png"
 	"io/ioutil"
 	"os"
@@ -126,6 +128,11 @@ func (ts *TestScenario) GetCharacterPixel(char uint8, rowInChar int, colInChar i
 // GetSuperVideoMemory returns a slice to the SHR video memory
 func (ts *TestScenario) GetSuperVideoMemory() []uint8 {
 	return ts.SVideoPage
+}
+
+// GetCardImage returns an image provided by a card, like the videx card
+func (ts *TestScenario) GetCardImage(light color.Color) *image.RGBA {
+	return nil
 }
 
 func buildImageName(name string, screenMode int, altSet bool) string {

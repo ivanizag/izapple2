@@ -26,6 +26,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - ThunderClock Plus real time clock
   - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
   - No Slot Clock based on the DS1216
+  - Videx Videoterm 80 column card with the Videx Soft Video Switch (Apple ][+ only)
 - Useful cards not emulating a real card
   - Bootable Smartport / ProDOS card
   - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
@@ -35,7 +36,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
 
 - Graphic modes:
   - Text 40 columns
-  - Text 80 columns (Apple //e only)
+  - Text 80 columns (Apple //e and Videx VideoTerm)
   - Low-Resolution graphics
   - Double-Width Low-Resolution graphics (Apple //e only)
   - High-Resolution graphics
@@ -231,6 +232,8 @@ Only valid on SDL mode
         dump to the console the sofswitch registrations
   -vidHDSlot int
         slot for the VidHD card, only for //e models. -1 for none (default 2)
+  -videxCardSlot int
+    	  slot for the Videx Videoterm 80 columns card. For pre-2e models. -1 for none (default 3)
 
 
 ```

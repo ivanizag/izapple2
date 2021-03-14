@@ -28,7 +28,7 @@ func (c *CardLogger) assign(a *Apple2, slot int) {
 			return 0
 		}, "LOGGERR")
 		c.addCardSoftSwitchW(i, func(_ *ioC0Page, value uint8) {
-			fmt.Printf("[cardLogger] Write access to softswith 0x%x for slot %v, value 0x%v.\n", iCopy, slot, value)
+			fmt.Printf("[cardLogger] Write access to softswith 0x%x for slot %v, value 0x%02x.\n", iCopy, slot, value)
 		}, "LOGGERW")
 	}
 

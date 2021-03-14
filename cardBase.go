@@ -1,6 +1,8 @@
 package izapple2
 
-import "github.com/ivanizag/izapple2/storage"
+import (
+	"github.com/ivanizag/izapple2/storage"
+)
 
 // Card represents an Apple II card to be inserted in a slot
 type Card interface {
@@ -15,9 +17,9 @@ type Card interface {
 type cardBase struct {
 	a       *Apple2
 	name    string
-	romCsxx *memoryRangeROM
-	romC8xx *memoryRangeROM
-	romCxxx *memoryRangeROM
+	romCsxx memoryHandler
+	romC8xx memoryHandler
+	romCxxx memoryHandler
 
 	slot     int
 	_ssr     [16]softSwitchR
@@ -54,8 +56,14 @@ func (c *cardBase) loadRom(data []uint8) {
 	if len(data) == 0x100 {
 		// Just 256 bytes in Cs00
 		c.romCsxx = newMemoryRangeROM(0, data, "Slot ROM")
+	} else if len(data) == 0x400 {
+		// The file has C800 to CBFF for ROM
+		// The 256 bytes in Cx00 are copied from the last page in C800-CBFF
+		// Used on the Videx 80 columns card
+		c.romCsxx = newMemoryRangeROM(0, data[0x300:], "Slot ROM")
+		c.romC8xx = newMemoryRangeROM(0xc800, data, "Slot C8 ROM")
 	} else if len(data) == 0x800 {
-		// The file has C800 to C8FF
+		// The file has C800 to CFFF
 		// The 256 bytes in Cx00 are copied from the first page in C800
 		c.romCsxx = newMemoryRangeROM(0, data, "Slot ROM")
 		c.romC8xx = newMemoryRangeROM(0xc800, data, "Slot C8 ROM")

@@ -15,6 +15,7 @@ type Apple2 struct {
 	io                  *ioC0Page
 	cg                  *CharacterGenerator
 	cards               [8]Card
+	softVideoSwitch     *SoftVideoSwitch
 	isApple2e           bool
 	commandChannel      chan int
 	cycleDurationNs     float64 // Current speed. Inverse of the cpu clock in Ghz
@@ -53,7 +54,7 @@ func (a *Apple2) Run() {
 			for i := 0; i < cpuSpinLoops; i++ {
 				// Conditional tracing
 				//pc, _ := a.cpu.GetPCAndSP()
-				//a.cpu.SetTrace(pc >= 0x300 && pc <= 0x400)
+				//a.cpu.SetTrace((pc >= 0xc300 && pc <= 0xc400) || (pc >= 0xc800 && pc <= 0xce00))
 
 				// Execution
 				a.cpu.ExecuteInstruction()

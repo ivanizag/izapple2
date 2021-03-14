@@ -158,6 +158,13 @@ func (a *Apple2) AddMouseCard(slot int) {
 	a.insertCard(NewCardMouse(), slot)
 }
 
+// AddVidexCard inserts a Videx card
+func (a *Apple2) AddVidexCard(slot int) {
+	c := NewCardVidex()
+	a.insertCard(c, slot)
+	a.softVideoSwitch = NewSoftVideoSwitch(c)
+}
+
 // AddRGBCard inserts an RBG option to the Apple IIe 80 col 64KB card
 func (a *Apple2) AddRGBCard() {
 	setupRGBCard(a)

@@ -71,6 +71,8 @@ func VideoModeName(vs VideoSource) string {
 		name = "RGB160"
 	case VideoSHR:
 		name = "SHR"
+	case VideoVidex:
+		name = "VIDEX"
 	default:
 		name = "Unknown video mode"
 	}

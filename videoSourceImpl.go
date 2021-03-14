@@ -1,6 +1,9 @@
 package izapple2
 
 import (
+	"image"
+	"image/color"
+
 	"github.com/ivanizag/izapple2/screen"
 )
 
@@ -23,6 +26,7 @@ func (a *Apple2) GetCurrentVideoMode() uint16 {
 	isStore80Active := a.mmu.store80Active
 	isDoubleResMode := !isTextMode && is80Columns && !a.io.isSoftSwitchActive(ioFlagAnnunciator3)
 	isSuperHighResMode := a.io.isSoftSwitchActive(ioDataNewVideo)
+	isVidex := a.softVideoSwitch.isActive()
 
 	isRGBCard := a.io.isSoftSwitchActive(ioFlagRGBCardActive)
 	rgbFlag1 := a.io.isSoftSwitchActive(ioFlag1RGBCard)
@@ -38,6 +42,9 @@ func (a *Apple2) GetCurrentVideoMode() uint16 {
 	var mode uint16
 	if isSuperHighResMode {
 		mode = screen.VideoSHR
+		isMixMode = false
+	} else if isVidex {
+		mode = screen.VideoVidex
 		isMixMode = false
 	} else if isTextMode {
 		if is80Columns {
@@ -135,6 +142,11 @@ func (a *Apple2) GetCharacterPixel(char uint8, rowInChar int, colInChar int, isA
 		pixel = pixel != (isInverse || (isFlash && isFlashedFrame))
 	}
 	return pixel
+}
+
+// GetCardImage returns an image provided by a card, like the videx card
+func (a *Apple2) GetCardImage(light color.Color) *image.RGBA {
+	return a.softVideoSwitch.BuildAlternateImage(light)
 }
 
 // DumpTextModeAnsi returns the text mode contents using ANSI escape codes for reverse and flash

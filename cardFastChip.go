@@ -6,6 +6,10 @@ from controlled speed to max speed the emulator can do.
 Note: It ends up not being useful for Total Replay as loading from HD is already
 very fast. HD blocks are loaded directly on the emulated RAM.
 
+Note that it doesn't intefere with the Apple IIe 80 columns in slot 3. It doesn't
+have ROM or slot specific sofswitches.
+
+
 See:
 	https://github.com/a2-4am/4cade/blob/master/src/hw.accel.a
 	http://www.a2heaven.com/webshop/resources/pdf_document/18/82/c.pdf
@@ -26,13 +30,7 @@ type CardFastChip struct {
 func NewCardFastChip() *CardFastChip {
 	var c CardFastChip
 	c.name = "FASTChip IIe Card - limited"
-	c.loadRom(buildFastChipRom())
 	return &c
-}
-
-func buildFastChipRom() []uint8 {
-	data := make([]uint8, 256)
-	return data
 }
 
 const (
