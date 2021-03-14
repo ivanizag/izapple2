@@ -240,26 +240,13 @@ Only valid on SDL mode
 
 ## Building from source
 
-### izapple2console
-
-The only dependency is having a working Go installation on any platform.
-
-Run:
-
-``` terminal
-go get github.com/ivanizag/izapple2/izapple2console
-go build github.com/ivanizag/izapple2/izapple2console
-```
-
-### izapple2sdl
-
 Besides having a working Go installation, install the SDL2 developer files. Valid for any platform
 
 Run:
 
 ``` terminal
-go get github.com/ivanizag/izapple2/izapple2sdl
-go build github.com/ivanizag/izapple2/izapple2sdl
+go get github.com/ivanizag/izapple2/frontend/a2sdl
+go build github.com/ivanizag/izapple2/frontend/a2sdl
 ```
 
 ### Use docker to cross compile for Linux and Windows
