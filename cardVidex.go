@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"time"
 
 	"github.com/ivanizag/izapple2/component"
 	"github.com/ivanizag/izapple2/storage"
@@ -125,22 +126,37 @@ func (c *CardVidex) buildImage(light color.Color) *image.RGBA {
 		img.Set(1, 1, color.White)
 		return img
 	}
+	ms := time.Now().Nanosecond() / (1000 * 1000) // Host time, used for the cursoR blink
 
 	size := image.Rect(0, 0, width, height)
 	img := image.NewRGBA(size)
 
 	params.IterateScreen(func(address uint16, charLine uint8,
-		cursor bool, displayEnable bool,
+		cursorMode uint8, displayEnable bool,
 		column uint8, y int) {
 
 		bits := uint8(0)
 		if displayEnable {
 			char := c.sram[address&0x7ff]
 			bits = c.charGen[(uint16(char&0x7f)<<4)+uint16(charLine)]
-			if cursor {
+			isCursor := false
+			switch cursorMode {
+			case component.MC6845CursorFixed:
+				isCursor = true
+			case component.MC6845CursorSlow:
+				// It should be 533ms (32/60, 32 screen refreshes)
+				// Let's make a 2 blinks per second
+				isCursor = ms/2 > 1000/4
+			case component.MC6845CursorFast:
+				// It should be 266ms (32/60, 16 screen refreshes)
+				// Let's make a 4 blinks per second
+				isCursor = ms/4 > 1000/8
+			}
+			if isCursor {
 				bits = ^bits
 			}
 			if char >= 128 {
+				// Inverse
 				bits = ^bits
 			}
 		}
