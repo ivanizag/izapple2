@@ -25,7 +25,8 @@ NIB: 35 tracks 6656 bytes, 232960 bytes
 // CardDisk2 is a DiskII interface card
 type CardDisk2 struct {
 	cardBase
-	selected int // q5, Only 0 and 1 supported
+	selected int  // q5, Only 0 and 1 supported
+	power    bool // q4
 	drive    [2]cardDisk2Drive
 
 	dataLatch uint8
@@ -36,7 +37,6 @@ type CardDisk2 struct {
 type cardDisk2Drive struct {
 	name       string
 	diskette   storage.Diskette
-	power      bool  // q4
 	phases     uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
 	tracksStep int   // Stepmotor for tracks position. 4 steps per track
 }
@@ -63,19 +63,18 @@ func NewCardDisk2() *CardDisk2 {
 func (c *CardDisk2) GetInfo() map[string]string {
 	info := make(map[string]string)
 	info["rom"] = "16 sector"
+	info["power"] = strconv.FormatBool(c.power)
 
 	info["D1 name"] = c.drive[0].name
 	info["D1 track"] = strconv.FormatFloat(float64(c.drive[0].tracksStep)/4, 'f', 2, 64)
-	info["D1 power"] = strconv.FormatBool(c.drive[0].power)
 
 	info["D2 name"] = c.drive[1].name
 	info["D2 track"] = strconv.FormatFloat(float64(c.drive[1].tracksStep)/4, 'f', 2, 64)
-	info["D1 power"] = strconv.FormatBool(c.drive[1].power)
 	return info
 }
 
 func (c *CardDisk2) reset() {
-	// UtA2e 9-12, all sowtches forced to off
+	// UtA2e 9-12, all switches forced to off
 	drive := &c.drive[c.selected]
 	drive.phases = 0      // q0, q1, q2, q3
 	c.softSwitchQ4(false) // q4
@@ -114,24 +113,16 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 	}, "Q4DRIVEOFF")
 	c.addCardSoftSwitchR(0x9, func(_ *ioC0Page) uint8 {
 		c.softSwitchQ4(true)
-		drive := &c.drive[c.selected]
-		if !drive.power {
-			drive.power = true
-			c.a.requestFastMode()
-			if drive.diskette != nil {
-				drive.diskette.PowerOn(c.a.cpu.GetCycles())
-			}
-		}
 		return 0
 	}, "Q4DRIVEON")
 
 	// Q5, drive selecion
 	c.addCardSoftSwitchR(0xA, func(_ *ioC0Page) uint8 {
-		c.selected = 0
+		c.softSwitchQ5(0)
 		return c.dataLatch
 	}, "Q5SELECT1")
 	c.addCardSoftSwitchR(0xB, func(_ *ioC0Page) uint8 {
-		c.selected = 1
+		c.softSwitchQ5(1)
 		return 0
 	}, "Q5SELECT2")
 
@@ -150,22 +141,37 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 }
 
 func (c *CardDisk2) softSwitchQ4(value bool) {
-	drive := &c.drive[c.selected]
-	if !value && drive.power {
+	if !value && c.power {
 		// Turn off
-		drive.power = false
+		c.power = false
 		c.a.releaseFastMode()
+		drive := &c.drive[c.selected]
 		if drive.diskette != nil {
 			drive.diskette.PowerOff(c.a.cpu.GetCycles())
 		}
-	} else if value && !drive.power {
+	} else if value && !c.power {
 		// Turn on
-		drive.power = true
+		c.power = true
 		c.a.requestFastMode()
+		drive := &c.drive[c.selected]
 		if drive.diskette != nil {
 			drive.diskette.PowerOn(c.a.cpu.GetCycles())
 		}
 	}
+}
+
+func (c *CardDisk2) softSwitchQ5(selected int) {
+	if c.power && c.selected != selected {
+		// Selected changed with power on, power goes to the other disk
+		if c.drive[c.selected].diskette != nil {
+			c.drive[c.selected].diskette.PowerOff(c.a.cpu.GetCycles())
+		}
+		if c.drive[selected].diskette != nil {
+			c.drive[selected].diskette.PowerOn(c.a.cpu.GetCycles())
+		}
+	}
+
+	c.selected = selected
 }
 
 // Q6: shift/load
