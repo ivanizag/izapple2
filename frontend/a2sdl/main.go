@@ -94,10 +94,10 @@ func sdlRun(a *izapple2.Apple2) {
 				img = screen.SnapshotCharacterGenerator(a, kp.showAltText)
 				window.SetTitle(fmt.Sprintf("%v character map", a.Name))
 			} else if kp.showPages {
-				img = screen.SnapshotParts(a, screen.ScreenModeNTSC)
+				img = screen.SnapshotParts(a, kp.screenMode)
 				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, screen.VideoModeName(a), img.Rect.Dx()/2, img.Rect.Dy()/2))
 			} else {
-				img = screen.Snapshot(a, screen.ScreenModeNTSC)
+				img = screen.Snapshot(a, kp.screenMode)
 			}
 			if img != nil {
 				surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]),

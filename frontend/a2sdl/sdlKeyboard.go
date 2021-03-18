@@ -15,12 +15,15 @@ type sdlKeyboard struct {
 	showPages   bool
 	showCharGen bool
 	showAltText bool
+	screenMode  int
 }
 
 func newSDLKeyBoard(a *izapple2.Apple2) *sdlKeyboard {
 	var k sdlKeyboard
 	k.a = a
 	k.keyChannel = izapple2.NewKeyboardChannel(a)
+
+	k.screenMode = screen.ScreenModeNTSC
 	return &k
 }
 
@@ -98,6 +101,12 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		} else {
 			k.a.SendCommand(izapple2.CommandToggleSpeed)
 		}
+	case sdl.K_F6:
+		if k.screenMode == screen.ScreenModeNTSC {
+			k.screenMode = screen.ScreenModeGreen
+		} else {
+			k.screenMode = screen.ScreenModeNTSC
+		}
 	case sdl.K_F7:
 		k.showPages = !k.showPages
 	case sdl.K_F9:
@@ -113,12 +122,13 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	case sdl.K_F11:
 		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case sdl.K_F12:
+		fallthrough
 	case sdl.K_PRINTSCREEN:
 		err := screen.SaveSnapshot(k.a, screen.ScreenModeNTSC, "snapshot.png")
 		if err != nil {
 			fmt.Printf("Error saving snapshoot: %v.\n.", err)
 		} else {
-			fmt.Println("Saving snapshot")
+			fmt.Println("Saving snapshot 'snapshot.png'")
 		}
 	case sdl.K_PAUSE:
 		k.a.SendCommand(izapple2.CommandPauseUnpauseEmulator)
