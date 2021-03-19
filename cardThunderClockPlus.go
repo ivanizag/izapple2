@@ -1,5 +1,7 @@
 package izapple2
 
+import "github.com/ivanizag/izapple2/component"
+
 /*
 ThunderClock`, real time clock card.
 
@@ -22,7 +24,8 @@ uPD1990AC hookup:
 // CardThunderClockPlus represents a ThunderClock+ card
 type CardThunderClockPlus struct {
 	cardBase
-	microPD1990ac
+	upd1990 component.MicroPD1990ac
+	//component.microPD1990ac
 }
 
 // NewCardThunderClockPlus creates a new CardThunderClockPlus
@@ -35,7 +38,7 @@ func NewCardThunderClockPlus() *CardThunderClockPlus {
 
 func (c *CardThunderClockPlus) assign(a *Apple2, slot int) {
 	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
-		bit := c.microPD1990ac.out()
+		bit := c.upd1990.Out()
 		// Get the next data bit from uPD1990AC on the MSB
 		if bit {
 			return 0x80
@@ -51,7 +54,7 @@ func (c *CardThunderClockPlus) assign(a *Apple2, slot int) {
 		/* fmt.Printf("[cardThunderClock] dataIn %v, clock %v, strobe %v, command %v.\n",
 		dataIn, clock, strobe, command) */
 
-		c.microPD1990ac.in(clock, strobe, command, dataIn)
+		c.upd1990.In(clock, strobe, command, dataIn)
 	}, "THUNDERCLOCKW")
 
 	c.cardBase.assign(a, slot)

@@ -1,4 +1,4 @@
-package izapple2
+package component
 
 import (
 	"time"
@@ -21,8 +21,7 @@ import (
 		byte 0: seconds, BCD 0 to 59
 
 */
-
-type microPD1990ac struct {
+type MicroPD1990ac struct {
 	clock    bool   // CLK state
 	strobe   bool   // STB state
 	command  uint8  // C0, C1, C2 command. From 0 to 7
@@ -36,7 +35,7 @@ const (
 	mpd1990commandTimeRead = 3
 )
 
-func (m *microPD1990ac) in(clock bool, strobe bool, command uint8, dataIn bool) {
+func (m *MicroPD1990ac) In(clock bool, strobe bool, command uint8, dataIn bool) {
 	// Detect signal raise
 	clockRaise := clock && !m.clock
 	strobeRaise := strobe && !m.strobe
@@ -69,7 +68,7 @@ func (m *microPD1990ac) in(clock bool, strobe bool, command uint8, dataIn bool) 
 	}
 }
 
-func (m *microPD1990ac) out() bool {
+func (m *MicroPD1990ac) Out() bool {
 	if m.command == mpd1990commandRegHold {
 		//panic("Output on RegHold should be a 1Hz signal. Not implemented.")
 	}
@@ -82,7 +81,7 @@ func (m *microPD1990ac) out() bool {
 	return (m.register & 1) == 1
 }
 
-func (m *microPD1990ac) loadTime() {
+func (m *MicroPD1990ac) loadTime() {
 	now := time.Now()
 
 	var register uint64
