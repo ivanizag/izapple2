@@ -240,14 +240,29 @@ Only valid on SDL mode
 
 ## Building from source
 
-Besides having a working Go installation, install the SDL2 developer files. Valid for any platform
+### Linux
+
+Besides having a working Go installation, install the SDL2 developer files. Run:
+
+``` terminal
+git clone github.com/ivanizag/izapple2
+cd izapple2/frontend/a2sdl
+go build .
+```
+
+### Windows 
+
+On Windows, CGO needs a gcc compiler. Install [mingw-w64](http://mingw-w64.org/doku.php/download/mingw-builds) and the [SDL2 developer files](https://www.libsdl.org/release/) for mingw-64.
 
 Run:
 
 ``` terminal
-go get github.com/ivanizag/izapple2/frontend/a2sdl
-go build github.com/ivanizag/izapple2/frontend/a2sdl
+git clone github.com/ivanizag/izapple2
+cd izapple2\frontend\a2sdl
+go build .
 ```
+
+To run in Windows, copy the file `SDL2.dll` on the same folder as `a2sdl.exe`. The latest `SDL2.dll` can be found in the [Runtime binary for Windows 64-bit](https://www.libsdl.org/download-2.0.php).
 
 ### Use docker to cross compile for Linux and Windows
 
@@ -257,5 +272,3 @@ To create executables for Linux and Windows without installing Go, SDL2 or the W
 cd docker
 ./build.sh
 ```
-
-To run in Windows, copy the file `SDL2.dll` on the same folder as `izapple2sdl.exe`. The latest `SDL2.dll` can be found in the [Runtime binary for Windows 64-bit](https://www.libsdl.org/download-2.0.php).
