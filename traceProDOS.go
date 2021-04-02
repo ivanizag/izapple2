@@ -67,9 +67,9 @@ func (t *traceProDOS) inspect() {
 }
 
 func (t *traceProDOS) dumpMLICall() {
-	_, ps := t.a.cpu.GetPCAndSP()
-	caller := uint16(t.a.mmu.Peek(0x100+uint16(ps+1))) +
-		uint16(t.a.mmu.Peek(0x100+uint16(ps+2)))<<8 - 2
+	_, sp := t.a.cpu.GetPCAndSP()
+	caller := uint16(t.a.mmu.Peek(0x100+uint16(sp+1))) +
+		uint16(t.a.mmu.Peek(0x100+uint16(sp+2)))<<8 - 2
 	t.functionCode = t.a.mmu.Peek(caller + 3)
 	t.paramsAdddress = uint16(t.a.mmu.Peek(caller+4)) + uint16(t.a.mmu.Peek(caller+5))<<8
 	t.returnAddress = caller + 6

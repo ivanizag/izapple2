@@ -24,8 +24,12 @@ type Apple2 struct {
 	profile             bool
 	showSpeed           bool
 	paused              bool
-	traceMLI            *traceProDOS
+	tracers             []executionTracer
 	forceCaps           bool
+}
+
+type executionTracer interface {
+	inspect()
 }
 
 const (
@@ -211,8 +215,10 @@ func (a *Apple2) releaseFastMode() {
 }
 
 func (a *Apple2) executionTrace() {
-	if a.traceMLI != nil {
-		a.traceMLI.inspect()
+	if a.tracers != nil {
+		for _, v := range a.tracers {
+			v.inspect()
+		}
 	}
 }
 
@@ -223,15 +229,17 @@ func (a *Apple2) dumpDebugInfo() {
 		0x37: "CSWH",
 		0x38: "KSWL",
 		0x39: "KSWH",
+		0xe2: "ACJVAFLDL", // Apple Pascal
+		0xe3: "ACJVAFLDH", // Apple Pascal
+		0xec: "JVBFOLDL",  // Apple Pascal
+		0xed: "JVBFOLDH",  // Apple Pascal
+		0xee: "JVAFOLDL",  // Apple Pascal
+		0xef: "JVAFOLDH",  // Apple Pascal
 	}
 
 	fmt.Printf("Page zero values:\n")
-	for _, k := range []int{0x36, 0x37, 0x38, 0x39} {
+	for _, k := range []int{0x36, 0x37, 0x38, 0x39, 0xe2, 0xe3, 0xec, 0xed, 0xee, 0xef} {
 		d := a.mmu.physicalMainRAM.data[k]
 		fmt.Printf("  %v(0x%x): 0x%02x\n", pageZeroSymbols[k], k, d)
-	}
-
-	if a.traceMLI != nil {
-		a.traceMLI.dumpDevices()
 	}
 }

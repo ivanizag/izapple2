@@ -87,7 +87,11 @@ func (r *registers) updateFlagZN(t uint8) {
 }
 
 func (r registers) String() string {
-	ch := (r.getA() & 0x3F) + 0x40
+	//ch := (r.getA() & 0x3F) + 0x40
+	ch := (r.getA() & 0x7F)
+	if ch < 0x20 {
+		ch += 0x40
+	}
 	return fmt.Sprintf("A: %#02x(%v), X: %#02x, Y: %#02x, SP: %#02x, PC: %#04x, P: %#02x, (NV-BDIZC): %08b",
 		r.getA(), string(ch), r.getX(), r.getY(), r.getSP(), r.getPC(), r.getP(), r.getP())
 }

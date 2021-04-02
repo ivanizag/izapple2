@@ -29,7 +29,7 @@ type memoryManager struct {
 	// Configuration switches, Language cards
 	lcSelectedBlock uint8 // Language card block selected. Usually, allways 0. But Saturn has 8
 	lcActiveRead    bool  // Upper RAM active for read
-	lcActiveWrite   bool  // Upper RAM active for read
+	lcActiveWrite   bool  // Upper RAM active for write
 	lcAltBank       bool  // Alternate
 
 	// Configuration switches, Apple //e

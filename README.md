@@ -54,6 +54,12 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - RGB for Super High Resolution and RGB card
   - ANSI Console, avoiding the SDL2 dependency
   - Debug mode: shows four panels with actual screen, page1, page2 and extra info dependant of the video mode
+- Tracing capabilities:
+  - CPU execution disassembled
+  - Softswitch reads and writes
+  - ProDOS MLI calls
+  - Apple Pascal BIOS calls
+  - Smartport commands
 - Other features:
   - Sound
   - Joystick support. Up to two joysticks or four paddles
@@ -62,7 +68,6 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Fast disk mode to set max speed while using the disks
   - Single file executable with embedded ROMs and DOS 3.3
   - Pause (thanks a2geek)
-  - ProDOS MLI calls tracing
   - Passes the [A2AUDIT 1.06](https://github.com/zellyn/a2audit) tests as II+, //e, and //e Enhanced.
 
 By default the following configuration is launched:
@@ -226,6 +231,8 @@ Only valid on SDL mode
         dump to the console the hd/smartport commands
   -traceMLI
         dump to the console the calls to ProDOS machine language interface calls to $BF00
+  -tracePascal
+        dump to the console the calls to the Apple Pascal BIOS
   -traceSS
         dump to the console the sofswitches calls
   -traceSSReg

@@ -16,12 +16,9 @@ func newApple2() *Apple2 {
 	return &a
 }
 
-func (a *Apple2) setup(clockMhz float64, fastMode bool, traceMLI bool) {
+func (a *Apple2) setup(clockMhz float64, fastMode bool) {
 	a.commandChannel = make(chan int, 100)
 	a.fastMode = fastMode
-	if traceMLI {
-		a.traceMLI = newTraceProDOS(a)
-	}
 
 	if clockMhz <= 0 {
 		// Full speed
@@ -53,6 +50,14 @@ func setApple2eEnhanced(a *Apple2) {
 	a.mmu.initExtendedRAM(1)
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)
+}
+
+func (a *Apple2) addTracer(tracer executionTracer) {
+	if a.tracers == nil {
+		a.tracers = make([]executionTracer, 0)
+	}
+
+	a.tracers = append(a.tracers, tracer)
 }
 
 func (a *Apple2) insertCard(c Card, slot int) {

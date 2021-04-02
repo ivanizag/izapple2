@@ -130,6 +130,10 @@ func MainApple() *Apple2 {
 		"traceMLI",
 		false,
 		"dump to the console the calls to ProDOS machine language interface calls to $BF00")
+	tracePascal := flag.Bool(
+		"tracePascal",
+		false,
+		"dump to the console the calls to the Apple Pascal BIOS")
 	forceCaps := flag.Bool(
 		"forceCaps",
 		false,
@@ -150,12 +154,18 @@ func MainApple() *Apple2 {
 	}
 
 	a := newApple2()
-	a.setup(*cpuClock, *fastDisk, *traceMLI)
+	a.setup(*cpuClock, *fastDisk)
 	a.io.setTrace(*traceSS)
 	a.io.setTraceRegistrations(*traceSSReg)
 	a.io.setPanicNotImplemented(*panicSS)
 	a.setProfiling(*profile)
 	a.SetForceCaps(*forceCaps)
+	if *traceMLI {
+		a.addTracer(newTraceProDOS(a))
+	}
+	if *tracePascal {
+		a.addTracer(newTracePascal(a))
+	}
 
 	var charGenMap charColumnMap
 	initialCharGenPage := 0
