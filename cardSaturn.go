@@ -34,6 +34,7 @@ func (c *CardSaturn) assign(a *Apple2, slot int) {
 	c.activeBlock = 0
 	a.mmu.initLanguageRAM(saturnBlocks)
 
+	// TODO: use addCardSoftSwitches()
 	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
 		c.addCardSoftSwitchR(iCopy, func(*ioC0Page) uint8 {

@@ -60,6 +60,8 @@ func (c *CardVidex) loadCharacterMap(filename string) error {
 }
 
 func (c *CardVidex) assign(a *Apple2, slot int) {
+
+	// TODO: use addCardSoftSwitches()
 	for i := uint8(0x0); i <= 0xf; i++ {
 		// Bit 0 goes to the RS pin of the MC6548. It controls
 		// whether a register is being accesed or the contents

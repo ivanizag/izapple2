@@ -21,16 +21,14 @@ func NewCardLogger() *CardLogger {
 }
 
 func (c *CardLogger) assign(a *Apple2, slot int) {
-	for i := uint8(0x0); i <= 0xf; i++ {
-		iCopy := i
-		c.addCardSoftSwitchR(i, func(*ioC0Page) uint8 {
-			fmt.Printf("[cardLogger] Read access to softswith 0x%x for slot %v.\n", iCopy, slot)
-			return 0
-		}, "LOGGERR")
-		c.addCardSoftSwitchW(i, func(_ *ioC0Page, value uint8) {
-			fmt.Printf("[cardLogger] Write access to softswith 0x%x for slot %v, value 0x%02x.\n", iCopy, slot, value)
-		}, "LOGGERW")
-	}
+	c.addCardSoftSwitches(func(_ *ioC0Page, address uint8, data uint8, write bool) uint8 {
+		if write {
+			fmt.Printf("[cardLogger] Write access to softswith 0x%x for slot %v, value 0x%02x.\n", address, slot, data)
+		} else {
+			fmt.Printf("[cardLogger] Read access to softswith 0x%x for slot %v.\n", address, slot)
+		}
+		return 0
+	}, "LOGGER")
 
 	c.cardBase.assign(a, slot)
 }

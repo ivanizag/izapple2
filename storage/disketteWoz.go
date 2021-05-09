@@ -33,24 +33,56 @@ Emulation status for the disks used on the reference:
 	- When bits aren't really bits
 		- The Print Shop Companion: Working
 	- What is the lifespan of the data latch?
-		- *** First Math Adventures - Understanding Word Problems
+		- *** First Math Adventures: Not working
 	- Reading Offset Data Streams
 		- *** Wings of Fury: Not working
 		- Stickybear Town Builder: Working
 	- Optimal bit timing of WOZ 2,0
 		- * Border Zone: Unknown, there is no UI to swap disks
 
+With the sequencer:
+	- How to begin
+		- DOS 3.3: Works
+		- * DOS 3.2: Not working, 13 sector disks can't boot
+	- Next choices
+		- *** Bouncing Kamungas: Not working
+		- Commando: Working
+		- Planetfall: Working
+		- Rescue Raiders: Working
+		- Sammy Lightfoot: Working
+		- Stargate: Working
+	- Cross track sync
+		- Blazing Paddles: Working
+		- Take 1: Working
+		- Hard Hat Mack: Working
+	- Half tracks
+		- The Bilestoad: Working
+	- Even more bit fiddling
+		- Dino Eggs: Working
+		- Crisis Mountain: Working
+		- Miner 2049er II: Working
+	- When bits aren't really bits
+		- The Print Shop Companion: Working
+	- What is the lifespan of the data latch?
+		- First Math Adventures: Working
+	- Reading Offset Data Streams
+		- Wings of Fury: Working
+		- Stickybear Town Builder: Working
+	- Optimal bit timing of WOZ 2,0
+		- * Border Zone: Unknown, there is no UI to swap disks
+
+
 */
 
 type disketteWoz struct {
-	data    *fileWoz
+	data    *FileWoz
 	cycleOn uint64 // Cycle when the disk was last turned on
 	turning bool
 
-	latch            uint8
-	position         uint32
-	cycle            uint64
-	lastQuarterTrack int
+	latch       uint8
+	position    uint32
+	positionMax uint32 // As tracks may have different lengths position is related of positionMax of the las track
+	cycle       uint64
 
 	mc3470Buffer uint8 // Four bit buffer to detect weak bits and to add latency
 
@@ -58,12 +90,12 @@ type disketteWoz struct {
 	visibleLatchCountDown int8 // The visible latch stores a valid latch reading for 2 bit timings
 }
 
-func newDisquetteWoz(f *fileWoz) (*disketteWoz, error) {
+func newDisquetteWoz(f *FileWoz) (*disketteWoz, error) {
 	// Discard not supported features
-	if f.info.DiskType != 1 {
+	if f.Info.DiskType != 1 {
 		return nil, errors.New("Only 5.25 disks are supported")
 	}
-	if f.info.BootSectorFormat == 2 { // Info not available in WOZ 1.0
+	if f.Info.BootSectorFormat == 2 { // Info not available in WOZ 1.0
 		return nil, errors.New("Woz 13 sector disks are not supported")
 	}
 
@@ -91,8 +123,7 @@ func (d *disketteWoz) Read(quarterTrack int, cycle uint64) uint8 {
 	for i := uint64(0); i < deltaBits; i++ {
 		// Get next bit taking into account the MC3470 latency and weak bits
 		var fluxBit uint8
-		fluxBit, d.position = d.data.getNextBitAndPosition(d.position, quarterTrack, d.lastQuarterTrack)
-		d.lastQuarterTrack = quarterTrack
+		fluxBit, d.position, d.positionMax = d.data.GetNextBitAndPosition(d.position, d.positionMax, quarterTrack)
 		d.mc3470Buffer = (d.mc3470Buffer<<1 + fluxBit) & 0x0f
 		bit := (d.mc3470Buffer >> 1) & 0x1 // Use the previous to last bit to add latency
 		if d.mc3470Buffer == 0 && rand.Intn(100) < 3 {

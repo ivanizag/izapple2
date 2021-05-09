@@ -1,6 +1,8 @@
 package izapple2
 
 import (
+	"fmt"
+
 	"github.com/ivanizag/izapple2/storage"
 )
 
@@ -112,4 +114,19 @@ func (c *cardBase) addCardSoftSwitchR(address uint8, ss softSwitchR, name string
 func (c *cardBase) addCardSoftSwitchW(address uint8, ss softSwitchW, name string) {
 	c._ssw[address] = ss
 	c._sswName[address] = name
+}
+
+type softSwitches func(io *ioC0Page, address uint8, data uint8, write bool) uint8
+
+func (c *cardBase) addCardSoftSwitches(sss softSwitches, name string) {
+
+	for i := uint8(0x0); i <= 0xf; i++ {
+		address := i
+		c.addCardSoftSwitchR(address, func(io *ioC0Page) uint8 {
+			return sss(io, address, 0, false)
+		}, fmt.Sprintf("%v%xR", name, address))
+		c.addCardSoftSwitchW(address, func(io *ioC0Page, value uint8) {
+			sss(io, address, value, true)
+		}, fmt.Sprintf("%v%xW", name, address))
+	}
 }

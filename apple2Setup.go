@@ -116,6 +116,28 @@ func (a *Apple2) AddDisk2(slot int, diskImage, diskBImage string) error {
 	return nil
 }
 
+// AddDisk2 inserts a DiskII controller
+func (a *Apple2) AddDisk2Sequencer(slot int, diskImage, diskBImage string) error {
+	c := NewCardDisk2Sequencer()
+	a.insertCard(c, slot)
+
+	if diskImage != "" {
+		err := c.drive[0].insertDiskette(diskImage)
+		if err != nil {
+			return err
+		}
+	}
+
+	if diskBImage != "" {
+		err := c.drive[0].insertDiskette(diskBImage)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // AddSmartPortDisk adds a smart port card and image
 func (a *Apple2) AddSmartPortDisk(slot int, hdImage string, trace bool) error {
 	c := NewCardHardDisk()

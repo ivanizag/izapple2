@@ -91,7 +91,7 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 			// Update magnets and position
 			drive := &c.drive[c.selected]
 			drive.phases &^= (1 << phase)
-			drive.tracksStep = moveStep(drive.phases, drive.tracksStep)
+			drive.tracksStep = moveDriveStepper(drive.phases, drive.tracksStep)
 
 			return c.dataLatch // All even addresses return the last dataLatch
 		}, fmt.Sprintf("PHASE%vOFF", phase))
@@ -100,7 +100,7 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 			// Update magnets and position
 			drive := &c.drive[c.selected]
 			drive.phases |= (1 << phase)
-			drive.tracksStep = moveStep(drive.phases, drive.tracksStep)
+			drive.tracksStep = moveDriveStepper(drive.phases, drive.tracksStep)
 
 			return 0
 		}, fmt.Sprintf("PHASE%vON", phase))
@@ -220,87 +220,6 @@ func (c *CardDisk2) processQ6Q7(in uint8) {
 	if c.dataLatch >= 0x80 {
 		//fmt.Printf("Datalacth: 0x%.2x in cycle %v\n", c.dataLatch, c.a.cpu.GetCycles())
 	}
-}
-
-/*
-Stepper motor to position the track.
-
-There are a number of group of four magnets. The stepper motor can be thought as a long
-line of groups of magnets, each group on the same configuration. We call phase each of those
-magnets. The cog is attracted to the enabled magnets, and can stay aligned to a magnet or
-between two.
-
-Phases (magnets):                       3   2   1   0   3   2   1   0   3   2   1   0
-Cog direction (step within a group):   7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0
-
-We will consider that the cog would go to the prefferred position if there is one. Independently
-of the previous position. The previous position is only used to know if it goes up or down
-a full group.
-*/
-
-const (
-	undefinedPosition = -1
-	maxStep           = 68 * 2 // What is the maximum quarter tracks a DiskII can go?
-	stepsPerGroup     = 8
-	stepsPerTrack     = 4
-)
-
-var cogPositions = []int{
-	undefinedPosition, // 0000, phases active
-	0,                 // 0001
-	2,                 // 0010
-	1,                 // 0011
-	4,                 // 0100
-	undefinedPosition, // 0101
-	3,                 // 0110
-	2,                 // 0111
-	6,                 // 1000
-	7,                 // 1001
-	undefinedPosition, // 1010
-	0,                 // 1011
-	5,                 // 1100
-	6,                 // 1101
-	4,                 // 1110
-	undefinedPosition, // 1111
-}
-
-func moveStep(phases uint8, prevStep int) int {
-
-	//fmt.Printf("magnets: 0x%x\n", phases)
-
-	cogPosition := cogPositions[phases]
-	if cogPosition == undefinedPosition {
-		// Don't move if magnets don't push on a defined direction.
-		return prevStep
-	}
-
-	prevPosition := prevStep % stepsPerGroup // Direction, step in the current group of magnets.
-	delta := cogPosition - prevPosition
-	if delta < 0 {
-		delta = delta + stepsPerGroup
-	}
-
-	var nextStep int
-	if delta < 4 {
-		// Steps up
-		nextStep = prevStep + delta
-		if nextStep > maxStep {
-			nextStep = maxStep
-		}
-	} else if delta == 4 {
-		// Don't move if magnets push on the opposite direction
-		nextStep = prevStep
-	} else { // delta > 4
-		// Steps down
-		nextStep = prevStep + delta - stepsPerGroup
-		if nextStep < 0 {
-			nextStep = 0
-		}
-	}
-
-	//fmt.Printf("[DiskII] 1/4 track: %03d %vO\n", nextStep, strings.Repeat(" ", nextStep))
-
-	return nextStep
 }
 
 func (d *cardDisk2Drive) insertDiskette(name string, dt storage.Diskette) {

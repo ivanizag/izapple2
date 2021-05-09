@@ -13,9 +13,9 @@ See:
 	https://applesaucefdc.com/woz/
 */
 
-type fileWoz struct {
+type FileWoz struct {
 	version  int
-	info     woz2Info
+	Info     woz2Info
 	trackMap []uint8
 	tracks   [wozMaxTrack]disketteTrackWoz
 	meta     map[string]string
@@ -80,20 +80,30 @@ const (
 var headerWoz1 = []uint8{0x57, 0x4f, 0x5A, 0x31, 0xFF, 0x0A, 0x0D, 0x0A}
 var headerWoz2 = []uint8{0x57, 0x4f, 0x5A, 0x32, 0xFF, 0x0A, 0x0D, 0x0A}
 
-func (f *fileWoz) getNextBitAndPosition(position uint32, quarterTrack int, prevQuarterTrack int) (uint8, uint32) {
-	trackWoz := f.tracks[f.trackMap[quarterTrack]]
-
-	if prevQuarterTrack != quarterTrack {
-		// Adjust position as tracks may have different length
-		prevTrackWoz := f.tracks[f.trackMap[prevQuarterTrack]]
-		newPosition := position * trackWoz.bitCount / prevTrackWoz.bitCount
-		//fmt.Printf("%03d to %03d: adjustmend %d\n", prevQuarterTrack, quarterTrack, int64(newPosition)-int64(position))
-		position = newPosition
+func (f *FileWoz) GetNextBitAndPosition(position uint32, positionMax uint32, quarterTrack int) (uint8, uint32, uint32) {
+	if positionMax == 0 {
+		// First unitialised use
+		positionMax = ^uint32(0) // MaxUint32
 	}
 
 	position++
-	position %= trackWoz.bitCount
-	return trackWoz.data[position/8] >> (7 - position%8) & 1, position
+	position %= positionMax
+
+	trackIndex := f.trackMap[quarterTrack]
+	if trackIndex == 0xff {
+		// No track defined
+		// TODO: return random value
+		return 0, position, positionMax
+	}
+	trackWoz := f.tracks[trackIndex]
+
+	if trackWoz.bitCount != positionMax {
+		// Adjust position as tracks have different length
+		position = position * trackWoz.bitCount / positionMax
+		positionMax = trackWoz.bitCount
+	}
+
+	return trackWoz.data[position/8] >> (7 - position%8) & 1, position, positionMax
 }
 
 func isFileWoz(data []uint8) bool {
@@ -107,8 +117,8 @@ func isFileWoz(data []uint8) bool {
 	return false
 }
 
-func newFileWoz(data []uint8) (*fileWoz, error) {
-	var f fileWoz
+func NewFileWoz(data []uint8) (*FileWoz, error) {
+	var f FileWoz
 
 	// Verify header. Note, the CRC is not verified
 	header := data[:len(headerWoz2)]
@@ -147,9 +157,9 @@ func newFileWoz(data []uint8) (*fileWoz, error) {
 	}
 	switch f.version {
 	case 1:
-		binary.Read(bytes.NewReader(infoData), binary.LittleEndian, &f.info.woz1Info)
+		binary.Read(bytes.NewReader(infoData), binary.LittleEndian, &f.Info.woz1Info)
 	case 2:
-		binary.Read(bytes.NewReader(infoData), binary.LittleEndian, &f.info)
+		binary.Read(bytes.NewReader(infoData), binary.LittleEndian, &f.Info)
 	}
 
 	// Read the optional META chunk
@@ -211,7 +221,12 @@ func newFileWoz(data []uint8) (*fileWoz, error) {
 	return &f, nil
 }
 
-func (f *fileWoz) dumpTrackAsNib(quarterTrack int) []uint8 {
+func (f *FileWoz) DumpTrackAsWoz(quarterTrack int) []uint8 {
+	trackWoz := f.tracks[f.trackMap[quarterTrack]]
+	return trackWoz.data
+}
+
+func (f *FileWoz) DumpTrackAsNib(quarterTrack int) []uint8 {
 	trackWoz := f.tracks[f.trackMap[quarterTrack]]
 	out := make([]uint8, 0, trackWoz.bitCount/8)
 	latch := uint8(0)
@@ -227,21 +242,21 @@ func (f *fileWoz) dumpTrackAsNib(quarterTrack int) []uint8 {
 	return out
 }
 
-func (f *fileWoz) dump() {
+func (f *FileWoz) dump() {
 	fmt.Printf("Woz image:\n")
-	fmt.Printf("  Version: %v\n", f.info.Version)
-	fmt.Printf("  Disk type: %v\n", f.info.DiskType)
-	fmt.Printf("  Write protected: %v\n", f.info.WriteProtected)
-	fmt.Printf("  Synchronized: %v\n", f.info.Synchronized)
-	fmt.Printf("  Cleaned: %v\n", f.info.Cleaned)
-	fmt.Printf("  Creator: %v\n", string(f.info.Creator[:]))
-	if f.info.Version >= 2 {
-		fmt.Printf("  Disk sides: %v\n", f.info.DiskSides)
-		fmt.Printf("  Boot sector format: %v\n", f.info.BootSectorFormat)
-		fmt.Printf("  Optimal bit timing: %v ns\n", 125*int(f.info.OptimalBitTiming))
-		fmt.Printf("  Compatible hardware: 0x%x\n", f.info.CompatibleHardware)
-		fmt.Printf("  Required RAM: %vKB\n", f.info.RequiredRAM)
-		fmt.Printf("  Largest track: %v blocks\n", f.info.LargestTrack)
+	fmt.Printf("  Version: %v\n", f.Info.Version)
+	fmt.Printf("  Disk type: %v\n", f.Info.DiskType)
+	fmt.Printf("  Write protected: %v\n", f.Info.WriteProtected)
+	fmt.Printf("  Synchronized: %v\n", f.Info.Synchronized)
+	fmt.Printf("  Cleaned: %v\n", f.Info.Cleaned)
+	fmt.Printf("  Creator: %v\n", string(f.Info.Creator[:]))
+	if f.Info.Version >= 2 {
+		fmt.Printf("  Disk sides: %v\n", f.Info.DiskSides)
+		fmt.Printf("  Boot sector format: %v\n", f.Info.BootSectorFormat)
+		fmt.Printf("  Optimal bit timing: %v ns\n", 125*int(f.Info.OptimalBitTiming))
+		fmt.Printf("  Compatible hardware: 0x%x\n", f.Info.CompatibleHardware)
+		fmt.Printf("  Required RAM: %vKB\n", f.Info.RequiredRAM)
+		fmt.Printf("  Largest track: %v blocks\n", f.Info.LargestTrack)
 	}
 	if f.meta != nil {
 		fmt.Printf("  Metadata:\n")

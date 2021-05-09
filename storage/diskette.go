@@ -43,7 +43,7 @@ func LoadDiskette(filename string) (Diskette, error) {
 	}
 
 	if isFileWoz(data) {
-		f, err := newFileWoz(data)
+		f, err := NewFileWoz(data)
 		if err != nil {
 			return nil, err
 		}
