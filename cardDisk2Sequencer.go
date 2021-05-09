@@ -1,8 +1,6 @@
 package izapple2
 
 import (
-	"fmt"
-
 	"github.com/ivanizag/izapple2/component"
 	"github.com/ivanizag/izapple2/storage"
 )
@@ -26,10 +24,10 @@ type CardDisk2Sequencer struct {
 	cardBase
 
 	p6ROM      []uint8
-	latch      component.SN74LS259 // 8-bit latch
-	register   uint8               // 8-bit shift/storage register SN74LS323
-	sequence   uint8               // 4 bits stored in an hex flip-flop SN74LS174
-	motorDelay uint8               // NE556 timer, used to delay motor off
+	q          [8]bool // 8-bit latch SN74LS259
+	register   uint8   // 8-bit shift/storage register SN74LS323
+	sequence   uint8   // 4 bits stored in an hex flip-flop SN74LS174
+	motorDelay uint8   // NE556 timer, used to delay motor off
 	drive      [2]cardDisk2SequencerDrive
 
 	lastPulse       bool
@@ -38,8 +36,17 @@ type CardDisk2Sequencer struct {
 	lastCycle uint64 // 2 Mhz cycles
 }
 
-const disk2MotorOffDelay = uint8(20) // 2 Mhz cycles, TODO: how long?
-const disk2PulseCcyles = uint8(8)    // 8 cycles = 4ms * 2Mhz
+const (
+	disk2MotorOffDelay = uint8(20) // 2 Mhz cycles, TODO: how long?
+	disk2PulseCcyles   = uint8(8)  // 8 cycles = 4ms * 2Mhz
+
+	/*
+	   We skip register calculations for long periods with the motor
+	   on but not reading bytes. It's an optimizations, 10000 is too
+	   short for cross track sync copy protections.
+	*/
+	disk2CyclestoLoseSsync = 100000
+)
 
 // NewCardDisk2Sequencer creates a new CardDisk2Sequencer
 func NewCardDisk2Sequencer() *CardDisk2Sequencer {
@@ -57,10 +64,6 @@ func NewCardDisk2Sequencer() *CardDisk2Sequencer {
 	return &c
 }
 
-func (c *CardDisk2Sequencer) dumpState() {
-	fmt.Printf("Q5 %v, Q4 %v, delay %v\n", c.latch.Q(5), c.latch.Q(4), c.motorDelay)
-}
-
 // GetInfo returns card info
 func (c *CardDisk2Sequencer) GetInfo() map[string]string {
 	info := make(map[string]string)
@@ -71,34 +74,30 @@ func (c *CardDisk2Sequencer) GetInfo() map[string]string {
 
 func (c *CardDisk2Sequencer) reset() {
 	// UtA2e 9-12, all switches forced to off
-	c.latch.Reset()
+	c.q = [8]bool{}
 }
 
 func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
 	c.addCardSoftSwitches(func(_ *ioC0Page, address uint8, data uint8, write bool) uint8 {
 		/*
-			Slot card pins to SN74LS259 mapping:
+			Slot card pins to SN74LS259 latch mapping:
 				slot_address[3,2,1] => latch_address[2,1,0]
 				slot_address[0] => latch_data
-				slot_dev_selct =>  latch_write_enable // It will be true
+				slot_dev_selct =>  latch_write_enable ;It will be true
 		*/
-		c.latch.Write(address>>1, (address&1) != 0, true)
+		c.q[address>>1] = (address & 1) != 0
 
 		// Advance the Disk2 state machine since the last call to softswitches
 		c.catchUp(data)
-		//c.dumpState()
 		/*
 			Slot card pins to SN74LS259 mapping:
 				slot_address[0] => latch_oe2_n
 		*/
 		register_output_enable_neg := (address & 1) != 0
 		if !register_output_enable_neg {
-			//if c.register >= 0x80 && address == 0xc {
-			//	fmt.Printf("Byte %x\n", c.register)
-			//}
 			return c.register
 		} else {
-			return 33
+			return 33 // Floating
 		}
 	}, "DISK2SEQ")
 
@@ -109,9 +108,9 @@ func (c *CardDisk2Sequencer) catchUp(data uint8) {
 	currentCycle := c.a.cpu.GetCycles() << 1 // Disk2 cycles are x2 cpu cycle
 
 	motorOn := c.step(data, true)
-	//if motorOn && c.lastCycle == 0 {
-	if motorOn && currentCycle > c.lastCycle+100000 { // With 10000, cross track snc not working
-		// The motor was off, now on. We start the count. We do at least a couple 2 Mhz cycles
+	if motorOn && currentCycle > c.lastCycle+disk2CyclestoLoseSsync {
+		// We have losy sync. We start the count.
+		//We do at least a couple 2 Mhz cycles
 		c.lastCycle = currentCycle - 2
 	}
 	c.lastCycle++
@@ -122,7 +121,7 @@ func (c *CardDisk2Sequencer) catchUp(data uint8) {
 	}
 
 	if !motorOn {
-		c.lastCycle = 0 // No tracking done
+		c.lastCycle = 0 // Sync lost
 	}
 }
 
@@ -131,8 +130,8 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 		Q4 and Q6 set on the sofswitches is stored on the
 		latch.
 	*/
-	q5 := c.latch.Q(5) // Drive selection
-	q4 := c.latch.Q(4) // Motor on (before delay)
+	q5 := c.q[5] // Drive selection
+	q4 := c.q[4] // Motor on (before delay)
 
 	/*
 		Motor On comes from the latched q4 via the 556 to
@@ -169,10 +168,10 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 		Q0 to Q3 are connected directly to the drives.
 	*/
 	if firstStep {
-		q0 := c.latch.Q(0)
-		q1 := c.latch.Q(1)
-		q2 := c.latch.Q(2)
-		q3 := c.latch.Q(3)
+		q0 := c.q[0]
+		q1 := c.q[1]
+		q2 := c.q[2]
+		q3 := c.q[3]
 		c.drive[0].moveHead(q0, q1, q2, q3)
 		c.drive[1].moveHead(q0, q1, q2, q3)
 	}
@@ -214,21 +213,17 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 	romAddress := component.PinsToByte([8]bool{
 		seqBits[1], // seq1
 		high,
-		c.latch.Q(6),
-		c.latch.Q(7),
+		c.q[6],
+		c.q[7],
 		!pulse,
 		seqBits[0], // seq0
 		seqBits[2], // seq2
-		seqBits[3], //seq3
+		seqBits[3], // seq3
 	})
-
-	//fmt.Printf("For Q6(%v) Q7(%v) H(%v) P(%v) Seq(%x) => ",
-	//	c.latch.Q(6), c.latch.Q(6), high, pulse, c.sequence)
 
 	romData := c.p6ROM[romAddress]
 	inst := romData & 0xf
 	next := romData >> 4
-	//fmt.Printf("cmd(%x) seq(%x) ", inst, next)
 
 	/*
 		The pins for the register shifter update are:
@@ -262,6 +257,5 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 	}
 	c.sequence = next
 
-	//fmt.Printf("reg %02x\n", c.register)
 	return true
 }
