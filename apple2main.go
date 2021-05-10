@@ -138,8 +138,8 @@ func MainApple() *Apple2 {
 		"forceCaps",
 		false,
 		"force all letters to be uppercased (no need for caps lock!)")
-	expermintalWoz := flag.Bool(
-		"xw",
+	sequencerDisk2 := flag.Bool(
+		"sequencer",
 		false,
 		"use the sequencer based Disk II card")
 
@@ -288,7 +288,7 @@ func MainApple() *Apple2 {
 		a.AddFastChip(*fastChipCardSlot)
 	}
 	if *disk2Slot > 0 {
-		if *expermintalWoz {
+		if *sequencerDisk2 {
 			err := a.AddDisk2Sequencer(*disk2Slot, diskImageFinal, *diskBImage)
 			if err != nil {
 				panic(err)

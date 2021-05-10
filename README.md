@@ -18,7 +18,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - 3.5 disks in PO or 2MG format
   - Hard disk in HDV or 2MG format with ProDOS and SmartPort support
 - Emulated extension cards:
-  - DiskII controller
+  - DiskII controller (state machine based for WOZ files)
   - 16Kb Language Card
   - 256Kb Saturn RAM
   - 1Mb Memory Expansion Card (slinky)
@@ -223,6 +223,8 @@ Only valid on SDL mode
         main rom file (default "<default>")
   -saturnCardSlot int
         slot for the 256kb Saturn card. -1 for none (default -1)
+  -sequencer
+        use the sequencer based Disk II card
   -thunderClockCardSlot int
         slot for the ThunderClock Plus card. -1 for none (default 4)
   -traceCpu
