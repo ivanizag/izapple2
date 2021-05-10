@@ -19,7 +19,7 @@ See:
 
 */
 
-// CardDisk2Sequencer is a DiskII interface card
+// CardDisk2Sequencer is a DiskII interface card with the Woz state machine
 type CardDisk2Sequencer struct {
 	cardBase
 
@@ -27,7 +27,7 @@ type CardDisk2Sequencer struct {
 	q          [8]bool // 8-bit latch SN74LS259
 	register   uint8   // 8-bit shift/storage register SN74LS323
 	sequence   uint8   // 4 bits stored in an hex flip-flop SN74LS174
-	motorDelay uint8   // NE556 timer, used to delay motor off
+	motorDelay uint64  // NE556 timer, used to delay motor off
 	drive      [2]cardDisk2SequencerDrive
 
 	lastPulse       bool
@@ -37,8 +37,8 @@ type CardDisk2Sequencer struct {
 }
 
 const (
-	disk2MotorOffDelay = uint8(20) // 2 Mhz cycles, TODO: how long?
-	disk2PulseCcyles   = uint8(8)  // 8 cycles = 4ms * 2Mhz
+	disk2MotorOffDelay = uint64(2 * 1000 * 1000) // 2 Mhz cycles. Total 1 second.
+	disk2PulseCyles    = uint8(8)                // 8 cycles = 4ms * 2Mhz
 
 	/*
 	   We skip register calculations for long periods with the motor
@@ -89,6 +89,7 @@ func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
 
 		// Advance the Disk2 state machine since the last call to softswitches
 		c.catchUp(data)
+
 		/*
 			Slot card pins to SN74LS259 mapping:
 				slot_address[0] => latch_oe2_n
@@ -185,7 +186,7 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 	*/
 	pulse := false
 	c.lastPulseCycles++
-	if c.lastPulseCycles == disk2PulseCcyles {
+	if c.lastPulseCycles == disk2PulseCyles {
 		pulse = c.drive[0].readPulse() ||
 			c.drive[1].readPulse()
 		c.lastPulseCycles = 0
@@ -207,9 +208,8 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 			A3 <= Q7 from 9334
 			A4 <= pulse transition
 	*/
-	seqBits := component.ByteToPins(c.sequence)
-
 	high := c.register >= 0x80
+	seqBits := component.ByteToPins(c.sequence)
 	romAddress := component.PinsToByte([8]bool{
 		seqBits[1], // seq1
 		high,
@@ -255,7 +255,10 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 			c.register = data
 		}
 	}
-	c.sequence = next
 
+	//fmt.Printf("[D2SEQ] Step. seq:%x inst:%x next:%x reg:%02x\n",
+	//	c.sequence, inst, next, c.register)
+
+	c.sequence = next
 	return true
 }

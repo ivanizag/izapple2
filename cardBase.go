@@ -124,9 +124,9 @@ func (c *cardBase) addCardSoftSwitches(sss softSwitches, name string) {
 		address := i
 		c.addCardSoftSwitchR(address, func(io *ioC0Page) uint8 {
 			return sss(io, address, 0, false)
-		}, fmt.Sprintf("%v%xR", name, address))
+		}, fmt.Sprintf("%v%XR", name, address))
 		c.addCardSoftSwitchW(address, func(io *ioC0Page, value uint8) {
 			sss(io, address, value, true)
-		}, fmt.Sprintf("%v%xW", name, address))
+		}, fmt.Sprintf("%v%XW", name, address))
 	}
 }

@@ -1,10 +1,5 @@
 package izapple2
 
-import (
-	"fmt"
-	"strings"
-)
-
 /*
 Stepper motor to position the track.
 
@@ -14,7 +9,7 @@ magnets. The cog is attracted to the enabled magnets, and can stay aligned to a 
 between two.
 
 Phases (magnets):                       3   2   1   0   3   2   1   0   3   2   1   0
-Cog direction (step within a group):   7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0
+Cog direction (step within a group):    7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0 7 6 5 4 3 2 1 0
 
 We will consider that the cog would go to the prefferred position if there is one. Independently
 of the previous position. The previous position is only used to know if it goes up or down
@@ -83,6 +78,6 @@ func moveDriveStepper(phases uint8, prevStep int) int {
 		}
 	}
 
-	fmt.Printf("[DiskII] 1/4 track: %03d %vO\n", nextStep, strings.Repeat(" ", nextStep))
+	//fmt.Printf("[DiskII] 1/4 track: %03d %vO\n", nextStep, strings.Repeat(" ", nextStep))
 	return nextStep
 }

@@ -41,8 +41,6 @@ func (d *cardDisk2SequencerDrive) insertDiskette(filename string) error {
 	d.data = f
 	d.writeProtected = !writeable
 
-	d.mc3470Buffer = 0xf // Test with the buffer full REMOVE
-
 	return nil
 }
 
@@ -75,7 +73,7 @@ func (d *cardDisk2SequencerDrive) readPulse() bool {
 		d.currentQuarterTrack)
 	d.mc3470Buffer = (d.mc3470Buffer<<1 + fluxBit) & 0x0f
 	bit := ((d.mc3470Buffer >> 1) & 0x1) != 0 // Use the previous to last bit to add latency
-	if d.mc3470Buffer == 0 && rand.Intn(100) < 3 {
+	if d.mc3470Buffer == 0 && rand.Intn(100) < 30 {
 		// Four consecutive zeros. It'a a fake bit.
 		// Output a random value. 70% zero, 30% one
 		bit = true

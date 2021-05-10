@@ -45,7 +45,7 @@ With the sequencer:
 		- DOS 3.3: Works
 		- * DOS 3.2: Not working, 13 sector disks can't boot
 	- Next choices
-		- *** Bouncing Kamungas: Not working
+		- Bouncing Kamungas: Working
 		- Commando: Working
 		- Planetfall: Working
 		- Rescue Raiders: Working
