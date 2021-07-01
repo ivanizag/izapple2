@@ -80,7 +80,7 @@ const (
 var headerWoz1 = []uint8{0x57, 0x4f, 0x5A, 0x31, 0xFF, 0x0A, 0x0D, 0x0A}
 var headerWoz2 = []uint8{0x57, 0x4f, 0x5A, 0x32, 0xFF, 0x0A, 0x0D, 0x0A}
 
-func (f *FileWoz) GetNextBitAndPosition(position uint32, positionMax uint32, quarterTrack int) (uint8, uint32, uint32) {
+func (f *FileWoz) GetNextBitAndPosition(position uint32, positionMax uint32, quarterTrack int) (bool, uint32, uint32) {
 	if positionMax == 0 {
 		// First unitialised use
 		positionMax = ^uint32(0) // MaxUint32
@@ -93,7 +93,7 @@ func (f *FileWoz) GetNextBitAndPosition(position uint32, positionMax uint32, qua
 	if trackIndex == 0xff {
 		// No track defined
 		// TODO: return random value
-		return 0, position, positionMax
+		return false, position, positionMax
 	}
 	trackWoz := f.tracks[trackIndex]
 
@@ -103,7 +103,28 @@ func (f *FileWoz) GetNextBitAndPosition(position uint32, positionMax uint32, qua
 		positionMax = trackWoz.bitCount
 	}
 
-	return trackWoz.data[position/8] >> (7 - position%8) & 1, position, positionMax
+	value := (trackWoz.data[position/8] >> (7 - position%8) & 1) == 1
+	return value, position, positionMax
+}
+
+func (f *FileWoz) SetBit(value bool, position uint32, positionMax uint32, quarterTrack int) {
+	// The position is not moved, GetNextBitAndPosition() would have been called previously.
+
+	trackIndex := f.trackMap[quarterTrack]
+	if trackIndex == 0xff {
+		// No track defined. Nothing is saved
+		return
+	}
+	trackWoz := f.tracks[trackIndex]
+
+	mask := uint8(1) << (7 - position%8)
+	if value {
+		trackWoz.data[position/8] |= mask
+	} else {
+		trackWoz.data[position/8] &= ^mask
+	}
+
+	fmt.Printf("Saving %v at %v\n", value, position)
 }
 
 func isFileWoz(data []uint8) bool {

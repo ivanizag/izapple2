@@ -66,12 +66,15 @@ func (d *cardDisk2SequencerDrive) readPulse() bool {
 	}
 
 	// Get next bit taking into account the MC3470 latency and weak bits
-	var fluxBit uint8
+	var fluxBit bool
 	fluxBit, d.position, d.positionMax = d.data.GetNextBitAndPosition(
 		d.position,
 		d.positionMax,
 		d.currentQuarterTrack)
-	d.mc3470Buffer = (d.mc3470Buffer<<1 + fluxBit) & 0x0f
+	d.mc3470Buffer = (d.mc3470Buffer << 1) & 0x0f
+	if fluxBit {
+		d.mc3470Buffer++
+	}
 	bit := ((d.mc3470Buffer >> 1) & 0x1) != 0 // Use the previous to last bit to add latency
 	if d.mc3470Buffer == 0 && rand.Intn(100) < 30 {
 		// Four consecutive zeros. It'a a fake bit.
@@ -82,6 +85,14 @@ func (d *cardDisk2SequencerDrive) readPulse() bool {
 	return bit
 }
 
-func (d *cardDisk2SequencerDrive) writePulse(value uint8) {
-	panic("Write not implemented on woz disk implementation")
+func (d *cardDisk2SequencerDrive) writePulse(value bool) {
+	if d.writeProtected || !d.enabled || d.data == nil {
+		return
+	}
+
+	d.data.SetBit(
+		value,
+		d.position,
+		d.positionMax,
+		d.currentQuarterTrack)
 }

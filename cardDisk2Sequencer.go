@@ -30,7 +30,7 @@ type CardDisk2Sequencer struct {
 	motorDelay uint64  // NE556 timer, used to delay motor off
 	drive      [2]cardDisk2SequencerDrive
 
-	lastPulse       bool
+	lastWriteValue  bool  // We write transitions to the WOZ file. We store the last value to send a pulse on change.
 	lastPulseCycles uint8 // There is a new pulse every 4ms, that's 8 cycles of 2Mhz
 
 	lastCycle uint64 // 2 Mhz cycles
@@ -110,8 +110,8 @@ func (c *CardDisk2Sequencer) catchUp(data uint8) {
 
 	motorOn := c.step(data, true)
 	if motorOn && currentCycle > c.lastCycle+disk2CyclestoLoseSsync {
-		// We have losy sync. We start the count.
-		//We do at least a couple 2 Mhz cycles
+		// We have lost sync. We start the count.
+		// We do at least a couple 2 Mhz cycles
 		c.lastCycle = currentCycle - 2
 	}
 	c.lastCycle++
@@ -187,6 +187,7 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 	pulse := false
 	c.lastPulseCycles++
 	if c.lastPulseCycles == disk2PulseCyles {
+		// Read
 		pulse = c.drive[0].readPulse() ||
 			c.drive[1].readPulse()
 		c.lastPulseCycles = 0
@@ -253,6 +254,15 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 		case 3:
 			// Load
 			c.register = data
+		}
+
+		if c.q[7] && (inst&0x3) != 0 {
+			currentWriteValue := next >= 0x8
+			writePulse := currentWriteValue != c.lastWriteValue
+			c.drive[0].writePulse(writePulse)
+			c.drive[1].writePulse(writePulse)
+			c.lastWriteValue = currentWriteValue
+
 		}
 	}
 

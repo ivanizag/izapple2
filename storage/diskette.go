@@ -16,6 +16,7 @@ type Diskette interface {
 func IsDiskette(filename string) bool {
 	data, _, err := LoadResource(filename)
 	if err != nil {
+		panic(err)
 		return false
 	}
 

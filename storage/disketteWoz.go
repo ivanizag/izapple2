@@ -122,9 +122,12 @@ func (d *disketteWoz) Read(quarterTrack int, cycle uint64) uint8 {
 	// TODO: avoid processing too many bits if delta is big
 	for i := uint64(0); i < deltaBits; i++ {
 		// Get next bit taking into account the MC3470 latency and weak bits
-		var fluxBit uint8
+		var fluxBit bool
 		fluxBit, d.position, d.positionMax = d.data.GetNextBitAndPosition(d.position, d.positionMax, quarterTrack)
-		d.mc3470Buffer = (d.mc3470Buffer<<1 + fluxBit) & 0x0f
+		d.mc3470Buffer = (d.mc3470Buffer << 1) & 0x0f
+		if fluxBit {
+			d.mc3470Buffer++
+		}
 		bit := (d.mc3470Buffer >> 1) & 0x1 // Use the previous to last bit to add latency
 		if d.mc3470Buffer == 0 && rand.Intn(100) < 3 {
 			// Four consecutive zeros. It'a a fake bit.
