@@ -14,7 +14,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - NIB (read only)
     - DSK
     - PO
-    - WOZ 1.0 or 2.0 (read only)
+    - [WOZ 1.0 or 2.0](storage/WozSupportStatus.md) (read only)
   - 3.5 disks in PO or 2MG format
   - Hard disk in HDV or 2MG format with ProDOS and SmartPort support
 - Emulated extension cards:
