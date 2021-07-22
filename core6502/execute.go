@@ -127,9 +127,14 @@ func (s *State) GetPCAndSP() (uint16, uint8) {
 	return s.reg.getPC(), s.reg.getSP()
 }
 
-// GetCarryAndAcc returns the value of te carry flag and the accumulator. Used to trace MLI calls
+// GetCarryAndAcc returns the value of the carry flag and the accumulator. Used to trace MLI calls
 func (s *State) GetCarryAndAcc() (bool, uint8) {
 	return s.reg.getFlag(flagC), s.reg.getA()
+}
+
+// GetAXY returns the value of the A, X and Y registers
+func (s *State) GetAXY() (uint8, uint8, uint8) {
+	return s.reg.getA(), s.reg.getX(), s.reg.getY()
 }
 
 // Save saves the CPU state (registers and cycle counter)

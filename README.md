@@ -60,6 +60,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - ProDOS MLI calls
   - Apple Pascal BIOS calls
   - Smartport commands
+  - BBC MOS calls when using [Applecorn](https://github.com/bobbimanners/)
 - Other features:
   - Sound
   - Joystick support. Up to two joysticks or four paddles
@@ -227,6 +228,10 @@ Only valid on SDL mode
         use the sequencer based Disk II card
   -thunderClockCardSlot int
         slot for the ThunderClock Plus card. -1 for none (default 4)
+  -traceBBC
+        trace BBC MOS API calls used with Applecorn, skip console I/O calls
+  -traceBBCFull
+        trace BBC MOS API calls used with Applecorn
   -traceCpu
         dump to the console the CPU execution. Use F11 to toggle.
   -traceHD

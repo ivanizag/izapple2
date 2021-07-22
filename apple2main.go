@@ -142,6 +142,14 @@ func MainApple() *Apple2 {
 		"sequencer",
 		false,
 		"use the sequencer based Disk II card")
+	traceBBC := flag.Bool(
+		"traceBBC",
+		false,
+		"trace BBC MOS API calls used with Applecorn, skip console I/O calls")
+	traceBBCFull := flag.Bool(
+		"traceBBCFull",
+		false,
+		"trace BBC MOS API calls used with Applecorn")
 
 	flag.Parse()
 
@@ -169,6 +177,12 @@ func MainApple() *Apple2 {
 	}
 	if *tracePascal {
 		a.addTracer(newTracePascal(a))
+	}
+	if *traceBBC {
+		a.addTracer(newTraceApplecorn(a, false))
+	}
+	if *traceBBCFull {
+		a.addTracer(newTraceApplecorn(a, true))
 	}
 
 	var charGenMap charColumnMap
