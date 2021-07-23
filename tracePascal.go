@@ -206,5 +206,5 @@ func (t *tracePascal) inspectPerArchitectureGuide() {
 func (t *tracePascal) param(index uint8) uint16 {
 	_, sp := t.a.cpu.GetPCAndSP()
 	return uint16(t.a.mmu.Peek(0x100+uint16(sp+index))) +
-		uint16(t.a.mmu.Peek(0x100+uint16(sp+index+1)))<<8 - 2
+		uint16(t.a.mmu.Peek(0x100+uint16(sp+index+1)))<<8 - 2 // ??
 }

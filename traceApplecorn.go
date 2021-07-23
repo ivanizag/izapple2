@@ -1,10 +1,14 @@
 package izapple2
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 /*
   See:
     https://github.com/bobbimanners/Applecorn
+	Chapter 45 https://raw.githubusercontent.com/bobbimanners/Applecorn/main/Manuals/Acorn%20BBC%20Micro%20User%20Guide.pdf
 	http://beebwiki.mdfs.net/Category:MOS_API
 	http://beebwiki.mdfs.net/OSBYTEs
 	http://mdfs.net/Docs/Comp/BBC/Osbyte00
@@ -15,10 +19,18 @@ type traceApplecorn struct {
 	a           *Apple2
 	skipConsole bool
 	osbyteNames [256]string
+	calls       []mosCallData
+}
+
+type mosCallData struct {
+	caller  uint16
+	api     uint16
+	a, x, y uint8
 }
 
 const (
-	applecornMosVec uint16 = 0xffb9 // Start of the MOS entry points
+	applecornMosVec   uint16 = 0xffb9 // Start of the MOS entry points
+	applecornNoCaller uint16 = 0xffff
 )
 
 func newTraceApplecorn(a *Apple2, skipConsole bool) *traceApplecorn {
@@ -35,20 +47,17 @@ func newTraceApplecorn(a *Apple2, skipConsole bool) *traceApplecorn {
 	t.osbyteNames[0x85] = "top user mem for mode"
 	t.osbyteNames[0x86] = "read cursor pos"
 	t.osbyteNames[0xDA] = "clear VDU queue"
-
+	t.calls = make([]mosCallData, 0)
 	return &t
 }
 
 func (t *traceApplecorn) inspect() {
-	pc, _ := t.a.cpu.GetPCAndSP()
+	pc, sp := t.a.cpu.GetPCAndSP()
 	if pc >= applecornMosVec {
 		regA, regX, regY := t.a.cpu.GetAXY()
 		s := ""
-
 		if !t.skipConsole {
 			switch pc {
-			case 0xffe0:
-				s = fmt.Sprintf("OSNEWL()")
 			case 0xffc8:
 				ch := ""
 				if regA >= 0x20 && regA < 0x7f {
@@ -57,8 +66,14 @@ func (t *traceApplecorn) inspect() {
 				s = fmt.Sprintf("OSNWRCH(A=%02x, '%v')", regA, ch)
 			case 0xffcb:
 				s = fmt.Sprintf("OSNRDCH()")
-			case 0xffe7:
+			case 0xffe0:
 				s = fmt.Sprintf("OSRDCH()")
+			//case 0xffe3: // This fallbacks to OSWRCH
+			//	s = "OSASCI(?)"
+			//case 0xffe7: // This fallbacks to OSWRCH
+			//	s = fmt.Sprintf("OSNEWL()")
+			//case 0xffec: // This fallbacks to OSWRCH
+			//	s = fmt.Sprintf("OSNECR()")
 			case 0xffee:
 				ch := ""
 				if regA >= 0x20 && regA < 0x7f {
@@ -72,6 +87,8 @@ func (t *traceApplecorn) inspect() {
 		switch pc {
 		case 0xffb9:
 			s = "OSDRM(?)"
+		case 0xffbc:
+			s = "VDUCHR(?)"
 		case 0xffbf:
 			s = "OSEVEN(?)"
 		case 0xffc2:
@@ -90,18 +107,66 @@ func (t *traceApplecorn) inspect() {
 			s = "OSARGS(?)"
 		case 0xffdd:
 			s = "OSFILE(?)"
-		case 0xffe3:
-			s = "OSASCI(?)"
 		case 0xfff1:
-			s = fmt.Sprintf("OSWORD(A=%02x,XY=%04x)", regA, uint16(regX)<<8+uint16(regY))
+			xy := uint16(regX) + uint16(regY)<<8
+			switch regA {
+			case 0: // Read line from input
+				lineAddress := t.a.mmu.peekWord(xy)
+				maxLength := t.a.mmu.Peek(xy + 2)
+				s = fmt.Sprintf("OSWORD('read line';A=%02x,XY=%04x,BUF=%04x,MAX=%02x)", regA, xy, lineAddress, maxLength)
+			default:
+				s = fmt.Sprintf("OSWORD(A=%02x,XY=%04x)", regA, xy)
+			}
 		case 0xfff4:
 			s = fmt.Sprintf("OSBYTE('%s';A=%02x,X=%02x,Y=%02x)", t.osbyteNames[regA], regA, regX, regY)
+			//if regA == 0xda {
+			//	t.a.cpu.Reset()
+			//}
 		case 0xfff7:
 			s = "OSCLI(?)"
 		}
 
+		//if s == "" && !(pc >= 0xffe3 && pc < 0xffee) {
+		//	s = "UNKNOWN(?)"
+		//}
+
 		if s != "" {
-			fmt.Printf("BBC MOS call to $%04x %s\n", pc, s)
+			caller := t.a.mmu.peekWord(0x100+uint16(sp+1)) + 1
+			t.calls = append(t.calls, mosCallData{caller, pc, regA, regX, regY})
+			if len(t.calls) > 1 {
+				// Reentrant call
+				fmt.Printf("%s", strings.Repeat("  ", len(t.calls)))
+			}
+			fmt.Printf("BBC MOS call to $%04x %s ", pc, s)
 		}
 	}
+
+	if len(t.calls) > 0 && pc == t.calls[len(t.calls)-1].caller {
+		// Returning from the call
+		regA, regX, regY := t.a.cpu.GetAXY()
+		call := t.calls[len(t.calls)-1]
+		s := ""
+		switch call.api {
+		case 0xfff1: // OSWORD
+			cbAddress := uint16(call.x) + uint16(call.y)<<8
+			switch call.a {
+			case 0: // Read line from input
+				lineAddress := t.a.mmu.peekWord(cbAddress)
+				line := t.getString(lineAddress, regY)
+				s = fmt.Sprintf(",line='%s'", line)
+			}
+		}
+
+		fmt.Printf("=> (A=%02x,X=%02x,Y=%02x%s)\n", regA, regX, regY, s)
+		t.calls = t.calls[:len(t.calls)-1]
+	}
+}
+
+func (t *traceApplecorn) getString(address uint16, length uint8) string {
+	s := ""
+	for i := uint8(0); i < length; i++ {
+		ch := t.a.mmu.Peek(address + uint16(i))
+		s = s + string(ch)
+	}
+	return s
 }

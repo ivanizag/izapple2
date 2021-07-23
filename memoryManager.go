@@ -211,6 +211,15 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 	return mmu.physicalROM[mmu.romPage]
 }
 
+func (mmu *memoryManager) peekWord(address uint16) uint16 {
+	return uint16(mmu.Peek(address)) +
+		uint16(mmu.Peek(address+1))<<8
+
+	//return uint16(mmu.Peek(address)) +
+	//    0x100*uint16(mmu.Peek(address+1))
+
+}
+
 // Peek returns the data on the given address
 func (mmu *memoryManager) Peek(address uint16) uint8 {
 	mh := mmu.accessRead(address)
