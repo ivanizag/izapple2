@@ -179,10 +179,10 @@ func MainApple() *Apple2 {
 		a.addTracer(newTracePascal(a))
 	}
 	if *traceBBC {
-		a.addTracer(newTraceApplecorn(a, false))
+		a.addTracer(newTraceApplecorn(a, true))
 	}
 	if *traceBBCFull {
-		a.addTracer(newTraceApplecorn(a, true))
+		a.addTracer(newTraceApplecorn(a, false))
 	}
 
 	var charGenMap charColumnMap
