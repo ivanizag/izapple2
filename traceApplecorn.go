@@ -20,6 +20,7 @@ type traceApplecorn struct {
 	skipConsole bool
 	osbyteNames [256]string
 	calls       []mosCallData
+	lastDepth   int
 }
 
 type mosCallData struct {
@@ -133,11 +134,16 @@ func (t *traceApplecorn) inspect() {
 		if s != "" {
 			caller := t.a.mmu.peekWord(0x100+uint16(sp+1)) + 1
 			t.calls = append(t.calls, mosCallData{caller, pc, regA, regX, regY})
+			if len(t.calls) > t.lastDepth {
+				// Reentrant call, first of block
+				fmt.Println()
+			}
 			if len(t.calls) > 1 {
 				// Reentrant call
 				fmt.Printf("%s", strings.Repeat("  ", len(t.calls)))
 			}
 			fmt.Printf("BBC MOS call to $%04x %s ", pc, s)
+			t.lastDepth = len(t.calls)
 		}
 	}
 
