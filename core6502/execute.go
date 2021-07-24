@@ -132,16 +132,17 @@ func (s *State) GetCarryAndAcc() (bool, uint8) {
 	return s.reg.getFlag(flagC), s.reg.getA()
 }
 
-// GetAXY returns the value of the A, X and Y registers
-func (s *State) GetAXY() (uint8, uint8, uint8) {
-	return s.reg.getA(), s.reg.getX(), s.reg.getY()
+// GetAXYP returns the value of the A, X, Y and P registers
+func (s *State) GetAXYP() (uint8, uint8, uint8, uint8) {
+	return s.reg.getA(), s.reg.getX(), s.reg.getY(), s.reg.getP()
 }
 
-// SetAXY changes the value of the A, X and Y registers
-func (s *State) SetAXY(regA uint8, regX uint8, regY uint8) {
+// SetAXYP changes the value of the A, X, Y and P registers
+func (s *State) SetAXYP(regA uint8, regX uint8, regY uint8, regP uint8) {
 	s.reg.setA(regA)
 	s.reg.setX(regX)
 	s.reg.setY(regY)
+	s.reg.setP(regP)
 }
 
 // Save saves the CPU state (registers and cycle counter)
