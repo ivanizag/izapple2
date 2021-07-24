@@ -54,37 +54,39 @@ func newTraceApplecorn(a *Apple2, skipConsole bool) *traceApplecorn {
 
 func (t *traceApplecorn) inspect() {
 	pc, sp := t.a.cpu.GetPCAndSP()
-	if pc >= applecornMosVec {
+	if pc >= 0xd000 /*applecornMosVec*/ {
 		regA, regX, regY := t.a.cpu.GetAXY()
-		s := ""
-		if !t.skipConsole {
-			switch pc {
-			case 0xffc8:
-				ch := ""
-				if regA >= 0x20 && regA < 0x7f {
-					ch = string(regA)
-				}
-				s = fmt.Sprintf("OSNWRCH(A=%02x, '%v')", regA, ch)
-			case 0xffcb:
-				s = fmt.Sprintf("OSNRDCH()")
-			case 0xffe0:
-				s = fmt.Sprintf("OSRDCH()")
-			//case 0xffe3: // This fallbacks to OSWRCH
-			//	s = "OSASCI(?)"
-			//case 0xffe7: // This fallbacks to OSWRCH
-			//	s = fmt.Sprintf("OSNEWL()")
-			//case 0xffec: // This fallbacks to OSWRCH
-			//	s = fmt.Sprintf("OSNECR()")
-			case 0xffee:
-				ch := ""
-				if regA >= 0x20 && regA < 0x7f {
-					ch = string(regA)
-				}
-				s = fmt.Sprintf("OSWRCH(A=%02x, '%v')", regA, ch)
-			}
 
+		s := ""
+		skip := false
+
+		// Page 2 vectors
+		switch pc {
+		case t.vector(0x0208): // OSCLI vector
+			pc = 0xfff7
+		case t.vector(0x020A): // OSBYTE vector
+			pc = 0xfff4
+		case t.vector(0x020C): // OSWORD vector
+			pc = 0xfff1
+		case t.vector(0x020E): // OSWRCH vector
+			pc = 0xffee
+		case t.vector(0x0210): // OSRDCH vector
+			pc = 0xffe0
+		case t.vector(0x0212): // OSFILE vector
+			pc = 0xffdd
+		case t.vector(0x0214): // OSARGS vector
+			pc = 0xffda
+		case t.vector(0x0216): // OSBGET vector
+			pc = 0xffd7
+		case t.vector(0x0218): // OSBPUT vector
+			pc = 0xffd4
+		case t.vector(0x021A): // OSGBPB vector
+			pc = 0xffd1
+		case t.vector(0x021C): // OSFIND vector
+			pc = 0xffce
 		}
 
+		// Jump area
 		switch pc {
 		case 0xffb9:
 			s = "OSDRM(?)"
@@ -96,6 +98,16 @@ func (t *traceApplecorn) inspect() {
 			s = "OSINIT(?)"
 		case 0xffc5:
 			s = "OSREAD(?)"
+		case 0xffc8:
+			ch := ""
+			if regA >= 0x20 && regA < 0x7f {
+				ch = string(regA)
+			}
+			s = fmt.Sprintf("OSNWRCH(A=%02x, '%v')", regA, ch)
+			skip = t.skipConsole
+		case 0xffcb:
+			s = fmt.Sprintf("OSNRDCH()")
+			skip = t.skipConsole
 		case 0xffce:
 			s = "OSFIND(?)"
 		case 0xffd1:
@@ -108,6 +120,27 @@ func (t *traceApplecorn) inspect() {
 			s = "OSARGS(?)"
 		case 0xffdd:
 			s = "OSFILE(?)"
+		case 0xffe0:
+			s = fmt.Sprintf("OSRDCH()")
+			skip = t.skipConsole
+			/*
+				case 0xffe3: // This fallbacks to OSWRCH
+					s = "OSASCI(?)"
+					skip = t.skipConsole
+				case 0xffe7: // This fallbacks to OSWRCH
+					s = fmt.Sprintf("OSNEWL()")
+					skip = t.skipConsole
+				case 0xffec: // This fallbacks to OSWRCH
+					skip = t.skipConsole
+					s = fmt.Sprintf("OSNECR()")
+			*/
+		case 0xffee:
+			ch := ""
+			if regA >= 0x20 && regA < 0x7f {
+				ch = string(regA)
+			}
+			s = fmt.Sprintf("OSWRCH(A=%02x, '%v')", regA, ch)
+			skip = t.skipConsole
 		case 0xfff1:
 			xy := uint16(regX) + uint16(regY)<<8
 			switch regA {
@@ -127,11 +160,7 @@ func (t *traceApplecorn) inspect() {
 			s = "OSCLI(?)"
 		}
 
-		//if s == "" && !(pc >= 0xffe3 && pc < 0xffee) {
-		//	s = "UNKNOWN(?)"
-		//}
-
-		if s != "" {
+		if !skip && s != "" {
 			caller := t.a.mmu.peekWord(0x100+uint16(sp+1)) + 1
 			t.calls = append(t.calls, mosCallData{caller, pc, regA, regX, regY})
 			if len(t.calls) > t.lastDepth {
@@ -175,4 +204,8 @@ func (t *traceApplecorn) getString(address uint16, length uint8) string {
 		s = s + string(ch)
 	}
 	return s
+}
+
+func (t *traceApplecorn) vector(address uint16) uint16 {
+	return t.a.mmu.peekWord(address)
 }
