@@ -137,6 +137,13 @@ func (s *State) GetAXY() (uint8, uint8, uint8) {
 	return s.reg.getA(), s.reg.getX(), s.reg.getY()
 }
 
+// SetAXY changes the value of the A, X and Y registers
+func (s *State) SetAXY(regA uint8, regX uint8, regY uint8) {
+	s.reg.setA(regA)
+	s.reg.setX(regX)
+	s.reg.setY(regY)
+}
+
 // Save saves the CPU state (registers and cycle counter)
 func (s *State) Save(w io.Writer) error {
 	err := binary.Write(w, binary.BigEndian, s.cycles)
