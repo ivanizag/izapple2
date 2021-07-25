@@ -120,7 +120,10 @@ func (t *traceApplecorn) inspect() {
 		case 0xffda:
 			s = "OSARGS(?)"
 		case 0xffdd:
-			s = "OSFILE(?)"
+			controlBlock := uint16(regX) + uint16(regY)<<8
+			filenameAddress := t.a.mmu.peekWord(controlBlock)
+			filename := t.getTerminatedString(filenameAddress, 0x0d)
+			s = fmt.Sprintf("OSFILE(A=%02x,FILE=%s)", regA, filename)
 		case 0xffe0:
 			s = fmt.Sprintf("OSRDCH()")
 			skip = t.skipConsole
@@ -156,6 +159,11 @@ func (t *traceApplecorn) inspect() {
 			s = "OSCLI(?)"
 		}
 
+		if s == "UNKNOWN" && t.skipConsole {
+			// Let's also skip not known calls
+			skip = true
+		}
+
 		t.call.api = pc
 		t.call.a = regA
 		t.call.x = regX
@@ -178,9 +186,6 @@ func (t *traceApplecorn) inspect() {
 				lineAddress := t.a.mmu.peekWord(cbAddress)
 				line := t.getString(lineAddress, regY)
 				s = fmt.Sprintf(",line='%s'", line)
-
-				t.a.cpu.SetTrace(true)
-
 			}
 		}
 
@@ -195,6 +200,19 @@ func (t *traceApplecorn) getString(address uint16, length uint8) string {
 	for i := uint8(0); i < length; i++ {
 		ch := t.a.mmu.Peek(address + uint16(i))
 		s = s + string(ch)
+	}
+	return s
+}
+
+func (t *traceApplecorn) getTerminatedString(address uint16, terminator uint8) string {
+	s := ""
+	for {
+		ch := t.a.mmu.Peek(address)
+		if ch == terminator {
+			break
+		}
+		s += string(ch)
+		address++
 	}
 	return s
 }
