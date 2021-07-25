@@ -145,6 +145,11 @@ func (s *State) SetAXYP(regA uint8, regX uint8, regY uint8, regP uint8) {
 	s.reg.setP(regP)
 }
 
+// SetPC changes the program counter, as a JMP instruction
+func (s *State) SetPC(pc uint16) {
+	s.reg.setPC(pc)
+}
+
 // Save saves the CPU state (registers and cycle counter)
 func (s *State) Save(w io.Writer) error {
 	err := binary.Write(w, binary.BigEndian, s.cycles)
