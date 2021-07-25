@@ -156,7 +156,9 @@ func (t *traceApplecorn) inspect() {
 		case 0xfff4:
 			s = fmt.Sprintf("OSBYTE('%s';A=%02x,X=%02x,Y=%02x)", t.osbyteNames[regA], regA, regX, regY)
 		case 0xfff7:
-			s = "OSCLI(?)"
+			xy := uint16(regX) + uint16(regY)<<8
+			command := t.getTerminatedString(xy, 0x0d)
+			s = fmt.Sprintf("OSCLI(\"%s\")", command)
 		}
 
 		if s == "UNKNOWN" && t.skipConsole {
