@@ -84,7 +84,7 @@ func (a *Apple2) LoadRom(filename string) error {
 
 	size := len(data)
 	if size != apple2RomSize && size != apple2eRomSize {
-		return errors.New("Rom size not supported")
+		return errors.New("rom size not supported")
 	}
 
 	romBase := 0x10000 - size
@@ -218,7 +218,7 @@ func (a *Apple2) AddRomX() {
 func (a *Apple2) AddNoSlotClockInCard(slot int) error {
 	cardRom := a.mmu.cardsROM[slot]
 	if cardRom == nil {
-		return errors.New("No ROM available on the slot to add a no slot clock")
+		return errors.New("no ROM available on the slot to add a no slot clock")
 	}
 	nsc := newNoSlotClockDS1216(a, cardRom)
 	a.mmu.cardsROM[slot] = nsc

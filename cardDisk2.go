@@ -41,16 +41,6 @@ type cardDisk2Drive struct {
 	tracksStep int   // Stepmotor for tracks position. 4 steps per track
 }
 
-const (
-	maxHalfTrack           = 68
-	diskBitCycle           = 4   // There is a dataLatch bit transferred every 4 cycles
-	diskLatchReadCycles    = 7   // Loaded data is available for a little more than 7ns
-	diskWriteByteCycle     = 32  // Load data to write every 32 cycles
-	diskWriteSelfSyncCycle = 40  // Save $FF every 40 cycles. Self sync is 10 bits: 1111 1111 00
-	diskMotorStartMs       = 150 // Time with the disk spinning to get full speed
-
-)
-
 // NewCardDisk2 creates a new CardDisk2
 func NewCardDisk2() *CardDisk2 {
 	var c CardDisk2
@@ -217,9 +207,11 @@ func (c *CardDisk2) processQ6Q7(in uint8) {
 		}
 	}
 
-	if c.dataLatch >= 0x80 {
-		//fmt.Printf("Datalacth: 0x%.2x in cycle %v\n", c.dataLatch, c.a.cpu.GetCycles())
-	}
+	/*
+		if c.dataLatch >= 0x80 {
+			fmt.Printf("Datalach: 0x%.2x in cycle %v\n", c.dataLatch, c.a.cpu.GetCycles())
+		}
+	*/
 }
 
 func (d *cardDisk2Drive) insertDiskette(name string, dt storage.Diskette) {

@@ -91,8 +91,6 @@ func (c *CardMouse) readMouse() (uint16, uint16, bool) {
 	return xTrans, yTrans, pressed
 }
 
-const mouseReponse = "10,10,+4\n"
-
 func (c *CardMouse) assign(a *Apple2, slot int) {
 	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
 		if c.iOut == 0 {

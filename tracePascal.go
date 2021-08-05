@@ -103,6 +103,7 @@ func (t *tracePascal) inspect() {
  See http://www.bitsavers.org/pdf/softech/softechPascalIV_intArch1981.pdf
  page 106
 */
+//lint:ignore U1000 unused but stays as reference
 func (t *tracePascal) inspectPerArchitectureGuide() {
 	bios := uint16(t.a.mmu.physicalMainRAM.peek(pascalJvabfoldL)) +
 		uint16(t.a.mmu.physicalMainRAM.peek(pascalJvabfoldH))<<8

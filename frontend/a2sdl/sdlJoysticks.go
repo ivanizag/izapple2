@@ -79,10 +79,6 @@ func (j *sdlJoysticks) putButtonEvent(e *sdl.JoyButtonEvent) {
 	j.button[uint8(e.Which)*2+(e.Button%2)] = (e.State != 0)
 }
 
-func mouseToJoyFull(x int32, w int32) uint8 {
-	return uint8(256 * x / (w + 1))
-}
-
 func mouseToJoyCentered(x int32, w int32) uint8 {
 	r := x - (w / 2) + 127
 	if r >= 255 {

@@ -217,6 +217,7 @@ func (t *traceProDOS) dumpDriverCall() {
 	fmt.Printf("\n  Prodos driver $%04x command %02x-%s on unit $%x, block %v to $%04x ==> ", pc, command, commandName, unit, block, address)
 }
 
+//lint:ignore U1000 unused but stays as reference
 func (t *traceProDOS) dumpDevices() {
 
 	// Active disk devices

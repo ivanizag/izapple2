@@ -53,7 +53,7 @@ func (c *CardVidex) loadCharacterMap(filename string) error {
 	}
 	size := len(bytes)
 	if size < 0x800 {
-		return errors.New("Character ROM size not supported for Videx")
+		return errors.New("character ROM size not supported for Videx")
 	}
 	c.charGen = bytes
 	return nil

@@ -50,7 +50,7 @@ func (cg *CharacterGenerator) load(filename string) error {
 	}
 	size := len(bytes)
 	if size < charGenPageSize {
-		return errors.New("Character ROM size not supported")
+		return errors.New("character ROM size not supported")
 	}
 	cg.data = bytes
 	return nil

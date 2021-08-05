@@ -69,13 +69,15 @@ func (m *MicroPD1990ac) In(clock bool, strobe bool, command uint8, dataIn bool) 
 }
 
 func (m *MicroPD1990ac) Out() bool {
-	if m.command == mpd1990commandRegHold {
-		//panic("Output on RegHold should be a 1Hz signal. Not implemented.")
-	}
+	/*
+		if m.command == mpd1990commandRegHold {
+			panic("Output on RegHold should be a 1Hz signal. Not implemented.")
+		}
 
-	if m.command == mpd1990commandTimeRead {
-		//panic("Output on RegHold should be a 512Hz signal with LSB. Not implemented.")
-	}
+		if m.command == mpd1990commandTimeRead {
+			panic("Output on RegHold should be a 512Hz signal with LSB. Not implemented.")
+		}
+	*/
 
 	// Return the LSB of the register shift
 	return (m.register & 1) == 1

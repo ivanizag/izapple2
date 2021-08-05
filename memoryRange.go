@@ -52,6 +52,7 @@ func (m *memoryRangeROM) poke(address uint16, value uint8) {
 	// Ignore
 }
 
+//lint:ignore U1000 this is used to write debug code
 func identifyMemory(m memoryHandler) string {
 	ram, ok := m.(*memoryRange)
 	if ok {

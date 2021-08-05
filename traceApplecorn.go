@@ -19,7 +19,6 @@ type traceApplecorn struct {
 	skipConsole bool
 	osbyteNames [256]string
 	call        mosCallData
-	lastDepth   int
 	wasInKernel bool
 }
 
@@ -107,7 +106,7 @@ func (t *traceApplecorn) inspect() {
 			s = fmt.Sprintf("OSNWRCH(A=%02x, '%v')", regA, ch)
 			skip = t.skipConsole
 		case 0xffcb:
-			s = fmt.Sprintf("OSNRDCH()")
+			s = "OSNRDCH()"
 			skip = t.skipConsole
 		case 0xffce:
 			s = "OSFIND(?)"
@@ -125,17 +124,17 @@ func (t *traceApplecorn) inspect() {
 			filename := t.getTerminatedString(filenameAddress, 0x0d)
 			s = fmt.Sprintf("OSFILE(A=%02x,FILE=%s)", regA, filename)
 		case 0xffe0:
-			s = fmt.Sprintf("OSRDCH()")
+			s = "OSRDCH()"
 			skip = t.skipConsole
 		case 0xffe3: // This fallbacks to OSWRCH
 			s = "OSASCI(?)"
 			skip = t.skipConsole
 		case 0xffe7: // This fallbacks to OSWRCH
-			s = fmt.Sprintf("OSNEWL()")
+			s = "OSNEWL()"
 			skip = t.skipConsole
 		case 0xffec: // This fallbacks to OSWRCH
 			skip = t.skipConsole
-			s = fmt.Sprintf("OSNECR()")
+			s = "OSNECR()"
 		case 0xffee:
 			ch := ""
 			if regA >= 0x20 && regA < 0x7f {
