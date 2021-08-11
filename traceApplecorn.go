@@ -37,22 +37,27 @@ func newTraceApplecorn(a *Apple2, skipConsole bool) *traceApplecorn {
 	var t traceApplecorn
 	t.a = a
 	t.skipConsole = skipConsole
+	t.osbyteNames[0x02] = "select input device"
+	t.osbyteNames[0x03] = "select output device"
 	t.osbyteNames[0x7c] = "clear escape condition"
 	t.osbyteNames[0x7d] = "set escape condition"
 	t.osbyteNames[0x7e] = "ack detection of ESC"
-	t.osbyteNames[0x81] = "Read key with time lim"
+	t.osbyteNames[0x7f] = "check for end-of-file on an opened file"
+	t.osbyteNames[0x90] = "read ADC channel"
+	t.osbyteNames[0x81] = "read key with time lim"
 	t.osbyteNames[0x82] = "read high order address"
 	t.osbyteNames[0x83] = "read bottom of user mem"
 	t.osbyteNames[0x84] = "read top of user mem"
 	t.osbyteNames[0x85] = "top user mem for mode"
 	t.osbyteNames[0x86] = "read cursor pos"
+	t.osbyteNames[0x8b] = "set filing system options"
 	t.osbyteNames[0xDA] = "clear VDU queue"
 	return &t
 }
 
 func (t *traceApplecorn) inspect() {
 	pc, _ := t.a.cpu.GetPCAndSP()
-	inKernel := pc >= applecornKernelStart
+	inKernel := pc >= applecornKernelStart && t.a.mmu.altMainRAMActiveRead
 
 	if !t.wasInKernel && inKernel {
 		regA, regX, regY, _ := t.a.cpu.GetAXYP()
@@ -110,6 +115,13 @@ func (t *traceApplecorn) inspect() {
 			skip = t.skipConsole
 		case 0xffce:
 			s = "OSFIND(?)"
+			if regA == 0 {
+				s = fmt.Sprintf("OSFIND('close',HANDLE=%v", regY)
+			} else {
+				filenameAddress := uint16(regX) + uint16(regY)<<8
+				filename := t.getTerminatedString(filenameAddress, 0x0d)
+				s = fmt.Sprintf("OSFIND('open',FILE='%s')", filename)
+			}
 		case 0xffd1:
 			s = "OSGBPB(?)"
 		case 0xffd4:
@@ -118,11 +130,12 @@ func (t *traceApplecorn) inspect() {
 			s = "OSBGET(?)"
 		case 0xffda:
 			s = "OSARGS(?)"
+			s = fmt.Sprintf("OSARGS(HANDLE=%v,A=%02x)", regY, regA)
 		case 0xffdd:
 			controlBlock := uint16(regX) + uint16(regY)<<8
 			filenameAddress := t.a.mmu.peekWord(controlBlock)
 			filename := t.getTerminatedString(filenameAddress, 0x0d)
-			s = fmt.Sprintf("OSFILE(A=%02x,FILE=%s)", regA, filename)
+			s = fmt.Sprintf("OSFILE(A=%02x,FILE='%s')", regA, filename)
 		case 0xffe0:
 			s = "OSRDCH()"
 			skip = t.skipConsole
