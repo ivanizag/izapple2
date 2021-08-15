@@ -43,7 +43,7 @@ func newTraceApplecorn(a *Apple2, skipConsole bool) *traceApplecorn {
 	t.osbyteNames[0x7d] = "set escape condition"
 	t.osbyteNames[0x7e] = "ack detection of ESC"
 	t.osbyteNames[0x7f] = "check for end-of-file on an opened file"
-	t.osbyteNames[0x90] = "read ADC channel"
+	t.osbyteNames[0x80] = "read ADC channel"
 	t.osbyteNames[0x81] = "read key with time lim"
 	t.osbyteNames[0x82] = "read high order address"
 	t.osbyteNames[0x83] = "read bottom of user mem"
@@ -56,8 +56,13 @@ func newTraceApplecorn(a *Apple2, skipConsole bool) *traceApplecorn {
 }
 
 func (t *traceApplecorn) inspect() {
-	pc, _ := t.a.cpu.GetPCAndSP()
-	inKernel := pc >= applecornKernelStart && t.a.mmu.altMainRAMActiveRead
+	if !t.a.mmu.altMainRAMActiveRead {
+		// We want to trace only the activity on the Acorn memory space
+		return
+	}
+
+	pc, sp := t.a.cpu.GetPCAndSP()
+	inKernel := pc >= applecornKernelStart
 
 	if !t.wasInKernel && inKernel {
 		regA, regX, regY, _ := t.a.cpu.GetAXYP()
@@ -89,6 +94,8 @@ func (t *traceApplecorn) inspect() {
 			pc = 0xffd1
 		case t.vector(0x021C): // OSFIND vector
 			pc = 0xffce
+		case t.vector(0xfffe): // BRK vector
+			pc = 0xfffe
 		}
 
 		// Jump area
@@ -140,7 +147,11 @@ func (t *traceApplecorn) inspect() {
 			s = "OSRDCH()"
 			skip = t.skipConsole
 		case 0xffe3: // This fallbacks to OSWRCH
-			s = "OSASCI(?)"
+			ch := ""
+			if regA >= 0x20 && regA < 0x7f {
+				ch = string(regA)
+			}
+			s = fmt.Sprintf("OSASCI(A=%02x, '%v')", regA, ch)
 			skip = t.skipConsole
 		case 0xffe7: // This fallbacks to OSWRCH
 			s = "OSNEWL()"
@@ -171,6 +182,12 @@ func (t *traceApplecorn) inspect() {
 			xy := uint16(regX) + uint16(regY)<<8
 			command := t.getTerminatedString(xy, 0x0d)
 			s = fmt.Sprintf("OSCLI(\"%s\")", command)
+		case 0xfffe:
+			address := t.a.mmu.peekWord(0x100+uint16(sp+2)) - 1
+			faultNumber := t.a.mmu.Peek(address)
+			faultMessage := address + 1
+			faultString := t.getTerminatedString(faultMessage, 0)
+			s = fmt.Sprintf("BRK(number=%v,message='%s')", faultNumber, faultString)
 		}
 
 		if s == "UNKNOWN" && t.skipConsole {
@@ -198,8 +215,8 @@ func (t *traceApplecorn) inspect() {
 			switch t.call.a {
 			case 0: // Read line from input
 				lineAddress := t.a.mmu.peekWord(cbAddress)
-				line := t.getString(lineAddress, regY)
-				s = fmt.Sprintf(",line='%s'", line)
+				line := t.getTerminatedString(lineAddress, '\r')
+				s = fmt.Sprintf(",line='%s',cbaddress=%04x,lineAddress=%04x", line, cbAddress, lineAddress)
 			}
 		}
 
@@ -207,15 +224,6 @@ func (t *traceApplecorn) inspect() {
 	}
 
 	t.wasInKernel = inKernel
-}
-
-func (t *traceApplecorn) getString(address uint16, length uint8) string {
-	s := ""
-	for i := uint8(0); i < length; i++ {
-		ch := t.a.mmu.Peek(address + uint16(i))
-		s = s + string(ch)
-	}
-	return s
 }
 
 func (t *traceApplecorn) getTerminatedString(address uint16, terminator uint8) string {
