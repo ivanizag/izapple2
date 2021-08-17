@@ -29,7 +29,7 @@ type mosCallData struct {
 }
 
 const (
-	applecornKernelStart uint16 = 0xc000 // Code above this is out of BBC territory
+	applecornKernelStart uint16 = 0xd000 // Code above this is out of BBC territory
 	applecornNoCaller    uint16 = 0xffff
 )
 
@@ -62,8 +62,19 @@ func (t *traceApplecorn) inspect() {
 	}
 
 	pc, sp := t.a.cpu.GetPCAndSP()
-	inKernel := pc >= applecornKernelStart
 
+	if pc == 0x8000 {
+		regA, _, _, _ := t.a.cpu.GetAXYP()
+		fmt.Printf("BBC MOS call to $%04x LANGUAGE(%02x)\n", pc, regA)
+	} else if pc == 0x8003 {
+		regA, _, regY, _ := t.a.cpu.GetAXYP()
+		address := t.a.mmu.peekWord(0xf2 + uint16(regY))
+		command := t.getTerminatedString(address, 0x0d)
+		fmt.Printf("BBC MOS call to $%04x SERVICE(A=%v, \"%s\")\n", pc, regA, command)
+
+	}
+
+	inKernel := pc >= applecornKernelStart
 	if !t.wasInKernel && inKernel {
 		regA, regX, regY, _ := t.a.cpu.GetAXYP()
 
