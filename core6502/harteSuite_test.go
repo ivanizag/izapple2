@@ -42,19 +42,44 @@ func TestHarteNMOS6502(t *testing.T) {
 			opcode := fmt.Sprintf("%02x", i)
 			t.Run(opcode+s.opcodes[i].name, func(t *testing.T) {
 				t.Parallel()
-				testOpcode(t, path, opcode)
+				m := new(FlatMemory)
+				s := NewNMOS6502(m)
+				testOpcode(t, s, path, opcode)
 			})
 		}
 	}
 }
 
-func testOpcode(t *testing.T, path string, opcode string) {
-	m := new(FlatMemory)
-	s := NewNMOS6502(m)
+func TestHarteCMOS65c02(t *testing.T) {
+	t.Skip("Not ready to be used in CI")
 
+	s := NewCMOS65c02(nil) // Use to get the opcodes names
+
+	path := "/home/casa/code/ProcessorTests/wdc65c02/v1/"
+	for i := 0x00; i <= 0xff; /*0xff*/ i++ {
+		if s.opcodes[i].name != "ADC" && // Issue with ADC crossing page boundaries
+			s.opcodes[i].name != "SBC" && // Issue with SBC crossing page boundaries
+			s.opcodes[i].name != "" {
+
+			opcode := fmt.Sprintf("%02x", i)
+			t.Run(opcode+s.opcodes[i].name, func(t *testing.T) {
+				t.Parallel()
+				m := new(FlatMemory)
+				s := NewCMOS65c02(m)
+				testOpcode(t, s, path, opcode)
+			})
+		}
+	}
+}
+
+func testOpcode(t *testing.T, s *State, path string, opcode string) {
 	data, err := os.ReadFile(path + opcode + ".json")
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	if len(data) == 0 {
+		return
 	}
 
 	var scenarios []scenario
