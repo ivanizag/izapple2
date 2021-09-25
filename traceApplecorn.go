@@ -132,7 +132,6 @@ func (t *traceApplecorn) inspect() {
 			s = "OSNRDCH()"
 			skip = t.skipConsole
 		case 0xffce:
-			s = "OSFIND(?)"
 			if regA == 0 {
 				s = fmt.Sprintf("OSFIND('close',HANDLE=%v", regY)
 			} else {
