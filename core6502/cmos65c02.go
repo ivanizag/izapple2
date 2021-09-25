@@ -67,6 +67,7 @@ var opcodes65c02Delta = [256]opcode{
 	0x00: {"BRK", 1, 7, modeImplicit, opBRKAlt},
 	0x24: {"BIT", 2, 3, modeZeroPage, opBIT},
 	0x2C: {"BIT", 3, 3, modeAbsolute, opBIT},
+	0x6C: {"JMP", 3, 3, modeIndirect65c02Fix, opJMP},
 
 	// Fixed BCD arithmetic flags
 	0x69: {"ADC", 2, 2, modeImmediate, opADCAlt},

@@ -19,6 +19,7 @@ const (
 	modeIndexedIndirectX
 	modeIndirectIndexedY
 	// Added on the 65c02
+	modeIndirect65c02Fix
 	modeIndirectZeroPage
 	modeAbsoluteIndexedIndirectX
 	modeZeroPageAndRelative
@@ -91,15 +92,10 @@ func resolveAddress(s *State, line []uint8, opcode opcode) uint16 {
 		address = getZeroPageWord(s.mem, addressAddress)
 	case modeIndirect:
 		addressAddress := getWordInLine(line)
+		address = getWordNoCrossPage(s.mem, addressAddress)
+	case modeIndirect65c02Fix:
+		addressAddress := getWordInLine(line)
 		address = getWord(s.mem, addressAddress)
-		//address = getWordNoCrossPage(s.mem, addressAddress)
-
-		/*
-			The tests from https://github.com/Klaus2m5/6502_65C02_functional_tests
-			pass with getWord(), but the tests in https://github.com/TomHarte/ProcessorTests/tree/main/6502/v1
-			need getWordNoCrossPage().
-		*/
-
 	case modeIndirectIndexedY:
 		base := getZeroPageWord(s.mem, line[1])
 		address, extraCycle = addOffset(base, s.reg.getY())
