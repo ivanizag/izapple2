@@ -184,6 +184,6 @@ var opcodesNMOS6502 = [256]opcode{
 
 	// Undocumented opcodes, see http://bbc.nvg.org/doc/6502OpList.txt
 	0x1A: {"NOP", 1, 2, modeImplicit, opNOP}, // INC A in the 65c02
-	0xC2: {"NOP", 1, 2, modeImplicit, opNOP}, // Should be HALT?
-	0x02: {"NOP", 1, 2, modeImplicit, opNOP}, // Should be HALT?
+	0xC2: {"NOP", 2, 2, modeImplicit, opNOP},
+	0x02: {"NOP", 1, 1, modeImplicit, opHALT},
 }

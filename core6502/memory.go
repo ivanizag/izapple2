@@ -16,6 +16,15 @@ func getWord(m Memory, address uint16) uint16 {
 	return uint16(m.Peek(address)) + 0x100*uint16(m.Peek(address+1))
 }
 
+func getWordNoCrossPage(m Memory, address uint16) uint16 {
+	addressMSB := address + 1
+	if address&0xff == 0xff {
+		// We won't cross the page bounday for the MSB byte
+		addressMSB -= 0x100
+	}
+	return uint16(m.Peek(address)) + 0x100*uint16(m.Peek(addressMSB))
+}
+
 func getZeroPageWord(m Memory, address uint8) uint16 {
 	return uint16(m.Peek(uint16(address))) + 0x100*uint16(m.Peek(uint16(address+1)))
 }

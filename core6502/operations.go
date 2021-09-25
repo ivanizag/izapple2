@@ -255,7 +255,9 @@ func buildOpPull(regDst int) opFunc {
 	return func(s *State, line []uint8, opcode opcode) {
 		value := pullByte(s)
 		s.reg.setRegister(regDst, value)
-		if regDst != regP {
+		if regDst == regP {
+			s.reg.updateFlag5B()
+		} else {
 			s.reg.updateFlagZN(value)
 		}
 	}
@@ -278,6 +280,10 @@ func opJMP(s *State, line []uint8, opcode opcode) {
 
 func opNOP(s *State, line []uint8, opcode opcode) {}
 
+func opHALT(s *State, line []uint8, opcode opcode) {
+	s.reg.setPC(s.reg.getPC() - 1)
+}
+
 func opJSR(s *State, line []uint8, opcode opcode) {
 	pushWord(s, s.reg.getPC()-1)
 	address := resolveAddress(s, line, opcode)
@@ -286,6 +292,7 @@ func opJSR(s *State, line []uint8, opcode opcode) {
 
 func opRTI(s *State, line []uint8, opcode opcode) {
 	s.reg.setP(pullByte(s))
+	s.reg.updateFlag5B()
 	s.reg.setPC(pullWord(s))
 }
 

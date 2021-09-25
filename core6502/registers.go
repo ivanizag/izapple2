@@ -86,6 +86,11 @@ func (r *registers) updateFlagZN(t uint8) {
 	r.updateFlag(flagN, t >= (1<<7))
 }
 
+func (r *registers) updateFlag5B() {
+	r.setFlag(flag5)
+	r.clearFlag(flagB)
+}
+
 func (r registers) String() string {
 	//ch := (r.getA() & 0x3F) + 0x40
 	ch := (r.getA() & 0x7F)
