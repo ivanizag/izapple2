@@ -11,7 +11,7 @@ func NewNMOS6502(m Memory) *State {
 var opcodesNMOS6502 = [256]opcode{
 	0x00: {"BRK", 1, 7, modeImplicit, opBRK},
 	0x4C: {"JMP", 3, 3, modeAbsolute, opJMP},
-	0x6C: {"JMP", 3, 3, modeIndirect, opJMP},
+	0x6C: {"JMP", 3, 5, modeIndirect, opJMP},
 	0x20: {"JSR", 3, 6, modeAbsolute, opJSR},
 	0x40: {"RTI", 1, 6, modeImplicit, opRTI},
 	0x60: {"RTS", 1, 6, modeImplicit, opRTS},
@@ -67,7 +67,7 @@ var opcodesNMOS6502 = [256]opcode{
 	0xF1: {"SBC", 2, 5, modeIndirectIndexedY, opSBC}, // Extra cycles
 
 	0x24: {"BIT", 2, 3, modeZeroPage, opBIT},
-	0x2C: {"BIT", 3, 3, modeAbsolute, opBIT},
+	0x2C: {"BIT", 3, 4, modeAbsolute, opBIT},
 
 	0xC9: {"CMP", 2, 2, modeImmediate, buildOpCompare(regA)},
 	0xC5: {"CMP", 2, 3, modeZeroPage, buildOpCompare(regA)},
@@ -185,5 +185,5 @@ var opcodesNMOS6502 = [256]opcode{
 	// Undocumented opcodes, see http://bbc.nvg.org/doc/6502OpList.txt
 	0x1A: {"NOP", 1, 2, modeImplicit, opNOP}, // INC A in the 65c02
 	0xC2: {"NOP", 2, 2, modeImplicit, opNOP},
-	0x02: {"NOP", 1, 1, modeImplicit, opHALT},
+	0x02: {"NOP", 1, 3, modeImplicit, opHALT},
 }

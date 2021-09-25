@@ -92,7 +92,6 @@ func buildOpBranchOnBit(bit uint8, test bool) opFunc {
 		bitValue := ((value >> bit) & 1) == 1
 
 		if bitValue == test {
-			s.extraCycleBranchTaken = true
 			address := resolveAddress(s, line, opcode)
 			s.reg.setPC(address)
 		}

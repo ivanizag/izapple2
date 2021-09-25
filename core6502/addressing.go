@@ -14,6 +14,7 @@ const (
 	modeRelative
 	modeAbsolute
 	modeAbsoluteX
+	modeAbsoluteX65c02
 	modeAbsoluteY
 	modeIndirect
 	modeIndexedIndirectX
@@ -64,8 +65,10 @@ func resolveSetValue(s *State, line []uint8, opcode opcode, value uint8) {
 	s.mem.Poke(address, value)
 
 	// On writes, the possible extra cycle crossing page boundaries is
-	// always added and already accounted for.
-	s.extraCycleCrossingBoundaries = false
+	// added and already accounted for on NMOS
+	if opcode.addressMode != modeAbsoluteX65c02 {
+		s.extraCycleCrossingBoundaries = false
+	}
 }
 
 func resolveAddress(s *State, line []uint8, opcode opcode) uint16 {
@@ -81,6 +84,8 @@ func resolveAddress(s *State, line []uint8, opcode opcode) uint16 {
 		address = uint16(line[1] + s.reg.getY())
 	case modeAbsolute:
 		address = getWordInLine(line)
+	case modeAbsoluteX65c02:
+		fallthrough
 	case modeAbsoluteX:
 		base := getWordInLine(line)
 		address, extraCycle = addOffset(base, s.reg.getX())
@@ -113,7 +118,7 @@ func resolveAddress(s *State, line []uint8, opcode opcode) uint16 {
 		// Two addressing modes combined. We refer to the second one, relative,
 		// placed one byte after the zeropage reference
 		base := s.reg.getPC()
-		address, extraCycle = addOffsetRelative(base, line[2])
+		address, _ = addOffsetRelative(base, line[2])
 	default:
 		panic("Assert failed. Missing addressing mode")
 	}
@@ -179,6 +184,8 @@ func lineString(line []uint8, opcode opcode) string {
 		t += fmt.Sprintf(" *%+x", int8(line[1]))
 	case modeAbsolute:
 		t += fmt.Sprintf(" $%04x", getWordInLine(line))
+	case modeAbsoluteX65c02:
+		fallthrough
 	case modeAbsoluteX:
 		t += fmt.Sprintf(" $%04x,X", getWordInLine(line))
 	case modeAbsoluteY:
