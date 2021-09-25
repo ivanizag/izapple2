@@ -3,7 +3,7 @@ package core6502
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"io/ioutil"
 	"testing"
 )
 
@@ -72,7 +72,7 @@ func TestHarteCMOS65c02(t *testing.T) {
 }
 
 func testOpcode(t *testing.T, s *State, path string, opcode string) {
-	data, err := os.ReadFile(path + opcode + ".json")
+	data, err := ioutil.ReadFile(path + opcode + ".json")
 	if err != nil {
 		t.Fatal(err)
 	}
