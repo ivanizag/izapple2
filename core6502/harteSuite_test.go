@@ -1,11 +1,28 @@
 package core6502
 
+/*
+	Tests from https://github.com/TomHarte/ProcessorTests
+
+	Know issues:
+		- Test 6502/v1/20_55_13
+		- Not implemented undocumented opcodes for NMOS
+		- Errors on flags N and V for ADC in BCD mode
+
+	The tests are disabled by defaut because they take long to run
+	and require a huge download.
+	To enable them, clone the repo https://github.com/TomHarte/ProcessorTests
+	and change the variables ProcessorTestsEnable and ProcessorTestsPath.
+*/
+
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"testing"
 )
+
+var ProcessorTestsEnable = false
+var ProcessorTestsPath = "/home/casa/code/ProcessorTests/"
 
 type scenarioState struct {
 	Pc  uint16
@@ -24,16 +41,14 @@ type scenario struct {
 	Cycles  [][]interface{}
 }
 
-/*
-	Tests from https://github.com/TomHarte/ProcessorTests/tree/main/6502/v1
-	more work needed.
-*/
 func TestHarteNMOS6502(t *testing.T) {
-	t.Skip("Not ready to be used in CI")
+	if !ProcessorTestsEnable {
+		t.Skip("TomHarte/ProcessorTests are not enabled")
+	}
 
 	s := NewNMOS6502(nil) // Use to get the opcodes names
 
-	path := "/home/casa/code/ProcessorTests/6502/v1/"
+	path := ProcessorTestsPath + "6502/v1/"
 	for i := 0x00; i <= 0xff; i++ {
 		mnemonic := s.opcodes[i].name
 		if mnemonic != "" {
@@ -54,11 +69,13 @@ func TestHarteNMOS6502(t *testing.T) {
 }
 
 func TestHarteCMOS65c02(t *testing.T) {
-	t.Skip("Not ready to be used in CI")
+	if !ProcessorTestsEnable {
+		t.Skip("TomHarte/ProcessorTests are not enabled")
+	}
 
 	s := NewCMOS65c02(nil) // Use to get the opcodes names
 
-	path := "/home/casa/code/ProcessorTests/wdc65c02/v1/"
+	path := ProcessorTestsPath + "wdc65c02/v1/"
 	for i := 0x00; i <= 0xff; i++ {
 		mnemonic := s.opcodes[i].name
 		opcode := fmt.Sprintf("%02x", i)

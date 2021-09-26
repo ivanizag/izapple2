@@ -182,8 +182,51 @@ var opcodesNMOS6502 = [256]opcode{
 
 	0xEA: {"NOP", 1, 2, modeImplicit, opNOP},
 
-	// Undocumented opcodes, see http://bbc.nvg.org/doc/6502OpList.txt
-	0x1A: {"NOP", 1, 2, modeImplicit, opNOP}, // INC A in the 65c02
-	0xC2: {"NOP", 2, 2, modeImplicit, opNOP},
-	0x02: {"NOP", 1, 3, modeImplicit, opHALT},
+	/*
+		Undocumented opcodes,
+			see http://bbc.nvg.org/doc/6502OpList.txt
+			see https://www.nesdev.com/undocumented_opcodes.txt
+	*/
+	0x1A: {"NOP", 1, 2, modeImplicit, opNOP},
+	0x3A: {"NOP", 1, 2, modeImplicit, opNOP},
+	0x5A: {"NOP", 1, 2, modeImplicit, opNOP},
+	0x7A: {"NOP", 1, 2, modeImplicit, opNOP},
+	0xDA: {"NOP", 1, 2, modeImplicit, opNOP},
+	0xFA: {"NOP", 1, 2, modeImplicit, opNOP},
+
+	0x04: {"DOP", 2, 3, modeImplicit, opNOP},
+	0x14: {"DOP", 2, 4, modeImplicit, opNOP},
+	0x34: {"DOP", 2, 4, modeImplicit, opNOP},
+	0x44: {"DOP", 2, 3, modeImplicit, opNOP},
+	0x54: {"DOP", 2, 4, modeImplicit, opNOP},
+	0x64: {"DOP", 2, 3, modeImplicit, opNOP},
+	0x74: {"DOP", 2, 4, modeImplicit, opNOP},
+	0x80: {"DOP", 2, 2, modeImplicit, opNOP},
+	0x82: {"DOP", 2, 2, modeImplicit, opNOP},
+	0x89: {"DOP", 2, 2, modeImplicit, opNOP},
+	0xC2: {"DOP", 2, 2, modeImplicit, opNOP},
+	0xD4: {"DOP", 2, 4, modeImplicit, opNOP},
+	0xE2: {"DOP", 2, 2, modeImplicit, opNOP},
+	0xF4: {"DOP", 2, 4, modeImplicit, opNOP},
+
+	0x0C: {"TOP", 3, 3, modeImplicit, opNOP},
+	0x1C: {"TOP", 3, 4, modeImplicit, opNOP},
+	0x3C: {"TOP", 3, 4, modeImplicit, opNOP},
+	0x5C: {"TOP", 3, 4, modeImplicit, opNOP},
+	0x7C: {"TOP", 3, 4, modeImplicit, opNOP},
+	0xDC: {"TOP", 3, 4, modeImplicit, opNOP},
+	0xFC: {"TOP", 3, 4, modeImplicit, opNOP},
+
+	0x02: {"KIL", 1, 3, modeImplicit, opHALT},
+	0x12: {"KIL", 1, 3, modeImplicit, opHALT},
+	0x22: {"KIL", 1, 3, modeImplicit, opHALT},
+	0x32: {"KIL", 1, 3, modeImplicit, opHALT},
+	0x42: {"KIL", 1, 3, modeImplicit, opHALT},
+	0x52: {"KIL", 1, 3, modeImplicit, opHALT},
+	0x62: {"KIL", 1, 3, modeImplicit, opHALT},
+	0x72: {"KIL", 1, 3, modeImplicit, opHALT},
+	0x92: {"KIL", 1, 3, modeImplicit, opHALT},
+	0xB2: {"KIL", 1, 3, modeImplicit, opHALT},
+	0xD2: {"KIL", 1, 3, modeImplicit, opHALT},
+	0xF2: {"KIL", 1, 3, modeImplicit, opHALT},
 }
