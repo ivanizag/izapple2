@@ -4,9 +4,9 @@ package core6502
 	Tests from https://github.com/TomHarte/ProcessorTests
 
 	Know issues:
-		- Test 6502/v1/20_55_13
-		- Not implemented undocumented opcodes for NMOS
-		- Errors on flags N and V for ADC in BCD mode
+		- Test 6502/v1/20_55_13 (Note 1)
+		- Not implemented undocumented opcodes for NMOS (Note 2)
+		- Errors on flag N for ADC in BCD mode (Note 3)
 
 	The tests are disabled by defaut because they take long to run
 	and require a huge download.
@@ -51,7 +51,7 @@ func TestHarteNMOS6502(t *testing.T) {
 	path := ProcessorTestsPath + "6502/v1/"
 	for i := 0x00; i <= 0xff; i++ {
 		mnemonic := s.opcodes[i].name
-		if mnemonic != "" {
+		if mnemonic != "" { // Note 2
 			opcode := fmt.Sprintf("%02x", i)
 			t.Run(opcode+mnemonic, func(t *testing.T) {
 				t.Parallel()
@@ -105,7 +105,7 @@ func testOpcode(t *testing.T, s *State, path string, opcode string, mnemonic str
 	}
 
 	for _, scenario := range scenarios {
-		if scenario.Name != "20 55 13" { // TODO: FIx JSR on the stack being modified
+		if scenario.Name != "20 55 13" { // Note 1
 			t.Run(scenario.Name, func(t *testing.T) {
 				testScenario(t, s, &scenario, mnemonic)
 			})
@@ -135,8 +135,8 @@ func testScenario(t *testing.T, s *State, sc *scenario, mnemonic string) {
 	assertReg8(t, sc, "X", s.reg.getX(), sc.Final.X)
 	assertReg8(t, sc, "Y", s.reg.getY(), sc.Final.Y)
 	if s.reg.getFlag(flagD) && (mnemonic == "ADC") {
-		// TODO: fix N and V flags for ADC with BCD
-		assertFlags(t, sc, sc.Initial.P, s.reg.getP()&0x3f, sc.Final.P&0x3f)
+		// Note 3
+		assertFlags(t, sc, sc.Initial.P, s.reg.getP()&0x7f, sc.Final.P&0x7f)
 	} else {
 		assertFlags(t, sc, sc.Initial.P, s.reg.getP(), sc.Final.P)
 	}

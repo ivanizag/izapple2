@@ -167,12 +167,13 @@ func opADC(s *State, line []uint8, opcode opcode) {
 	truncated := uint8(total)
 
 	if s.reg.getFlag(flagD) {
-		totalBcdLo := int(aValue&0x0f) + int(value&0x0f) + int(carry)
-		totalBcdHi := int(aValue>>4) + int(value>>4)
+		totalBcdLo := uint(aValue&0x0f) + uint(value&0x0f) + uint(carry)
+		totalBcdHi := uint(aValue>>4) + uint(value>>4)
 		if totalBcdLo >= 10 {
 			totalBcdLo -= 10
 			totalBcdHi++
 		}
+		totalBcdHiPrenormalised := uint8(totalBcdHi & 0xf)
 		newCarry := false
 		if totalBcdHi >= 10 {
 			totalBcdHi -= 10
@@ -181,14 +182,19 @@ func opADC(s *State, line []uint8, opcode opcode) {
 		totalBcd := uint8(totalBcdHi)<<4 + (uint8(totalBcdLo) & 0xf)
 		s.reg.setA(uint8(totalBcd))
 		s.reg.updateFlag(flagC, newCarry)
+		s.reg.updateFlag(flagV, (value>>7 == aValue>>7) &&
+			(value>>7 != totalBcdHiPrenormalised>>3))
 	} else {
 		s.reg.setA(truncated)
 		s.reg.updateFlag(flagC, total > 0xFF)
+		s.reg.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
+		// Effectively the same as the less clear:
+		// s.reg.updateFlag(flagV, (value>>7 == aValue>>7) && (value>>7 != truncated>>7))
+		// See http://www.6502.org/tutorials/vflag.html
 	}
 
-	// ZNV flags behave for BCD as if the operation was binary?
+	// ZN flags behave for BCD as if the operation was binary?
 	s.reg.updateFlagZN(truncated)
-	s.reg.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 }
 
 func opADCAlt(s *State, line []uint8, opcode opcode) {
