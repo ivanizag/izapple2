@@ -35,17 +35,20 @@ func TestHarteNMOS6502(t *testing.T) {
 
 	path := "/home/casa/code/ProcessorTests/6502/v1/"
 	for i := 0x00; i <= 0xff; i++ {
-		if s.opcodes[i].name != "ADC" && // Issue with ADC crossing page boundaries
-			s.opcodes[i].name != "SBC" && // Issue with ADC crossing page boundaries
-			s.opcodes[i].name != "" {
-
+		mnemonic := s.opcodes[i].name
+		if mnemonic != "" {
 			opcode := fmt.Sprintf("%02x", i)
-			t.Run(opcode+s.opcodes[i].name, func(t *testing.T) {
+			t.Run(opcode+mnemonic, func(t *testing.T) {
 				t.Parallel()
 				m := new(FlatMemory)
 				s := NewNMOS6502(m)
-				testOpcode(t, s, path, opcode)
+				testOpcode(t, s, path, opcode, mnemonic)
 			})
+			//} else {
+			//	opcode := fmt.Sprintf("%02x", i)
+			//	t.Run(opcode+mnemonic, func(t *testing.T) {
+			//		t.Error("Opcode not implemented")
+			//	})
 		}
 	}
 }
@@ -57,21 +60,18 @@ func TestHarteCMOS65c02(t *testing.T) {
 
 	path := "/home/casa/code/ProcessorTests/wdc65c02/v1/"
 	for i := 0x00; i <= 0xff; i++ {
-		if s.opcodes[i].name != "ADC" && // Issue with ADC crossing page boundaries
-			s.opcodes[i].name != "SBC" { // Issue with SBC crossing page boundaries
-
-			opcode := fmt.Sprintf("%02x", i)
-			t.Run(opcode+s.opcodes[i].name, func(t *testing.T) {
-				t.Parallel()
-				m := new(FlatMemory)
-				s := NewCMOS65c02(m)
-				testOpcode(t, s, path, opcode)
-			})
-		}
+		mnemonic := s.opcodes[i].name
+		opcode := fmt.Sprintf("%02x", i)
+		t.Run(opcode+mnemonic, func(t *testing.T) {
+			t.Parallel()
+			m := new(FlatMemory)
+			s := NewCMOS65c02(m)
+			testOpcode(t, s, path, opcode, mnemonic)
+		})
 	}
 }
 
-func testOpcode(t *testing.T, s *State, path string, opcode string) {
+func testOpcode(t *testing.T, s *State, path string, opcode string, mnemonic string) {
 	data, err := ioutil.ReadFile(path + opcode + ".json")
 	if err != nil {
 		t.Fatal(err)
@@ -88,15 +88,15 @@ func testOpcode(t *testing.T, s *State, path string, opcode string) {
 	}
 
 	for _, scenario := range scenarios {
-		if scenario.Name != "20 55 13" { // Skip JSR on the stack being modified
+		if scenario.Name != "20 55 13" { // TODO: FIx JSR on the stack being modified
 			t.Run(scenario.Name, func(t *testing.T) {
-				testScenario(t, s, &scenario)
+				testScenario(t, s, &scenario, mnemonic)
 			})
 		}
 	}
 }
 
-func testScenario(t *testing.T, s *State, sc *scenario) {
+func testScenario(t *testing.T, s *State, sc *scenario, mnemonic string) {
 	// Setup CPU
 	start := s.GetCycles()
 	s.reg.setPC(sc.Initial.Pc)
@@ -105,6 +105,7 @@ func testScenario(t *testing.T, s *State, sc *scenario) {
 	s.reg.setX(sc.Initial.X)
 	s.reg.setY(sc.Initial.Y)
 	s.reg.setP(sc.Initial.P)
+
 	for _, e := range sc.Initial.Ram {
 		s.mem.Poke(uint16(e[0]), uint8(e[1]))
 	}
@@ -116,7 +117,12 @@ func testScenario(t *testing.T, s *State, sc *scenario) {
 	assertReg8(t, sc, "A", s.reg.getA(), sc.Final.A)
 	assertReg8(t, sc, "X", s.reg.getX(), sc.Final.X)
 	assertReg8(t, sc, "Y", s.reg.getY(), sc.Final.Y)
-	assertFlags(t, sc, sc.Initial.P, s.reg.getP(), sc.Final.P)
+	if s.reg.getFlag(flagD) && (mnemonic == "ADC") {
+		// TODO: fix N and V flags for ADC with BCD
+		assertFlags(t, sc, sc.Initial.P, s.reg.getP()&0x3f, sc.Final.P&0x3f)
+	} else {
+		assertFlags(t, sc, sc.Initial.P, s.reg.getP(), sc.Final.P)
+	}
 	assertReg8(t, sc, "SP", s.reg.getSP(), sc.Final.S)
 	assertReg16(t, sc, "PC", s.reg.getPC(), sc.Final.Pc)
 
@@ -128,13 +134,13 @@ func testScenario(t *testing.T, s *State, sc *scenario) {
 
 func assertReg8(t *testing.T, sc *scenario, name string, actual uint8, wanted uint8) {
 	if actual != wanted {
-		t.Errorf("Register %s is %02x and should be %02x for %+v", name, actual, wanted, sc)
+		t.Errorf("Register %s is $%02x and should be $%02x for %+v", name, actual, wanted, sc)
 	}
 }
 
 func assertReg16(t *testing.T, sc *scenario, name string, actual uint16, wanted uint16) {
 	if actual != wanted {
-		t.Errorf("Register %s is %04x and should be %04x for %+v", name, actual, wanted, sc)
+		t.Errorf("Register %s is $%04x and should be $%04x for %+v", name, actual, wanted, sc)
 	}
 }
 

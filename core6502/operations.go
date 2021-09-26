@@ -170,23 +170,35 @@ func opADC(s *State, line []uint8, opcode opcode) {
 		totalBcdLo := int(aValue&0x0f) + int(value&0x0f) + int(carry)
 		totalBcdHi := int(aValue>>4) + int(value>>4)
 		if totalBcdLo >= 10 {
+			totalBcdLo -= 10
 			totalBcdHi++
 		}
-		totalBcd := (totalBcdHi%10)<<4 + (totalBcdLo % 10)
+		newCarry := false
+		if totalBcdHi >= 10 {
+			totalBcdHi -= 10
+			newCarry = true
+		}
+		totalBcd := uint8(totalBcdHi)<<4 + (uint8(totalBcdLo) & 0xf)
 		s.reg.setA(uint8(totalBcd))
-		s.reg.updateFlag(flagC, totalBcdHi > 9)
+		s.reg.updateFlag(flagC, newCarry)
+		s.reg.updateFlagZN(truncated)
+		s.reg.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 	} else {
 		s.reg.setA(truncated)
 		s.reg.updateFlag(flagC, total > 0xFF)
+		s.reg.updateFlagZN(truncated)
+		s.reg.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 	}
 
 	// ZNV flags behave for BCD as if the operation was binary?
-	s.reg.updateFlagZN(truncated)
-	s.reg.updateFlag(flagV, signedTotal < -128 || signedTotal > 127)
 }
 
 func opADCAlt(s *State, line []uint8, opcode opcode) {
 	opADC(s, line, opcode)
+	if s.reg.getFlag(flagD) {
+		s.extraCycleBCD = true
+	}
+
 	// The Z and N flags on BCD are fixed in 65c02.
 	s.reg.updateFlagZN(s.reg.getA())
 }
@@ -201,14 +213,20 @@ func opSBC(s *State, line []uint8, opcode opcode) {
 	truncated := uint8(total)
 
 	if s.reg.getFlag(flagD) {
-		totalBcdLo := 10 + int(aValue&0x0f) - int(value&0x0f) + int(carry) - 1
-		totalBcdHi := 10 + int(aValue>>4) - int(value>>4)
-		if totalBcdLo < 10 {
+		totalBcdLo := int(aValue&0x0f) - int(value&0x0f) + int(carry) - 1
+		totalBcdHi := int(aValue>>4) - int(value>>4)
+		if totalBcdLo < 0 {
+			totalBcdLo += 10
 			totalBcdHi--
 		}
-		totalBcd := (totalBcdHi%10)<<4 + (totalBcdLo % 10)
+		newCarry := true
+		if totalBcdHi < 0 {
+			totalBcdHi += 10
+			newCarry = false
+		}
+		totalBcd := uint8(totalBcdHi)<<4 + (uint8(totalBcdLo) & 0xf)
 		s.reg.setA(uint8(totalBcd))
-		s.reg.updateFlag(flagC, totalBcdHi >= 10)
+		s.reg.updateFlag(flagC, newCarry)
 	} else {
 		s.reg.setA(truncated)
 		s.reg.updateFlag(flagC, total > 0xFF)
@@ -221,6 +239,9 @@ func opSBC(s *State, line []uint8, opcode opcode) {
 
 func opSBCAlt(s *State, line []uint8, opcode opcode) {
 	opSBC(s, line, opcode)
+	if s.reg.getFlag(flagD) {
+		s.extraCycleBCD = true
+	}
 	// The Z and N flags on BCD are fixed in 65c02.
 	s.reg.updateFlagZN(s.reg.getA())
 }

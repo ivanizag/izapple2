@@ -26,6 +26,7 @@ type State struct {
 
 	extraCycleCrossingBoundaries bool
 	extraCycleBranchTaken        bool
+	extraCycleBCD                bool
 	lineCache                    []uint8
 	// We cache the allocation of a line to avoid a malloc per instruction. To be used only
 	// by ExecuteInstruction(). 2x speedup on the emulation!!
@@ -81,6 +82,7 @@ func (s *State) ExecuteInstruction() {
 	opcode.action(s, s.lineCache, opcode)
 	s.cycles += uint64(opcode.cycles)
 
+	// Extra cycles
 	if s.extraCycleBranchTaken {
 		s.cycles++
 		s.extraCycleBranchTaken = false
@@ -88,6 +90,10 @@ func (s *State) ExecuteInstruction() {
 	if s.extraCycleCrossingBoundaries {
 		s.cycles++
 		s.extraCycleCrossingBoundaries = false
+	}
+	if s.extraCycleBCD {
+		s.cycles++
+		s.extraCycleBCD = false
 	}
 
 	if s.trace {
