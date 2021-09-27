@@ -57,6 +57,12 @@ func add65c02NOPs(opcodes *[256]opcode) {
 		// BBR and BBS: opcodes[i+0x0f] = nop11
 	}
 
+	/* Changes for Rockwell65c02
+	nop12 := opcode{"NOP", 1, 2, modeImplicit, opNOP}
+	opcodes[0xcb] = nop12
+	opcodes[0xdb] = nop24
+	*/
+
 	// Detection of 65c816
 	opcodes[0xbf].name = "XCE"
 }
