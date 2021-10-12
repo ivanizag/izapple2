@@ -33,6 +33,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - FASTChip, limited to what Total Replay needs to set and clear fast mode
   - Mouse Card, emulates the entry points, not the softswitches.
   - Host console card. Maps the host STDIN and STDOUT to PR# and IN#
+  - ROMXe, limited to font switching
 
 - Graphic modes:
   - Text 40 columns
@@ -223,6 +224,8 @@ Only valid on SDL mode
         emulate the RGB modes of the 80col RGB card for DHGR (default true)
   -rom string
         main rom file (default "<default>")
+  -romx
+        emulate a RomX
   -saturnCardSlot int
         slot for the 256kb Saturn card. -1 for none (default -1)
   -sequencer

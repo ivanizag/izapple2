@@ -209,9 +209,13 @@ func (a *Apple2) AddNoSlotClock() {
 }
 
 // AddRomX inserts a RomX. It intercepts all memory accesses
-func (a *Apple2) AddRomX() {
-	rx := newRomX(a, a.mmu)
+func (a *Apple2) AddRomX() error {
+	rx, err := newRomX(a, a.mmu)
+	if err != nil {
+		return err
+	}
 	a.cpu.SetMemory(rx)
+	return nil
 }
 
 // AddNoSlotClockInCard inserts a DS1215 no slot clock under a card ROM

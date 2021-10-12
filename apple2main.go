@@ -94,6 +94,10 @@ func MainApple() *Apple2 {
 		"rgb",
 		true,
 		"emulate the RGB modes of the 80col RGB card for DHGR")
+	romX := flag.Bool(
+		"romx",
+		false,
+		"emulate a RomX")
 	fastDisk := flag.Bool(
 		"fastDisk",
 		true,
@@ -258,7 +262,7 @@ func MainApple() *Apple2 {
 	}
 
 	// Load character generator if it loaded already
-	cg, err := newCharacterGenerator(*charRomFile, charGenMap)
+	cg, err := newCharacterGenerator(*charRomFile, charGenMap, a.isApple2e)
 	if err != nil {
 		panic(err)
 	}
@@ -347,7 +351,13 @@ func MainApple() *Apple2 {
 
 	}
 
-	// a.AddRomX()
+	if *romX {
+		err := a.AddRomX()
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	// a.AddCardLogger(4)
 
 	return a

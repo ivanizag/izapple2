@@ -16,6 +16,7 @@ type CharacterGenerator struct {
 	data      []uint8
 	columnMap charColumnMap
 	page      int
+	pageSize  int
 }
 
 type charColumnMap func(column int) int
@@ -29,17 +30,24 @@ func charGenColumnsMap2e(column int) int {
 }
 
 const (
-	charGenPageSize = 2048
+	charGenPageSize2Plus = 2048
+	charGenPageSize2E    = 2048 * 2
 )
 
 // NewCharacterGenerator instantiates a new Character Generator with the rom on the file given
-func newCharacterGenerator(filename string, order charColumnMap) (*CharacterGenerator, error) {
+func newCharacterGenerator(filename string, order charColumnMap, isApple2e bool) (*CharacterGenerator, error) {
 	var cg CharacterGenerator
+	cg.columnMap = order
+	cg.pageSize = charGenPageSize2Plus
+	if isApple2e {
+		cg.pageSize = charGenPageSize2E
+	}
+
 	err := cg.load(filename)
 	if err != nil {
 		return nil, err
 	}
-	cg.columnMap = order
+
 	return &cg, nil
 }
 
@@ -49,7 +57,7 @@ func (cg *CharacterGenerator) load(filename string) error {
 		return err
 	}
 	size := len(bytes)
-	if size < charGenPageSize {
+	if size < cg.pageSize {
 		return errors.New("character ROM size not supported")
 	}
 	cg.data = bytes
@@ -58,8 +66,12 @@ func (cg *CharacterGenerator) load(filename string) error {
 
 func (cg *CharacterGenerator) setPage(page int) {
 	// Some clones had a switch to change codepage with extra characters
-	pages := len(cg.data) / charGenPageSize
+	pages := len(cg.data) / cg.pageSize
 	cg.page = page % pages
+}
+
+func (cg *CharacterGenerator) getPage() int {
+	return cg.page
 }
 
 func (cg *CharacterGenerator) nextPage() {
@@ -67,7 +79,7 @@ func (cg *CharacterGenerator) nextPage() {
 }
 
 func (cg *CharacterGenerator) getPixel(char uint8, row int, column int) bool {
-	bits := cg.data[int(char)*8+row+cg.page*charGenPageSize]
+	bits := cg.data[int(char)*8+row+cg.page*cg.pageSize]
 	bit := cg.columnMap(column)
 	value := bits >> uint(bit) & 1
 	return value == 1
