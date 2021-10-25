@@ -29,8 +29,10 @@ type mosCallData struct {
 }
 
 const (
-	applecornKernelStart uint16 = 0xd000 // Code above this is out of BBC territory
-	applecornNoCaller    uint16 = 0xffff
+	applecornKernelStart    uint16 = 0xc000 // Code above this is out of BBC territory
+	applecornTraceAreaStart uint16 = 0xd000
+	applecornNoCaller       uint16 = 0xffff
+	applecornRomTitle       uint16 = 0x8009
 )
 
 func newTraceApplecorn(a *Apple2, skipConsole bool) *traceApplecorn {
@@ -64,18 +66,49 @@ func (t *traceApplecorn) inspect() {
 	pc, sp := t.a.cpu.GetPCAndSP()
 
 	if pc == 0x8000 {
+		activeROM := t.getTerminatedString(applecornRomTitle, 0)
 		regA, _, _, _ := t.a.cpu.GetAXYP()
-		fmt.Printf("BBC MOS call to $%04x LANGUAGE(%02x)\n", pc, regA)
+		fmt.Printf("BBC MOS call to $%04x LANGUAGE(ROM=\"%s\", A=%02x)\n", pc, activeROM, regA)
 	} else if pc == 0x8003 {
-		regA, _, regY, _ := t.a.cpu.GetAXYP()
-		address := t.a.mmu.peekWord(0xf2 + uint16(regY))
-		command := t.getTerminatedString(address, 0x0d)
-		fmt.Printf("BBC MOS call to $%04x SERVICE(A=%v, \"%s\")\n", pc, regA, command)
+		activeROM := t.getTerminatedString(applecornRomTitle, 0)
+		service, _, regY, _ := t.a.cpu.GetAXYP()
+		switch service {
+		case 4: // OSCLI
+			address := t.a.mmu.peekWord(0xf2 + uint16(regY))
+			command := t.getTerminatedString(address, 0x0d)
+			fmt.Printf("BBC MOS call to $%04x SERVICE_OSCLI(ROM=\"%s\", A=%v, \"%s\")\n",
+				pc, activeROM, service, command)
+		case 6: // Error
+			address := t.a.mmu.peekWord(0xfd)
+			faultNumber := t.a.mmu.Peek(address)
+			faultMessage := address + 1
+			faultString := t.getTerminatedString(faultMessage, 0)
+			fmt.Printf("BBC MOS call to $%04x SERVICE_ERROR(ROM=\"%s\", A=%v, #=%v, \"%s\")\n",
+				pc, activeROM, service, faultNumber, faultString)
+		case 7: // OSBYTE
+			pA := t.a.mmu.Peek(0xef)
+			pX := t.a.mmu.Peek(0xf0)
+			pY := t.a.mmu.Peek(0xf1)
+			fmt.Printf("BBC MOS call to $%04x SERVICE_OSBYTE%02x(ROM=\"%s\", A=%v, pX=%02x, pY=%02x)\n",
+				pc, pA, activeROM, service, pX, pY)
+		case 8: // OSWORD
+			pA := t.a.mmu.Peek(0xef)
+			fmt.Printf("BBC MOS call to $%04x SERVICE_OSWORD%02x(ROM=\"%s\", A=%v)\n",
+				pc, pA, activeROM, service)
+		case 9: // *HELP
+			address := t.a.mmu.peekWord(0xf2 + uint16(regY))
+			command := t.getTerminatedString(address, 0x0d)
+			fmt.Printf("BBC MOS call to $%04x SERVICE_HELP(ROM=\"%s\", A=%v, \"%s\")\n",
+				pc, activeROM, service, command)
+		default:
+			fmt.Printf("BBC MOS call to $%04x SERVICE(ROM=\"%s\", A=%v)\n",
+				pc, activeROM, service)
 
+		}
 	}
 
 	inKernel := pc >= applecornKernelStart
-	if !t.wasInKernel && inKernel {
+	if !t.wasInKernel && inKernel && pc >= applecornTraceAreaStart {
 		regA, regX, regY, _ := t.a.cpu.GetAXYP()
 
 		s := "UNKNOWN"
