@@ -21,7 +21,7 @@ type cardDisk2SequencerDrive struct {
 }
 
 func (d *cardDisk2SequencerDrive) insertDiskette(filename string) error {
-	data, writeable, err := storage.LoadResource(filename)
+	data, writeable, err := LoadResource(filename)
 	if err != nil {
 		return err
 	}

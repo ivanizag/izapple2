@@ -2,8 +2,6 @@ package izapple2
 
 import (
 	"flag"
-
-	"github.com/ivanizag/izapple2/storage"
 )
 
 const defaultInternal = "<default>"
@@ -162,7 +160,9 @@ func MainApple() *Apple2 {
 	diskImageFinal := *diskImage
 	hardDiskImageFinal := *hardDiskImage
 	if filename != "" {
-		if storage.IsDiskette(filename) {
+		// Try loading as diskette
+		_, err := LoadDiskette(filename)
+		if err == nil {
 			diskImageFinal = filename
 		} else {
 			hardDiskImageFinal = filename

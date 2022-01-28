@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ivanizag/izapple2/component"
-	"github.com/ivanizag/izapple2/storage"
 )
 
 /*
@@ -47,7 +46,7 @@ func NewCardVidex() *CardVidex {
 }
 
 func (c *CardVidex) loadCharacterMap(filename string) error {
-	bytes, _, err := storage.LoadResource(filename)
+	bytes, _, err := LoadResource(filename)
 	if err != nil {
 		return err
 	}

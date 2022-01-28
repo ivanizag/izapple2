@@ -2,7 +2,6 @@ package izapple2
 
 import (
 	"github.com/ivanizag/izapple2/component"
-	"github.com/ivanizag/izapple2/storage"
 )
 
 // TODO: fast mode
@@ -54,7 +53,7 @@ func NewCardDisk2Sequencer() *CardDisk2Sequencer {
 	c.name = "Disk II"
 	c.loadRomFromResource("<internal>/DISK2.rom")
 
-	data, _, err := storage.LoadResource("<internal>/DISK2P6.rom")
+	data, _, err := LoadResource("<internal>/DISK2P6.rom")
 	if err != nil {
 		// The resource should be internal and never fail
 		panic(err)

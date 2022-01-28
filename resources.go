@@ -1,23 +1,28 @@
-package storage
+package izapple2
 
 import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"embed"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/ivanizag/izapple2/romdumps"
+	"github.com/ivanizag/izapple2/storage"
 )
 
 const (
 	internalPrefix = "<internal>/"
+	embedPrefix    = "resources/"
 	httpPrefix     = "http://"
 	httpsPrefix    = "https://"
 )
+
+//go:embed resources
+var internalFiles embed.FS
 
 func isInternalResource(filename string) bool {
 	return strings.HasPrefix(filename, internalPrefix)
@@ -34,8 +39,8 @@ func LoadResource(filename string) ([]uint8, bool, error) {
 	var file io.Reader
 	if isInternalResource(filename) {
 		// load from embedded resource
-		resource := strings.TrimPrefix(filename, internalPrefix)
-		resourceFile, err := romdumps.Assets.Open(resource)
+		resource := embedPrefix + strings.TrimPrefix(filename, internalPrefix)
+		resourceFile, err := internalFiles.Open(resource)
 		if err != nil {
 			return nil, false, err
 		}
@@ -96,7 +101,7 @@ func LoadResource(filename string) ([]uint8, bool, error) {
 			if err != nil {
 				return nil, false, err
 			}
-			if isFileDsk(bytes) || isFileNib(bytes) || isFileWoz(bytes) {
+			if storage.IsDiskette(bytes) {
 				data = bytes
 				break
 			}
@@ -104,4 +109,14 @@ func LoadResource(filename string) ([]uint8, bool, error) {
 	}
 
 	return data, writeable, nil
+}
+
+// LoadDiskette returns a Diskette by detecting the format
+func LoadDiskette(filename string) (storage.Diskette, error) {
+	data, writeable, err := LoadResource(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return storage.MakeDiskette(data, filename, writeable)
 }

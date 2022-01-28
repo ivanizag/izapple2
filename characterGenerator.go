@@ -2,8 +2,6 @@ package izapple2
 
 import (
 	"errors"
-
-	"github.com/ivanizag/izapple2/storage"
 )
 
 /*
@@ -52,7 +50,7 @@ func newCharacterGenerator(filename string, order charColumnMap, isApple2e bool)
 }
 
 func (cg *CharacterGenerator) load(filename string) error {
-	bytes, _, err := storage.LoadResource(filename)
+	bytes, _, err := LoadResource(filename)
 	if err != nil {
 		return err
 	}

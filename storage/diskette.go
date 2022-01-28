@@ -13,22 +13,12 @@ type Diskette interface {
 }
 
 // IsDiskette returns true if the files looks like a 5 1/4 diskette
-func IsDiskette(filename string) bool {
-	data, _, err := LoadResource(filename)
-	if err != nil {
-		return false
-	}
-
+func IsDiskette(data []byte) bool {
 	return isFileNib(data) || isFileDsk(data) || isFileWoz(data)
 }
 
-// LoadDiskette returns a Diskette by detecting the format
-func LoadDiskette(filename string) (Diskette, error) {
-	data, writeable, err := LoadResource(filename)
-	if err != nil {
-		return nil, err
-	}
-
+// MakeDiskette returns a Diskette by detecting the format
+func MakeDiskette(data []byte, filename string, writeable bool) (Diskette, error) {
 	if isFileNib(data) {
 		var d diskette16sector
 		d.nib = newFileNib(data)
