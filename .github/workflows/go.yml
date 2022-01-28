@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: Install SDL2
+      run: |
+        sudo apt-get install libsdl2-dev
+
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
