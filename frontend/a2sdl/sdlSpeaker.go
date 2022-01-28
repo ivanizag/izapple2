@@ -7,7 +7,6 @@ void SpeakerCallback(void *userdata, Uint8 *stream, int len);
 import "C"
 import (
 	"fmt"
-	"reflect"
 	"unsafe"
 
 	"github.com/ivanizag/izapple2"
@@ -72,9 +71,7 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	}
 
 	// Adapt C buffer
-	n := int(length)
-	hdr := reflect.SliceHeader{Data: uintptr(unsafe.Pointer(stream)), Len: n, Cap: n}
-	buf := *(*[]C.Uint8)(unsafe.Pointer(&hdr))
+	buf := unsafe.Slice(stream, length)
 
 	//Read queued clicks
 	done := false
