@@ -3,7 +3,7 @@ package izapple2
 import (
 	"fmt"
 
-	"github.com/ivanizag/izapple2/core6502"
+	"github.com/ivanizag/iz6502"
 )
 
 /*
@@ -31,7 +31,7 @@ go run *.go -rom ROMX.FIRM.dump -disk ROM\ X\ 20-10-22.dsk
 
 type romX struct {
 	a              *Apple2
-	memory         core6502.Memory
+	memory         iz6502.Memory
 	activationStep int
 	systemBank     uint8
 	mainBank       uint8
@@ -74,7 +74,7 @@ const (
 	*/
 )
 
-func newRomX(a *Apple2, memory core6502.Memory) (*romX, error) {
+func newRomX(a *Apple2, memory iz6502.Memory) (*romX, error) {
 	var rx romX
 	rx.a = a
 	rx.memory = memory

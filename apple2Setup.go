@@ -3,7 +3,7 @@ package izapple2
 import (
 	"errors"
 
-	"github.com/ivanizag/izapple2/core6502"
+	"github.com/ivanizag/iz6502"
 	"github.com/ivanizag/izapple2/storage"
 )
 
@@ -30,14 +30,14 @@ func (a *Apple2) setup(clockMhz float64, fastMode bool) {
 
 func setApple2plus(a *Apple2) {
 	a.Name = "Apple ][+"
-	a.cpu = core6502.NewNMOS6502(a.mmu)
+	a.cpu = iz6502.NewNMOS6502(a.mmu)
 	addApple2SoftSwitches(a.io)
 }
 
 func setApple2e(a *Apple2) {
 	a.Name = "Apple IIe"
 	a.isApple2e = true
-	a.cpu = core6502.NewNMOS6502(a.mmu)
+	a.cpu = iz6502.NewNMOS6502(a.mmu)
 	a.mmu.initExtendedRAM(1)
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)
@@ -46,7 +46,7 @@ func setApple2e(a *Apple2) {
 func setApple2eEnhanced(a *Apple2) {
 	a.Name = "Apple //e"
 	a.isApple2e = true
-	a.cpu = core6502.NewCMOS65c02(a.mmu)
+	a.cpu = iz6502.NewCMOS65c02(a.mmu)
 	a.mmu.initExtendedRAM(1)
 	addApple2SoftSwitches(a.io)
 	addApple2ESoftSwitches(a.io)

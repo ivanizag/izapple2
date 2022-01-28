@@ -12,6 +12,7 @@ require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200625191551-73d3c3675aa3
 	github.com/godbus/dbus/v5 v5.0.3 // indirect
 	github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff // indirect
+	github.com/ivanizag/iz6502 v1.2.1
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pkg/profile v1.5.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect

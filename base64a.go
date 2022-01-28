@@ -3,7 +3,7 @@ package izapple2
 import (
 	"fmt"
 
-	"github.com/ivanizag/izapple2/core6502"
+	"github.com/ivanizag/iz6502"
 	"github.com/ivanizag/izapple2/storage"
 )
 
@@ -13,7 +13,7 @@ import (
 
 func setBase64a(a *Apple2) {
 	a.Name = "Base 64A"
-	a.cpu = core6502.NewNMOS6502(a.mmu)
+	a.cpu = iz6502.NewNMOS6502(a.mmu)
 	addApple2SoftSwitches(a.io)
 	addBase64aSoftSwitches(a.io)
 }

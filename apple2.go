@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ivanizag/izapple2/core6502"
+	"github.com/ivanizag/iz6502"
 )
 
 // Apple2 represents all the components and state of the emulated machine
 type Apple2 struct {
 	Name                string
-	cpu                 *core6502.State
+	cpu                 *iz6502.State
 	mmu                 *memoryManager
 	io                  *ioC0Page
 	cg                  *CharacterGenerator
