@@ -26,7 +26,7 @@ func RenderTextModeAnsi(vs VideoSource, is80Columns bool, isSecondPage bool, isA
 		line := ""
 		for c := 0; c < columns; c++ {
 			char := text[l*columns+c]
-			line += textMemoryByteToString(char, isAltText, isApple2e)
+			line += textMemoryByteToString(char, isAltText, isApple2e, true)
 		}
 		content += fmt.Sprintf("# %v #\n", line)
 	}
@@ -49,7 +49,7 @@ $e0-$ff           Low Nor  Low Nor  Low Nor  Low Nor
 ----------------------------------------------------
 */
 
-func textMemoryByteToString(value uint8, isAltCharSet bool, isApple2e bool) string {
+func textMemoryByteToString(value uint8, isAltCharSet bool, isApple2e bool, ansi bool) string {
 	// Normal, inverse or flash
 	topBits := value >> 6
 	isInverse := topBits == 0
@@ -80,13 +80,13 @@ func textMemoryByteToString(value uint8, isAltCharSet bool, isApple2e bool) stri
 		value = '_'
 	}
 
-	if isFlash {
+	if ansi && isFlash {
 		if value == ' ' {
 			// Flashing space in Apple is the full box. It can't be done with ANSI codes
 			value = '_'
 		}
 		return fmt.Sprintf("\033[5m%v\033[0m", string(value))
-	} else if isInverse {
+	} else if ansi && isInverse {
 		return fmt.Sprintf("\033[7m%v\033[0m", string(value))
 	} else {
 		return string(value)

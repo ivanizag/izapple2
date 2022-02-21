@@ -26,7 +26,7 @@ func TestTextMemoryByteToString(t *testing.T) {
 }
 
 func charExpectation(t *testing.T, arg uint8, alt bool, expect string) {
-	s := textMemoryByteToString(arg, alt, alt)
+	s := textMemoryByteToString(arg, alt, alt, true)
 	if s != expect {
 		t.Errorf("For 0x%02x:%v, got %v, expected %v", arg, alt, s, expect)
 	}

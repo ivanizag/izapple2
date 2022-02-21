@@ -189,85 +189,23 @@ func MainApple() *Apple2 {
 		a.addTracer(newTraceApplecorn(a, false))
 	}
 
-	var charGenMap charColumnMap
-	initialCharGenPage := 0
+	initModel(a, *model, *romFile, *charRomFile)
+	a.cpu.SetTrace(*traceCPU)
+
+	// Disable incompatible cards
 	switch *model {
 	case "2plus":
-		setApple2plus(a)
-		if *romFile == defaultInternal {
-			*romFile = "<internal>/Apple2_Plus.rom"
-		}
-		if *charRomFile == defaultInternal {
-			*charRomFile = "<internal>/Apple2rev7CharGen.rom"
-		}
-		charGenMap = charGenColumnsMap2Plus
 		*vidHDCardSlot = -1
-
 	case "2e":
-		setApple2e(a)
-		if *romFile == defaultInternal {
-			*romFile = "<internal>/Apple2e.rom"
-		}
-		if *charRomFile == defaultInternal {
-			*charRomFile = "<internal>/Apple IIe Video Unenhanced - 342-0133-A - 2732.bin"
-		}
-		a.isApple2e = true
-		charGenMap = charGenColumnsMap2e
-
+		*videxCardSlot = -1
 	case "2enh":
-		setApple2eEnhanced(a)
-		if *romFile == defaultInternal {
-			*romFile = "<internal>/Apple2e_Enhanced.rom"
-		}
-		if *charRomFile == defaultInternal {
-			*charRomFile = "<internal>/Apple IIe Video Enhanced - 342-0265-A - 2732.bin"
-		}
-		a.isApple2e = true
-		charGenMap = charGenColumnsMap2e
-
+		*videxCardSlot = -1
 	case "base64a":
-		setBase64a(a)
-		if *romFile == defaultInternal {
-			err := loadBase64aRom(a)
-			if err != nil {
-				panic(err)
-			}
-			*romFile = ""
-		}
-		if *charRomFile == defaultInternal {
-			*charRomFile = "<internal>/BASE64A_ROM7_CharGen.BIN"
-			initialCharGenPage = 1
-		}
-		charGenMap = charGenColumnsMapBase64a
 		*vidHDCardSlot = -1
 		*videxCardSlot = -1 // The videx firmware crashes the BASE64A, probably by use of ANN0
-
 	default:
 		panic("Model not supported")
 	}
-
-	if a.isApple2e {
-		// Videx not used on Apple IIe
-		*videxCardSlot = -1
-	}
-
-	a.cpu.SetTrace(*traceCPU)
-
-	// Load ROM if not loaded already
-	if *romFile != "" {
-		err := a.LoadRom(*romFile)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	// Load character generator if it loaded already
-	cg, err := newCharacterGenerator(*charRomFile, charGenMap, a.isApple2e)
-	if err != nil {
-		panic(err)
-	}
-	cg.setPage(initialCharGenPage)
-	a.cg = cg
 
 	// Externsion cards
 	if *languageCardSlot >= 0 {
@@ -361,4 +299,74 @@ func MainApple() *Apple2 {
 	// a.AddCardLogger(4)
 
 	return a
+}
+
+func initModel(a *Apple2, model string, romFile string, charRomFile string) {
+	var charGenMap charColumnMap
+	initialCharGenPage := 0
+	switch model {
+	case "2plus":
+		setApple2plus(a)
+		if romFile == defaultInternal {
+			romFile = "<internal>/Apple2_Plus.rom"
+		}
+		if charRomFile == defaultInternal {
+			charRomFile = "<internal>/Apple2rev7CharGen.rom"
+		}
+		charGenMap = charGenColumnsMap2Plus
+
+	case "2e":
+		setApple2e(a)
+		if romFile == defaultInternal {
+			romFile = "<internal>/Apple2e.rom"
+		}
+		if charRomFile == defaultInternal {
+			charRomFile = "<internal>/Apple IIe Video Unenhanced - 342-0133-A - 2732.bin"
+		}
+		charGenMap = charGenColumnsMap2e
+
+	case "2enh":
+		setApple2eEnhanced(a)
+		if romFile == defaultInternal {
+			romFile = "<internal>/Apple2e_Enhanced.rom"
+		}
+		if charRomFile == defaultInternal {
+			charRomFile = "<internal>/Apple IIe Video Enhanced - 342-0265-A - 2732.bin"
+		}
+		charGenMap = charGenColumnsMap2e
+
+	case "base64a":
+		setBase64a(a)
+		if romFile == defaultInternal {
+			err := loadBase64aRom(a)
+			if err != nil {
+				panic(err)
+			}
+			romFile = ""
+		}
+		if charRomFile == defaultInternal {
+			charRomFile = "<internal>/BASE64A_ROM7_CharGen.BIN"
+			initialCharGenPage = 1
+		}
+		charGenMap = charGenColumnsMapBase64a
+
+	default:
+		panic("Model not supported")
+	}
+
+	// Load ROM if not loaded already
+	if romFile != "" {
+		err := a.LoadRom(romFile)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	// Load character generator if it loaded already
+	cg, err := newCharacterGenerator(charRomFile, charGenMap, a.isApple2e)
+	if err != nil {
+		panic(err)
+	}
+	cg.setPage(initialCharGenPage)
+	a.cg = cg
 }
