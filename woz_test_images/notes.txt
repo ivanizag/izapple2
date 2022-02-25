@@ -1,0 +1,21 @@
+[From Apple II Slack, 4am (2021-06-29)]
+
+On the subject of "tricky woz images beyond the official test suite," I would recommend
+
+    https://archive.org/details/wozaday_Mr_Do (success = boot to joystick calibration)
+    https://archive.org/details/wozaday_Wavy_Navy (success = boot to game)
+    https://archive.org/details/wozaday_SAGA_6_Strange_Odyssey (success = begin game, climb down ladder, take shovel)
+    https://archive.org/details/wozaday_CongoBongo (success = boot to game)
+    https://archive.org/details/wozaday_Wizardry_III (success = boot to title screen, press a key, boot to main menu)
+
+
+
+Mr. Do relies on weakbits on track 0. Also, the protection check uses LDA $C088,X to fetch nibbles and expects the entire check to complete before the drive motor turns off.
+
+Wavy Navy relies on weakbits on track $22
+
+Strange Odyssey relies on both track length and weakbits on track $22
+
+Congo Bongo relies on weakbits on track 1, to a much greater degree than others. There is only one small sequence of valid nibbles, surrounded by an entire track of weakbits. This has flummoxed many emulators.
+
+Wizardry III relies on track length, and it is extremely sensitive to the precise timing of when the data latch "sees" bits and how long it holds on to a full nibble before resetting itself.

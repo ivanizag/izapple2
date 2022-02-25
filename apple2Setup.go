@@ -92,8 +92,8 @@ func (a *Apple2) LoadRom(filename string) error {
 }
 
 // AddDisk2 inserts a DiskII controller
-func (a *Apple2) AddDisk2(slot int, diskImage, diskBImage string) error {
-	c := NewCardDisk2()
+func (a *Apple2) AddDisk2(slot int, diskImage, diskBImage string, trackTracer trackTracer) error {
+	c := NewCardDisk2(trackTracer)
 	a.insertCard(c, slot)
 
 	if diskImage != "" {
@@ -116,8 +116,8 @@ func (a *Apple2) AddDisk2(slot int, diskImage, diskBImage string) error {
 }
 
 // AddDisk2 inserts a DiskII controller
-func (a *Apple2) AddDisk2Sequencer(slot int, diskImage, diskBImage string) error {
-	c := NewCardDisk2Sequencer()
+func (a *Apple2) AddDisk2Sequencer(slot int, diskImage, diskBImage string, trackTracer trackTracer) error {
+	c := NewCardDisk2Sequencer(trackTracer)
 	a.insertCard(c, slot)
 
 	if diskImage != "" {

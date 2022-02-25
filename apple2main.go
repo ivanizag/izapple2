@@ -245,12 +245,12 @@ func MainApple() *Apple2 {
 	}
 	if *disk2Slot > 0 {
 		if *sequencerDisk2 {
-			err := a.AddDisk2Sequencer(*disk2Slot, diskImageFinal, *diskBImage)
+			err := a.AddDisk2Sequencer(*disk2Slot, diskImageFinal, *diskBImage, nil)
 			if err != nil {
 				panic(err)
 			}
 		} else {
-			err := a.AddDisk2(*disk2Slot, diskImageFinal, *diskBImage)
+			err := a.AddDisk2(*disk2Slot, diskImageFinal, *diskBImage, nil)
 			if err != nil {
 				panic(err)
 			}

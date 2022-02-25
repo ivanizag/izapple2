@@ -33,6 +33,8 @@ type CardDisk2Sequencer struct {
 	lastPulseCycles uint8 // There is a new pulse every 4ms, that's 8 cycles of 2Mhz
 
 	lastCycle uint64 // 2 Mhz cycles
+
+	trackTracer trackTracer
 }
 
 const (
@@ -48,9 +50,10 @@ const (
 )
 
 // NewCardDisk2Sequencer creates a new CardDisk2Sequencer
-func NewCardDisk2Sequencer() *CardDisk2Sequencer {
+func NewCardDisk2Sequencer(trackTracer trackTracer) *CardDisk2Sequencer {
 	var c CardDisk2Sequencer
 	c.name = "Disk II"
+	c.trackTracer = trackTracer
 	c.loadRomFromResource("<internal>/DISK2.rom")
 
 	data, _, err := LoadResource("<internal>/DISK2P6.rom")
@@ -172,8 +175,8 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 		q1 := c.q[1]
 		q2 := c.q[2]
 		q3 := c.q[3]
-		c.drive[0].moveHead(q0, q1, q2, q3)
-		c.drive[1].moveHead(q0, q1, q2, q3)
+		c.drive[0].moveHead(q0, q1, q2, q3, c.trackTracer)
+		c.drive[1].moveHead(q0, q1, q2, q3, c.trackTracer)
 	}
 
 	/*

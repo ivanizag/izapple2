@@ -72,7 +72,7 @@ func TestBase64Boots(t *testing.T) {
 func TestPlusDOS33Boots(t *testing.T) {
 	at := makeApple2Tester("2plus")
 
-	err := at.a.AddDisk2(6, "<internal>/dos33.dsk", "")
+	err := at.a.AddDisk2(6, "<internal>/dos33.dsk", "", nil)
 	if err != nil {
 		panic(err)
 	}

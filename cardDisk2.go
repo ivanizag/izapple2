@@ -32,19 +32,22 @@ type CardDisk2 struct {
 	dataLatch uint8
 	q6        bool
 	q7        bool
+
+	trackTracer trackTracer
 }
 
 type cardDisk2Drive struct {
-	name       string
-	diskette   storage.Diskette
-	phases     uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
-	tracksStep int   // Stepmotor for tracks position. 4 steps per track
+	name      string
+	diskette  storage.Diskette
+	phases    uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
+	trackStep int   // Stepmotor for tracks position. 4 steps per track
 }
 
 // NewCardDisk2 creates a new CardDisk2
-func NewCardDisk2() *CardDisk2 {
+func NewCardDisk2(trackTracer trackTracer) *CardDisk2 {
 	var c CardDisk2
 	c.name = "Disk II"
+	c.trackTracer = trackTracer
 	c.loadRomFromResource("<internal>/DISK2.rom")
 	return &c
 }
@@ -56,10 +59,10 @@ func (c *CardDisk2) GetInfo() map[string]string {
 	info["power"] = strconv.FormatBool(c.power)
 
 	info["D1 name"] = c.drive[0].name
-	info["D1 track"] = strconv.FormatFloat(float64(c.drive[0].tracksStep)/4, 'f', 2, 64)
+	info["D1 track"] = strconv.FormatFloat(float64(c.drive[0].trackStep)/4, 'f', 2, 64)
 
 	info["D2 name"] = c.drive[1].name
-	info["D2 track"] = strconv.FormatFloat(float64(c.drive[1].tracksStep)/4, 'f', 2, 64)
+	info["D2 track"] = strconv.FormatFloat(float64(c.drive[1].trackStep)/4, 'f', 2, 64)
 	return info
 }
 
@@ -81,7 +84,11 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 			// Update magnets and position
 			drive := &c.drive[c.selected]
 			drive.phases &^= (1 << phase)
-			drive.tracksStep = moveDriveStepper(drive.phases, drive.tracksStep)
+			drive.trackStep = moveDriveStepper(drive.phases, drive.trackStep)
+
+			if c.trackTracer != nil {
+				c.trackTracer.traceTrack(drive.trackStep)
+			}
 
 			return c.dataLatch // All even addresses return the last dataLatch
 		}, fmt.Sprintf("PHASE%vOFF", phase))
@@ -90,7 +97,11 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 			// Update magnets and position
 			drive := &c.drive[c.selected]
 			drive.phases |= (1 << phase)
-			drive.tracksStep = moveDriveStepper(drive.phases, drive.tracksStep)
+			drive.trackStep = moveDriveStepper(drive.phases, drive.trackStep)
+
+			if c.trackTracer != nil {
+				c.trackTracer.traceTrack(drive.trackStep)
+			}
 
 			return 0
 		}, fmt.Sprintf("PHASE%vON", phase))
@@ -194,9 +205,9 @@ func (c *CardDisk2) processQ6Q7(in uint8) {
 	}
 	if !c.q6 { // shift
 		if !c.q7 { // Q6L-Q7L: Read
-			c.dataLatch = d.diskette.Read(d.tracksStep, c.a.cpu.GetCycles())
+			c.dataLatch = d.diskette.Read(d.trackStep, c.a.cpu.GetCycles())
 		} else { // Q6L-Q7H: Write the dataLatch value to disk. Shift data out
-			d.diskette.Write(d.tracksStep, c.dataLatch, c.a.cpu.GetCycles())
+			d.diskette.Write(d.trackStep, c.dataLatch, c.a.cpu.GetCycles())
 		}
 	} else { // load
 		if !c.q7 { // Q6H-Q7L: Sense write protect / prewrite state
