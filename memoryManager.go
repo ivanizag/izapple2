@@ -33,15 +33,16 @@ type memoryManager struct {
 	lcAltBank       bool  // Alternate
 
 	// Configuration switches, Apple //e
-	altZeroPage           bool  // Use extra RAM from 0x0000 to 0x01ff. And additional language card block
-	altMainRAMActiveRead  bool  // Use extra RAM from 0x0200 to 0xbfff for read
-	altMainRAMActiveWrite bool  // Use extra RAM from 0x0200 to 0xbfff for write
-	store80Active         bool  // Special pagination for text and graphics areas
-	slotC3ROMActive       bool  // Apple2e slot 3  ROM shadow
-	intCxROMActive        bool  // Apple2e slots internal ROM shadow
-	intC8ROMActive        bool  // C8Rom associated to the internal slot 3. Softswitch not directly accessible. See UtA2e 5-28
-	activeSlot            uint8 // Active slot owner of 0xc800 to 0xcfff
-	extendedRAMBlock      uint8 // Block used for entended memory for RAMWorks cards
+	altZeroPage           bool          // Use extra RAM from 0x0000 to 0x01ff. And additional language card block
+	altMainRAMActiveRead  bool          // Use extra RAM from 0x0200 to 0xbfff for read
+	altMainRAMActiveWrite bool          // Use extra RAM from 0x0200 to 0xbfff for write
+	store80Active         bool          // Special pagination for text and graphics areas
+	slotC3ROMActive       bool          // Apple2e slot 3  ROM shadow
+	intCxROMActive        bool          // Apple2e slots internal ROM shadow
+	intC8ROMActive        bool          // C8Rom associated to the internal slot 3. Softswitch not directly accessible. See UtA2e 5-28
+	activeSlot            uint8         // Active slot owner of 0xc800 to 0xcfff
+	extendedRAMBlock      uint8         // Block used for entended memory for RAMWorks cards
+	mainROMinhibited      memoryHandler // Alternative ROM from 0xd000 to 0xffff provided by a card with the INH signal.
 
 	// Configuration switches, Base64A
 	romPage uint8 // Active ROM page
@@ -151,6 +152,12 @@ func (mmu *memoryManager) getVideoRAM(ext bool) *memoryRange {
 	return mmu.physicalMainRAM
 }
 
+func (mmu *memoryManager) inhibitROM(replacement memoryHandler) {
+	// If a card INH the ROM, it replaces the ROM and the LC RAM
+	mmu.mainROMinhibited = replacement
+	mmu.lastAddressPage = invalidAddressPage // Invalidate cache
+}
+
 func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 	if address <= addressLimitZero {
 		return mmu.getPhysicalMainRAM(mmu.altZeroPage)
@@ -174,6 +181,9 @@ func (mmu *memoryManager) accessRead(address uint16) memoryHandler {
 	}
 	if address <= addressLimitSlotsExtra {
 		return mmu.accessCArea(address)
+	}
+	if mmu.mainROMinhibited != nil {
+		return mmu.mainROMinhibited
 	}
 	if mmu.lcActiveRead {
 		return mmu.accessUpperRAMArea(address)
@@ -204,6 +214,9 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 	}
 	if address <= addressLimitSlotsExtra {
 		return mmu.accessCArea(address)
+	}
+	if mmu.mainROMinhibited != nil {
+		return mmu.mainROMinhibited
 	}
 	if mmu.lcActiveWrite {
 		return mmu.accessUpperRAMArea(address)

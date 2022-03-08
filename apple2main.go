@@ -18,7 +18,7 @@ func MainApple() *Apple2 {
 		"slot for the disk driver. -1 for none.")
 	diskImage := flag.String(
 		"disk",
-		"<internal>/dos33.dsk",
+		defaultInternal,
 		"file to load on the first disk drive")
 	diskBImage := flag.String(
 		"diskb",
@@ -84,6 +84,10 @@ func MainApple() *Apple2 {
 		"videxCardSlot",
 		3,
 		"slot for the Videx Videoterm 80 columns card. For pre-2e models. -1 for none")
+	swyftCard := flag.Bool(
+		"swyftCard",
+		false,
+		"activate a Swyft Card in slot 3. Load the tutorial disk if none provided")
 	nsc := flag.Int(
 		"nsc",
 		-1,
@@ -169,6 +173,15 @@ func MainApple() *Apple2 {
 		}
 	}
 
+	// Resolve what is the default disk to use if not specified
+	if diskImageFinal == defaultInternal {
+		if *swyftCard {
+			diskImageFinal = "<internal>/SwyftWare_-_SwyftCard_Tutorial.woz"
+		} else {
+			diskImageFinal = "<internal>/dos33.dsk"
+		}
+	}
+
 	a := newApple2()
 	a.setup(*cpuClock, *fastDisk)
 	a.io.setTrace(*traceSS)
@@ -231,6 +244,12 @@ func MainApple() *Apple2 {
 	}
 	if *videxCardSlot > 0 {
 		a.AddVidexCard(*videxCardSlot)
+	}
+	if *swyftCard {
+		if !a.isApple2e {
+			panic("SwyftCard available only on Apple IIe or better")
+		}
+		a.AddSwyftCard()
 	}
 
 	if *smartPortImage != "" {
@@ -354,7 +373,7 @@ func initModel(a *Apple2, model string, romFile string, charRomFile string) {
 		panic("Model not supported")
 	}
 
-	// Load ROM if not loaded already
+	// Load ROM
 	if romFile != "" {
 		err := a.LoadRom(romFile)
 		if err != nil {
@@ -362,7 +381,7 @@ func initModel(a *Apple2, model string, romFile string, charRomFile string) {
 		}
 	}
 
-	// Load character generator if it loaded already
+	// Load character generator
 	cg, err := newCharacterGenerator(charRomFile, charGenMap, a.isApple2e)
 	if err != nil {
 		panic(err)
