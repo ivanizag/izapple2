@@ -35,3 +35,7 @@ func (at *apple2Tester) run() {
 func (at *apple2Tester) getText() string {
 	return screen.RenderTextModeString(at.a, false, false, false, at.a.isApple2e)
 }
+
+func (at *apple2Tester) getText80() string {
+	return screen.RenderTextModeString(at.a, true, false, false, at.a.isApple2e)
+}

@@ -191,6 +191,12 @@ func (a *Apple2) AddVidexCard(slot int) {
 	a.softVideoSwitch = NewSoftVideoSwitch(c)
 }
 
+// AddSwyftCard inserts a Swyft card in slot 3
+func (a *Apple2) AddSwyftCard() {
+	c := NewCardSwyft()
+	a.insertCard(c, 3)
+}
+
 // AddRGBCard inserts an RBG option to the Apple IIe 80 col 64KB card
 func (a *Apple2) AddRGBCard() {
 	setupRGBCard(a)
