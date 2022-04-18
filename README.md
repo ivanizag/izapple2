@@ -27,6 +27,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
   - No Slot Clock based on the DS1216
   - Videx Videoterm 80 column card with the Videx Soft Video Switch (Apple ][+ only)
+  - SwyftCard (Apple //e only)
 - Useful cards not emulating a real card
   - Bootable Smartport / ProDOS card
   - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
@@ -230,6 +231,8 @@ Only valid on SDL mode
         slot for the 256kb Saturn card. -1 for none (default -1)
   -sequencer
         use the sequencer based Disk II card
+  -swyftCard
+        activate a Swyft Card in slot 3. Load the tutorial disk if none provided
   -thunderClockCardSlot int
         slot for the ThunderClock Plus card. -1 for none (default 4)
   -traceBBC
