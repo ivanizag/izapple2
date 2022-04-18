@@ -51,13 +51,14 @@ func (s *sdlSpeaker) Click(cycle uint64) {
 	case s.clickChannel <- cycle:
 		// Sent
 	default:
+		fmt.Printf("Speaker click dropped in channel.\n")
 		// The channel is full, the click is lost.
 	}
 }
 
 func stateToLevel(state bool) C.Uint8 {
 	if state {
-		return 255
+		return 200
 	}
 	return 0
 }
@@ -91,13 +92,14 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 		if pc-s.lastCycle > maxOutOfSyncCycles {
 			// Fast forward
 			s.lastCycle = pc
+			fmt.Printf("Speaker fast forward.\n")
 		}
 	}
 
 	// Build wave
-	var i, p int
+	var i, r int
 	level := s.lastLevel
-	for p = 0; p < len(s.pendingClicks); p++ {
+	for p := 0; p < len(s.pendingClicks); p++ {
 		cycle := s.pendingClicks[p]
 		if cycle < s.lastCycle {
 			// Too old, ignore
@@ -105,19 +107,22 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 		}
 
 		// Fill with samples
+		level = stateToLevel(s.lastState)
 		samplesNeeded := int(float64(cycle-s.lastCycle) / sampleDurationCycles)
 		if samplesNeeded+i > bufferSize {
+			// Partial fill, to be completed on the next callback
 			samplesNeeded = bufferSize - i
+			s.lastCycle = cycle - uint64(float64(samplesNeeded)*sampleDurationCycles)
+		} else {
+			s.lastCycle = cycle
+			s.lastState = !s.lastState
+			r++ // Remove this pending click
 		}
+
 		for j := 0; j < samplesNeeded; j++ {
 			buf[i] = level
 			i++
 		}
-
-		// Update state
-		s.lastCycle = cycle
-		s.lastState = !s.lastState
-		level = stateToLevel(s.lastState)
 
 		if i == bufferSize {
 			// Buffer is complete
@@ -147,11 +152,7 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	s.lastLevel = level
 
 	// Remove processed clicks, store the rest for later
-	remainingClicks := len(s.pendingClicks) - p
-	for r := 0; r < remainingClicks; r++ {
-		s.pendingClicks[r] = s.pendingClicks[p+r]
-	}
-	s.pendingClicks = s.pendingClicks[0:remainingClicks]
+	s.pendingClicks = s.pendingClicks[r:]
 }
 
 func (s *sdlSpeaker) start() {
