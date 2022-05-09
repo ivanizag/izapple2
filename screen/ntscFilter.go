@@ -30,6 +30,21 @@ var ntscColorMap = [16]color.Color{
 	color.RGBA{255, 255, 255, 255}, // White
 }
 
+var attenuatedColorMap = buildAttenuatedColorMap(ntscColorMap)
+
+func buildAttenuatedColorMap(colorMap [16]color.Color) [16]color.Color {
+	colors := [16]color.Color{}
+	for i := 0; i < len(colorMap); i++ {
+		r, g, b, _ := colorMap[i].RGBA()
+		colors[i] = color.RGBA64{
+			uint16(r / 2), uint16(g / 2), uint16(b / 2),
+			65535,
+		}
+	}
+	return colors
+}
+
+/*
 var rgbColorMap = [16]color.Color{
 	color.RGBA{0, 0, 0, 255},       // Black
 	color.RGBA{221, 0, 51, 255},    // Magenta
@@ -48,18 +63,13 @@ var rgbColorMap = [16]color.Color{
 	color.RGBA{68, 255, 153, 255},  // Aquamarine
 	color.RGBA{255, 255, 255, 255}, // White
 }
+*/
 
 func filterNTSCColor(in *image.RGBA, mask *image.Alpha, screenMode int) *image.RGBA {
 	colorMap := ntscColorMap // or rgbColorMap
-	attenuatedColorMap := ntscColorMap
+	colorMapLow := ntscColorMap
 	if screenMode == ScreenModeNTSC {
-		for i := 0; i < len(colorMap); i++ {
-			r, g, b, _ := colorMap[i].RGBA()
-			attenuatedColorMap[i] = color.RGBA64{
-				uint16(r / 2), uint16(g / 2), uint16(b / 2),
-				65535,
-			}
-		}
+		colorMapLow = attenuatedColorMap
 	}
 
 	b := in.Bounds()
@@ -90,7 +100,7 @@ func filterNTSCColor(in *image.RGBA, mask *image.Alpha, screenMode int) *image.R
 			if r != 0 {
 				cOut = colorMap[v]
 			} else {
-				cOut = attenuatedColorMap[v]
+				cOut = colorMapLow[v]
 			}
 			if mask != nil {
 				// RGB mode7

@@ -36,6 +36,16 @@ func Snapshot(vs VideoSource, screenMode int) *image.RGBA {
 	return snap
 }
 
+// SnapshotPaletted, snapshot of the currently visible screen as a paletted image
+func SnapshotPaletted(vs VideoSource, screenMode int) *image.Paletted {
+	img := Snapshot(vs, screenMode)
+	return palletedFilter(img)
+}
+
+// Color for typical Apple ][ period green P1 phosphor monitors
+// See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
+var greenPhosphorColor = color.RGBA{65, 255, 0, 255}
+
 func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGBA {
 	videoBase := videoMode & VideoBaseMask
 	mixMode := videoMode & VideoMixTextMask
@@ -44,9 +54,7 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 
 	var lightColor color.Color = color.White
 	if screenMode == ScreenModeGreen {
-		// Color for typical Apple ][ period green P1 phosphor monitors
-		// See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
-		lightColor = color.RGBA{65, 255, 0, 255}
+		lightColor = greenPhosphorColor
 	}
 
 	applyNTSCFilter := screenMode != ScreenModeGreen
@@ -169,4 +177,22 @@ func linesSeparatedFilter(in *image.RGBA) *image.RGBA {
 		}
 	}
 	return out
+}
+
+func palletedFilter(in *image.RGBA) *image.Paletted {
+	bounds := in.Bounds()
+	outBounds := image.Rect(0, 0, bounds.Dx()*2, bounds.Dy())
+	palette := []color.Color{color.Black, color.White, greenPhosphorColor}
+	palette = append(palette, ntscColorMap[:]...)
+	palette = append(palette, attenuatedColorMap[:]...)
+	paletted := image.NewPaletted(outBounds, palette)
+
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			c := in.At(x, y)
+			paletted.Set(x*2, y, c)
+			paletted.Set(x*2+1, y, c)
+		}
+	}
+	return paletted
 }

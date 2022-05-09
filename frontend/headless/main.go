@@ -3,8 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"image/gif"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/ivanizag/izapple2"
 	"github.com/ivanizag/izapple2/screen"
@@ -88,6 +90,9 @@ func main() {
 		case "return":
 			fe.keyChannel <- 13
 
+		case "gif":
+			SaveGif(a, "snapshot.gif")
+
 		case "help":
 			fmt.Print(`
 Available commands:
@@ -99,12 +104,47 @@ Available commands:
 	Key or k: Sends a key to the emulator
 	Keys or ks: Sends a string to the emulator
 	Return or r: Sends a return to the emulator
+	GIF or gif: Captures a GIF animation
 	Help: Prints this help
 `)
 		default:
 			fmt.Println("Unknown command.")
 		}
 	}
+}
+
+func SaveGif(a *izapple2.Apple2, filename string) error {
+	animation := gif.GIF{}
+
+	delay := 50 * time.Millisecond
+	delayHundredsS := 5
+	frames := 20 // 1 second
+
+	planned := time.Now()
+	for i := 0; i < frames; i++ {
+		lapse := planned.Sub(time.Now())
+		fmt.Printf("%v\n", lapse)
+		if lapse > 0 {
+			time.Sleep(lapse)
+		}
+
+		fmt.Printf("%v\n", time.Now())
+		img := screen.SnapshotPaletted(a, screen.ScreenModeNTSC)
+		animation.Image = append(animation.Image, img)
+		animation.Delay = append(animation.Delay, delayHundredsS)
+
+		planned = planned.Add(delay)
+	}
+
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	gif.EncodeAll(f, &animation)
+	return nil
+
 }
 
 /*

@@ -5,3 +5,6 @@ frontend/a2sdl/a2sdl
 frontend/a2sdl/*.woz
 frontend/a2sdl/*.dsk
 frontend/a2fyne/a2fyne
+frontend/headless/headless
+frontend/*/snapshot.gif
+frontend/*/snapshot.png
