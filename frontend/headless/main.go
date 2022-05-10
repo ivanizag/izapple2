@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/gif"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,11 +18,11 @@ func main() {
 	fe := &headLessFrontend{}
 	fe.keyChannel = make(chan uint8, 200)
 	a.SetKeyboardProvider(fe)
-	go a.Run()
+	go a.Start(true /*paused*/)
 
 	inReader := bufio.NewReader(os.Stdin)
-	running := true
-	for running {
+	done := false
+	for !done {
 		fmt.Print("* ")
 		text, err := inReader.ReadString('\n')
 		if err != nil {
@@ -31,18 +32,65 @@ func main() {
 		parts := strings.Split(text, " ")
 		command := strings.ToLower(parts[0])
 		switch command {
-		case "exit":
-			a.SendCommand(izapple2.CommandKill)
-			running = false
 
-		case "pts":
-			fallthrough
-		case "printtextscreen":
+		// General commands
+		case "quit":
+			a.SendCommand(izapple2.CommandKill)
+			done = true
+		case "help":
+			fmt.Print(help)
+
+		// Emulation control commands
+		case "start":
+			a.SendCommand(izapple2.CommandStart)
+			spinWait(func() bool { return !a.IsPaused() })
+		case "pause":
+			a.SendCommand(izapple2.CommandPause)
+			spinWait(func() bool { return a.IsPaused() })
+		case "run":
+			if len(parts) != 2 {
+				fmt.Printf("Usage: run <cycles>\n")
+			} else if cycles, err := strconv.Atoi(parts[1]); err != nil {
+				fmt.Printf("Usage: run <cycles>\n")
+			} else if !a.IsPaused() {
+				fmt.Printf("Emulation is already running\n")
+			} else {
+				a.RequestFastMode()
+				a.SetCycleBreakpoint(a.GetCycles() + uint64(cycles)*1000)
+				a.SendCommand(izapple2.CommandStart)
+				spinWait(func() bool { return a.BreakPoint() })
+				a.ReleaseFastMode()
+			}
+		case "cycle":
+			fmt.Printf("%v\n", a.GetCycles())
+		case "reset":
+			a.SendCommand(izapple2.CommandReset)
+
+		// Keyboard related commands
+		case "key":
+			if len(parts) < 2 {
+				fmt.Println("Usage: key <number>")
+			} else if code, err := strconv.Atoi(parts[1]); err != nil {
+				fmt.Println("Usage: key <number>")
+			} else {
+				fe.putKey(uint8(code))
+			}
+		case "type":
+			text := strings.Join(parts[1:], " ")
+			for _, char := range text {
+				fe.putKey(uint8(char))
+			}
+		case "enter":
+			fe.putKey(13)
+		case "clearkeys":
+			fe.clearKeyQueue()
+
+		//Screen related commands
+		case "text":
 			fmt.Print(izapple2.DumpTextModeAnsi(a))
 
-		case "ss":
-			fallthrough
-		case "savescreen":
+		// Old:
+		case "png":
 			err := screen.SaveSnapshot(a, screen.ScreenModeNTSC, "snapshot.png")
 			if err != nil {
 				fmt.Printf("Error saving screen: %v.\n.", err)
@@ -50,9 +98,7 @@ func main() {
 				fmt.Println("Saving screen 'snapshot.png'")
 			}
 
-		case "ssm":
-			fallthrough
-		case "savescreenmono":
+		case "pngm":
 			err := screen.SaveSnapshot(a, screen.ScreenModePlain, "snapshot.png")
 			if err != nil {
 				fmt.Printf("Error saving screen: %v.\n.", err)
@@ -60,56 +106,69 @@ func main() {
 				fmt.Println("Saving screen 'snapshot.png'")
 			}
 
-		case "k":
-			fallthrough
-		case "key":
-			if len(parts) < 2 {
-				fmt.Println("No key specified.")
-			} else {
-				key := uint8(parts[1][0])
-				fe.keyChannel <- key
-			}
-
-		case "ks":
-			fallthrough
-		case "keys":
-			text := strings.Join(parts[1:], " ")
-			for _, char := range text {
-				fe.keyChannel <- uint8(char)
-			}
-
-		case "kr":
-			text := strings.Join(parts[1:], " ")
-			for _, char := range text {
-				fe.keyChannel <- uint8(char)
-			}
-			fe.keyChannel <- 13
-
-		case "r":
-			fallthrough
-		case "return":
-			fe.keyChannel <- 13
-
 		case "gif":
 			SaveGif(a, "snapshot.gif")
 
-		case "help":
-			fmt.Print(`
-Available commands:
-	Exit: Stops the emulator and quits
-	PrintTextScreen or pts: Prints the text mode screen
-	PrintTextScreen, pts: Prints the text mode screen
-	SaveScreen or ss: Saves the screen with NTSC colors to "snapshot.png"
-	SaveScreenMono or ssm: Saves the monochromatic screen to "snapshot.png"
-	Key or k: Sends a key to the emulator
-	Keys or ks: Sends a string to the emulator
-	Return or r: Sends a return to the emulator
-	GIF or gif: Captures a GIF animation
-	Help: Prints this help
-`)
 		default:
 			fmt.Println("Unknown command.")
 		}
+	}
+}
+
+var help = `
+General commands:
+	quit
+		Quits
+	help
+		Prints this help
+
+Emulation control commands:
+	start
+		Runs the emulator
+	stop
+		Stops the emulator
+	run <cycles>
+		Runs the emulator for <cycles> thousand cycles at full speed. Waits until completed.
+	cycle
+		Prints the current cycle count
+	reset
+		Sends a reset to the emulator
+
+Keyboard related commands:
+	key <key>
+		Queues the key to the emulator. <key> is a decimal number from 0 to 127.
+	type <string>
+		Queues the string characters to the emulator. No quotes for the argument, it can have spaces.
+	enter
+		Queues the enter key to the emulator. Alias for "key 13".
+	clearkeys
+		Clears the key queue.
+
+Screen related commands:
+	text
+		Prints the text mode screen.
+	* png <filename>
+		Stores the active screen to <filename> in PNG format as NTSC color.
+	* pngm <filename>
+		Same as "png" in monochrome.
+	* gif <filename> <seconds> <delay>
+		Stores the running screen to <filename> in GIF format during <seconds> with a <delay> per frame
+		in 100ths of a second as NTSC color.
+		If the emulators is stopped. It is run at full speed during <seconds> and the stopped again.
+	* gifm <filename> <seconds> <delay>
+		Same as "gif" in monochrome.
+
+`
+
+/*
+TODO:
+	floppy related commands: load disk....
+	joystick related commands: set paddle and button state, dump state
+*/
+
+func spinWait(f func() bool) {
+	for !f() {
+		time.Sleep(time.Millisecond * 1)
 	}
 }
 
@@ -168,4 +227,19 @@ func (fe *headLessFrontend) GetKey(strobed bool) (key uint8, ok bool) {
 		ok = false
 	}
 	return
+}
+
+func (fe *headLessFrontend) putKey(key uint8) {
+	fe.keyChannel <- key
+}
+
+func (fe *headLessFrontend) clearKeyQueue() {
+	empty := false
+	for !empty {
+		select {
+		case <-fe.keyChannel:
+		default:
+			empty = true
+		}
+	}
 }

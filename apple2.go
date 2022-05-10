@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/ivanizag/iz6502"
@@ -20,7 +21,9 @@ type Apple2 struct {
 	commandChannel      chan int
 	cycleDurationNs     float64 // Current speed. Inverse of the cpu clock in Ghz
 	fastMode            bool
-	fastRequestsCounter int
+	fastRequestsCounter int32
+	cycleBreakpoint     uint64
+	breakPoint          bool
 	profile             bool
 	showSpeed           bool
 	paused              bool
@@ -45,15 +48,21 @@ const (
 
 // Run starts the Apple2 emulation
 func (a *Apple2) Run() {
+	a.Start(false)
+}
 
+// Start the Apple2 emulation, can start paused
+func (a *Apple2) Start(paused bool) {
 	// Start the processor
 	a.cpu.Reset()
 	referenceTime := time.Now()
 	speedReferenceTime := referenceTime
 	speedReferenceCycles := uint64(0)
 
+	a.paused = paused
+
 	for {
-		// Run a 6502 step
+		// Run 6502 steps
 		if !a.paused {
 			for i := 0; i < cpuSpinLoops; i++ {
 				// Conditional tracing
@@ -65,6 +74,12 @@ func (a *Apple2) Run() {
 
 				// Special tracing
 				a.executionTrace()
+			}
+
+			if a.cycleBreakpoint != 0 && a.cpu.GetCycles() >= a.cycleBreakpoint {
+				a.breakPoint = true
+				a.cycleBreakpoint = 0
+				a.paused = true
 			}
 		} else {
 			time.Sleep(200 * time.Millisecond)
@@ -78,7 +93,17 @@ func (a *Apple2) Run() {
 				switch command {
 				case CommandKill:
 					return
-				case CommandPauseUnpauseEmulator:
+				case CommandPause:
+					if !a.paused {
+						a.paused = true
+					}
+				case CommandStart:
+					if a.paused {
+						a.paused = false
+						referenceTime = time.Now()
+						speedReferenceTime = referenceTime
+					}
+				case CommandPauseUnpause:
 					a.paused = !a.paused
 					referenceTime = time.Now()
 					speedReferenceTime = referenceTime
@@ -134,6 +159,20 @@ func (a *Apple2) IsPaused() bool {
 	return a.paused
 }
 
+func (a *Apple2) GetCycles() uint64 {
+	return a.cpu.GetCycles()
+}
+
+// SetCycleBreakpoint sets a cycle number to pause the emulator. 0 to disable
+func (a *Apple2) SetCycleBreakpoint(cycle uint64) {
+	a.cycleBreakpoint = cycle
+	a.breakPoint = false
+}
+
+func (a *Apple2) BreakPoint() bool {
+	return a.breakPoint
+}
+
 func (a *Apple2) setProfiling(value bool) {
 	a.profile = value
 }
@@ -168,8 +207,12 @@ const (
 	CommandKill
 	// CommandReset executes a 6502 reset
 	CommandReset
-	// CommandPauseUnpauseEmulator allows the Pause button to freeze the emulator for a coffee break
-	CommandPauseUnpauseEmulator
+	// CommandPauseUnpause allows the Pause button to freeze the emulator for a coffee break
+	CommandPauseUnpause
+	// CommandPause pauses the emulator
+	CommandPause
+	// CommandStart restarts the emulator
+	CommandStart
 )
 
 // SendCommand enqueues a command to the emulator thread
@@ -201,16 +244,16 @@ func (a *Apple2) executeCommand(command int) {
 	}
 }
 
-func (a *Apple2) requestFastMode() {
+func (a *Apple2) RequestFastMode() {
 	// Note: if the fastMode is shorter than maxWaitDuration, there won't be any gain.
 	if a.fastMode {
-		a.fastRequestsCounter++
+		atomic.AddInt32(&a.fastRequestsCounter, 1)
 	}
 }
 
-func (a *Apple2) releaseFastMode() {
+func (a *Apple2) ReleaseFastMode() {
 	if a.fastMode {
-		a.fastRequestsCounter--
+		atomic.AddInt32(&a.fastRequestsCounter, -1)
 	}
 }
 

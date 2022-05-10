@@ -89,9 +89,9 @@ func (c *CardFastChip) setSpeed(a *Apple2, value uint8) {
 		return
 	}
 	if newAccelerated {
-		a.requestFastMode()
+		a.RequestFastMode()
 	} else {
-		a.releaseFastMode()
+		a.ReleaseFastMode()
 	}
 	c.accelerated = newAccelerated
 }

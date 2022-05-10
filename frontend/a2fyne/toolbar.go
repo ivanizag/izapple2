@@ -21,7 +21,7 @@ func buildCommandToolbar(s *state, icon fyne.Resource, command int) widget.Toolb
 func buildToolbar(s *state) *widget.Toolbar {
 	tb := widget.NewToolbar()
 	tb.Append(buildCommandToolbar(s, resourceRestartSvg, izapple2.CommandReset))
-	tb.Append(buildCommandToolbar(s, resourcePauseSvg, izapple2.CommandPauseUnpauseEmulator))
+	tb.Append(buildCommandToolbar(s, resourcePauseSvg, izapple2.CommandPauseUnpause))
 	tb.Append(buildCommandToolbar(s, resourceFastForwardSvg, izapple2.CommandToggleSpeed))
 	tb.Append(widget.NewToolbarSeparator())
 	tb.Append(newToolbarScreen(s))

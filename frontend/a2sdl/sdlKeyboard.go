@@ -131,7 +131,7 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 			fmt.Println("Saving snapshot 'snapshot.png'")
 		}
 	case sdl.K_PAUSE:
-		k.a.SendCommand(izapple2.CommandPauseUnpauseEmulator)
+		k.a.SendCommand(izapple2.CommandPauseUnpause)
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_

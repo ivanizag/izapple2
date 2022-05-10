@@ -135,7 +135,7 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 			fmt.Println("Saving snapshot")
 		}
 		//case fyne.KeyPause:
-		//	k.s.a.SendCommand(izapple2.CommandPauseUnpauseEmulator)
+		//	k.s.a.SendCommand(izapple2.CommandPauseUnpause)
 	}
 
 	if result != 0 {

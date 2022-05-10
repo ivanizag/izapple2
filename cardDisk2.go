@@ -145,7 +145,7 @@ func (c *CardDisk2) softSwitchQ4(value bool) {
 	if !value && c.power {
 		// Turn off
 		c.power = false
-		c.a.releaseFastMode()
+		c.a.ReleaseFastMode()
 		drive := &c.drive[c.selected]
 		if drive.diskette != nil {
 			drive.diskette.PowerOff(c.a.cpu.GetCycles())
@@ -153,7 +153,7 @@ func (c *CardDisk2) softSwitchQ4(value bool) {
 	} else if value && !c.power {
 		// Turn on
 		c.power = true
-		c.a.requestFastMode()
+		c.a.RequestFastMode()
 		drive := &c.drive[c.selected]
 		if drive.diskette != nil {
 			drive.diskette.PowerOn(c.a.cpu.GetCycles())
