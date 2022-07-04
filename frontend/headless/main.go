@@ -70,10 +70,13 @@ func main() {
 		case "key":
 			if len(parts) < 2 {
 				fmt.Println("Usage: key <number>")
-			} else if code, err := strconv.Atoi(parts[1]); err != nil {
-				fmt.Println("Usage: key <number>")
 			} else {
-				fe.putKey(uint8(code))
+				code, err := strconv.Atoi(parts[1])
+				if err != nil || code < 0 || code > 127 {
+					fmt.Println("Usage: key <number from 0 to 127>")
+				} else {
+					fe.putKey(uint8(code))
+				}
 			}
 		case "type":
 			text := strings.Join(parts[1:], " ")
