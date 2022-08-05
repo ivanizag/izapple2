@@ -68,11 +68,11 @@ func (c *CardLanguage) assign(a *Apple2, slot int) {
 	a.mmu.initLanguageRAM(1)
 	for i := uint8(0x0); i <= 0xf; i++ {
 		iCopy := i
-		c.addCardSoftSwitchR(iCopy, func(*ioC0Page) uint8 {
+		c.addCardSoftSwitchR(iCopy, func() uint8 {
 			c.ssAction(iCopy, false)
 			return 0
 		}, "LANGCARDR")
-		c.addCardSoftSwitchW(iCopy, func(*ioC0Page, uint8) {
+		c.addCardSoftSwitchW(iCopy, func(uint8) {
 			c.ssAction(iCopy, true)
 		}, "LANGCARDW")
 	}

@@ -77,11 +77,11 @@ func (c *CardVidex) assign(a *Apple2, slot int) {
 			ssName += "ADDRESS"
 		}
 
-		c.addCardSoftSwitchR(i, func(*ioC0Page) uint8 {
+		c.addCardSoftSwitchR(i, func() uint8 {
 			c.sramPage = sramPage
 			return c.mc6845.Read(rsPin)
 		}, ssName+"R")
-		c.addCardSoftSwitchW(i, func(_ *ioC0Page, value uint8) {
+		c.addCardSoftSwitchW(i, func(value uint8) {
 			c.sramPage = sramPage
 			c.mc6845.Write(rsPin, value)
 		}, ssName+"W")

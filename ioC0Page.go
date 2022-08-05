@@ -21,8 +21,8 @@ type ioC0Page struct {
 	panicNotImplemented bool
 }
 
-type softSwitchR func(io *ioC0Page) uint8
-type softSwitchW func(io *ioC0Page, value uint8)
+type softSwitchR func() uint8
+type softSwitchW func(value uint8)
 
 // SpeakerProvider provides a speaker implementation
 type SpeakerProvider interface {
@@ -69,8 +69,8 @@ func (p *ioC0Page) setPanicNotImplemented(value bool) {
 
 func (p *ioC0Page) addSoftSwitchRW(address uint8, ss softSwitchR, name string) {
 	p.addSoftSwitchR(address, ss, name)
-	p.addSoftSwitchW(address, func(p *ioC0Page, _ uint8) {
-		ss(p)
+	p.addSoftSwitchW(address, func(uint8) {
+		ss()
 	}, name)
 }
 
@@ -122,7 +122,7 @@ func (p *ioC0Page) peek(address uint16) uint8 {
 		}
 		return 0
 	}
-	value := ss(p)
+	value := ss()
 	if p.trace && address != 0xc000 {
 		name := p.softSwitchesRName[pageAddress]
 		fmt.Printf("Softswitch peek on $%04x %v: $%02x\n", address, name, value)
@@ -146,7 +146,7 @@ func (p *ioC0Page) poke(address uint16, value uint8) {
 		name := p.softSwitchesWName[pageAddress]
 		fmt.Printf("Softswitch poke on $%04x %v with $%02x\n", address, name, value)
 	}
-	ss(p, value)
+	ss(value)
 }
 
 func (p *ioC0Page) setBase(_ uint16) {

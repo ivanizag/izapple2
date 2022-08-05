@@ -65,31 +65,31 @@ func (c *CardMemoryExpansion) GetInfo() map[string]string {
 func (c *CardMemoryExpansion) assign(a *Apple2, slot int) {
 
 	// Read pointer position
-	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(0, func() uint8 {
 		return uint8(c.index)
 	}, "MEMORYEXLOR")
-	c.addCardSoftSwitchR(1, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(1, func() uint8 {
 		return uint8(c.index >> 8)
 	}, "MEMORYEXMIR")
-	c.addCardSoftSwitchR(2, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(2, func() uint8 {
 		// Top nibble returned is 0xf
 		return uint8(c.index>>16) | 0xf0
 	}, "MEMORYEXHIR")
 
 	// Set pointer position
-	c.addCardSoftSwitchW(0, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(0, func(value uint8) {
 		c.index = (c.index &^ 0xff) + int(value)
 	}, "MEMORYEXLOW")
-	c.addCardSoftSwitchW(1, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(1, func(value uint8) {
 		c.index = (c.index &^ 0xff00) + int(value)<<8
 	}, "MEMORYEXMIW")
-	c.addCardSoftSwitchW(2, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(2, func(value uint8) {
 		// Only lo nibble is used
 		c.index = (c.index &^ 0xff0000) + int(value&0x0f)<<16
 	}, "MEMORYEXHIW")
 
 	// Read data
-	c.addCardSoftSwitchR(3, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(3, func() uint8 {
 		var value uint8
 		if c.index < len(c.ram) {
 			value = c.ram[c.index]
@@ -101,7 +101,7 @@ func (c *CardMemoryExpansion) assign(a *Apple2, slot int) {
 	}, "MEMORYEXR")
 
 	// Write data
-	c.addCardSoftSwitchW(3, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(3, func(value uint8) {
 		if c.index < len(c.ram) {
 			c.ram[c.index] = value
 		}
@@ -110,7 +110,7 @@ func (c *CardMemoryExpansion) assign(a *Apple2, slot int) {
 
 	// The rest of the softswitches return 255, at least on //e and //c
 	for i := uint8(4); i < 16; i++ {
-		c.addCardSoftSwitchR(i, func(*ioC0Page) uint8 {
+		c.addCardSoftSwitchR(i, func() uint8 {
 			return 255
 		}, "MEMORYEXUNUSEDR")
 	}

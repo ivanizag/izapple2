@@ -73,7 +73,7 @@ const (
 func (c *CardHardDisk) assign(a *Apple2, slot int) {
 	c.loadRom(buildHardDiskRom(slot))
 
-	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(0, func() uint8 {
 		// Prodos entry point
 		command := a.mmu.Peek(0x42)
 		unit := a.mmu.Peek(0x43)
@@ -95,16 +95,16 @@ func (c *CardHardDisk) assign(a *Apple2, slot int) {
 			return proDosDeviceErrorIO
 		}
 	}, "HDCOMMAND")
-	c.addCardSoftSwitchR(1, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(1, func() uint8 {
 		// Blocks available, low byte
 		return uint8(c.disk.GetSizeInBlocks())
 	}, "HDBLOCKSLO")
-	c.addCardSoftSwitchR(2, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(2, func() uint8 {
 		// Blocks available, high byte
 		return uint8(c.disk.GetSizeInBlocks() >> 8)
 	}, "HDBLOCKHI")
 
-	c.addCardSoftSwitchR(3, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(3, func() uint8 {
 		// Smart port entry point
 		command := c.a.mmu.Peek(c.mliParams + 1)
 		paramsAddress := uint16(c.a.mmu.Peek(c.mliParams+2)) + uint16(c.a.mmu.Peek(c.mliParams+3))<<8
@@ -127,13 +127,13 @@ func (c *CardHardDisk) assign(a *Apple2, slot int) {
 			return proDosDeviceErrorIO
 		}
 	}, "HDSMARTPORT")
-	c.addCardSoftSwitchW(4, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(4, func(value uint8) {
 		c.mliParams = (c.mliParams & 0xff00) + uint16(value)
 		if c.trace {
 			fmt.Printf("[CardHardDisk] Smart port LO: 0x%x.\n", c.mliParams)
 		}
 	}, "HDSMARTPORTLO")
-	c.addCardSoftSwitchW(5, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(5, func(value uint8) {
 		c.mliParams = (c.mliParams & 0x00ff) + (uint16(value) << 8)
 		if c.trace {
 			fmt.Printf("[CardHardDisk] Smart port HI: 0x%x.\n", c.mliParams)

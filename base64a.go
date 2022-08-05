@@ -58,33 +58,27 @@ func loadBase64aRom(a *Apple2) error {
 
 func addBase64aSoftSwitches(io *ioC0Page) {
 	// Other softswitches, not implemented but called from the ROM
-	io.addSoftSwitchW(0x0C, notImplementedSoftSwitchW, "80COLOFF")
-	io.addSoftSwitchW(0x0E, notImplementedSoftSwitchW, "ALTCHARSETOFF")
-
-	// Write on the speaker. That is a double access and should do nothing
-	// but works somehow on the BASE64A
-	io.addSoftSwitchW(0x30, func(io *ioC0Page, value uint8) {
-		speakerSoftSwitch(io)
-	}, "SPEAKER")
+	io.addSoftSwitchW(0x0C, buildNotImplementedSoftSwitchW(io), "80COLOFF")
+	io.addSoftSwitchW(0x0E, buildNotImplementedSoftSwitchW(io), "ALTCHARSETOFF")
 
 	// ROM pagination softswitches. They use the annunciator 0 and 1
 	mmu := io.apple2.mmu
-	io.addSoftSwitchRW(0x58, func(*ioC0Page) uint8 {
+	io.addSoftSwitchRW(0x58, func() uint8 {
 		p := mmu.getActiveROMPage()
 		mmu.setActiveROMPage(p & 2)
 		return 0
 	}, "ANN0OFF-ROM")
-	io.addSoftSwitchRW(0x59, func(*ioC0Page) uint8 {
+	io.addSoftSwitchRW(0x59, func() uint8 {
 		p := mmu.getActiveROMPage()
 		mmu.setActiveROMPage(p | 1)
 		return 0
 	}, "ANN0ON-ROM")
-	io.addSoftSwitchRW(0x5A, func(*ioC0Page) uint8 {
+	io.addSoftSwitchRW(0x5A, func() uint8 {
 		p := mmu.getActiveROMPage()
 		mmu.setActiveROMPage(p & 1)
 		return 0
 	}, "ANN1OFF-ROM")
-	io.addSoftSwitchRW(0x5B, func(*ioC0Page) uint8 {
+	io.addSoftSwitchRW(0x5B, func() uint8 {
 		p := mmu.getActiveROMPage()
 		mmu.setActiveROMPage(p | 2)
 		return 0

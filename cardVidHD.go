@@ -37,14 +37,14 @@ const (
 
 func (c *CardVidHD) assign(a *Apple2, slot int) {
 	// The softswitches are outside the card reserved ss
-	a.io.addSoftSwitchR(0x22, notImplementedSoftSwitchR, "VIDHD-TBCOLOR")
-	a.io.addSoftSwitchW(0x22, notImplementedSoftSwitchW, "VIDHD-TBCOLOR")
-	a.io.addSoftSwitchR(0x29, getStatusSoftSwitch(ioDataNewVideo), "VIDHD-NEWVIDEO")
-	a.io.addSoftSwitchW(0x29, setStatusSoftSwitch(ioDataNewVideo), "VIDHD-NEWVIDEO")
-	a.io.addSoftSwitchR(0x34, notImplementedSoftSwitchR, "VIDHD-CLOCKCTL")
-	a.io.addSoftSwitchW(0x34, notImplementedSoftSwitchW, "VIDHD-CLOCKCTL")
-	a.io.addSoftSwitchR(0x35, notImplementedSoftSwitchR, "VIDHD-SHADOW")
-	a.io.addSoftSwitchW(0x35, notImplementedSoftSwitchW, "VIDHD-SHADOW")
+	a.io.addSoftSwitchR(0x22, buildNotImplementedSoftSwitchR(a.io), "VIDHD-TBCOLOR")
+	a.io.addSoftSwitchW(0x22, buildNotImplementedSoftSwitchW(a.io), "VIDHD-TBCOLOR")
+	a.io.addSoftSwitchR(0x29, getStatusSoftSwitch(a.io, ioDataNewVideo), "VIDHD-NEWVIDEO")
+	a.io.addSoftSwitchW(0x29, setStatusSoftSwitch(a.io, ioDataNewVideo), "VIDHD-NEWVIDEO")
+	a.io.addSoftSwitchR(0x34, buildNotImplementedSoftSwitchR(a.io), "VIDHD-CLOCKCTL")
+	a.io.addSoftSwitchW(0x34, buildNotImplementedSoftSwitchW(a.io), "VIDHD-CLOCKCTL")
+	a.io.addSoftSwitchR(0x35, buildNotImplementedSoftSwitchR(a.io), "VIDHD-SHADOW")
+	a.io.addSoftSwitchW(0x35, buildNotImplementedSoftSwitchW(a.io), "VIDHD-SHADOW")
 
 	c.cardBase.assign(a, slot)
 }

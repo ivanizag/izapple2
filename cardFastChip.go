@@ -42,7 +42,7 @@ const (
 func (c *CardFastChip) assign(a *Apple2, slot int) {
 	// The softswitches are outside the card reserved ss
 	// Only writes are implemented to avoid conflicts with the joysticks
-	a.io.addSoftSwitchW(0x6a, func(_ *ioC0Page, value uint8) {
+	a.io.addSoftSwitchW(0x6a, func(value uint8) {
 		if value == fastChipUnlockToken {
 			c.unlockCounter++
 			if c.unlockCounter >= fastChipUnlockRepeats {
@@ -55,25 +55,25 @@ func (c *CardFastChip) assign(a *Apple2, slot int) {
 		}
 	}, "FASTCHIP-LOCK")
 
-	a.io.addSoftSwitchW(0x6b, func(_ *ioC0Page, _ uint8) {
+	a.io.addSoftSwitchW(0x6b, func(uint8) {
 		if c.unlocked {
 			c.enabled = true
 		}
 	}, "FASTCHIP-ENABLE")
 
-	a.io.addSoftSwitchW(0x6d, func(_ *ioC0Page, value uint8) {
+	a.io.addSoftSwitchW(0x6d, func(value uint8) {
 		if c.enabled {
 			c.setSpeed(a, value)
 		}
 	}, "FASTCHIP-SPEED")
 
-	a.io.addSoftSwitchW(0x6e, func(_ *ioC0Page, value uint8) {
+	a.io.addSoftSwitchW(0x6e, func(value uint8) {
 		if c.enabled {
 			c.configRegister = value
 		}
 	}, "FASTCHIP-CONFIG")
 
-	a.io.addSoftSwitchW(0x6f, func(_ *ioC0Page, value uint8) {
+	a.io.addSoftSwitchW(0x6f, func(value uint8) {
 		if c.enabled && c.configRegister == 0 {
 			c.setSpeed(a, value)
 		}

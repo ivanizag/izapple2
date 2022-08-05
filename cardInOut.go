@@ -32,7 +32,7 @@ func NewCardInOut() *CardInOut {
 }
 
 func (c *CardInOut) assign(a *Apple2, slot int) {
-	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(0, func() uint8 {
 		if c.reader == nil {
 			c.reader = bufio.NewReader(os.Stdin)
 		}
@@ -48,7 +48,7 @@ func (c *CardInOut) assign(a *Apple2, slot int) {
 		//fmt.Printf("[cardInOut] Read access to softswith 0x%x for slot %v, value %x.\n", 0, slot, value)
 		return value
 	}, "INOUTR")
-	c.addCardSoftSwitchW(1, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(1, func(value uint8) {
 		//fmt.Printf("[cardInOut] Write access to softswith 0x%x for slot %v, value 0x%x: %v, %v.\n", 1, slot, value, value&0x7f, string(value&0x7f))
 		if value&0x7f == 13 {
 			fmt.Printf("\n")

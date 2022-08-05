@@ -33,7 +33,7 @@ func (c *CardParallelPrinter) assign(a *Apple2, slot int) {
 	}
 	c.file = f
 
-	c.addCardSoftSwitchW(0, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(0, func(value uint8) {
 		c.printByte(value)
 	}, "PARALLELDEVW")
 

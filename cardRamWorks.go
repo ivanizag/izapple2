@@ -14,11 +14,11 @@ It's is like the extra 64kb on an Apple IIe 80col 64kb card, but with up to 256 
 func setupRAMWorksCard(a *Apple2, banks int) {
 	a.mmu.initExtendedRAM(banks)
 
-	ssr := func(_ *ioC0Page) uint8 {
+	ssr := func() uint8 {
 		return a.mmu.extendedRAMBlock
 	}
 
-	ssw := func(_ *ioC0Page, value uint8) {
+	ssw := func(value uint8) {
 		a.mmu.setExtendedRAMActiveBlock(value)
 	}
 

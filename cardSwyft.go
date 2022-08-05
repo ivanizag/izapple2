@@ -81,19 +81,19 @@ func (c *CardSwyft) assign(a *Apple2, slot int) {
 	}
 	c.rom = data
 
-	c.addCardSoftSwitchRW(0, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchRW(0, func() uint8 {
 		a.mmu.inhibitROM(c)
 		c.bank2 = false
 		return 0x55
 	}, "SWYFTONBANK1")
 
-	c.addCardSoftSwitchRW(1, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchRW(1, func() uint8 {
 		a.mmu.inhibitROM(nil)
 		c.bank2 = false
 		return 0x55
 	}, "SWYFTOFFBANK1")
 
-	c.addCardSoftSwitchRW(2, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchRW(2, func() uint8 {
 		a.mmu.inhibitROM(c)
 		c.bank2 = true
 		return 0x55

@@ -37,7 +37,7 @@ func NewCardThunderClockPlus() *CardThunderClockPlus {
 }
 
 func (c *CardThunderClockPlus) assign(a *Apple2, slot int) {
-	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(0, func() uint8 {
 		bit := c.upd1990.Out()
 		// Get the next data bit from uPD1990AC on the MSB
 		if bit {
@@ -46,7 +46,7 @@ func (c *CardThunderClockPlus) assign(a *Apple2, slot int) {
 		return 0
 	}, "THUNDERCLOCKR")
 
-	c.addCardSoftSwitchW(0, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(0, func(value uint8) {
 		dataIn := (value & 0x01) == 1
 		clock := ((value >> 1) & 0x01) == 1
 		strobe := ((value >> 2) & 0x01) == 1

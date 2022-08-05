@@ -92,7 +92,7 @@ func (c *CardMouse) readMouse() (uint16, uint16, bool) {
 }
 
 func (c *CardMouse) assign(a *Apple2, slot int) {
-	c.addCardSoftSwitchR(0, func(*ioC0Page) uint8 {
+	c.addCardSoftSwitchR(0, func() uint8 {
 		if c.iOut == 0 {
 			// Create a new response
 			x, y, pressed := c.readMouse()
@@ -126,7 +126,7 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 		return value
 	}, "MOUSEOUT")
 
-	c.addCardSoftSwitchW(1, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(1, func(value uint8) {
 		if c.trace {
 			fmt.Printf("[cardMouse] PR#%v <- %02x\n", slot, value)
 		}
@@ -140,21 +140,21 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 		}
 	}, "MOUSEIN")
 
-	c.addCardSoftSwitchW(2, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(2, func(value uint8) {
 		if c.trace {
 			fmt.Printf("[cardMouse] SetMouse(0x%02v)\n", value)
 		}
 		c.setMode(value & 0x0f)
 	}, "SETMOUSE")
 
-	c.addCardSoftSwitchW(3, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(3, func(value uint8) {
 		if c.trace {
 			fmt.Printf("[cardMouse] ServeMouse() NOT IMPLEMENTED\n")
 		}
 		panic("Mouse interrupts not implemented")
 	}, "SERVEMOUSE")
 
-	c.addCardSoftSwitchW(4, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(4, func(value uint8) {
 		if c.mode&mouseModeEnabled == 1 {
 			x, y, pressed := c.readMouse()
 
@@ -186,7 +186,7 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 		}
 	}, "READMOUSE")
 
-	c.addCardSoftSwitchW(5, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(5, func(value uint8) {
 		if c.trace {
 			fmt.Printf("[cardMouse] ClearMouse() NOT IMPLEMENTED\n")
 		}
@@ -195,13 +195,13 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 		c.set(mouseXLo, 0)
 		c.set(mouseYLo, 0)
 	}, "CLEARMOUSE")
-	c.addCardSoftSwitchW(6, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(6, func(value uint8) {
 		if c.trace {
 			fmt.Printf("[cardMouse] PosMouse() NOT IMPLEMENTED\n")
 		}
 	}, "POSMOUSE")
 
-	c.addCardSoftSwitchW(7, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(7, func(value uint8) {
 		if c.trace {
 			fmt.Printf("[cardMouse] ClampMouse(%v)\n", value)
 		}
@@ -219,13 +219,13 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 		}
 	}, "CLAMPMOUSE")
 
-	c.addCardSoftSwitchW(8, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(8, func(value uint8) {
 		if c.trace {
 			fmt.Printf("[cardMouse] HomeMouse() NOT IMPLEMENTED\n")
 		}
 	}, "HOMEMOUSE")
 
-	c.addCardSoftSwitchW(0xc, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(0xc, func(value uint8) {
 		if c.trace {
 			fmt.Printf("[cardMouse] InitMouse()\n")
 		}
@@ -236,7 +236,7 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 		c.mode = 0
 	}, "INITMOUSE")
 
-	c.addCardSoftSwitchW(8, func(_ *ioC0Page, value uint8) {
+	c.addCardSoftSwitchW(8, func(value uint8) {
 		if c.trace {
 			fmt.Printf("[cardMouse] TimeData(%v) NOT IMPLEMENTED\n", value)
 		}

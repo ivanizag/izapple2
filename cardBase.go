@@ -118,23 +118,23 @@ func (c *cardBase) addCardSoftSwitchRW(address uint8, ss softSwitchR, name strin
 	c._ssr[address] = ss
 	c._ssrName[address] = name
 
-	c._ssw[address] = func(p *ioC0Page, _ uint8) {
-		ss(p)
+	c._ssw[address] = func(uint8) {
+		ss()
 	}
 	c._sswName[address] = name
 }
 
-type softSwitches func(io *ioC0Page, address uint8, data uint8, write bool) uint8
+type softSwitches func(address uint8, data uint8, write bool) uint8
 
 func (c *cardBase) addCardSoftSwitches(sss softSwitches, name string) {
 
 	for i := uint8(0x0); i <= 0xf; i++ {
 		address := i
-		c.addCardSoftSwitchR(address, func(io *ioC0Page) uint8 {
-			return sss(io, address, 0, false)
+		c.addCardSoftSwitchR(address, func() uint8 {
+			return sss(address, 0, false)
 		}, fmt.Sprintf("%v%XR", name, address))
-		c.addCardSoftSwitchW(address, func(io *ioC0Page, value uint8) {
-			sss(io, address, value, true)
+		c.addCardSoftSwitchW(address, func(value uint8) {
+			sss(address, value, true)
 		}, fmt.Sprintf("%v%XW", name, address))
 	}
 }

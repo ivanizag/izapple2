@@ -38,17 +38,17 @@ func setupRGBCard(a *Apple2) *cardRGB {
 	a.io.softSwitchesData[ioFlagRGBCardActive] = ssOn
 
 	// Does not have ROM or private softswitches. It spies on the softswitches
-	a.io.addSoftSwitchRW(0x50, func(io *ioC0Page) uint8 {
-		io.softSwitchesData[ioFlagText] = ssOff
+	a.io.addSoftSwitchRW(0x50, func() uint8 {
+		a.io.softSwitchesData[ioFlagText] = ssOff
 		// Reset RGB modes when entering graphics mode
 		c.step = 0
-		io.softSwitchesData[ioFlag1RGBCard] = ssOn
-		io.softSwitchesData[ioFlag2RGBCard] = ssOn
+		a.io.softSwitchesData[ioFlag1RGBCard] = ssOn
+		a.io.softSwitchesData[ioFlag2RGBCard] = ssOn
 		return 0
 	}, "TEXTOFF")
 
-	a.io.addSoftSwitchRW(0x5e, func(io *ioC0Page) uint8 {
-		io.softSwitchesData[ioFlagAnnunciator3] = ssOff
+	a.io.addSoftSwitchRW(0x5e, func() uint8 {
+		a.io.softSwitchesData[ioFlagAnnunciator3] = ssOff
 		switch c.step {
 		case 0:
 			c.step++
@@ -59,14 +59,14 @@ func setupRGBCard(a *Apple2) *cardRGB {
 		return 0
 	}, "ANN3OFF-RGB")
 
-	a.io.addSoftSwitchRW(0x5f, func(io *ioC0Page) uint8 {
-		io.softSwitchesData[ioFlagAnnunciator3] = ssOn
+	a.io.addSoftSwitchRW(0x5f, func() uint8 {
+		a.io.softSwitchesData[ioFlagAnnunciator3] = ssOn
 		switch c.step {
 		case 1:
-			io.softSwitchesData[ioFlag1RGBCard] = io.softSwitchesData[ioFlag80Col]
+			a.io.softSwitchesData[ioFlag1RGBCard] = a.io.softSwitchesData[ioFlag80Col]
 			c.step++
 		case 3:
-			io.softSwitchesData[ioFlag2RGBCard] = io.softSwitchesData[ioFlag80Col]
+			a.io.softSwitchesData[ioFlag2RGBCard] = a.io.softSwitchesData[ioFlag80Col]
 			c.step++
 		}
 
