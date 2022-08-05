@@ -8,3 +8,4 @@ frontend/a2fyne/a2fyne
 frontend/headless/headless
 frontend/*/snapshot.gif
 frontend/*/snapshot.png
+frontend/*/printer.out

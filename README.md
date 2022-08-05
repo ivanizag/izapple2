@@ -21,10 +21,11 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - DiskII controller (state machine based for WOZ files)
   - 16Kb Language Card
   - 256Kb Saturn RAM
+  - Parallel Printer Interface card
   - 1Mb Memory Expansion Card (slinky)
   - RAMWorks style expansion Card (up to 16MB additional) (Apple //e only)
   - ThunderClock Plus real time clock
-  - Apple //e 80 columns with 64Kb extra RAM and optional RGB modes
+  - Apple //e 80 columns card with 64Kb extra RAM and optional RGB modes
   - No Slot Clock based on the DS1216
   - Videx Videoterm 80 column card with the Videx Soft Video Switch (Apple ][+ only)
   - SwyftCard (Apple //e only)
@@ -78,7 +79,7 @@ By default the following configuration is launched:
 
 - Enhanced Apple //e with 65c02 processor
 - RAMWorks card with 80 column, RGB (with Video7 modes) and 8Gb RAM in aux slot
-- Memory Expansion card with 1Gb in slot 1
+- Parallel print inteface in slot 1
 - VidHD card (SHR support) in slot 2
 - FASTChip Accelerator card in slot 3
 - Mouse card in slot 4
@@ -206,7 +207,7 @@ Only valid on SDL mode
   -languageCardSlot int
         slot for the 16kb language card. -1 for none
   -memoryExpSlot int
-        slot for the Memory Expansion card with 1GB. -1 for none (default 1)
+        slot for the Memory Expansion card with 1GB. -1 for none (default -1)
   -mhz float
         cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
   -model string
@@ -217,6 +218,8 @@ Only valid on SDL mode
         add a DS1216 No-Slot-Clock on the main ROM (use 0) or a slot ROM. -1 for none (default -1)
   -panicSS
         panic if a not implemented softswitch is used
+  -printer int
+        slot for the Parallel Printer Interface. -1 for none (default 1)
   -profile
         generate profile trace to analyse with pprof
   -ramworks int

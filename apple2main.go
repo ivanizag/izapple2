@@ -62,8 +62,12 @@ func MainApple() *Apple2 {
 		"slot for the FASTChip accelerator card, -1 for none")
 	memoryExpansionCardSlot := flag.Int(
 		"memoryExpSlot",
-		1,
+		-1,
 		"slot for the Memory Expansion card with 1GB. -1 for none")
+	parallelPrinterSlot := flag.Int(
+		"printer",
+		1,
+		"slot for the Parallel Printer Interface. -1 for none")
 	ramWorksKb := flag.Int(
 		"ramworks",
 		8192,
@@ -226,6 +230,9 @@ func MainApple() *Apple2 {
 	}
 	if *saturnCardSlot >= 0 {
 		a.AddSaturnCard(*saturnCardSlot)
+	}
+	if *parallelPrinterSlot >= 0 {
+		a.AddParallelPrinter(*parallelPrinterSlot)
 	}
 	if *memoryExpansionCardSlot >= 0 {
 		a.AddMemoryExpansionCard(*memoryExpansionCardSlot)

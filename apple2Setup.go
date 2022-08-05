@@ -169,6 +169,11 @@ func (a *Apple2) AddSaturnCard(slot int) {
 	a.insertCard(NewCardSaturn(), slot)
 }
 
+// AddParallelPrinter inserts an Apple II Parallel Printer card
+func (a *Apple2) AddParallelPrinter(slot int) {
+	a.insertCard(NewCardParallelPrinter(), slot)
+}
+
 // AddMemoryExpansionCard inserts an Apple II Memory Expansion card with 1GB
 func (a *Apple2) AddMemoryExpansionCard(slot int) {
 	a.insertCard(NewCardMemoryExpansion(), slot)
