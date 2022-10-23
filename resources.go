@@ -6,7 +6,6 @@ import (
 	"compress/gzip"
 	"embed"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -67,7 +66,7 @@ func LoadResource(filename string) ([]uint8, bool, error) {
 		writeable = true
 	}
 
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, false, err
 	}
@@ -80,7 +79,7 @@ func LoadResource(filename string) ([]uint8, bool, error) {
 			return nil, false, err
 		}
 		defer gz.Close()
-		data, err = ioutil.ReadAll(gz)
+		data, err = io.ReadAll(gz)
 		if err != nil {
 			return nil, false, err
 		}
@@ -97,7 +96,7 @@ func LoadResource(filename string) ([]uint8, bool, error) {
 				return nil, false, err
 			}
 			defer f.Close()
-			bytes, err := ioutil.ReadAll(f)
+			bytes, err := io.ReadAll(f)
 			if err != nil {
 				return nil, false, err
 			}
