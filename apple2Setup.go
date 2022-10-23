@@ -139,14 +139,12 @@ func (a *Apple2) AddDisk2Sequencer(slot int, diskImage, diskBImage string, track
 
 // AddSmartPortDisk adds a smart port card and image
 func (a *Apple2) AddSmartPortDisk(slot int, hdImage string, trace bool) error {
-	c := NewCardHardDisk()
+	c := NewCardSmartport()
 	c.trace = trace
-	err := c.LoadImage(hdImage)
-	if err != nil {
-		return err
-	}
 	a.insertCard(c, slot)
-	return nil
+
+	err := c.LoadImage(hdImage)
+	return err
 }
 
 // AddVidHD adds a card with the signature of VidHD
