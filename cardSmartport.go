@@ -20,7 +20,7 @@ See:
 // CardSmartPort represents a SmartPort card
 type CardSmartPort struct {
 	cardBase
-	device         smartPortDevice
+	devices        []smartPortDevice
 	hardDiskBlocks uint32
 
 	mliParams uint16
@@ -46,7 +46,7 @@ func (c *CardSmartPort) LoadImage(filename string, trace bool) error {
 	device, err := NewSmartPortHardDisk(c, filename)
 	if err == nil {
 		device.trace = trace
-		c.device = device
+		c.devices = append(c.devices, device)
 		c.hardDiskBlocks = device.disk.GetSizeInBlocks() // Needed for the PRODOS status
 	}
 	return err
@@ -54,7 +54,7 @@ func (c *CardSmartPort) LoadImage(filename string, trace bool) error {
 
 // LoadImage loads a disk image
 func (c *CardSmartPort) AddDevice(unt uint8, device smartPortDevice) {
-	c.device = device
+	c.devices = append(c.devices, device)
 	c.hardDiskBlocks = 0 // Needed for the PRODOS status
 }
 
@@ -119,22 +119,25 @@ func (c *CardSmartPort) assign(a *Apple2, slot int) {
 
 func (c *CardSmartPort) exec(call *smartPortCall) uint8 {
 	var result uint8
+	unit := int(call.unit())
 
 	if call.command == proDosDeviceCommandStatus &&
 		// Call to the host
 		call.statusCode() == prodosDeviceStatusCodeDevice {
 
 		result = c.hostStatus(call)
-	} else if call.unit() > 1 {
+	} else if unit > len(c.devices) {
 		result = proDosDeviceErrorNoDevice
 	} else {
-		// TODO: select the device, 0(host) is sent to 1
-		result = c.device.exec(call)
+		if unit == 0 {
+			unit = 1 // For unit 0(host) use the first device
+		}
+		result = c.devices[unit-1].exec(call)
 	}
 
 	if c.trace {
-		fmt.Printf("[CardSmartPort] Command %v on slot %v => result %s.\n",
-			call, c.slot, smartPortErrorMessage(result))
+		fmt.Printf("[CardSmartPort] Command %v on slot %v, unit %v => result %s.\n",
+			call, c.slot, call.unit(), smartPortErrorMessage(result))
 	}
 	return result
 }
