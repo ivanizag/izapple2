@@ -52,7 +52,7 @@ func NewCardDisk2(trackTracer trackTracer) *CardDisk2 {
 	return &c
 }
 
-// GetInfo returns smartport info
+// GetInfo returns smartPort info
 func (c *CardDisk2) GetInfo() map[string]string {
 	info := make(map[string]string)
 	info["rom"] = "16 sector"

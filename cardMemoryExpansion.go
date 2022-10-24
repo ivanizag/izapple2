@@ -5,8 +5,8 @@ import "fmt"
 /*
 Apple II Memory Expansion Card
 
-
 See:
+
 	http://www.apple-iigs.info/doc/fichiers/a2me.pdf
 	http://ae.applearchives.com/files/RamFactor_Manual_1.5.pdf
 	http://www.1000bit.it/support/manuali/apple/technotes/memx/tn.memx.1.html
@@ -14,22 +14,27 @@ See:
 There is a self test in ROM, address Cs0A.
 
 From the RamFactor docs:
+
 	The RamFactor card has five addressable registers, which are addressed
+
 according to the slot number the card is in:
+
 		$C080+slot * 16low byte of RAM address
 		$C081+slot * 16middle byte of RAM address
 		$C082+slot * 16high byte of RAM address
 		$C083+slot * 16data at addressed location
 		$C08F+slot * 16Firmware Bank Select
 	After power up or Control-Reset, the registers on the card are all in a
+
 disabled state. They will be enabled by addressing any address in the firmware
 page $Cs00-CsFF.
+
 	The three address bytes can be both written into and read from. If the card
+
 has one Megabyte or less, reading the high address byte will always return a
 value in the range $F0-FF. The top nybble can be any value  when you write it,
 but it will always be “F” when you read it. If the card has more than one
 Megabyte of RAM, the top nybble will be a meaningful part of the address.
-
 */
 const (
 	memoryExpansionSize256  = 256 * 1024
@@ -55,7 +60,7 @@ func NewCardMemoryExpansion() *CardMemoryExpansion {
 	return &c
 }
 
-// GetInfo returns smartport info
+// GetInfo returns smartPort info
 func (c *CardMemoryExpansion) GetInfo() map[string]string {
 	info := make(map[string]string)
 	info["size"] = fmt.Sprintf("%vKB", len(c.ram)/1024)

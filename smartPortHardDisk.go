@@ -7,7 +7,7 @@ import (
 )
 
 /*
-To implement a smartport hard drive we have to support the smartport commands.
+To implement a smartPort hard drive we have to support the smartPort commands.
 
 See:
 	Beneath Prodos, section 6-6, 7-13 and 5-8. (http://www.apple-iigs.info/doc/fichiers/beneathprodos.pdf)
@@ -15,16 +15,16 @@ See:
 
 */
 
-// SmartPortHardDisk represents a SmartPort card
+// SmartPortHardDisk represents a hard disk
 type SmartPortHardDisk struct {
-	host     *CardSmartport // For DMA
+	host     *CardSmartPort // For DMA
 	filename string
 	trace    bool
 	disk     *storage.BlockDisk
 }
 
-// NewSmartPortHardDisk creates a new hard disk with the smartport interface
-func NewSmartPortHardDisk(host *CardSmartport, filename string) (*SmartPortHardDisk, error) {
+// NewSmartPortHardDisk creates a new hard disk with the smartPort interface
+func NewSmartPortHardDisk(host *CardSmartPort, filename string) (*SmartPortHardDisk, error) {
 	var d SmartPortHardDisk
 	d.host = host
 	d.filename = filename
@@ -38,22 +38,22 @@ func NewSmartPortHardDisk(host *CardSmartport, filename string) (*SmartPortHardD
 	return &d, nil
 }
 
-func (d *SmartPortHardDisk) exec(command uint8, params []uint8) uint8 {
+func (d *SmartPortHardDisk) exec(call *smartPortCall) uint8 {
 	var result uint8
 
-	switch command {
+	switch call.command {
 	case proDosDeviceCommandStatus:
-		address := smartPortParam16(params, 2)
+		address := call.param16(2)
 		result = d.status(address)
 
 	case proDosDeviceCommandRead:
-		address := smartPortParam16(params, 2)
-		block := smartPortParam24(params, 4)
+		address := call.param16(2)
+		block := call.param24(4)
 		result = d.readBlock(block, address)
 
 	case proDosDeviceCommandWrite:
-		address := smartPortParam16(params, 2)
-		block := smartPortParam24(params, 4)
+		address := call.param16(2)
+		block := call.param24(4)
 		result = d.writeBlock(block, address)
 
 	default:
@@ -62,7 +62,8 @@ func (d *SmartPortHardDisk) exec(command uint8, params []uint8) uint8 {
 	}
 
 	if d.trace {
-		fmt.Printf("[SmartPortHardDisk] Command $%x, return $%02x \n", command, result)
+		fmt.Printf("[SmartPortFujinet] Command %v, return %s \n",
+			call, smartPortErrorMessage(result))
 	}
 
 	return result
@@ -77,6 +78,7 @@ func (d *SmartPortHardDisk) readBlock(block uint32, dest uint16) uint8 {
 	if err != nil {
 		return proDosDeviceErrorIO
 	}
+
 	// Byte by byte transfer to memory using the full Poke code path
 	for i := uint16(0); i < uint16(len(data)); i++ {
 		d.host.a.mmu.Poke(dest+i, data[i])
@@ -114,7 +116,7 @@ func (d *SmartPortHardDisk) status(dest uint16) uint8 {
 	}
 
 	// See http://www.1000bit.it/support/manuali/apple/technotes/smpt/tn.smpt.2.html
-	d.host.a.mmu.Poke(dest+0, 0x02) // One device
+	d.host.a.mmu.Poke(dest+0, 0x01) // One device
 	d.host.a.mmu.Poke(dest+1, 0xff) // No interrupt
 	d.host.a.mmu.Poke(dest+2, 0x00)
 	d.host.a.mmu.Poke(dest+3, 0x00) // Unknown manufacturer

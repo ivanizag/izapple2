@@ -17,42 +17,48 @@ See:
 
 */
 
-// CardSmartport represents a SmartPort card
-type CardSmartport struct {
+// CardSmartPort represents a SmartPort card
+type CardSmartPort struct {
 	cardBase
-	hardDiskDevice smartPortDevice
+	device         smartPortDevice
 	hardDiskBlocks uint32
 
 	mliParams uint16
 	trace     bool
 }
 
-// NewCardSmartport creates a new SmartPort card
-func NewCardSmartport() *CardSmartport {
-	var c CardSmartport
-	c.name = "Smartport Card"
+// NewCardSmartPort creates a new SmartPort card
+func NewCardSmartPort() *CardSmartPort {
+	var c CardSmartPort
+	c.name = "SmartPort Card"
 	return &c
 }
 
-// GetInfo returns smartport info
-func (c *CardSmartport) GetInfo() map[string]string {
+// GetInfo returns smartPort info
+func (c *CardSmartPort) GetInfo() map[string]string {
 	info := make(map[string]string)
 	info["trace"] = strconv.FormatBool(c.trace)
 	return info
 }
 
 // LoadImage loads a disk image
-func (c *CardSmartport) LoadImage(filename string) error {
+func (c *CardSmartPort) LoadImage(filename string, trace bool) error {
 	device, err := NewSmartPortHardDisk(c, filename)
 	if err == nil {
-		device.trace = c.trace
-		c.hardDiskDevice = device
+		device.trace = trace
+		c.device = device
 		c.hardDiskBlocks = device.disk.GetSizeInBlocks() // Needed for the PRODOS status
 	}
 	return err
 }
 
-func (c *CardSmartport) assign(a *Apple2, slot int) {
+// LoadImage loads a disk image
+func (c *CardSmartPort) AddDevice(unt uint8, device smartPortDevice) {
+	c.device = device
+	c.hardDiskBlocks = 0 // Needed for the PRODOS status
+}
+
+func (c *CardSmartPort) assign(a *Apple2, slot int) {
 	c.loadRom(buildHardDiskRom(slot))
 
 	c.addCardSoftSwitchR(0, func() uint8 {
@@ -61,25 +67,26 @@ func (c *CardSmartport) assign(a *Apple2, slot int) {
 		unit := a.mmu.Peek(0x43) & 0x0f
 
 		// Generate Smarport compatible params
-		var params []uint8
+		var call *smartPortCall
 		if command == proDosDeviceCommandStatus {
-			params = []uint8{
-				5, unit,
+			call = newSmartPortCallSynthetic(c, command, []uint8{
+				3, // 3 args
+				unit,
 				a.mmu.Peek(0x44), a.mmu.Peek(0x45), // data address
 				0,
-			}
-		} else {
-			params = []uint8{
-				7, unit,
+			})
+		} else if command == proDosDeviceCommandRead || command == proDosDeviceCommandWrite {
+			call = newSmartPortCallSynthetic(c, command, []uint8{
+				3, // 3args
+				unit,
 				a.mmu.Peek(0x44), a.mmu.Peek(0x45), // data address
 				a.mmu.Peek(0x46), a.mmu.Peek(0x47), 0, // block number
-			}
+			})
+		} else {
+			return proDosDeviceBadCommand
 		}
-		result := c.hardDiskDevice.exec(command, params)
-		if c.trace {
-			fmt.Printf("[CardSmartport] PRODOS command $%x on slot %v, unit $%x, result $%02x.\n", command, slot, unit, result)
-		}
-		return result
+
+		return c.exec(call)
 	}, "SMARTPORTPRODOSCOMMAND")
 
 	c.addCardSoftSwitchR(1, func() uint8 {
@@ -96,34 +103,59 @@ func (c *CardSmartport) assign(a *Apple2, slot int) {
 		command := c.a.mmu.Peek(c.mliParams + 1)
 		paramsAddress := uint16(c.a.mmu.Peek(c.mliParams+2)) + uint16(c.a.mmu.Peek(c.mliParams+3))<<8
 
-		paramsSize := int(a.mmu.Peek(paramsAddress + 0))
-		params := make([]uint8, paramsSize)
-		for i := 0; i < paramsSize; i++ {
-			params[i] = a.mmu.Peek(paramsAddress + uint16(i))
-		}
-		unit := params[1]
-
-		result := c.hardDiskDevice.exec(command, params)
-		if c.trace {
-			fmt.Printf("[CardSmartport] Smart port command $%x on slot %v, unit $%x, result $%02x.\n", command, slot, unit, result)
-		}
-		return result
+		call := newSmartPortCall(c, command, paramsAddress)
+		return c.exec(call)
 	}, "SMARTPORTEXEC")
 
 	c.addCardSoftSwitchW(4, func(value uint8) {
 		c.mliParams = (c.mliParams & 0xff00) + uint16(value)
-		if c.trace {
-			fmt.Printf("[CardSmartport] Smart port LO: 0x%x.\n", c.mliParams)
-		}
 	}, "HDSMARTPORTLO")
 	c.addCardSoftSwitchW(5, func(value uint8) {
 		c.mliParams = (c.mliParams & 0x00ff) + (uint16(value) << 8)
-		if c.trace {
-			fmt.Printf("[CardSmartport] Smart port HI: 0x%x.\n", c.mliParams)
-		}
 	}, "HDSMARTPORTHI")
 
 	c.cardBase.assign(a, slot)
+}
+
+func (c *CardSmartPort) exec(call *smartPortCall) uint8 {
+	var result uint8
+
+	if call.command == proDosDeviceCommandStatus &&
+		// Call to the host
+		call.statusCode() == prodosDeviceStatusCodeDevice {
+
+		result = c.hostStatus(call)
+	} else if call.unit() > 1 {
+		result = proDosDeviceErrorNoDevice
+	} else {
+		// TODO: select the device, 0(host) is sent to 1
+		result = c.device.exec(call)
+	}
+
+	if c.trace {
+		fmt.Printf("[CardSmartPort] Command %v on slot %v => result %s.\n",
+			call, c.slot, smartPortErrorMessage(result))
+	}
+	return result
+}
+
+func (c *CardSmartPort) hostStatus(call *smartPortCall) uint8 {
+	dest := call.param16(2)
+	if c.trace {
+		fmt.Printf("[CardSmartPort] Host status into $%x.\n", dest)
+	}
+
+	// See http://www.1000bit.it/support/manuali/apple/technotes/smpt/tn.smpt.2.html
+	c.a.mmu.Poke(dest+0, 0x01) // One device
+	c.a.mmu.Poke(dest+1, 0xff) // No interrupt
+	c.a.mmu.Poke(dest+2, 0x00)
+	c.a.mmu.Poke(dest+3, 0x00) // Unknown manufacturer
+	c.a.mmu.Poke(dest+4, 0x01)
+	c.a.mmu.Poke(dest+5, 0x00) // Version 1.0 final
+	c.a.mmu.Poke(dest+6, 0x00)
+	c.a.mmu.Poke(dest+7, 0x00) // Reserved
+
+	return proDosDeviceNoError
 }
 
 func buildHardDiskRom(slot int) []uint8 {
@@ -136,7 +168,38 @@ func buildHardDiskRom(slot int) []uint8 {
 		0xa9, 0x00, // LDA #$00
 		0xa9, 0x03, // LDA #$03
 		0xa9, 0x00, // LDA #$00
+		0xd0, 0x36, // BNE bootcode, there is no space for a jmp
+	})
 
+	if slot == 7 {
+		// It should be 0 for SmartPort, but with 0 it's not bootable with the II+ ROM
+		// See http://www.1000bit.it/support/manuali/apple/technotes/udsk/tn.udsk.2.html
+		data[0x07] = 0x3c
+	}
+
+	copy(data[0x0a:], []uint8{
+		// Entrypoints and SmartPort body it has to be in $Cx0a
+		0x4c, 0x80, 0xc0 + uint8(slot), // JMP $cs80 ; Prodos Entrypoint
+
+		// 3 bytes later, smartPort entrypoint. Uses the ProDos MLI calling convention
+		0x68,                   // PLA
+		0x8d, ssBase + 4, 0xc0, // STA $c0n4 ; Softswitch 4, store LO(cmdBlock)
+		0xa8,                   // TAY ; We will need it later
+		0x68,                   // PLA
+		0x8d, ssBase + 5, 0xc0, // STA $c0n5 ; Softswitch 5, store HI(cmdBlock)
+		0x48,       // PHA
+		0x98,       // TYA
+		0x18,       // CLC
+		0x69, 0x03, // ADC #$03 ; Fix return address past the cmdblock
+		0x48,                   // PHA
+		0xad, ssBase + 3, 0xc0, // LDA $C0n3 ; Softswitch 3, execute command. Error code in reg A.
+		0x18,       // CLC ; Clear carry for no errors.
+		0xF0, 0x01, // BEQ $01 ; Skips the SEC if reg A is zero
+		0x38, // SEC ; Set carry on errors
+		0x60, // RTS
+	})
+
+	copy(data[0x40:], []uint8{
 		// Boot code: SS will load block 0 in address $0800. The jump there.
 		// Note: after execution the first block expects $42 to $47 to have
 		// valid values to read block 0. At least Total Replay expects that.
@@ -155,34 +218,6 @@ func buildHardDiskRom(slot int) []uint8 {
 		0x4c, 0x01, 0x08, // JMP $801 ; Jump to loaded boot sector
 	})
 
-	if slot == 7 {
-		// It should be 0 for SmartPort, but with 0 it's not bootable with the II+ ROM
-		// See http://www.1000bit.it/support/manuali/apple/technotes/udsk/tn.udsk.2.html
-		data[0x07] = 0x3c
-	}
-
-	// Entrypoints and Smartport body
-	copy(data[0x40:], []uint8{
-		0x4c, 0x80, 0xc0 + uint8(slot), // JMP $cs80 ; Prodos Entrypoint
-
-		// 3 bytes later, smartport entrypoint. Uses the ProDos MLI calling convention
-		0x68,                   // PLA
-		0x8d, ssBase + 4, 0xc0, // STA $c0n4 ; Softswitch 4, store LO(cmdBlock)
-		0xa8,                   // TAY ; We will need it later
-		0x68,                   // PLA
-		0x8d, ssBase + 5, 0xc0, // STA $c0n5 ; Softswitch 5, store HI(cmdBlock)
-		0x48,       // PHA
-		0x98,       // TYA
-		0x18,       // CLC
-		0x69, 0x03, // ADC #$03 ; Fix return address past the cmdblock
-		0x48,                   // PHA
-		0xad, ssBase + 3, 0xc0, // LDA $C0n3 ; Softswitch 3, execute command. Error code in reg A.
-		0x18,       // CLC ; Clear carry for no errors.
-		0xF0, 0x01, // BEQ $01 ; Skips the SEC if reg A is zero
-		0x38, // SEC ; Set carry on errors
-		0x60, // RTS
-	})
-
 	// Prodos entrypoint body
 	copy(data[0x80:], []uint8{
 		0xad, ssBase + 0, 0xc0, // LDA $C0n0 ; Softswitch 0, execute command. Error code in reg A.
@@ -199,7 +234,7 @@ func buildHardDiskRom(slot int) []uint8 {
 	data[0xfc] = 0
 	data[0xfd] = 0
 	data[0xfe] = 3    // Status and Read. No write, no format. Single volume
-	data[0xff] = 0x40 // Driver entry point
+	data[0xff] = 0x0a // Driver entry point  // Must be $0a
 
 	return data
 }

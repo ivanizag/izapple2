@@ -138,13 +138,24 @@ func (a *Apple2) AddDisk2Sequencer(slot int, diskImage, diskBImage string, track
 }
 
 // AddSmartPortDisk adds a smart port card and image
-func (a *Apple2) AddSmartPortDisk(slot int, hdImage string, trace bool) error {
-	c := NewCardSmartport()
+func (a *Apple2) AddSmartPortDisk(slot int, hdImage string, traceHD bool, traceSP bool) error {
+	c := NewCardSmartPort()
+	c.trace = traceSP
+	a.insertCard(c, slot)
+
+	err := c.LoadImage(hdImage, traceHD)
+	return err
+}
+
+// AddSmartPortDisk adds a smart port card and image
+func (a *Apple2) AddFujinet(slot int, trace bool) {
+	c := NewCardSmartPort()
 	c.trace = trace
 	a.insertCard(c, slot)
 
-	err := c.LoadImage(hdImage)
-	return err
+	d := NewSmartPortFujinet(c)
+	d.trace = trace
+	c.AddDevice(0, d)
 }
 
 // AddVidHD adds a card with the signature of VidHD

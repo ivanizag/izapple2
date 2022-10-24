@@ -30,7 +30,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Videx Videoterm 80 column card with the Videx Soft Video Switch (Apple ][+ only)
   - SwyftCard (Apple //e only)
 - Useful cards not emulating a real card
-  - Bootable Smartport / ProDOS card
+  - Bootable SmartPort / ProDOS card
   - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
   - FASTChip, limited to what Total Replay needs to set and clear fast mode
   - Mouse Card, emulates the entry points, not the softswitches.
@@ -62,7 +62,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Softswitch reads and writes
   - ProDOS MLI calls
   - Apple Pascal BIOS calls
-  - Smartport commands
+  - SmartPort commands
   - BBC MOS calls when using [Applecorn](https://github.com/bobbimanners/)
 - Other features:
   - Sound
@@ -245,7 +245,7 @@ Only valid on SDL mode
   -traceCpu
         dump to the console the CPU execution. Use F11 to toggle.
   -traceHD
-        dump to the console the hd/smartport commands
+        dump to the console the hd/smartPort commands
   -traceMLI
         dump to the console the calls to ProDOS machine language interface calls to $BF00
   -tracePascal

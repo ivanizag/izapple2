@@ -32,6 +32,10 @@ func MainApple() *Apple2 {
 		"hdSlot",
 		-1,
 		"slot for the hard drive if present. -1 for none.")
+	fujinetSlot := flag.Int(
+		"fujinet",
+		-1,
+		"slot for the smatport card hosting the Fujinet. -1 for none.")
 	smartPortImage := flag.String(
 		"disk35",
 		"",
@@ -127,7 +131,11 @@ func MainApple() *Apple2 {
 	traceHD := flag.Bool(
 		"traceHD",
 		false,
-		"dump to the console the hd/smarport commands")
+		"dump to the console the hd accesses")
+	traceSP := flag.Bool(
+		"traceSP",
+		false,
+		"dump to the console the smarport commands")
 	model := flag.String(
 		"model",
 		"2enh",
@@ -260,10 +268,14 @@ func MainApple() *Apple2 {
 	}
 
 	if *smartPortImage != "" {
-		err := a.AddSmartPortDisk(5, *smartPortImage, *traceHD)
+		err := a.AddSmartPortDisk(5, *smartPortImage, *traceHD, *traceSP)
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if *fujinetSlot >= 0 {
+		a.AddFujinet(*fujinetSlot, *traceSP)
 	}
 
 	if *fastChipCardSlot >= 0 {
@@ -288,7 +300,7 @@ func MainApple() *Apple2 {
 			// If there is a hard disk image, but no slot assigned, use slot 7.
 			*hardDiskSlot = 7
 		}
-		err := a.AddSmartPortDisk(*hardDiskSlot, hardDiskImageFinal, *traceHD)
+		err := a.AddSmartPortDisk(*hardDiskSlot, hardDiskImageFinal, *traceHD, *traceSP)
 		if err != nil {
 			panic(err)
 		}
