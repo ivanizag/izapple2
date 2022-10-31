@@ -46,22 +46,22 @@ func (d *SmartPortFujinet) exec(call *smartPortCall) uint8 {
 
 	switch call.command {
 
-	case proDosDeviceCommandOpen:
-		result = proDosDeviceNoError
+	case smartPortCommandOpen:
+		result = smartPortNoError
 
-	case proDosDeviceCommandClose:
-		result = proDosDeviceNoError
+	case smartPortCommandClose:
+		result = smartPortNoError
 
-	case proDosDeviceCommandStatus:
+	case smartPortCommandStatus:
 		address := call.param16(2)
 		result = d.status(call.statusCode(), address)
 
-	case proDosDeviceCommandControl:
+	case smartPortCommandControl:
 		data := call.paramData(2)
 		controlCode := call.param8(4)
 		result = d.control(data, controlCode)
 
-	case proDosDeviceCommandRead:
+	case smartPortCommandRead:
 		address := call.param16(2)
 		len := call.param16(4)
 		pos := call.param24(6)
@@ -69,7 +69,7 @@ func (d *SmartPortFujinet) exec(call *smartPortCall) uint8 {
 
 	default:
 		// Prodos device command not supported
-		result = proDosDeviceErrorIO
+		result = smartPortErrorIO
 	}
 
 	if d.trace {
@@ -91,7 +91,7 @@ func (d *SmartPortFujinet) read(pos uint32, length uint16, dest uint16) uint8 {
 		d.host.a.mmu.Poke(dest+i, d.data[i])
 	}
 
-	return proDosDeviceNoError
+	return smartPortNoError
 }
 
 func (d *SmartPortFujinet) control(data []uint8, code uint8) uint8 {
@@ -118,7 +118,7 @@ func (d *SmartPortFujinet) control(data []uint8, code uint8) uint8 {
 		d.controlChannelMode(mode)
 	}
 
-	return proDosDeviceNoError
+	return smartPortNoError
 }
 
 func (d *SmartPortFujinet) controlJsonParse() {
@@ -196,17 +196,17 @@ func (d *SmartPortFujinet) controlOpen(method uint8, translation uint8, rawUrl s
 func (d *SmartPortFujinet) status(code uint8, dest uint16) uint8 {
 
 	switch code {
-	case prodosDeviceStatusCodeDevice:
+	case smartPortStatusCodeDevice:
 		// See iwmNetwork::encode_status_reply_packet()
 		d.host.a.mmu.pokeRange(dest, []uint8{
-			prodosDeviceStatusCodeTypeRead & prodosDeviceStatusCodeTypeOnline,
+			smartPortStatusCodeTypeRead & smartPortStatusCodeTypeOnline,
 			0, 0, 0, // Block size is 0
 		})
 
-	case prodosDeviceStatusCodeDeviceInfo:
+	case smartPortStatusCodeDeviceInfo:
 		// See iwmNetwork::encode_status_reply_packet()
 		d.host.a.mmu.pokeRange(dest, []uint8{
-			prodosDeviceStatusCodeTypeRead & prodosDeviceStatusCodeTypeOnline,
+			smartPortStatusCodeTypeRead & smartPortStatusCodeTypeOnline,
 			0, 0, 0, // Block size is 0
 			7, 'N', 'E', 'T', 'W', 'O', 'R', 'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
 			0x02,       // Type hard disk
@@ -243,5 +243,5 @@ func (d *SmartPortFujinet) status(code uint8, dest uint16) uint8 {
 		}
 	}
 
-	return proDosDeviceNoError // The return code is always success
+	return smartPortNoError // The return code is always success
 }

@@ -43,7 +43,7 @@ func (js *FnJson) Query(query []uint8) {
 	queryString = strings.TrimSuffix(queryString, "/")
 	path := strings.Split(queryString, "/")
 
-	js.Result = nil
+	js.Result = getJsonValue(nil)
 	current := js.data
 	for i := 0; i < len(path); i++ {
 		switch v := current.(type) {

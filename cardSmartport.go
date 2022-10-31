@@ -68,14 +68,14 @@ func (c *CardSmartPort) assign(a *Apple2, slot int) {
 
 		// Generate Smarport compatible params
 		var call *smartPortCall
-		if command == proDosDeviceCommandStatus {
+		if command == smartPortCommandStatus {
 			call = newSmartPortCallSynthetic(c, command, []uint8{
 				3, // 3 args
 				unit,
 				a.mmu.Peek(0x44), a.mmu.Peek(0x45), // data address
 				0,
 			})
-		} else if command == proDosDeviceCommandReadBlock || command == proDosDeviceCommandWriteBlock {
+		} else if command == smartPortCommandReadBlock || command == smartPortCommandWriteBlock {
 			call = newSmartPortCallSynthetic(c, command, []uint8{
 				3, // 3args
 				unit,
@@ -83,7 +83,7 @@ func (c *CardSmartPort) assign(a *Apple2, slot int) {
 				a.mmu.Peek(0x46), a.mmu.Peek(0x47), 0, // block number
 			})
 		} else {
-			return proDosDeviceBadCommand
+			return smartPortBadCommand
 		}
 
 		return c.exec(call)
@@ -121,13 +121,13 @@ func (c *CardSmartPort) exec(call *smartPortCall) uint8 {
 	var result uint8
 	unit := int(call.unit())
 
-	if call.command == proDosDeviceCommandStatus &&
+	if call.command == smartPortCommandStatus &&
 		// Call to the host
-		call.statusCode() == prodosDeviceStatusCodeDevice {
+		call.statusCode() == smartPortStatusCodeDevice {
 
 		result = c.hostStatus(call)
 	} else if unit > len(c.devices) {
-		result = proDosDeviceErrorNoDevice
+		result = smartPortErrorNoDevice
 	} else {
 		if unit == 0 {
 			unit = 1 // For unit 0(host) use the first device
@@ -158,7 +158,7 @@ func (c *CardSmartPort) hostStatus(call *smartPortCall) uint8 {
 	c.a.mmu.Poke(dest+6, 0x00)
 	c.a.mmu.Poke(dest+7, 0x00) // Reserved
 
-	return proDosDeviceNoError
+	return smartPortNoError
 }
 
 func buildHardDiskRom(slot int) []uint8 {

@@ -42,27 +42,27 @@ func (d *SmartPortHardDisk) exec(call *smartPortCall) uint8 {
 	var result uint8
 
 	switch call.command {
-	case proDosDeviceCommandStatus:
+	case smartPortCommandStatus:
 		address := call.param16(2)
 		result = d.status(address)
 
-	case proDosDeviceCommandReadBlock:
+	case smartPortCommandReadBlock:
 		address := call.param16(2)
 		block := call.param24(4)
 		result = d.readBlock(block, address)
 
-	case proDosDeviceCommandWriteBlock:
+	case smartPortCommandWriteBlock:
 		address := call.param16(2)
 		block := call.param24(4)
 		result = d.writeBlock(block, address)
 
 	default:
 		// Prodos device command not supported
-		result = proDosDeviceErrorIO
+		result = smartPortErrorIO
 	}
 
 	if d.trace {
-		fmt.Printf("[SmartPortFujinet] Command %v, return %s \n",
+		fmt.Printf("[SmartPortHardDisk] Command %v, return %s \n",
 			call, smartPortErrorMessage(result))
 	}
 
@@ -76,7 +76,7 @@ func (d *SmartPortHardDisk) readBlock(block uint32, dest uint16) uint8 {
 
 	data, err := d.disk.Read(block)
 	if err != nil {
-		return proDosDeviceErrorIO
+		return smartPortErrorIO
 	}
 
 	// Byte by byte transfer to memory using the full Poke code path
@@ -84,7 +84,7 @@ func (d *SmartPortHardDisk) readBlock(block uint32, dest uint16) uint8 {
 		d.host.a.mmu.Poke(dest+i, data[i])
 	}
 
-	return proDosDeviceNoError
+	return smartPortNoError
 }
 
 func (d *SmartPortHardDisk) writeBlock(block uint32, source uint16) uint8 {
@@ -93,7 +93,7 @@ func (d *SmartPortHardDisk) writeBlock(block uint32, source uint16) uint8 {
 	}
 
 	if d.disk.IsReadOnly() {
-		return proDosDeviceErrorWriteProtected
+		return smartPortErrorWriteProtected
 	}
 
 	// Byte by byte transfer from memory using the full Peek code path
@@ -104,10 +104,10 @@ func (d *SmartPortHardDisk) writeBlock(block uint32, source uint16) uint8 {
 
 	err := d.disk.Write(block, buf)
 	if err != nil {
-		return proDosDeviceErrorIO
+		return smartPortErrorIO
 	}
 
-	return proDosDeviceNoError
+	return smartPortNoError
 }
 
 func (d *SmartPortHardDisk) status(dest uint16) uint8 {
@@ -125,5 +125,5 @@ func (d *SmartPortHardDisk) status(dest uint16) uint8 {
 	d.host.a.mmu.Poke(dest+6, 0x00)
 	d.host.a.mmu.Poke(dest+7, 0x00) // Reserved
 
-	return proDosDeviceNoError
+	return smartPortNoError
 }

@@ -122,7 +122,6 @@ func TestQueryArray(t *testing.T) {
 		{"/1/account/display_name", "NULL"},
 		{"/-1/account/display_name", "NULL"},
 		{"/zz/account/display_name", "NULL"},
-		{"/0/media_attachments/0/meta/original", "width213height181size213x181aspect1.1767955801"},
 	}
 	testQuerys(t, testArrayMessage, testCases)
 }

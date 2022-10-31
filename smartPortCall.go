@@ -11,42 +11,42 @@ type smartPortDevice interface {
 }
 
 const (
-	proDosDeviceCommandStatus     = 0
-	proDosDeviceCommandReadBlock  = 1
-	proDosDeviceCommandWriteBlock = 2
-	proDosDeviceCommandFormat     = 3
-	proDosDeviceCommandControl    = 4
-	proDosDeviceCommandInit       = 5
-	proDosDeviceCommandOpen       = 6
-	proDosDeviceCommandClose      = 7
-	proDosDeviceCommandRead       = 8
-	proDosDeviceCommandWrite      = 9
+	smartPortCommandStatus     = 0
+	smartPortCommandReadBlock  = 1
+	smartPortCommandWriteBlock = 2
+	smartPortCommandFormat     = 3
+	smartPortCommandControl    = 4
+	smartPortCommandInit       = 5
+	smartPortCommandOpen       = 6
+	smartPortCommandClose      = 7
+	smartPortCommandRead       = 8
+	smartPortCommandWrite      = 9
 )
 
 const (
-	prodosDeviceStatusCodeDevice             = 0
-	prodosDeviceStatusCodeDeviceControlBlock = 1
-	prodosDeviceStatusCodeNewline            = 2
-	prodosDeviceStatusCodeDeviceInfo         = 3
+	smartPortStatusCodeDevice             = 0
+	smartPortStatusCodeDeviceControlBlock = 1
+	smartPortStatusCodeNewline            = 2
+	smartPortStatusCodeDeviceInfo         = 3
 )
 
 const (
-	prodosDeviceStatusCodeTypeBlock       = uint8(1) << 7
-	prodosDeviceStatusCodeTypeWrite       = uint8(1) << 6
-	prodosDeviceStatusCodeTypeRead        = uint8(1) << 5
-	prodosDeviceStatusCodeTypeOnline      = uint8(1) << 4
-	prodosDeviceStatusCodeTypeFormat      = uint8(1) << 3
-	prodosDeviceStatusCodeTypeProtected   = uint8(1) << 2
-	prodosDeviceStatusCodeTypeInterruping = uint8(1) << 1
-	prodosDeviceStatusCodeTypeOpen        = uint8(1) << 0
+	smartPortStatusCodeTypeBlock       = uint8(1) << 7
+	smartPortStatusCodeTypeWrite       = uint8(1) << 6
+	smartPortStatusCodeTypeRead        = uint8(1) << 5
+	smartPortStatusCodeTypeOnline      = uint8(1) << 4
+	smartPortStatusCodeTypeFormat      = uint8(1) << 3
+	smartPortStatusCodeTypeProtected   = uint8(1) << 2
+	smartPortStatusCodeTypeInterruping = uint8(1) << 1
+	smartPortStatusCodeTypeOpen        = uint8(1) << 0
 )
 
 const (
-	proDosDeviceNoError             = uint8(0)
-	proDosDeviceBadCommand          = uint8(1)
-	proDosDeviceErrorIO             = uint8(0x27)
-	proDosDeviceErrorNoDevice       = uint8(0x28)
-	proDosDeviceErrorWriteProtected = uint8(0x2b)
+	smartPortNoError             = uint8(0)
+	smartPortBadCommand          = uint8(1)
+	smartPortErrorIO             = uint8(0x27)
+	smartPortErrorNoDevice       = uint8(0x28)
+	smartPortErrorWriteProtected = uint8(0x2b)
 )
 
 type smartPortCall struct {
@@ -80,8 +80,8 @@ func (spc *smartPortCall) unit() uint8 {
 }
 
 func (spc *smartPortCall) statusCode() uint8 {
-	if spc.command != proDosDeviceCommandStatus {
-		panic("Status code paremeter requeted for a non status smartport call")
+	if spc.command != smartPortCommandStatus {
+		panic("Status code paremeter requeted for a non status smartPort call")
 	}
 	return spc.param8(4)
 }
@@ -125,37 +125,37 @@ func (spc *smartPortCall) paramData(offset uint8) []uint8 {
 
 func (spc *smartPortCall) String() string {
 	switch spc.command {
-	case proDosDeviceCommandStatus:
+	case smartPortCommandStatus:
 		return fmt.Sprintf("STATUS(%v, unit=%v, code=%v)",
 			spc.command, spc.unit(),
 			spc.statusCode())
-	case proDosDeviceCommandReadBlock:
+	case smartPortCommandReadBlock:
 		return fmt.Sprintf("READBLOCK(%v, unit=%v, block=%v)",
 			spc.command, spc.unit(),
 			spc.param24(4))
-	case proDosDeviceCommandWriteBlock:
+	case smartPortCommandWriteBlock:
 		return fmt.Sprintf("WRITEBLOCK(%v, unit=%v, block=%v)",
 			spc.command, spc.unit(),
 			spc.param24(4))
-	case proDosDeviceCommandControl:
+	case smartPortCommandControl:
 		return fmt.Sprintf("CONTROL(%v, unit=%v, code=%v)",
 			spc.command, spc.unit(),
 			spc.param8(4))
-	case proDosDeviceCommandInit:
+	case smartPortCommandInit:
 		return fmt.Sprintf("INIT(%v, unit=%v)",
 			spc.command, spc.unit())
-	case proDosDeviceCommandOpen:
+	case smartPortCommandOpen:
 		return fmt.Sprintf("OPEN(%v, unit=%v)",
 			spc.command, spc.unit())
-	case proDosDeviceCommandClose:
+	case smartPortCommandClose:
 		return fmt.Sprintf("CLOSE(%v, unit=%v)",
 			spc.command, spc.unit())
-	case proDosDeviceCommandRead:
+	case smartPortCommandRead:
 		return fmt.Sprintf("READ(%v, unit=%v, pos=%v, len=%v)",
 			spc.command, spc.unit(),
 			spc.param24(6),
 			spc.param16(4))
-	case proDosDeviceCommandWrite:
+	case smartPortCommandWrite:
 		return fmt.Sprintf("WRITE(%v, unit=%v, pos=%v, len=%v)",
 			spc.command, spc.unit(),
 			spc.param24(6),
@@ -169,15 +169,15 @@ func (spc *smartPortCall) String() string {
 
 func smartPortErrorMessage(code uint8) string {
 	switch code {
-	case proDosDeviceNoError:
+	case smartPortNoError:
 		return "SUCCESS"
-	case proDosDeviceBadCommand:
+	case smartPortBadCommand:
 		return "BAD_COMMAND"
-	case proDosDeviceErrorIO:
+	case smartPortErrorIO:
 		return "ERROR_IO"
-	case proDosDeviceErrorNoDevice:
+	case smartPortErrorNoDevice:
 		return "NO_DEVICE"
-	case proDosDeviceErrorWriteProtected:
+	case smartPortErrorWriteProtected:
 		return "WRITE_PROTECT_ERROR"
 	default:
 		return string(code)
