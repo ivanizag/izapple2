@@ -227,10 +227,6 @@ func (mmu *memoryManager) accessWrite(address uint16) memoryHandler {
 func (mmu *memoryManager) peekWord(address uint16) uint16 {
 	return uint16(mmu.Peek(address)) +
 		uint16(mmu.Peek(address+1))<<8
-
-	//return uint16(mmu.Peek(address)) +
-	//    0x100*uint16(mmu.Peek(address+1))
-
 }
 
 // Peek returns the data on the given address
@@ -272,6 +268,12 @@ func (mmu *memoryManager) PeekCode(address uint16) uint8 {
 	//}
 
 	return value
+}
+
+func (mmu *memoryManager) pokeRange(address uint16, data []uint8) {
+	for i := 0; i < len(data); i++ {
+		mmu.Poke(address+uint16(i), data[i])
+	}
 }
 
 // Poke sets the data at the given address

@@ -46,12 +46,12 @@ func (d *SmartPortHardDisk) exec(call *smartPortCall) uint8 {
 		address := call.param16(2)
 		result = d.status(address)
 
-	case proDosDeviceCommandRead:
+	case proDosDeviceCommandReadBlock:
 		address := call.param16(2)
 		block := call.param24(4)
 		result = d.readBlock(block, address)
 
-	case proDosDeviceCommandWrite:
+	case proDosDeviceCommandWriteBlock:
 		address := call.param16(2)
 		block := call.param24(4)
 		result = d.writeBlock(block, address)

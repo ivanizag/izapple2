@@ -11,10 +11,16 @@ type smartPortDevice interface {
 }
 
 const (
-	proDosDeviceCommandStatus = 0
-	proDosDeviceCommandRead   = 1
-	proDosDeviceCommandWrite  = 2
-	proDosDeviceCommandFormat = 3
+	proDosDeviceCommandStatus     = 0
+	proDosDeviceCommandReadBlock  = 1
+	proDosDeviceCommandWriteBlock = 2
+	proDosDeviceCommandFormat     = 3
+	proDosDeviceCommandControl    = 4
+	proDosDeviceCommandInit       = 5
+	proDosDeviceCommandOpen       = 6
+	proDosDeviceCommandClose      = 7
+	proDosDeviceCommandRead       = 8
+	proDosDeviceCommandWrite      = 9
 )
 
 const (
@@ -103,20 +109,57 @@ func (spc *smartPortCall) param24(offset uint8) uint32 {
 		uint32(spc.param8(offset+2))<<16
 }
 
+func (spc *smartPortCall) paramData(offset uint8) []uint8 {
+	address := uint16(spc.param8(offset)) +
+		uint16(spc.param8(offset+1))<<8
+
+	size := spc.host.a.mmu.peekWord(address)
+
+	data := make([]uint8, size)
+	for i := 0; i < int(size); i++ {
+		data[i] = spc.host.a.mmu.Peek(address + 2 + uint16(i))
+	}
+
+	return data
+}
+
 func (spc *smartPortCall) String() string {
 	switch spc.command {
 	case proDosDeviceCommandStatus:
 		return fmt.Sprintf("STATUS(%v, unit=%v, code=%v)",
 			spc.command, spc.unit(),
 			spc.statusCode())
+	case proDosDeviceCommandReadBlock:
+		return fmt.Sprintf("READBLOCK(%v, unit=%v, block=%v)",
+			spc.command, spc.unit(),
+			spc.param24(4))
+	case proDosDeviceCommandWriteBlock:
+		return fmt.Sprintf("WRITEBLOCK(%v, unit=%v, block=%v)",
+			spc.command, spc.unit(),
+			spc.param24(4))
+	case proDosDeviceCommandControl:
+		return fmt.Sprintf("CONTROL(%v, unit=%v, code=%v)",
+			spc.command, spc.unit(),
+			spc.param8(4))
+	case proDosDeviceCommandInit:
+		return fmt.Sprintf("INIT(%v, unit=%v)",
+			spc.command, spc.unit())
+	case proDosDeviceCommandOpen:
+		return fmt.Sprintf("OPEN(%v, unit=%v)",
+			spc.command, spc.unit())
+	case proDosDeviceCommandClose:
+		return fmt.Sprintf("CLOSE(%v, unit=%v)",
+			spc.command, spc.unit())
 	case proDosDeviceCommandRead:
-		return fmt.Sprintf("READ(%v, unit=%v, block=%v)",
+		return fmt.Sprintf("READ(%v, unit=%v, pos=%v, len=%v)",
 			spc.command, spc.unit(),
-			spc.param24(4))
+			spc.param24(6),
+			spc.param16(4))
 	case proDosDeviceCommandWrite:
-		return fmt.Sprintf("WRITE(%v, unit=%v, block=%v)",
+		return fmt.Sprintf("WRITE(%v, unit=%v, pos=%v, len=%v)",
 			spc.command, spc.unit(),
-			spc.param24(4))
+			spc.param24(6),
+			spc.param16(4))
 
 	default:
 		return fmt.Sprintf("UNKNOWN(%v, unit=%v)",

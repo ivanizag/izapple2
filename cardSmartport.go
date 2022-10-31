@@ -75,7 +75,7 @@ func (c *CardSmartPort) assign(a *Apple2, slot int) {
 				a.mmu.Peek(0x44), a.mmu.Peek(0x45), // data address
 				0,
 			})
-		} else if command == proDosDeviceCommandRead || command == proDosDeviceCommandWrite {
+		} else if command == proDosDeviceCommandReadBlock || command == proDosDeviceCommandWriteBlock {
 			call = newSmartPortCallSynthetic(c, command, []uint8{
 				3, // 3args
 				unit,
