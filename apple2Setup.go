@@ -153,9 +153,13 @@ func (a *Apple2) AddFujinet(slot int, trace bool) {
 	c.trace = trace
 	a.insertCard(c, slot)
 
-	d := NewSmartPortFujinet(c)
-	d.trace = trace
-	c.AddDevice(0, d)
+	net := NewSmartPortFujinetNetwork(c)
+	net.trace = trace
+	c.AddDevice(net)
+
+	clock := NewSmartPortFujinetClock(c)
+	clock.trace = trace
+	c.AddDevice(clock)
 }
 
 // AddVidHD adds a card with the signature of VidHD

@@ -17,8 +17,8 @@ See:
 
 */
 
-// SmartPortFujinet represents a Fujinet device
-type SmartPortFujinet struct {
+// SmartPortFujinetNetwork represents a Fujinet device
+type SmartPortFujinetNetwork struct {
 	host  *CardSmartPort // For DMA
 	trace bool
 
@@ -32,16 +32,16 @@ type SmartPortFujinet struct {
 	//connected    uint8
 }
 
-// NewSmartPortFujinet creates a new fujinet device
-func NewSmartPortFujinet(host *CardSmartPort) *SmartPortFujinet {
-	var d SmartPortFujinet
+// NewSmartPortFujinetNetwork creates a new fujinet device
+func NewSmartPortFujinetNetwork(host *CardSmartPort) *SmartPortFujinetNetwork {
+	var d SmartPortFujinetNetwork
 	d.host = host
 	d.errorCode = fujinet.NoError
 
 	return &d
 }
 
-func (d *SmartPortFujinet) exec(call *smartPortCall) uint8 {
+func (d *SmartPortFujinetNetwork) exec(call *smartPortCall) uint8 {
 	var result uint8
 
 	switch call.command {
@@ -73,16 +73,16 @@ func (d *SmartPortFujinet) exec(call *smartPortCall) uint8 {
 	}
 
 	if d.trace {
-		fmt.Printf("[SmartPortFujinet] Command %v, return %s \n",
+		fmt.Printf("[SmartPortFujinetNetwork] Command %v, return %s \n",
 			call, smartPortErrorMessage(result))
 	}
 
 	return result
 }
 
-func (d *SmartPortFujinet) read(pos uint32, length uint16, dest uint16) uint8 {
+func (d *SmartPortFujinetNetwork) read(pos uint32, length uint16, dest uint16) uint8 {
 	if d.trace {
-		fmt.Printf("[SmartPortFujinet] Read %v bytes from pos %v into $%x.\n",
+		fmt.Printf("[SmartPortFujinetNetwork] Read %v bytes from pos %v into $%x.\n",
 			length, pos, dest)
 	}
 
@@ -94,7 +94,7 @@ func (d *SmartPortFujinet) read(pos uint32, length uint16, dest uint16) uint8 {
 	return smartPortNoError
 }
 
-func (d *SmartPortFujinet) control(data []uint8, code uint8) uint8 {
+func (d *SmartPortFujinetNetwork) control(data []uint8, code uint8) uint8 {
 	switch code {
 	case 'O':
 		// Open URL
@@ -121,10 +121,10 @@ func (d *SmartPortFujinet) control(data []uint8, code uint8) uint8 {
 	return smartPortNoError
 }
 
-func (d *SmartPortFujinet) controlJsonParse() {
+func (d *SmartPortFujinetNetwork) controlJsonParse() {
 	// See FNJSON::parse()
 	if d.trace {
-		fmt.Printf("[SmartPortFujinet] control-parse()\n")
+		fmt.Printf("[SmartPortFujinetNetwork] control-parse()\n")
 	}
 
 	data, errorCode := d.protocol.ReadAll()
@@ -137,9 +137,9 @@ func (d *SmartPortFujinet) controlJsonParse() {
 	d.errorCode = d.jsonData.Parse(data)
 }
 
-func (d *SmartPortFujinet) controlJsonQuery(query []uint8) {
+func (d *SmartPortFujinetNetwork) controlJsonQuery(query []uint8) {
 	if d.trace {
-		fmt.Printf("[SmartPortFujinet] control-query('%s')\n", query)
+		fmt.Printf("[SmartPortFujinetNetwork] control-query('%s')\n", query)
 	}
 
 	if d.jsonData != nil {
@@ -148,7 +148,7 @@ func (d *SmartPortFujinet) controlJsonQuery(query []uint8) {
 	}
 }
 
-func (d *SmartPortFujinet) controlChannelMode(mode uint8) {
+func (d *SmartPortFujinetNetwork) controlChannelMode(mode uint8) {
 	// See iwmNetwork::channel_mode()
 	if d.trace {
 		fmt.Printf("control-channel-mode(%v)\n", mode)
@@ -162,10 +162,10 @@ func (d *SmartPortFujinet) controlChannelMode(mode uint8) {
 	// The rest of the cases do not change the mode
 }
 
-func (d *SmartPortFujinet) controlOpen(method uint8, translation uint8, rawUrl string) {
+func (d *SmartPortFujinetNetwork) controlOpen(method uint8, translation uint8, rawUrl string) {
 	// See iwmNetwork::open()
 	if d.trace {
-		fmt.Printf("[SmartPortFujinet] control-open(%v, %v, '%s'\n", method, translation, rawUrl)
+		fmt.Printf("[SmartPortFujinetNetwork] control-open(%v, %v, '%s'\n", method, translation, rawUrl)
 	}
 
 	if d.protocol != nil {
@@ -193,7 +193,7 @@ func (d *SmartPortFujinet) controlOpen(method uint8, translation uint8, rawUrl s
 	d.jsonChannelMode = false
 }
 
-func (d *SmartPortFujinet) status(code uint8, dest uint16) uint8 {
+func (d *SmartPortFujinetNetwork) status(code uint8, dest uint16) uint8 {
 
 	switch code {
 	case smartPortStatusCodeDevice:

@@ -53,7 +53,7 @@ func (c *CardSmartPort) LoadImage(filename string, trace bool) error {
 }
 
 // LoadImage loads a disk image
-func (c *CardSmartPort) AddDevice(unt uint8, device smartPortDevice) {
+func (c *CardSmartPort) AddDevice(device smartPortDevice) {
 	c.devices = append(c.devices, device)
 	c.hardDiskBlocks = 0 // Needed for the PRODOS status
 }
@@ -136,8 +136,8 @@ func (c *CardSmartPort) exec(call *smartPortCall) uint8 {
 	}
 
 	if c.trace {
-		fmt.Printf("[CardSmartPort] Command %v on slot %v, unit %v => result %s.\n",
-			call, c.slot, call.unit(), smartPortErrorMessage(result))
+		fmt.Printf("[CardSmartPort] Command %v on slot %v => result %s.\n",
+			call, c.slot, smartPortErrorMessage(result))
 	}
 	return result
 }
