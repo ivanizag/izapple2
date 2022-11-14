@@ -68,13 +68,13 @@ func (d *SmartPortFujinetClock) status(code uint8, dest uint16) uint8 {
 			smartPortStatusCodeTypeRead & smartPortStatusCodeTypeOnline,
 			0, 0, 0, // Block size is 0
 			8, 'F', 'N', '_', 'C', 'L', 'O', 'C', 'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			0x0f,       // Type clock. See http://www.1000bit.it/support/manuali/apple/technotes/smpt/tn.smpt.4.html
+			0x13,       // Type fujinet clock.
 			0x00,       // Subtype
 			0x00, 0x01, // Firmware version
 		})
 
 	case 'T':
-		// Get time
+		// Get time and send it in easy to use format
 		now := time.Now()
 		d.host.a.mmu.pokeRange(dest, []uint8{
 			uint8(now.Year() / 100),
@@ -84,6 +84,23 @@ func (d *SmartPortFujinetClock) status(code uint8, dest uint16) uint8 {
 			uint8(now.Hour()),
 			uint8(now.Minute()),
 			uint8(now.Second()),
+		})
+
+	case 'P':
+		// Get time and send it in ProDOS format
+		// See 6.1 in https://prodos8.com/docs/techref/adding-routines-to-prodos/
+		now := time.Now()
+
+		datelo := uint8(now.Day()) + uint8(now.Month())<<5
+		datehi := uint8(now.Year()%100)<<1 + uint8(now.Month())>>3
+		timelo := uint8(now.Minute())
+		timehi := uint8(now.Hour())
+
+		d.host.a.mmu.pokeRange(dest, []uint8{
+			datelo,
+			datehi,
+			timelo,
+			timehi,
 		})
 	}
 

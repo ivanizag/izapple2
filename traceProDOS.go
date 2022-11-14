@@ -141,7 +141,7 @@ func (t *traceProDOS) dumpMLIReturn() {
 			minute := t.a.mmu.Peek(0xbf92)
 			hour := t.a.mmu.Peek(0xbf93)
 			fmt.Printf("%04v-%02v-%02v %02v:%02v\n",
-				date>>9+1900, (date>>5)&0x1f, date&0x1f, // Review Y2K
+				date>>9+1900, (date>>5)&0x0f, date&0x1f, // Review Y2K
 				hour, minute)
 		case 0xc5: // Online
 			dataAddress := t.paramWord(2)

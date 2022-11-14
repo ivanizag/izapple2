@@ -132,7 +132,12 @@ func (c *CardSmartPort) exec(call *smartPortCall) uint8 {
 		if unit == 0 {
 			unit = 1 // For unit 0(host) use the first device
 		}
-		result = c.devices[unit-1].exec(call)
+
+		if unit > len(c.devices) {
+			result = smartPortErrorNoDevice
+		} else {
+			result = c.devices[unit-1].exec(call)
+		}
 	}
 
 	if c.trace {
@@ -149,7 +154,7 @@ func (c *CardSmartPort) hostStatus(call *smartPortCall) uint8 {
 	}
 
 	// See http://www.1000bit.it/support/manuali/apple/technotes/smpt/tn.smpt.2.html
-	c.a.mmu.Poke(dest+0, 0x01) // One device
+	c.a.mmu.Poke(dest+0, uint8(len(c.devices)))
 	c.a.mmu.Poke(dest+1, 0xff) // No interrupt
 	c.a.mmu.Poke(dest+2, 0x00)
 	c.a.mmu.Poke(dest+3, 0x00) // Unknown manufacturer

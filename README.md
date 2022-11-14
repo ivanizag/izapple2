@@ -30,7 +30,10 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Videx Videoterm 80 column card with the Videx Soft Video Switch (Apple ][+ only)
   - SwyftCard (Apple //e only)
 - Useful cards not emulating a real card
-  - Bootable SmartPort / ProDOS card
+  - Bootable SmartPort / ProDOS card with the following smartport devices:
+      - Block device (hard disks)
+      - Fujinet network device (supports only http(s) with GET and JSON)
+      - Fujinet clock (not in Fujinet upstream)
   - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
   - FASTChip, limited to what Total Replay needs to set and clear fast mode
   - Mouse Card, emulates the entry points, not the softswitches.
