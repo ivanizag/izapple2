@@ -37,12 +37,18 @@ func (c *CardParallelPrinter) assign(a *Apple2, slot int) {
 		c.printByte(value)
 	}, "PARALLELDEVW")
 
+	c.addCardSoftSwitchR(4, func() uint8 {
+		return 0xff // TODO: What are the bit values?
+	}, "PARALLELSTATUSR")
+
 	c.cardBase.assign(a, slot)
 }
 
 const printerFile = "printer.out"
 
 func (c *CardParallelPrinter) printByte(value uint8) {
-	value = value & 0x7f // Remove the MSB bit
+
+	// As text the MSB has to be removed, but if done, graphics modes won't work
+	//value = value & 0x7f // Remove the MSB bit
 	c.file.Write([]byte{value})
 }
