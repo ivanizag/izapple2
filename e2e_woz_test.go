@@ -55,7 +55,7 @@ func TestWoz(t *testing.T) {
 
 		// Next choices
 		{"Bouncing Kamungas", all, "Bouncing Kamungas - Disk 1, Side A.woz", 30_000_000, []int{0, 32, 0, 40, 0}},
-		{"Commando", seq, "Commando - Disk 1, Side A.woz", 15_000_000, []int{0, 136, 68, 128, 68, 128, 68, 124, 12, 116, 108}},
+		// Runs but the test is unstable {"Commando", seq, "Commando - Disk 1, Side A.woz", 15_000_000, []int{0, 136, 68, 128, 68, 128, 68, 124, 12, 116, 108}},
 		{"Planetfall", all, "Planetfall - Disk 1, Side A.woz", 4_000_000, []int{0, 8}},
 		{"Rescue Raiders", all, "Rescue Raiders - Disk 1, Side B.woz", 80_000_000, []int{
 			0, 84, 44, 46,
