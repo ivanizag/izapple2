@@ -277,6 +277,17 @@ cd izapple2/frontend/a2sdl
 go build .
 ```
 
+### MacOS
+
+With a working Go installation, run:
+
+``` terminal
+brew install SDL2
+git clone github.com/ivanizag/izapple2
+cd izapple2/frontend/a2sdl
+go build .
+```
+
 ### Windows 
 
 On Windows, CGO needs a gcc compiler. Install [mingw-w64](http://mingw-w64.org/doku.php/download/mingw-builds) and the [SDL2 developer files](https://www.libsdl.org/release/) for mingw-64.
