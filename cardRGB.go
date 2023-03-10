@@ -45,7 +45,7 @@ func setupRGBCard(a *Apple2) *cardRGB {
 		a.io.softSwitchesData[ioFlag1RGBCard] = ssOn
 		a.io.softSwitchesData[ioFlag2RGBCard] = ssOn
 		return 0
-	}, "TEXTOFF")
+	}, "TEXTOFF-RGB")
 
 	a.io.addSoftSwitchRW(0x5e, func() uint8 {
 		a.io.softSwitchesData[ioFlagAnnunciator3] = ssOff
@@ -54,6 +54,8 @@ func setupRGBCard(a *Apple2) *cardRGB {
 			c.step++
 		case 2:
 			c.step++
+		case 4:
+			c.step = 0
 		}
 
 		return 0
