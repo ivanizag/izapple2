@@ -11,3 +11,4 @@ frontend/headless/headless
 frontend/*/snapshot.gif
 frontend/*/snapshot.png
 frontend/*/printer.out
+.DS_STORE

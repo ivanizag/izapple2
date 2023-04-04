@@ -178,6 +178,8 @@ Line:
 - F12: Save a screen snapshot to a file `snapshot.png`
 - Pause: Pause the emulation
 
+Drag and drop a diskette file on the left side of the window to change Drive 1; to the right side to change the disk on Drive 2.
+
 Only valid on SDL mode
 
 ### Command line options

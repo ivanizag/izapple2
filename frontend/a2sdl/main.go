@@ -52,6 +52,7 @@ func sdlRun(a *izapple2.Apple2) {
 
 	go a.Run()
 
+	var x int32
 	paused := false
 	running := true
 	for running {
@@ -73,9 +74,18 @@ func sdlRun(a *izapple2.Apple2) {
 				w, h := window.GetSize()
 				j.putMouseMotionEvent(t, w, h)
 				m.putMouseMotionEvent(t, w, h)
+				x = t.X
 			case *sdl.MouseButtonEvent:
 				j.putMouseButtonEvent(t)
 				m.putMouseButtonEvent(t)
+			case *sdl.DropEvent:
+				switch t.Type {
+				case sdl.DROPFILE:
+					w, _ := window.GetSize()
+					drive := int(2 * x / w)
+					fmt.Printf("Loading '%s' in drive %v\n", t.File, drive+1)
+					a.SendLoadDisk(drive, t.File)
+				}
 			}
 		}
 

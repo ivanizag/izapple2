@@ -30,7 +30,7 @@
     - Wings of Fury: Working
     - Stickybear Town Builder: Working
 - Optimal bit timing of WOZ 2.0
-    - Border Zone: **Unknown, there is no UI to swap disks**
+    - Border Zone: Slow (optimal bit timing not implemented)
 - 4am on Slack (2021-06-29)
     - Mr Do: Working
     - Wavy Navy: Working
@@ -68,7 +68,7 @@
     - Wings of Fury: ***Not working***
     - Stickybear Town Builder: Working
 - Optimal bit timing of WOZ 2.0
-    - Border Zone: **Unknown, there is no UI to swap disks**
+    - Border Zone: Slow (optimal bit timing not implemented)
 - 4am on Slack (2021-06-29)
     - Mr Do: ***Not working***
     - Wavy Navy: Working

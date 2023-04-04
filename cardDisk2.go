@@ -36,6 +36,10 @@ type CardDisk2 struct {
 	trackTracer trackTracer
 }
 
+type drive interface {
+	insertDiskette(path string) error
+}
+
 type cardDisk2Drive struct {
 	name      string
 	diskette  storage.Diskette
@@ -77,6 +81,9 @@ func (c *CardDisk2) reset() {
 }
 
 func (c *CardDisk2) assign(a *Apple2, slot int) {
+	a.registerRemovableMediaDrive(&c.drive[0])
+	a.registerRemovableMediaDrive(&c.drive[1])
+
 	// Q1, Q2, Q3 and Q4 phase control soft switches,
 	for i := uint8(0); i < 4; i++ {
 		phase := i
@@ -225,7 +232,13 @@ func (c *CardDisk2) processQ6Q7(in uint8) {
 	*/
 }
 
-func (d *cardDisk2Drive) insertDiskette(name string, dt storage.Diskette) {
+func (d *cardDisk2Drive) insertDiskette(name string) error {
+	diskette, err := LoadDiskette(name)
+	if err != nil {
+		return err
+	}
+
 	d.name = name
-	d.diskette = dt
+	d.diskette = diskette
+	return nil
 }

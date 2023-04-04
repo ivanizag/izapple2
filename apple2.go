@@ -10,25 +10,26 @@ import (
 
 // Apple2 represents all the components and state of the emulated machine
 type Apple2 struct {
-	Name                string
-	cpu                 *iz6502.State
-	mmu                 *memoryManager
-	io                  *ioC0Page
-	cg                  *CharacterGenerator
-	cards               [8]Card
-	softVideoSwitch     *SoftVideoSwitch
-	isApple2e           bool
-	commandChannel      chan int
-	cycleDurationNs     float64 // Current speed. Inverse of the cpu clock in Ghz
-	fastMode            bool
-	fastRequestsCounter int32
-	cycleBreakpoint     uint64
-	breakPoint          bool
-	profile             bool
-	showSpeed           bool
-	paused              bool
-	tracers             []executionTracer
-	forceCaps           bool
+	Name                 string
+	cpu                  *iz6502.State
+	mmu                  *memoryManager
+	io                   *ioC0Page
+	cg                   *CharacterGenerator
+	cards                [8]Card
+	softVideoSwitch      *SoftVideoSwitch
+	isApple2e            bool
+	commandChannel       chan command
+	cycleDurationNs      float64 // Current speed. Inverse of the cpu clock in Ghz
+	fastMode             bool
+	fastRequestsCounter  int32
+	cycleBreakpoint      uint64
+	breakPoint           bool
+	profile              bool
+	showSpeed            bool
+	paused               bool
+	forceCaps            bool
+	tracers              []executionTracer
+	removableMediaDrives []drive
 }
 
 type executionTracer interface {
@@ -90,7 +91,7 @@ func (a *Apple2) Start(paused bool) {
 		for commandsPending {
 			select {
 			case command := <-a.commandChannel:
-				switch command {
+				switch command.getId() {
 				case CommandKill:
 					return
 				case CommandPause:
@@ -192,58 +193,6 @@ func (a *Apple2) IsForceCaps() bool {
 	return a.forceCaps
 }
 
-const (
-	// CommandToggleSpeed toggles cpu speed between full speed and actual Apple II speed
-	CommandToggleSpeed = iota + 1
-	// CommandShowSpeed toggles printinf the current freq in Mhz
-	CommandShowSpeed
-	// CommandDumpDebugInfo dumps useful info
-	CommandDumpDebugInfo
-	// CommandNextCharGenPage cycles the CharGen page if several
-	CommandNextCharGenPage
-	// CommandToggleCPUTrace toggle tracing of CPU execution
-	CommandToggleCPUTrace
-	// CommandKill stops the cpu execution loop
-	CommandKill
-	// CommandReset executes a 6502 reset
-	CommandReset
-	// CommandPauseUnpause allows the Pause button to freeze the emulator for a coffee break
-	CommandPauseUnpause
-	// CommandPause pauses the emulator
-	CommandPause
-	// CommandStart restarts the emulator
-	CommandStart
-)
-
-// SendCommand enqueues a command to the emulator thread
-func (a *Apple2) SendCommand(command int) {
-	a.commandChannel <- command
-}
-
-func (a *Apple2) executeCommand(command int) {
-	switch command {
-	case CommandToggleSpeed:
-		if a.cycleDurationNs == 0 {
-			//fmt.Println("Slow")
-			a.cycleDurationNs = 1000.0 / CPUClockMhz
-		} else {
-			//fmt.Println("Fast")
-			a.cycleDurationNs = 0
-		}
-	case CommandShowSpeed:
-		a.showSpeed = !a.showSpeed
-	case CommandDumpDebugInfo:
-		a.dumpDebugInfo()
-	case CommandNextCharGenPage:
-		a.cg.nextPage()
-		fmt.Printf("Chargen page %v\n", a.cg.page)
-	case CommandToggleCPUTrace:
-		a.cpu.SetTrace(!a.cpu.GetTrace())
-	case CommandReset:
-		a.reset()
-	}
-}
-
 func (a *Apple2) RequestFastMode() {
 	// Note: if the fastMode is shorter than maxWaitDuration, there won't be any gain.
 	if a.fastMode {
@@ -258,10 +207,8 @@ func (a *Apple2) ReleaseFastMode() {
 }
 
 func (a *Apple2) executionTrace() {
-	if a.tracers != nil {
-		for _, v := range a.tracers {
-			v.inspect()
-		}
+	for _, v := range a.tracers {
+		v.inspect()
 	}
 }
 

@@ -16,7 +16,7 @@ func newApple2() *Apple2 {
 }
 
 func (a *Apple2) setup(clockMhz float64, fastMode bool) {
-	a.commandChannel = make(chan int, 100)
+	a.commandChannel = make(chan command, 100)
 	a.fastMode = fastMode
 
 	if clockMhz <= 0 {
@@ -52,11 +52,11 @@ func setApple2eEnhanced(a *Apple2) {
 }
 
 func (a *Apple2) addTracer(tracer executionTracer) {
-	if a.tracers == nil {
-		a.tracers = make([]executionTracer, 0)
-	}
-
 	a.tracers = append(a.tracers, tracer)
+}
+
+func (a *Apple2) registerRemovableMediaDrive(d drive) {
+	a.removableMediaDrives = append(a.removableMediaDrives, d)
 }
 
 func (a *Apple2) insertCard(c Card, slot int) {
@@ -97,19 +97,17 @@ func (a *Apple2) AddDisk2(slot int, diskImage, diskBImage string, trackTracer tr
 	a.insertCard(c, slot)
 
 	if diskImage != "" {
-		diskette, err := LoadDiskette(diskImage)
+		err := c.drive[0].insertDiskette(diskImage)
 		if err != nil {
 			return err
 		}
-		c.drive[0].insertDiskette(diskImage, diskette)
 	}
 
 	if diskBImage != "" {
-		diskette, err := LoadDiskette(diskBImage)
+		err := c.drive[1].insertDiskette(diskBImage)
 		if err != nil {
 			return err
 		}
-		c.drive[1].insertDiskette(diskImage, diskette)
 	}
 
 	return nil
