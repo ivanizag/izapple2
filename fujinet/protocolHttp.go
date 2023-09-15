@@ -22,7 +22,7 @@ func (p *protocolHttp) Open(urlParsed *url.URL) {
 }
 
 func (p *protocolHttp) Close() {
-
+	// nothing to do
 }
 
 func (p *protocolHttp) ReadAll() ([]uint8, ErrorCode) {

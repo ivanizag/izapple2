@@ -12,3 +12,6 @@ frontend/*/snapshot.gif
 frontend/*/snapshot.png
 frontend/*/printer.out
 .DS_STORE
+.scannerwork
+coverage.out
+test.out

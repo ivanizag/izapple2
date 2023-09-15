@@ -99,8 +99,8 @@ func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
 			Slot card pins to SN74LS259 mapping:
 				slot_address[0] => latch_oe2_n
 		*/
-		register_output_enable_neg := (address & 1) != 0
-		if !register_output_enable_neg {
+		registerOutputEnableNeg := (address & 1) != 0
+		if !registerOutputEnableNeg {
 			return c.register
 		} else {
 			return 33 // Floating
