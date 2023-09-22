@@ -126,7 +126,7 @@ func (a *Apple2) AddDisk2Sequencer(slot int, diskImage, diskBImage string, track
 	}
 
 	if diskBImage != "" {
-		err := c.drive[0].insertDiskette(diskBImage)
+		err := c.drive[1].insertDiskette(diskBImage)
 		if err != nil {
 			return err
 		}
