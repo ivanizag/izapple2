@@ -94,20 +94,19 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 			drive.trackStep = moveDriveStepper(drive.phases, drive.trackStep)
 
 			if c.trackTracer != nil {
-				c.trackTracer.traceTrack(drive.trackStep)
+				c.trackTracer.traceTrack(drive.trackStep, c.slot, c.selected)
 			}
 
 			return c.dataLatch // All even addresses return the last dataLatch
 		}, fmt.Sprintf("PHASE%vOFF", phase))
 
-		c.addCardSoftSwitchR((phase<<1)+1, func() uint8 {
-			// Update magnets and position
+		c.addCardSoftSwitchR((phase<<1)+1, func() uint8 { // Update magnets and position
 			drive := &c.drive[c.selected]
 			drive.phases |= (1 << phase)
 			drive.trackStep = moveDriveStepper(drive.phases, drive.trackStep)
 
 			if c.trackTracer != nil {
-				c.trackTracer.traceTrack(drive.trackStep)
+				c.trackTracer.traceTrack(drive.trackStep, slot, c.selected)
 			}
 
 			return 0

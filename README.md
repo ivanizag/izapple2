@@ -199,6 +199,10 @@ Only valid on SDL mode
         rom file for the disk drive controller (default "<internal>/DISK2.rom")
   -diskb string
         file to load on the second disk drive
+  -diskc string
+        file to load on the third disk drive, slot 5
+  -diskd string
+        file to load on the fourth disk drive, slot 5
   -fastChipSlot int
         slot for the FASTChip accelerator card, -1 for none (default 3)
   -forceCaps
@@ -259,6 +263,8 @@ Only valid on SDL mode
         dump to the console the sofswitches calls
   -traceSSReg
         dump to the console the sofswitch registrations
+  -traceTracks
+        dump to the console the disk tracks changes
   -vidHDSlot int
         slot for the VidHD card, only for //e models. -1 for none (default 2)
   -videxCardSlot int

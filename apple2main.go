@@ -24,6 +24,14 @@ func MainApple() *Apple2 {
 		"diskb",
 		"",
 		"file to load on the second disk drive")
+	diskCImage := flag.String(
+		"diskc",
+		"",
+		"file to load on the third disk drive, slot 5")
+	diskDImage := flag.String(
+		"diskd",
+		"",
+		"file to load on the fourth disk drive, slot 5")
 	hardDiskImage := flag.String(
 		"hd",
 		"",
@@ -136,6 +144,10 @@ func MainApple() *Apple2 {
 		"traceSP",
 		false,
 		"dump to the console the smarport commands")
+	traceTracks := flag.Bool(
+		"traceTracks",
+		false,
+		"dump to the console the disk tracks changes")
 	model := flag.String(
 		"model",
 		"2enh",
@@ -267,10 +279,27 @@ func MainApple() *Apple2 {
 		a.AddSwyftCard()
 	}
 
+	var trackTracer trackTracer
+	if *traceTracks {
+		trackTracer = makeTrackTracerLogger()
+	}
+
 	if *smartPortImage != "" {
 		err := a.AddSmartPortDisk(5, *smartPortImage, *traceHD, *traceSP)
 		if err != nil {
 			panic(err)
+		}
+	} else if *diskCImage != "" || *diskDImage != "" {
+		if *sequencerDisk2 {
+			err := a.AddDisk2Sequencer(5, *diskCImage, *diskDImage, trackTracer)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			err := a.AddDisk2(5, *diskCImage, *diskDImage, trackTracer)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 
@@ -283,12 +312,12 @@ func MainApple() *Apple2 {
 	}
 	if *disk2Slot > 0 {
 		if *sequencerDisk2 {
-			err := a.AddDisk2Sequencer(*disk2Slot, diskImageFinal, *diskBImage, nil)
+			err := a.AddDisk2Sequencer(*disk2Slot, diskImageFinal, *diskBImage, trackTracer)
 			if err != nil {
 				panic(err)
 			}
 		} else {
-			err := a.AddDisk2(*disk2Slot, diskImageFinal, *diskBImage, nil)
+			err := a.AddDisk2(*disk2Slot, diskImageFinal, *diskBImage, trackTracer)
 			if err != nil {
 				panic(err)
 			}

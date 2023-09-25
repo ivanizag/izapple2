@@ -48,7 +48,7 @@ func (d *cardDisk2SequencerDrive) enable(enabled bool) {
 	d.enabled = enabled
 }
 
-func (d *cardDisk2SequencerDrive) moveHead(q0, q1, q2, q3 bool, trackTracer trackTracer) {
+func (d *cardDisk2SequencerDrive) moveHead(q0, q1, q2, q3 bool, trackTracer trackTracer, slot int, driveNumber int) {
 	if !d.enabled {
 		return
 	}
@@ -60,7 +60,7 @@ func (d *cardDisk2SequencerDrive) moveHead(q0, q1, q2, q3 bool, trackTracer trac
 	d.currentQuarterTrack = moveDriveStepper(phases, d.currentQuarterTrack)
 
 	if trackTracer != nil {
-		trackTracer.traceTrack(d.currentQuarterTrack)
+		trackTracer.traceTrack(d.currentQuarterTrack, slot, driveNumber)
 	}
 }
 

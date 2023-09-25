@@ -178,14 +178,14 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 		q1 := c.q[1]
 		q2 := c.q[2]
 		q3 := c.q[3]
-		c.drive[0].moveHead(q0, q1, q2, q3, c.trackTracer)
-		c.drive[1].moveHead(q0, q1, q2, q3, c.trackTracer)
+		c.drive[0].moveHead(q0, q1, q2, q3, c.trackTracer, c.slot, 0)
+		c.drive[1].moveHead(q0, q1, q2, q3, c.trackTracer, c.slot, 1)
 	}
 
 	/*
 		The reading from the drive is converted to a pulse detecting
 		changes using Q3 and Q4 of the flip flop, combined with
-		the last quarter of the 74LS132 NAND.
+		the last quarter of the 74LS132 NAND.∫
 		The woz format provides the pulse directly and we won't emulate
 		this detection.
 	*/

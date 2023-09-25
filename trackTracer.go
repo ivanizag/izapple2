@@ -1,9 +1,26 @@
 package izapple2
 
+import "fmt"
+
 type trackTracer interface {
-	traceTrack(quarterTrack int)
+	traceTrack(quarterTrack int, slot int, drive int)
 }
 
+// ///////////////
+// TrackTracerLogger is a track tracer that logs to the console
+type trackTracerLogger struct {
+}
+
+func makeTrackTracerLogger() *trackTracerLogger {
+	return &trackTracerLogger{}
+}
+
+func (tt *trackTracerLogger) traceTrack(quarterTrack int, slot int, drive int) {
+	fmt.Printf("Slot %v, drive %v, track %v\n", slot, drive, quarterTrack)
+}
+
+// ///////////////
+// TrackTracerSummary is a track tracer that stores the track changes
 type trackTracerSummary struct {
 	quarterTracks []int
 }
@@ -14,7 +31,7 @@ func makeTrackTracerSummary() *trackTracerSummary {
 	return &tt
 }
 
-func (tt *trackTracerSummary) traceTrack(quarterTrack int) {
+func (tt *trackTracerSummary) traceTrack(quarterTrack int, _slot int, _drive int) {
 	if tt == nil {
 		return
 	}
