@@ -20,11 +20,12 @@ func newTracePascal(a *Apple2) *tracePascal {
 }
 
 /*
-  See:
-  	https://archive.org/details/Hyde_P-Source-A_Guide_to_the_APPLE_Pascal_System_1983/page/n415/mode/1up?view=theater
-  	https://archive.org/details/Apple_II_Pascal_1.2_Device_and_Interrupt_Support_Tools_Manual
+See:
 
-	Experimental. Not sure the paramters for DREAD and DWRITE are correct.
+	https://archive.org/details/Hyde_P-Source-A_Guide_to_the_APPLE_Pascal_System_1983/page/n415/mode/1up?view=theater
+	https://archive.org/details/Apple_II_Pascal_1.2_Device_and_Interrupt_Support_Tools_Manual
+
+Experimental. Not sure the paramters for DREAD and DWRITE are correct.
 */
 func (t *tracePascal) inspect() {
 	bios := uint16(t.a.mmu.physicalMainRAM.peek(pascalJvabfoldL)) +
@@ -207,5 +208,5 @@ func (t *tracePascal) inspectPerArchitectureGuide() {
 func (t *tracePascal) param(index uint8) uint16 {
 	_, sp := t.a.cpu.GetPCAndSP()
 	return uint16(t.a.mmu.Peek(0x100+uint16(sp+index))) +
-		uint16(t.a.mmu.Peek(0x100+uint16(sp+index+1)))<<8 - 2 // ??
+		uint16(t.a.mmu.Peek(0x100+uint16(sp+index+1)))<<8
 }
