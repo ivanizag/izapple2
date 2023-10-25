@@ -14,17 +14,20 @@ type panelDevices struct {
 func newPanelDevices(s *state) *panelDevices {
 	var pd panelDevices
 	pd.s = s
-	pd.w = container.NewVBox()
+	pd.w = container.NewMax()
+	c := container.NewVBox()
 
 	pd.joystick = newPanelJoystick()
-	pd.w.Add(pd.joystick.w)
+	c.Add(pd.joystick.w)
 
 	var cards = s.a.GetCards()
 	for i, card := range cards {
 		if card != nil && card.GetName() != "" {
-			pd.w.Add(newPanelCard(i, card).w)
+			c.Add(newPanelCard(i, card).w)
 		}
 	}
+
+	pd.w.Add(container.NewVScroll(c))
 
 	return &pd
 }
