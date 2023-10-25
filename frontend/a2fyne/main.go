@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 )
@@ -66,7 +67,7 @@ func fyneRun(s *state) {
 	display.ScaleMode = canvas.ImageScalePixels // Looks worst but loads less.
 	display.SetMinSize(fyne.NewSize(280, 192))
 
-	container := fyne.NewContainerWithLayout(
+	container := container.New(
 		layout.NewBorderLayout(nil, toolbar, nil, s.devices.w),
 		display, toolbar, s.devices.w,
 	)
