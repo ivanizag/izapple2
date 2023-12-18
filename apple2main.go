@@ -80,6 +80,10 @@ func MainApple() *Apple2 {
 		"printer",
 		1,
 		"slot for the Parallel Printer Interface. -1 for none")
+	brainBoard := flag.Int(
+		"brainBoardSlot",
+		-1,
+		"slot for the Brain Board II. -1 for none")
 	ramWorksKb := flag.Int(
 		"ramworks",
 		8192,
@@ -277,6 +281,9 @@ func MainApple() *Apple2 {
 			panic("SwyftCard available only on Apple IIe or better")
 		}
 		a.AddSwyftCard()
+	}
+	if *brainBoard > 0 {
+		a.AddBrainBoardII(*brainBoard)
 	}
 
 	var trackTracer trackTracer

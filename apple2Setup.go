@@ -213,6 +213,11 @@ func (a *Apple2) AddSwyftCard() {
 	a.insertCard(c, 3)
 }
 
+// AddBrainBoardII inserts a Brain Board II card
+func (a *Apple2) AddBrainBoardII(slot int) {
+	a.insertCard(NewCardBrainBoardII(), slot)
+}
+
 // AddRGBCard inserts an RBG option to the Apple IIe 80 col 64KB card
 func (a *Apple2) AddRGBCard() {
 	setupRGBCard(a)
