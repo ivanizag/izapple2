@@ -9,17 +9,24 @@ type apple2Tester struct {
 	terminateCondition func(a *Apple2) bool
 }
 
-func makeApple2Tester(model string) *apple2Tester {
-	a := newApple2()
-	a.setup(0, true) // Full speed
-	initModel(a, model, defaultInternal, defaultInternal)
-
-	a.AddLanguageCard(0)
+func makeApple2Tester(model string, overrides *configuration) (*apple2Tester, error) {
+	config, err := getConfigurationFromModel(model, overrides)
+	if err != nil {
+		return nil, err
+	}
+	config.set(confSpeed, "full")
+	a, err := configure(config)
+	if err != nil {
+		return nil, err
+	}
 
 	var at apple2Tester
-	at.a = a
 	a.addTracer(&at)
-	return &at
+	return &at, nil
+}
+
+func (at *apple2Tester) connect(a *Apple2) {
+	at.a = a
 }
 
 func (at *apple2Tester) inspect() {

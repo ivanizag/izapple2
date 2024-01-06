@@ -40,18 +40,19 @@ func (c *cardBase) reset() {
 	// nothing
 }
 
-func (c *cardBase) loadRomFromResource(resource string) {
+func (c *cardBase) loadRomFromResource(resource string) error {
 	data, _, err := LoadResource(resource)
 	if err != nil {
 		// The resource should be internal and never fail
-		panic(err)
+		return err
 	}
 	c.loadRom(data)
+	return nil
 }
 
 func (c *cardBase) loadRom(data []uint8) {
 	if c.a != nil {
-		panic("Assert failed. Rom must be loaded before inserting the card in the slot")
+		panic("Assert failed. ROM must be loaded before inserting the card in the slot")
 	}
 	if len(data) == 0x100 {
 		// Just 256 bytes in Cs00

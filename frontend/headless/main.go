@@ -14,7 +14,10 @@ import (
 )
 
 func main() {
-	a := izapple2.MainApple()
+	a, err := izapple2.CreateConfiguredApple()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
 	fe := &headLessFrontend{}
 	fe.keyChannel = make(chan uint8, 200)
 	a.SetKeyboardProvider(fe)

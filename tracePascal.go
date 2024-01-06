@@ -12,11 +12,14 @@ const (
 	pascalJvabfoldH uint16 = 0x00ed // Points to the BIOS entry points
 )
 
-func newTracePascal(a *Apple2) *tracePascal {
+func newTracePascal() *tracePascal {
 	var t tracePascal
-	t.a = a
 	t.skipConsole = true
 	return &t
+}
+
+func (t *tracePascal) connect(a *Apple2) {
+	t.a = a
 }
 
 /*

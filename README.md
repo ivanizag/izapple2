@@ -186,93 +186,53 @@ Only valid on SDL mode
 ### Command line options
 
 ```terminal
-  -brainBoardSlot int
-        slot for the Brain Board II. -1 for none (default -1)
-  -charRom string
-        rom file for the character generator (default "<default>")
-  -consoleCardSlot int
-    	  slot for the host console card. -1 for none (default -1)
-  -disk string
-        file to load on the first disk drive (default "<internal>/dos33.dsk")
-  -disk2Slot int
-        slot for the disk driver. -1 for none. (default 6)
-  -disk35 string
-        file to load on the SmartPort disk (slot 5)
-  -diskRom string
-        rom file for the disk drive controller (default "<internal>/DISK2.rom")
-  -diskb string
-        file to load on the second disk drive
-  -diskc string
-        file to load on the third disk drive, slot 5
-  -diskd string
-        file to load on the fourth disk drive, slot 5
-  -fastChipSlot int
-        slot for the FASTChip accelerator card, -1 for none (default 3)
+Usage: izapple [file]
+  file
+    	path to image to use on the boot device
+  -charrom string
+    	rom file for the character generator (default "<internal>/Apple IIe Video Enhanced.bin")
+  -cpu string
+    	cpu type, can be '6502' or '65c02' (default "65c02")
   -forceCaps
-        force all letters to be uppercased (no need for caps lock!)
-  -fastDisk
-        set fast mode when the disks are spinning (default true)
-  -hd string
-        file to load on the boot hard disk
-  -hdSlot int
-        slot for the hard drive if present. -1 for none. (default -1)
-  -languageCardSlot int
-        slot for the 16kb language card. -1 for none
-  -memoryExpSlot int
-        slot for the Memory Expansion card with 1GB. -1 for none (default -1)
-  -mhz float
-        cpu speed in Mhz, use 0 for full speed. Use F5 to toggle. (default 1.0227142857142857)
+    	force all letters to be uppercased (no need for caps lock!)
   -model string
-        set base model. Models available 2plus, 2e, 2enh, base64a (default "2enh")
-  -mouseCardSlot int
-    	  slot for the Mouse card. -1 for none (default 4)
-  -nsc int
-        add a DS1216 No-Slot-Clock on the main ROM (use 0) or a slot ROM. -1 for none (default -1)
-  -panicSS
-        panic if a not implemented softswitch is used
-  -printer int
-        slot for the Parallel Printer Interface. -1 for none (default 1)
+    	set base model (default "2enh")
+  -nsc string
+    	add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM (default "none")
   -profile
-        generate profile trace to analyse with pprof
-  -ramworks int
-        memory to use with RAMWorks card, 0 for no card, max is 16384 (default 8192)
+    	generate profile trace to analyse with pprof
+  -ramworks string
+    	memory to use with RAMWorks card, max is 16384 (default "none")
   -rgb
-        emulate the RGB modes of the 80col RGB card for DHGR (default true)
+    	emulate the RGB modes of the 80col RGB card for DHGR
   -rom string
-        main rom file (default "<default>")
+    	main rom file (default "<internal>/Apple2e_Enhanced.rom")
   -romx
-        emulate a RomX
-  -saturnCardSlot int
-        slot for the 256kb Saturn card. -1 for none (default -1)
-  -sequencer
-        use the sequencer based Disk II card
-  -swyftCard
-        activate a Swyft Card in slot 3. Load the tutorial disk if none provided
-  -thunderClockCardSlot int
-        slot for the ThunderClock Plus card. -1 for none (default 4)
-  -traceBBC
-        trace BBC MOS API calls used with Applecorn, skip console I/O calls
-  -traceBBCFull
-        trace BBC MOS API calls used with Applecorn
-  -traceCpu
-        dump to the console the CPU execution. Use F11 to toggle.
-  -traceHD
-        dump to the console the hd/smartPort commands
-  -traceMLI
-        dump to the console the calls to ProDOS machine language interface calls to $BF00
-  -tracePascal
-        dump to the console the calls to the Apple Pascal BIOS
-  -traceSS
-        dump to the console the sofswitches calls
-  -traceSSReg
-        dump to the console the sofswitch registrations
-  -traceTracks
-        dump to the console the disk tracks changes
-  -vidHDSlot int
-        slot for the VidHD card, only for //e models. -1 for none (default 2)
-  -videxCardSlot int
-    	  slot for the Videx Videoterm 80 columns card. For pre-2e models. -1 for none (default 3)
+    	emulate a RomX
+  -s0 string
+    	slot 0 configuration. (default "language")
+  -s1 string
+    	slot 1 configuration. (default "parallel")
+  -s2 string
+    	slot 2 configuration. (default "vidhd")
+  -s3 string
+    	slot 3 configuration. (default "fastchip")
+  -s4 string
+    	slot 4 configuration. (default "mouse")
+  -s5 string
+    	slot 5 configuration. (default "empty")
+  -s6 string
+    	slot 6 configuration. (default "diskii,disk1=<internal>/dos33.dsk")
+  -s7 string
+    	slot 7 configuration. (default "empty")
+  -speed string
+    	cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber (default "ntsc")
+  -trace string
+    	trace CPU execution with one or more comma separated tracers (default "none")
 
+The available pre configured models are: swyft, 2e, 2enh, 2plus, base64a.
+The available cards are: brainboard, diskii, memexp, mouse, swyftcard, inout, smartport, thunderclock, fujinet, videx, vidhd, diskiiseq, fastchip, language, softswitchlogger, parallel, saturn.
+The available tracers are: ucsd, cpu, ss, ssreg, panicSS, mos, mosfull, mli.
 
 ```
 

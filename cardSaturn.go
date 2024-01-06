@@ -16,11 +16,14 @@ type CardSaturn struct {
 	activeBlock uint8
 }
 
-// NewCardSaturn creates a new CardSaturn
-func NewCardSaturn() *CardSaturn {
-	var c CardSaturn
-	c.name = "Saturn 128KB Ram Card"
-	return &c
+func newCardSaturnBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "Saturn 128KB Ram Card",
+		description: "RAM card with 128Kb. It's like 8 language cards.",
+		buildFunc: func(params map[string]string) (Card, error) {
+			return &CardSaturn{}, nil
+		},
+	}
 }
 
 const (

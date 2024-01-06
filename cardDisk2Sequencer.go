@@ -37,6 +37,12 @@ type CardDisk2Sequencer struct {
 	trackTracer trackTracer
 }
 
+// Shared methods between both versions on the Disk II card
+type cardDisk2Shared interface {
+	//insertDiskette(drive int, ...)
+	setTrackTracer(tt trackTracer)
+}
+
 const (
 	disk2MotorOffDelay = uint64(2 * 1000 * 1000) // 2 Mhz cycles. Total 1 second.
 	disk2PulseCyles    = uint8(8)                // 8 cycles = 4ms * 2Mhz
@@ -49,21 +55,49 @@ const (
 	disk2CyclestoLoseSsync = 100000
 )
 
-// NewCardDisk2Sequencer creates a new CardDisk2Sequencer
-func NewCardDisk2Sequencer(trackTracer trackTracer) *CardDisk2Sequencer {
-	var c CardDisk2Sequencer
-	c.name = "Disk II"
-	c.trackTracer = trackTracer
-	c.loadRomFromResource("<internal>/DISK2.rom")
+func newCardDisk2SequencerBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "Disk II Sequencer",
+		description: "Disk II interface card emulating the Woz state machine",
+		defaultParams: &[]paramSpec{
+			{"disk1", "Diskette image for drive 1", ""},
+			{"disk2", "Diskette image for drive 2", ""},
+			{"tracktracer", "Trace how the disk head moves between tracks", "false"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardDisk2Sequencer
+			err := c.loadRomFromResource("<internal>/DISK2.rom")
+			if err != nil {
+				return nil, err
+			}
 
-	data, _, err := LoadResource("<internal>/DISK2P6.rom")
-	if err != nil {
-		// The resource should be internal and never fail
-		panic(err)
+			data, _, err := LoadResource("<internal>/DISK2P6.rom")
+			if err != nil {
+				return nil, err
+			}
+			c.p6ROM = data
+
+			disk1 := paramsGetString(params, "disk1")
+			if disk1 != "" {
+				err := c.drive[0].insertDiskette(disk1)
+				if err != nil {
+					return nil, err
+				}
+			}
+			disk2 := paramsGetString(params, "disk2")
+			if disk2 != "" {
+				err := c.drive[1].insertDiskette(disk2)
+				if err != nil {
+					return nil, err
+				}
+			}
+			trackTracer := paramsGetBool(params, "tracktracer")
+			if trackTracer {
+				c.trackTracer = makeTrackTracerLogger()
+			}
+			return &c, nil
+		},
 	}
-	c.p6ROM = data
-
-	return &c
 }
 
 // GetInfo returns card info
@@ -77,6 +111,10 @@ func (c *CardDisk2Sequencer) GetInfo() map[string]string {
 func (c *CardDisk2Sequencer) reset() {
 	// UtA2e 9-12, all switches forced to off
 	c.q = [8]bool{}
+}
+
+func (c *CardDisk2Sequencer) setTrackTracer(tt trackTracer) {
+	c.trackTracer = tt
 }
 
 func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {

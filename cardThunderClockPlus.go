@@ -25,15 +25,24 @@ uPD1990AC hookup:
 type CardThunderClockPlus struct {
 	cardBase
 	upd1990 component.MicroPD1990ac
-	//component.microPD1990ac
 }
 
-// NewCardThunderClockPlus creates a new CardThunderClockPlus
-func NewCardThunderClockPlus() *CardThunderClockPlus {
-	var c CardThunderClockPlus
-	c.name = "ThunderClock+ Card"
-	c.loadRomFromResource("<internal>/ThunderclockPlusROM.bin")
-	return &c
+func newCardThunderClockPlusBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "ThunderClock+ Card",
+		description: "Clock card",
+		defaultParams: &[]paramSpec{
+			{"rom", "ROM file to load", "<internal>/ThunderclockPlusROM.bin"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardThunderClockPlus
+			err := c.loadRomFromResource("<internal>/ThunderclockPlusROM.bin")
+			if err != nil {
+				return nil, err
+			}
+			return &c, nil
+		},
+	}
 }
 
 func (c *CardThunderClockPlus) assign(a *Apple2, slot int) {

@@ -20,8 +20,8 @@ ROM. This permits the SwyftCard program to take over the system at
 power-on and run the SwyftCard program. (Please refer to the
 schematic.)
 
-The lM311 voltage comparator is connected to provide the power-on
-reset function. When the Apple lie is first turned on, the power-on
+The LM311 voltage comparator is connected to provide the power-on
+reset function. When the Apple lIe is first turned on, the power-on
 reset circuit resets the PAL, turning on the SwyftCard and disabling
 the Apple IIe internal ROM. The power-on reset circuit must be
 provided because the existing Apple IIe reset function is used by
@@ -53,6 +53,9 @@ Apple /Ie asserts the IINH' signal there will not be a bus contention.
 However, there will be a bus contention on the data bus if another card
 attempts to control the bus while the SwyftCard is active.
 
+The Cx00 rom is not used. The card is expected to be installed in
+slot 3 of an Apple IIe with the 80 column firmware already present.
+
 */
 
 // CardSwyft represents a Swyft card
@@ -62,25 +65,26 @@ type CardSwyft struct {
 	rom   []uint8
 }
 
-// NewCardSwyft creates a new CardSwyft
-func NewCardSwyft() *CardSwyft {
-	var c CardSwyft
-	c.name = "SwyftCard"
+func newCardSwyftBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "SwyftCard",
+		description: "Card with the ROM needed to run the Swyftcard word processing system. Must run on slot 3 only on Apple IIe.",
+		requiresIIe: true,
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardSwyft
 
-	// The Cx00 rom is not used. The card is expected to be installed in
-	// slot 3 of an Apple IIe with the 80 column firmware already present.
-	return &c
+			// Load main ROM replacement
+			data, _, err := LoadResource("<internal>/SwyftCard ROM.bin")
+			if err != nil {
+				return nil, err
+			}
+			c.rom = data
+			return &c, nil
+		},
+	}
 }
 
 func (c *CardSwyft) assign(a *Apple2, slot int) {
-	// Load main ROM replacement
-	data, _, err := LoadResource("<internal>/SwyftCard ROM.bin")
-	if err != nil {
-		// The resource should be internal and never fail
-		panic(err)
-	}
-	c.rom = data
-
 	c.addCardSoftSwitchRW(0, func() uint8 {
 		a.mmu.inhibitROM(c)
 		c.bank2 = false

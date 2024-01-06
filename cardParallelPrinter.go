@@ -15,24 +15,39 @@ See:
 // CardParallelPrinter represents a Parallel Printer Interface card
 type CardParallelPrinter struct {
 	cardBase
-	file *os.File
+	file  *os.File
+	ascii bool
 }
 
-// NewCardParallelPrinter creates a new CardParallelPrinter
-func NewCardParallelPrinter() *CardParallelPrinter {
-	var c CardParallelPrinter
-	c.name = "Parallel Printer Interface"
-	c.loadRomFromResource("<internal>/Apple II Parallel Printer Interface Card ROM fixed.bin")
-	return &c
+func newCardParallelPrinterBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "Parallel Printer Interface",
+		description: "Card to dump to a file what would be printed to a parallel printer.",
+		defaultParams: &[]paramSpec{
+			{"file", "File to store the printed code", "printer.out"},
+			{"ascii", "Remove the 7 bit. Useful for normal text printing, but breaks graphics printing ", "false"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardParallelPrinter
+			c.ascii = paramsGetBool(params, "ascii")
+			filepath := paramsGetPath(params, "file")
+			f, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				return nil, err
+			}
+			c.file = f
+
+			err = c.loadRomFromResource("<internal>/Apple II Parallel Printer Interface Card ROM fixed.bin")
+			if err != nil {
+				return nil, err
+			}
+
+			return &c, nil
+		},
+	}
 }
 
 func (c *CardParallelPrinter) assign(a *Apple2, slot int) {
-	f, err := os.OpenFile(printerFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	c.file = f
-
 	c.addCardSoftSwitchW(0, func(value uint8) {
 		c.printByte(value)
 	}, "PARALLELDEVW")
@@ -44,11 +59,10 @@ func (c *CardParallelPrinter) assign(a *Apple2, slot int) {
 	c.cardBase.assign(a, slot)
 }
 
-const printerFile = "printer.out"
-
 func (c *CardParallelPrinter) printByte(value uint8) {
-
-	// As text the MSB has to be removed, but if done, graphics modes won't work
-	//value = value & 0x7f // Remove the MSB bit
+	if c.ascii {
+		// As text the MSB has to be removed, but if done, graphics modes won't work
+		value = value & 0x7f // Remove the MSB bit
+	}
 	c.file.Write([]byte{value})
 }

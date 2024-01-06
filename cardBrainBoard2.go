@@ -45,25 +45,30 @@ type CardBrainBoardII struct {
 	rom      []uint8
 }
 
-// NewCardBrainBoardII creates a new CardBrainBoardII
-func NewCardBrainBoardII() *CardBrainBoardII {
-	var c CardBrainBoardII
-	c.name = "Brain Board II"
+func newCardBrainBoardIIBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "Brain Board II",
+		description: "Firmware card for Apple II. It has 4 banks and can be used to boot wozaniam, Integer BASIC or other çustom ROMs.",
+		defaultParams: &[]paramSpec{
+			{"rom", "ROM file to load", "<internal>/ApplesoftInteger.BIN"},
+			{"dip2", "Use the upper half of the ROM", "true"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardBrainBoardII
+			c.highBank = false // Start with wozaniam by default
+			c.dip2 = paramsGetBool(params, "dip2")
 
-	c.highBank = false // Start with wozaniam by default
-	c.dip2 = true      // Use the wozaniam+integer banks
-
-	// The ROM has:xaa-wozaniam xab-applesoft xac-wozaniam xad-integer
-	data, _, err := LoadResource("<internal>/ApplesoftInteger.BIN")
-	if err != nil {
-		// The resource should be internal and never fail
-		panic(err)
+			// The ROM has:xaa-wozaniam xab-applesoft xac-wozaniam xad-integer
+			romFile := paramsGetPath(params, "rom")
+			data, _, err := LoadResource(romFile)
+			if err != nil {
+				return nil, err
+			}
+			c.rom = data
+			c.romCxxx = &c
+			return &c, nil
+		},
 	}
-	c.rom = data
-
-	// The ROM of the card is paged as the rest of the ROMs
-	c.romCxxx = &c
-	return &c
 }
 
 func (c *CardBrainBoardII) assign(a *Apple2, slot int) {

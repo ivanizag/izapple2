@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"errors"
+	"fmt"
 )
 
 /*
@@ -33,14 +34,10 @@ const (
 )
 
 // NewCharacterGenerator instantiates a new Character Generator with the rom on the file given
-func newCharacterGenerator(filename string, order charColumnMap, isApple2e bool) (*CharacterGenerator, error) {
+func newCharacterGenerator(filename string, order charColumnMap, pageSize int) (*CharacterGenerator, error) {
 	var cg CharacterGenerator
 	cg.columnMap = order
-	cg.pageSize = charGenPageSize2Plus
-	if isApple2e {
-		cg.pageSize = charGenPageSize2E
-	}
-
+	cg.pageSize = pageSize
 	err := cg.load(filename)
 	if err != nil {
 		return nil, err
@@ -81,4 +78,30 @@ func (cg *CharacterGenerator) getPixel(char uint8, row int, column int) bool {
 	bit := cg.columnMap(column)
 	value := bits >> uint(bit) & 1
 	return value == 1
+}
+
+func setupCharactedGenerator(a *Apple2, board string, charRomFile string) error {
+	var charGenMap charColumnMap
+	initialCharGenPage := 0
+	pageSize := charGenPageSize2Plus
+	switch board {
+	case "2plus":
+		charGenMap = charGenColumnsMap2Plus
+	case "2e":
+		charGenMap = charGenColumnsMap2e
+		pageSize = charGenPageSize2E
+	case "base64a":
+		charGenMap = charGenColumnsMapBase64a
+		initialCharGenPage = 1
+	default:
+		return fmt.Errorf("board %s not supported it must be '2plus', '2e' or 'base64a'", board)
+	}
+
+	cg, err := newCharacterGenerator(charRomFile, charGenMap, pageSize)
+	if err != nil {
+		return err
+	}
+	cg.setPage(initialCharGenPage)
+	a.cg = cg
+	return nil
 }

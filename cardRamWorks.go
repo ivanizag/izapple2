@@ -1,5 +1,10 @@
 package izapple2
 
+import (
+	"fmt"
+	"strconv"
+)
+
 /*
 RAMWorks style card on the Apple IIe aus slot.
 	https://patents.google.com/patent/US4601018
@@ -11,8 +16,16 @@ Diagnostics disks:
 It's is like the extra 64kb on an Apple IIe 80col 64kb card, but with up to 256 banks
 */
 
-func setupRAMWorksCard(a *Apple2, banks int) {
-	a.mmu.initExtendedRAM(banks)
+func setupRAMWorksCard(a *Apple2, sizeArg string) error {
+	size, err := strconv.Atoi(sizeArg)
+	if err != nil {
+		return fmt.Errorf("invalid RamWorks card RAM size: %s", sizeArg)
+	}
+	if size%64 != 0 {
+		return fmt.Errorf("the Ramworks size must be a multiple of 64, %v is not", size)
+	}
+
+	a.mmu.initExtendedRAM(size / 64)
 
 	ssr := func() uint8 {
 		return a.mmu.extendedRAMBlock
@@ -31,4 +44,6 @@ func setupRAMWorksCard(a *Apple2, banks int) {
 	a.io.addSoftSwitchW(0x73, ssw, "RAMWORKSW")
 	a.io.addSoftSwitchW(0x75, ssw, "RAMWORKSW")
 	a.io.addSoftSwitchW(0x77, ssw, "RAMWORKSW")
+
+	return nil
 }

@@ -26,11 +26,14 @@ type CardFastChip struct {
 	configRegister uint8
 }
 
-// NewCardFastChip creates a new CardFastChip
-func NewCardFastChip() *CardFastChip {
-	var c CardFastChip
-	c.name = "FASTChip IIe Card - limited"
-	return &c
+func newCardFastChipBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "FASTChip IIe Card - limited",
+		description: "Accelerator card for Apple IIe. Limited support.",
+		buildFunc: func(params map[string]string) (Card, error) {
+			return &CardFastChip{}, nil
+		},
+	}
 }
 
 const (

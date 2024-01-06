@@ -5,18 +5,24 @@ import (
 )
 
 func testWoz(t *testing.T, sequencer bool, file string, expectedTracks []int, cycleLimit uint64) {
-	at := makeApple2Tester("2enh")
-	tt := makeTrackTracerSummary()
 
-	var err error
+	overrides := newConfiguration()
 	if sequencer {
-		err = at.a.AddDisk2Sequencer(6, "woz_test_images/"+file, "", tt)
+		overrides.set(confS6, "diskiiseq,disk1=\"woz_test_images/"+file+"\"")
 	} else {
-		err = at.a.AddDisk2(6, "woz_test_images/"+file, "", tt)
+		overrides.set(confS6, "diskii,disk1=\"woz_test_images/"+file+"\"")
 	}
+	at, err := makeApple2Tester("2enh", overrides)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
+
+	diskIIcard, ok := at.a.cards[6].(cardDisk2Shared)
+	if !ok {
+		t.Fatal("Not a disk II card")
+	}
+	tt := makeTrackTracerSummary()
+	diskIIcard.setTrackTracer(tt)
 
 	expectedLen := len(expectedTracks)
 

@@ -28,6 +28,7 @@ type CardDisk2 struct {
 	selected int  // q5, Only 0 and 1 supported
 	power    bool // q4
 	drive    [2]cardDisk2Drive
+	fastMode bool
 
 	dataLatch uint8
 	q6        bool
@@ -47,13 +48,42 @@ type cardDisk2Drive struct {
 	trackStep int   // Stepmotor for tracks position. 4 steps per track
 }
 
-// NewCardDisk2 creates a new CardDisk2
-func NewCardDisk2(trackTracer trackTracer) *CardDisk2 {
-	var c CardDisk2
-	c.name = "Disk II"
-	c.trackTracer = trackTracer
-	c.loadRomFromResource("<internal>/DISK2.rom")
-	return &c
+func newCardDisk2Builder() *cardBuilder {
+	return &cardBuilder{
+		name:        "Disk II",
+		description: "Disk II interface card",
+		defaultParams: &[]paramSpec{
+			{"disk1", "Diskette image for drive 1", ""},
+			{"disk2", "Diskette image for drive 2", ""},
+			{"tracktracer", "Trace how the disk head moves between tracks", "false"},
+			{"fast", "Enable CPU burst when accessing the disk", "true"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardDisk2
+			c.loadRomFromResource("<internal>/DISK2.rom")
+
+			disk1 := paramsGetPath(params, "disk1")
+			if disk1 != "" {
+				err := c.drive[0].insertDiskette(disk1)
+				if err != nil {
+					return nil, err
+				}
+			}
+			disk2 := paramsGetPath(params, "disk2")
+			if disk2 != "" {
+				err := c.drive[1].insertDiskette(disk2)
+				if err != nil {
+					return nil, err
+				}
+			}
+			trackTracer := paramsGetBool(params, "tracktracer")
+			if trackTracer {
+				c.trackTracer = makeTrackTracerLogger()
+			}
+			c.fastMode = paramsGetBool(params, "fast")
+			return &c, nil
+		},
+	}
 }
 
 // GetInfo returns smartPort info
@@ -78,6 +108,10 @@ func (c *CardDisk2) reset() {
 	c.selected = 0        // q5
 	c.q6 = false
 	c.q7 = false
+}
+
+func (c *CardDisk2) setTrackTracer(tt trackTracer) {
+	c.trackTracer = tt
 }
 
 func (c *CardDisk2) assign(a *Apple2, slot int) {
@@ -151,7 +185,9 @@ func (c *CardDisk2) softSwitchQ4(value bool) {
 	if !value && c.power {
 		// Turn off
 		c.power = false
-		c.a.ReleaseFastMode()
+		if c.fastMode {
+			c.a.ReleaseFastMode()
+		}
 		drive := &c.drive[c.selected]
 		if drive.diskette != nil {
 			drive.diskette.PowerOff(c.a.cpu.GetCycles())
@@ -159,7 +195,9 @@ func (c *CardDisk2) softSwitchQ4(value bool) {
 	} else if value && !c.power {
 		// Turn on
 		c.power = true
-		c.a.RequestFastMode()
+		if c.fastMode {
+			c.a.RequestFastMode()
+		}
 		drive := &c.drive[c.selected]
 		if drive.diskette != nil {
 			drive.diskette.PowerOn(c.a.cpu.GetCycles())

@@ -11,7 +11,11 @@ import (
 )
 
 func main() {
-	a := apple2.MainApple()
+	a, err := apple2.CreateConfiguredApple()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+
 	fe := &ansiConsoleFrontend{}
 	a.SetKeyboardProvider(fe)
 	go fe.textModeGoRoutine(a)

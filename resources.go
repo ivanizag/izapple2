@@ -34,6 +34,11 @@ func isHTTPResource(filename string) bool {
 
 // LoadResource loads in memory a file from the filesystem, http or embedded
 func LoadResource(filename string) ([]uint8, bool, error) {
+	// Remove quotes if surrounded by them
+	if strings.HasPrefix(filename, "\"") && strings.HasSuffix(filename, "\"") {
+		filename = filename[1 : len(filename)-1]
+	}
+
 	var writeable bool
 	var file io.Reader
 	if isInternalResource(filename) {

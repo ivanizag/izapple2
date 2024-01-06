@@ -13,7 +13,10 @@ import (
 )
 
 func main() {
-	a := izapple2.MainApple()
+	a, err := izapple2.CreateConfiguredApple()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
 	if a != nil {
 		if a.IsProfiling() {
 			// See the log with:

@@ -1,6 +1,9 @@
 package izapple2
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -197,4 +200,23 @@ func (nsc *noSlotClockDS1216) loadTime() {
 	register += centisecond % 10
 
 	nsc.timeCapture = register
+}
+
+func setupNoSlotClock(a *Apple2, arg string) error {
+	if arg == "main" {
+		nsc := newNoSlotClockDS1216(a, a.mmu.physicalROM[0])
+		a.mmu.physicalROM[0] = nsc
+	} else {
+		slot, err := strconv.ParseUint(arg, 10, 8)
+		if err != nil || slot < 1 || slot > 7 {
+			return errors.New("invalid slot for the no slot clock, use 'none', 'main' or a slot number from 1 to 7")
+		}
+		cardRom := a.mmu.cardsROM[slot]
+		if cardRom == nil {
+			return fmt.Errorf("no ROM available on slot %d to add a no slot clock", slot)
+		}
+		nsc := newNoSlotClockDS1216(a, cardRom)
+		a.mmu.cardsROM[slot] = nsc
+	}
+	return nil
 }

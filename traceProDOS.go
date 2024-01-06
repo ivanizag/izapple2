@@ -26,11 +26,14 @@ const (
 	deviceDateTimeVector uint16 = 0xbf07 // DATETIME+1
 )
 
-func newTraceProDOS(a *Apple2) *traceProDOS {
+func newTraceProDOS() *traceProDOS {
 	var t traceProDOS
-	t.a = a
 	t.deviceDrivers = make([]uint16, 0)
 	return &t
+}
+
+func (t *traceProDOS) connect(a *Apple2) {
+	t.a = a
 }
 
 func (t *traceProDOS) inspect() {

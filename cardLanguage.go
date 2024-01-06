@@ -35,11 +35,14 @@ type CardLanguage struct {
 	altBank    bool // false is bank1, true is bank2
 }
 
-// NewCardLanguage creates a new CardLanguage
-func NewCardLanguage() *CardLanguage {
-	var c CardLanguage
-	c.name = "16KB Language Card"
-	return &c
+func newCardLanguageBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "16 KB Language Card",
+		description: "Language card with 16 extra KB for the Apple ][ and ][+",
+		buildFunc: func(params map[string]string) (Card, error) {
+			return &CardLanguage{}, nil
+		},
+	}
 }
 
 const (

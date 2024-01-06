@@ -24,11 +24,14 @@ type CardInOut struct {
 	reader *bufio.Reader
 }
 
-// NewCardInOut creates CardInOut
-func NewCardInOut() *CardInOut {
-	var c CardInOut
-	c.name = "Card to test I/O"
-	return &c
+func newCardInOutBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "InOut test card",
+		description: "Card to test I/O",
+		buildFunc: func(params map[string]string) (Card, error) {
+			return &CardInOut{}, nil
+		},
+	}
 }
 
 func (c *CardInOut) assign(a *Apple2, slot int) {

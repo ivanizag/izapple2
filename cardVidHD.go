@@ -13,12 +13,16 @@ type CardVidHD struct {
 	cardBase
 }
 
-// NewCardVidHD creates a new VidHD card
-func NewCardVidHD() *CardVidHD {
-	var c CardVidHD
-	c.name = "VidHD Card - limited"
-	c.loadRom(buildVidHDRom())
-	return &c
+func newCardVidHDBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "VidHD Card - limited",
+		description: "Firmware signature of the VidHD card to trick Total Replay to use the GS modes.",
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardVidHD
+			c.loadRom(buildVidHDRom())
+			return &c, nil
+		},
+	}
 }
 
 func buildVidHDRom() []uint8 {

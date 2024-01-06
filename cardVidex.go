@@ -30,19 +30,32 @@ type CardVidex struct {
 	charGen  []uint8
 }
 
-// NewCardVidex creates a new CardVidex
-func NewCardVidex() *CardVidex {
-	var c CardVidex
-	c.name = "Videx 80 col Card"
+func newCardVidexBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "Videx 80 columns Card",
+		description: "Videx compatible 80 columns card",
+		defaultParams: &[]paramSpec{
+			{"rom", "ROM file to load", "<internal>/Videx Videoterm ROM 2.4.bin"},
+			{"charmap", "Character map file to load", "<internal>/80ColumnP110.BIN"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardVidex
 
-	// The C800 area has ROM and RAM
-	c.loadRomFromResource("<internal>/Videx Videoterm ROM 2.4.bin")
-	c.upperROM = c.romC8xx
-	c.romC8xx = &c
+			// The C800 area has ROM and RAM
+			err := c.loadRomFromResource("<internal>/Videx Videoterm ROM 2.4.bin")
+			if err != nil {
+				return nil, err
+			}
+			c.upperROM = c.romC8xx
+			c.romC8xx = &c
 
-	// The resource should be internal and never fail
-	c.loadCharacterMap("<internal>/80ColumnP110.BIN")
-	return &c
+			err = c.loadCharacterMap(paramsGetPath(params, "charmap"))
+			if err != nil {
+				return nil, err
+			}
+			return &c, nil
+		},
+	}
 }
 
 func (c *CardVidex) loadCharacterMap(filename string) error {
@@ -88,6 +101,7 @@ func (c *CardVidex) assign(a *Apple2, slot int) {
 	}
 
 	c.cardBase.assign(a, slot)
+	a.softVideoSwitch = NewSoftVideoSwitch(c)
 }
 
 const videxRomLimit = uint16(0xcc00)

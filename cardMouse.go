@@ -33,14 +33,21 @@ type CardMouse struct {
 	trace bool
 }
 
-// NewCardMouse creates a new SmartPort card
-func NewCardMouse() *CardMouse {
-	var c CardMouse
-	c.name = "Mouse Card"
-	c.trace = false
-	c.maxX = 0x3ff
-	c.maxY = 0x3ff
-	return &c
+func newCardMouseBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "Mouse Card",
+		description: "Mouse card implementation. Does not emulate a real card, only the firmware behaviour.",
+		defaultParams: &[]paramSpec{
+			{"trace", "Trace accesses to the card", "false"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			return &CardMouse{
+				maxX:  0x3ff,
+				maxY:  0x3ff,
+				trace: paramsGetBool(params, "trace"),
+			}, nil
+		},
+	}
 }
 
 const (

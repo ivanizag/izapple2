@@ -35,9 +35,8 @@ const (
 	applecornRomTitle       uint16 = 0x8009
 )
 
-func newTraceApplecorn(a *Apple2, skipConsole bool) *traceApplecorn {
+func newTraceApplecorn(skipConsole bool) *traceApplecorn {
 	var t traceApplecorn
-	t.a = a
 	t.skipConsole = skipConsole
 	t.osbyteNames[0x02] = "select input device"
 	t.osbyteNames[0x03] = "select output device"
@@ -55,6 +54,10 @@ func newTraceApplecorn(a *Apple2, skipConsole bool) *traceApplecorn {
 	t.osbyteNames[0x8b] = "set filing system options"
 	t.osbyteNames[0xDA] = "clear VDU queue"
 	return &t
+}
+
+func (t *traceApplecorn) connect(a *Apple2) {
+	t.a = a
 }
 
 func (t *traceApplecorn) inspect() {

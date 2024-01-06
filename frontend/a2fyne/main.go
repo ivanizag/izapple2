@@ -40,7 +40,11 @@ func (s *state) DefaultTitle() string {
 
 func main() {
 	var s state
-	s.a = izapple2.MainApple()
+	var err error
+	s.a, err = izapple2.CreateConfiguredApple()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
 	if s.a != nil {
 		if s.a.IsProfiling() {
 			// See the log with:

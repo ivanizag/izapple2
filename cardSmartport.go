@@ -27,11 +27,64 @@ type CardSmartPort struct {
 	trace     bool
 }
 
-// NewCardSmartPort creates a new SmartPort card
-func NewCardSmartPort() *CardSmartPort {
-	var c CardSmartPort
-	c.name = "SmartPort Card"
-	return &c
+func newCardSmartPortStorageBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "SmartPort",
+		description: "SmartPort interface card",
+		defaultParams: &[]paramSpec{
+			{"image1", "Disk image for unit 1", ""},
+			{"image2", "Disk image for unit 2", ""},
+			{"image3", "Disk image for unit 3", ""},
+			{"image4", "Disk image for unit 4", ""},
+			{"image5", "Disk image for unit 5", ""},
+			{"image6", "Disk image for unit 6", ""},
+			{"image7", "Disk image for unit 7", ""},
+			{"image8", "Disk image for unit 8", ""},
+			{"tracesp", "Trace SmartPort calls", "false"},
+			{"tracehd", "Trace image accesses", "false"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardSmartPort
+			c.trace = paramsGetBool(params, "tracesp")
+			traceHD := paramsGetBool(params, "tracehd")
+			for i := 1; i <= 8; i++ {
+				image := paramsGetPath(params, "image"+strconv.Itoa(i))
+				if image != "" {
+					err := c.LoadImage(image, traceHD)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+			return &c, nil
+		},
+	}
+}
+
+func newCardSmartPortFujinetBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "Fujinet",
+		description: "SmartPort interface card hosting the Fujinet",
+		defaultParams: &[]paramSpec{
+			{"tracesp", "Trace SmartPort calls", "false"},
+			{"tracenet", "Trace on the network device", "false"},
+			{"traceclock", "Trace on the clock device", "false"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardSmartPort
+			c.trace = paramsGetBool(params, "tracesp")
+
+			net := NewSmartPortFujinetNetwork(&c)
+			net.trace = paramsGetBool(params, "tracenet")
+			c.AddDevice(net)
+
+			clock := NewSmartPortFujinetClock(&c)
+			clock.trace = paramsGetBool(params, "traceclock")
+			c.AddDevice(clock)
+
+			return &c, nil
+		},
+	}
 }
 
 // GetInfo returns smartPort info
@@ -95,7 +148,7 @@ func (c *CardSmartPort) assign(a *Apple2, slot int) {
 	}, "HDBLOCKSLO")
 	c.addCardSoftSwitchR(2, func() uint8 {
 		// Blocks available, high byte
-		return uint8(c.hardDiskBlocks)
+		return uint8(c.hardDiskBlocks >> 8)
 	}, "HDBLOCKHI")
 
 	c.addCardSoftSwitchR(3, func() uint8 {

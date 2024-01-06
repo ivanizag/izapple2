@@ -7,9 +7,10 @@ import (
 )
 
 /*
-	See:
-		https://mrob.com/pub/xapple2/colors.html
-		https://archive.org/details/IIgs_2523063_Master_Color_Values
+See:
+
+	https://mrob.com/pub/xapple2/colors.html
+	https://archive.org/details/IIgs_2523063_Master_Color_Values
 */
 var ntscColorMap = [16]color.Color{
 	color.RGBA{0, 0, 0, 255},       // Black

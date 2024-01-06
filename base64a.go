@@ -2,20 +2,11 @@ package izapple2
 
 import (
 	"fmt"
-
-	"github.com/ivanizag/iz6502"
 )
 
 /*
 	Copam BASE64A adaptation.
 */
-
-func setBase64a(a *Apple2) {
-	a.Name = "Base 64A"
-	a.cpu = iz6502.NewNMOS6502(a.mmu)
-	addApple2SoftSwitches(a.io)
-	addBase64aSoftSwitches(a.io)
-}
 
 const (
 	// There are 6 ROM chips. Each can have 4Kb or 8Kb. They can fill

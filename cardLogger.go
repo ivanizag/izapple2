@@ -13,11 +13,14 @@ type CardLogger struct {
 	cardBase
 }
 
-// NewCardLogger creates a new VidHD card
-func NewCardLogger() *CardLogger {
-	var c CardLogger
-	c.name = "Softswitch log card"
-	return &c
+func newCardLoggerBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "Softswitch logger card",
+		description: "Card to log softswitch accesses",
+		buildFunc: func(params map[string]string) (Card, error) {
+			return &CardLogger{}, nil
+		},
+	}
 }
 
 func (c *CardLogger) assign(a *Apple2, slot int) {
