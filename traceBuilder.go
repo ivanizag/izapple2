@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"fmt"
+	"strings"
 
 	"golang.org/x/exp/maps"
 )
@@ -72,6 +73,7 @@ func setupTracers(a *Apple2, paramString string) error {
 	tracerFactory := buildTracerFactory()
 	tracerNames := splitConfigurationString(paramString, ',')
 	for _, tracer := range tracerNames {
+		tracer = strings.ToLower(strings.TrimSpace(tracer))
 		if tracer == "none" {
 			continue
 		}

@@ -60,7 +60,10 @@ func newCardDisk2Builder() *cardBuilder {
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardDisk2
-			c.loadRomFromResource("<internal>/DISK2.rom")
+			err := c.loadRomFromResource("<internal>/DISK2.rom")
+			if err != nil {
+				return nil, err
+			}
 
 			disk1 := paramsGetPath(params, "disk1")
 			if disk1 != "" {

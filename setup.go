@@ -1,7 +1,6 @@
 package izapple2
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -136,13 +135,8 @@ func (a *Apple2) SetForceCaps(value bool) {
 	a.forceCaps = value
 }
 
-const (
-	apple2RomSize  = 12 * 1024
-	apple2eRomSize = 16 * 1024
-)
-
 func (a *Apple2) loadRom(filename string) error {
-	if a.board == "base64a" {
+	if a.board == "base64a" && isInternalResource(filename) {
 		// The ROM of the base64a has several file and pages
 		loadBase64aRom(a)
 		return nil
@@ -154,9 +148,6 @@ func (a *Apple2) loadRom(filename string) error {
 	}
 
 	size := len(data)
-	if size != apple2RomSize && size != apple2eRomSize {
-		return errors.New("rom size not supported")
-	}
 
 	romBase := 0x10000 - size
 	a.mmu.physicalROM[0] = newMemoryRangeROM(uint16(romBase), data, "Main ROM")

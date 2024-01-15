@@ -40,23 +40,32 @@ Operation:
 // CardBrainBoardII represents a Brain Board II card
 type CardBrainBoardII struct {
 	cardBase
-	highBank bool
-	dip2     bool
-	rom      []uint8
+	highBank  bool
+	dip2      bool
+	rom       []uint8
+	pages     int
+	forceBank int
 }
+
+const noForceBank = -1
 
 func newCardBrainBoardIIBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "Brain Board II",
-		description: "Firmware card for Apple II. It has 4 banks and can be used to boot wozaniam, Integer BASIC or other çustom ROMs.",
+		description: "Firmware card for Apple II. It has ROM banks and can be used to boot wozaniam, Integer BASIC or other çustom ROMs.",
 		defaultParams: &[]paramSpec{
 			{"rom", "ROM file to load", "<internal>/ApplesoftInteger.BIN"},
 			{"dip2", "Use the upper half of the ROM", "true"},
-		},
+			{"bank", "Force a ROM bank, 'no' or bank number", "no"}},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardBrainBoardII
+			var err error
 			c.highBank = false // Start with wozaniam by default
 			c.dip2 = paramsGetBool(params, "dip2")
+			c.forceBank, err = paramsGetInt(params, "bank")
+			if err != nil {
+				c.forceBank = noForceBank
+			}
 
 			// The ROM has:xaa-wozaniam xab-applesoft xac-wozaniam xad-integer
 			romFile := paramsGetPath(params, "rom")
@@ -64,6 +73,8 @@ func newCardBrainBoardIIBuilder() *cardBuilder {
 			if err != nil {
 				return nil, err
 			}
+
+			c.pages = len(data) / 0x4000
 			c.rom = data
 			c.romCxxx = &c
 			return &c, nil
@@ -87,14 +98,19 @@ func (c *CardBrainBoardII) assign(a *Apple2, slot int) {
 }
 
 func (c *CardBrainBoardII) translateAddress(address uint16) uint16 {
-	translated := address - 0xc000
-	if c.highBank {
-		translated += 0x4000
+	var bank = 0
+	if c.forceBank != noForceBank {
+		bank = c.forceBank
+	} else {
+		bank = 0
+		if c.highBank {
+			bank += 1
+		}
+		if c.dip2 {
+			bank += 2
+		}
 	}
-	if c.dip2 {
-		translated += 0x8000
-	}
-	return translated
+	return address - 0xc000 + uint16(bank*0x4000)
 }
 
 func (c *CardBrainBoardII) peek(address uint16) uint8 {
