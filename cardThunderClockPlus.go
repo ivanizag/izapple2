@@ -29,11 +29,9 @@ type CardThunderClockPlus struct {
 
 func newCardThunderClockPlusBuilder() *cardBuilder {
 	return &cardBuilder{
-		name:        "ThunderClock+ Card",
-		description: "Clock card",
-		defaultParams: &[]paramSpec{
-			{"rom", "ROM file to load", "<internal>/ThunderclockPlusROM.bin"},
-		},
+		name:          "ThunderClock+ Card",
+		description:   "Clock card",
+		defaultParams: &[]paramSpec{},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardThunderClockPlus
 			err := c.loadRomFromResource("<internal>/ThunderclockPlusROM.bin")

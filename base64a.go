@@ -1,8 +1,6 @@
 package izapple2
 
-import (
-	"fmt"
-)
+import "fmt"
 
 /*
 	Copam BASE64A adaptation.
@@ -36,14 +34,16 @@ func loadBase64aRom(a *Apple2) error {
 		}
 	}
 
-	// Create banks
-	for j := range romBanksBytes {
-		a.mmu.physicalROM[j] = newMemoryRange(0xd000, romBanksBytes[j], fmt.Sprintf("Base64 ROM page %v", j))
+	// Create paged ROM
+	romData := make([]uint8, 0, base64aRomBankSize*base64aRomBankCount)
+	for _, bank := range romBanksBytes {
+		romData = append(romData, bank...)
 	}
+	rom := newMemoryRangePagedROM(0xd000, romData, "Base64 ROM", base64aRomBankCount)
 
 	// Start with first bank active
-	a.mmu.setActiveROMPage(0)
-
+	rom.setPage(0)
+	a.mmu.physicalROM = rom
 	return nil
 }
 
@@ -55,23 +55,31 @@ func addBase64aSoftSwitches(io *ioC0Page) {
 	// ROM pagination softswitches. They use the annunciator 0 and 1
 	mmu := io.apple2.mmu
 	io.addSoftSwitchRW(0x58, func() uint8 {
-		p := mmu.getActiveROMPage()
-		mmu.setActiveROMPage(p & 2)
+		if rom, ok := mmu.physicalROM.(*memoryRangeROM); ok {
+			p := rom.getPage()
+			rom.setPage(p & 2)
+		}
 		return 0
 	}, "ANN0OFF-ROM")
 	io.addSoftSwitchRW(0x59, func() uint8 {
-		p := mmu.getActiveROMPage()
-		mmu.setActiveROMPage(p | 1)
+		if rom, ok := mmu.physicalROM.(*memoryRangeROM); ok {
+			p := rom.getPage()
+			rom.setPage(p | 1)
+		}
 		return 0
 	}, "ANN0ON-ROM")
 	io.addSoftSwitchRW(0x5A, func() uint8 {
-		p := mmu.getActiveROMPage()
-		mmu.setActiveROMPage(p & 1)
+		if rom, ok := mmu.physicalROM.(*memoryRangeROM); ok {
+			p := rom.getPage()
+			rom.setPage(p & 1)
+		}
 		return 0
 	}, "ANN1OFF-ROM")
 	io.addSoftSwitchRW(0x5B, func() uint8 {
-		p := mmu.getActiveROMPage()
-		mmu.setActiveROMPage(p | 2)
+		if rom, ok := mmu.physicalROM.(*memoryRangeROM); ok {
+			p := rom.getPage()
+			rom.setPage(p | 2)
+		}
 		return 0
 	}, "ANN1ON-ROM")
 

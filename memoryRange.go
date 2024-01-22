@@ -12,6 +12,8 @@ type memoryRange struct {
 
 type memoryRangeROM struct {
 	memoryRange
+	pageOffset uint16
+	pages      uint8
 }
 
 func newMemoryRange(base uint16, data []uint8, name string) *memoryRange {
@@ -25,10 +27,15 @@ func newMemoryRange(base uint16, data []uint8, name string) *memoryRange {
 }
 
 func newMemoryRangeROM(base uint16, data []uint8, name string) *memoryRangeROM {
+	return newMemoryRangePagedROM(base, data, name, 1)
+}
+
+func newMemoryRangePagedROM(base uint16, data []uint8, name string, pages uint8) *memoryRangeROM {
 	var m memoryRangeROM
 	m.base = base
 	m.data = data
 	m.name = name
+	m.pages = pages
 	return &m
 }
 
@@ -48,8 +55,25 @@ func (m *memoryRange) subRange(a, b uint16) []uint8 {
 	return m.data[a-m.base : b-m.base]
 }
 
+func (m *memoryRangeROM) setPage(page uint8) {
+	pageSize := len(m.data) / int(m.pages)
+	m.pageOffset = uint16(int(page%m.pages) * pageSize)
+}
+
+func (m *memoryRangeROM) getPage() uint8 {
+	pageSize := len(m.data) / int(m.pages)
+	return uint8(m.pageOffset / uint16(pageSize))
+}
+
+func (m *memoryRangeROM) peek(address uint16) uint8 {
+	return m.data[address-m.base+m.pageOffset]
+}
 func (m *memoryRangeROM) poke(address uint16, value uint8) {
 	// Ignore
+}
+
+func (m *memoryRangeROM) subRange(a, b uint16) []uint8 {
+	return m.data[a-m.base+m.pageOffset : b-m.base+m.pageOffset]
 }
 
 //lint:ignore U1000 this is used to write debug code

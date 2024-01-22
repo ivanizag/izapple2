@@ -204,8 +204,8 @@ func (nsc *noSlotClockDS1216) loadTime() {
 
 func setupNoSlotClock(a *Apple2, arg string) error {
 	if arg == "main" {
-		nsc := newNoSlotClockDS1216(a, a.mmu.physicalROM[0])
-		a.mmu.physicalROM[0] = nsc
+		nsc := newNoSlotClockDS1216(a, a.mmu.physicalROM)
+		a.mmu.physicalROM = nsc
 	} else {
 		slot, err := strconv.ParseUint(arg, 10, 8)
 		if err != nil || slot < 1 || slot > 7 {
