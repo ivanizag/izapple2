@@ -35,6 +35,7 @@ const (
 	VideoModifiersMask uint16 = 0xf000
 	VideoSecondPage    uint16 = 0x1000
 	VideoAltText       uint16 = 0x2000
+	VideoRGBCard       uint16 = 0x4000
 )
 
 // VideoSource provides the info to build the video output

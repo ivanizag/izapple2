@@ -51,6 +51,7 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 	mixMode := videoMode & VideoMixTextMask
 	isSecondPage := (videoMode & VideoSecondPage) != 0
 	isAltText := (videoMode & VideoAltText) != 0
+	isRGBCard := (videoMode & VideoRGBCard) != 0
 
 	var lightColor color.Color = color.White
 	if screenMode == ScreenModeGreen {
@@ -99,7 +100,7 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 
 	if mixMode != 0 {
 		var bottom *image.RGBA
-		applyNTSCFilter := screenMode != ScreenModeGreen
+		applyNTSCFilter := screenMode != ScreenModeGreen && !isRGBCard
 		switch mixMode {
 		case VideoMixText40:
 			bottom = snapshotText40(vs, isSecondPage, isAltText, lightColor)
