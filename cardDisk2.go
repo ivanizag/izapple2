@@ -124,7 +124,7 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 	// Q1, Q2, Q3 and Q4 phase control soft switches,
 	for i := uint8(0); i < 4; i++ {
 		phase := i
-		c.addCardSoftSwitchR(phase<<1, func() uint8 {
+		c.addCardSoftSwitchRW(phase<<1, func() uint8 {
 			// Update magnets and position
 			drive := &c.drive[c.selected]
 			drive.phases &^= (1 << phase)
@@ -137,7 +137,7 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 			return c.dataLatch // All even addresses return the last dataLatch
 		}, fmt.Sprintf("PHASE%vOFF", phase))
 
-		c.addCardSoftSwitchR((phase<<1)+1, func() uint8 { // Update magnets and position
+		c.addCardSoftSwitchRW((phase<<1)+1, func() uint8 { // Update magnets and position
 			drive := &c.drive[c.selected]
 			drive.phases |= (1 << phase)
 			drive.trackStep = moveDriveStepper(drive.phases, drive.trackStep)
@@ -151,21 +151,21 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 	}
 
 	// Q4, power switch
-	c.addCardSoftSwitchR(0x8, func() uint8 {
+	c.addCardSoftSwitchRW(0x8, func() uint8 {
 		c.softSwitchQ4(false)
 		return c.dataLatch
 	}, "Q4DRIVEOFF")
-	c.addCardSoftSwitchR(0x9, func() uint8 {
+	c.addCardSoftSwitchRW(0x9, func() uint8 {
 		c.softSwitchQ4(true)
 		return 0
 	}, "Q4DRIVEON")
 
 	// Q5, drive selecion
-	c.addCardSoftSwitchR(0xA, func() uint8 {
+	c.addCardSoftSwitchRW(0xA, func() uint8 {
 		c.softSwitchQ5(0)
 		return c.dataLatch
 	}, "Q5SELECT1")
-	c.addCardSoftSwitchR(0xB, func() uint8 {
+	c.addCardSoftSwitchRW(0xB, func() uint8 {
 		c.softSwitchQ5(1)
 		return 0
 	}, "Q5SELECT2")

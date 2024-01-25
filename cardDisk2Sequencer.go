@@ -121,7 +121,7 @@ func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
 	a.registerRemovableMediaDrive(&c.drive[0])
 	a.registerRemovableMediaDrive(&c.drive[1])
 
-	c.addCardSoftSwitches(func(address uint8, data uint8, write bool) uint8 {
+	c.addCardSoftSwitches(func(address uint8, data uint8, _ bool) uint8 {
 		/*
 			Slot card pins to SN74LS259 latch mapping:
 				slot_address[3,2,1] => latch_address[2,1,0]
