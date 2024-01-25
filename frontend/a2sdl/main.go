@@ -41,6 +41,8 @@ func sdlRun(a *izapple2.Apple2) {
 	defer renderer.Destroy()
 	window.SetTitle("iz-" + a.Name)
 
+	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "best")
+
 	kp := newSDLKeyBoard(a)
 
 	s := newSDLSpeaker()
