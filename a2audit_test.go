@@ -22,9 +22,7 @@ func testA2AuditInternal(t *testing.T, model string, removeLangCard bool, cycles
 	if err != nil {
 		t.Fatal(err)
 	}
-	at.terminateCondition = func(a *Apple2) bool {
-		return a.cpu.GetCycles() > cycles
-	}
+	at.terminateCondition = buildTerminateConditionTexts(at, messages, false, cycles)
 	at.run()
 
 	text := at.getText()

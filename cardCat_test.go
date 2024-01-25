@@ -19,9 +19,7 @@ func testCardDetectedInternal(t *testing.T, model string, card string, cycles ui
 	if err != nil {
 		t.Fatal(err)
 	}
-	at.terminateCondition = func(a *Apple2) bool {
-		return a.cpu.GetCycles() > cycles
-	}
+	at.terminateCondition = buildTerminateConditionText(at, banner, true, cycles)
 	at.run()
 
 	text := at.getText80()

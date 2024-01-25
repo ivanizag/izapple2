@@ -72,10 +72,6 @@ func (m *memoryRangeROM) poke(address uint16, value uint8) {
 	// Ignore
 }
 
-func (m *memoryRangeROM) subRange(a, b uint16) []uint8 {
-	return m.data[a-m.base+m.pageOffset : b-m.base+m.pageOffset]
-}
-
 //lint:ignore U1000 this is used to write debug code
 func identifyMemory(m memoryHandler) string {
 	ram, ok := m.(*memoryRange)

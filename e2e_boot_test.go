@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func testBoots(t *testing.T, model string, disk string, cycles uint64, banner string, prompt string) {
+func testBoots(t *testing.T, model string, disk string, cycles uint64, banner string, prompt string, col80 bool) {
 	overrides := newConfiguration()
 	if disk != "" {
 		overrides.set(confS6, "diskii,disk1=\""+disk+"\"")
@@ -17,12 +17,15 @@ func testBoots(t *testing.T, model string, disk string, cycles uint64, banner st
 	if err != nil {
 		t.Fatal(err)
 	}
-	at.terminateCondition = func(a *Apple2) bool {
-		return a.cpu.GetCycles() > cycles
-	}
+	at.terminateCondition = buildTerminateConditionTexts(at, []string{banner, prompt}, col80, cycles)
 	at.run()
 
-	text := at.getText()
+	var text string
+	if col80 {
+		text = at.getText80()
+	} else {
+		text = at.getText()
+	}
 	if !strings.Contains(text, banner) {
 		t.Errorf("Expected '%s', got '%s'", banner, text)
 	}
@@ -33,21 +36,25 @@ func testBoots(t *testing.T, model string, disk string, cycles uint64, banner st
 }
 
 func TestPlusBoots(t *testing.T) {
-	testBoots(t, "2plus", "", 200_000, "APPLE ][", "\n]")
+	testBoots(t, "2plus", "", 200_000, "APPLE ][", "\n]", false)
 }
 
 func Test2EBoots(t *testing.T) {
-	testBoots(t, "2e", "", 200_000, "Apple ][", "\n]")
+	testBoots(t, "2e", "", 200_000, "Apple ][", "\n]", false)
 }
 
 func Test2EnhancedBoots(t *testing.T) {
-	testBoots(t, "2enh", "", 200_000, "Apple //e", "\n]")
+	testBoots(t, "2enh", "", 200_000, "Apple //e", "\n]", false)
 }
 
 func TestBase64Boots(t *testing.T) {
-	testBoots(t, "base64a", "", 1_000_000, "BASE 64A", "\n]")
+	testBoots(t, "base64a", "", 1_000_000, "BASE 64A", "\n]", false)
 }
 
 func TestPlusDOS33Boots(t *testing.T) {
-	testBoots(t, "2plus", "<internal>/dos33.dsk", 100_000_000, "DOS VERSION 3.3", "\n]")
+	testBoots(t, "2plus", "<internal>/dos33.dsk", 100_000_000, "DOS VERSION 3.3", "\n]", false)
+}
+
+func TestCPM65Boots(t *testing.T) {
+	testBoots(t, "2enh", "<internal>/cpm65.po", 5_000_000, "CP/M-65 for the Apple II", "\nA>", true)
 }

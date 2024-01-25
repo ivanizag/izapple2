@@ -11,9 +11,8 @@ func TestSwyftTutorial(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	at.terminateCondition = func(a *Apple2) bool {
-		return a.cpu.GetCycles() > 10_000_000
-	}
+	at.terminateCondition = buildTerminateConditionText(at, "HOW TO USE SWYFTCARD", true, 10_000_000)
+
 	at.run()
 
 	text := at.getText80()

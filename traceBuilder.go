@@ -62,6 +62,11 @@ func buildTracerFactory() map[string]*traceBuilder {
 		description: "Panic on unimplemented softswitches",
 		connectFunc: func(a *Apple2) { a.io.setPanicNotImplemented(true) },
 	}
+	tracerFactory["cpm65"] = &traceBuilder{
+		name:            "cpm65",
+		description:     "Trace CPM65 BDOS calls",
+		executionTracer: newTraceCpm65(false),
+	}
 	return tracerFactory
 }
 
