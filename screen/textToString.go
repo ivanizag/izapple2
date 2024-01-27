@@ -2,6 +2,7 @@ package screen
 
 import (
 	"fmt"
+	"strings"
 )
 
 // RenderTextModeString returns the text mode contents ignoring reverse and flash
@@ -22,6 +23,7 @@ func RenderTextModeString(vs VideoSource, is80Columns bool, isSecondPage bool, i
 			char := text[l*columns+c]
 			line += textMemoryByteToString(char, isAltText, isApple2e, false)
 		}
+		line = strings.TrimRight(line, " ")
 		content += fmt.Sprintf("%v\n", line)
 	}
 	return content
