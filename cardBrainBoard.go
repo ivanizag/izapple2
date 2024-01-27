@@ -73,7 +73,7 @@ func newCardBrainBoardBuilder() *cardBuilder {
 			} else if bank == "down" {
 				c.isBankB = true
 			} else {
-				return nil, fmt.Errorf("Invalid bank '%s', must be up or down", bank)
+				return nil, fmt.Errorf("invalid bank '%s', must be up or down", bank)
 			}
 
 			dips, err := paramsGetDIPs(params, "dips", 8)

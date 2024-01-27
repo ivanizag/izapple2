@@ -51,11 +51,13 @@ func (at *apple2Tester) getText80() string {
 	return screen.RenderTextModeString(at.a, true, false, false, at.a.isApple2e)
 }
 
-func buildTerminateConditionCycles(cycles uint64) terminateConditionFunc {
-	return func(a *Apple2) bool {
-		return a.cpu.GetCycles() > cycles
+/*
+	func buildTerminateConditionCycles(cycles uint64) terminateConditionFunc {
+		return func(a *Apple2) bool {
+			return a.cpu.GetCycles() > cycles
+		}
 	}
-}
+*/
 
 const textCheckInterval = uint64(100_000)
 
