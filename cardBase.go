@@ -72,6 +72,10 @@ func (c *cardBase) loadRom(data []uint8) {
 		// The file covers the full Cxxx range. Only showing the page
 		// corresponding to the slot used.
 		c.romCxxx = newMemoryRangeROM(0xc000, data, "Slot ROM")
+	} else if len(data)%0x100 == 0 {
+		// The ROM covers many 256 bytes pages oc Csxx
+		// Used on the Dan 2 controller card
+		c.romCsxx = newMemoryRangePagedROM(0, data, "Slot paged ROM", uint8(len(data)/0x100))
 	} else {
 		panic("Invalid ROM size")
 	}
