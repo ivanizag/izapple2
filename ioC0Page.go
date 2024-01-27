@@ -16,7 +16,7 @@ type ioC0Page struct {
 	joysticks           JoysticksProvider
 	mouse               MouseProvider
 	apple2              *Apple2
-	trace               bool
+	traceMask           uint16 // A bit for each 16 softswitches
 	traceRegistrations  bool
 	panicNotImplemented bool
 }
@@ -56,7 +56,16 @@ func newIoC0Page(a *Apple2) *ioC0Page {
 }
 
 func (p *ioC0Page) setTrace(trace bool) {
-	p.trace = trace
+	if trace {
+		p.traceMask = 0xffff
+	} else {
+		p.traceMask = 0x0000
+	}
+}
+
+func (p *ioC0Page) traceSlot(slot int) {
+	p.traceMask |= 1 << (8 + slot)
+	fmt.Printf("Slot %v traced %04x\n", slot, p.traceMask)
 }
 
 func (p *ioC0Page) setTraceRegistrations(traceRegistrations bool) {
@@ -110,11 +119,17 @@ func (p *ioC0Page) setMouseProvider(m MouseProvider) {
 	p.mouse = m
 }
 
+func (p *ioC0Page) isTraced(address uint16) bool {
+	ss := address & 0xff
+	return ss != 0xc000 && // Do not trace the spammy keyboard softswitch
+		(p.traceMask&(1<<(ss>>4))) != 0
+}
+
 func (p *ioC0Page) peek(address uint16) uint8 {
 	pageAddress := uint8(address)
 	ss := p.softSwitchesR[pageAddress]
 	if ss == nil {
-		if p.trace {
+		if p.isTraced(address) {
 			fmt.Printf("Unknown softswitch on read to $%04x\n", address)
 		}
 		if p.panicNotImplemented {
@@ -123,7 +138,7 @@ func (p *ioC0Page) peek(address uint16) uint8 {
 		return 0
 	}
 	value := ss()
-	if p.trace && address != 0xc000 {
+	if p.isTraced(address) {
 		name := p.softSwitchesRName[pageAddress]
 		fmt.Printf("Softswitch peek on $%04x %v: $%02x\n", address, name, value)
 	}
@@ -134,15 +149,15 @@ func (p *ioC0Page) poke(address uint16, value uint8) {
 	pageAddress := uint8(address)
 	ss := p.softSwitchesW[pageAddress]
 	if ss == nil {
-		if p.trace {
-			fmt.Printf("Unknown softswitch on write to $%04x\n", address)
+		if p.isTraced(address) {
+			fmt.Printf("Unknown softswitch on write $%02x to $%04x\n", value, address)
 		}
 		if p.panicNotImplemented {
 			panic(fmt.Sprintf("Unknown softswitch on write to $%04x", address))
 		}
 		return
 	}
-	if p.trace && address != 0xc000 {
+	if p.isTraced(address) {
 		name := p.softSwitchesWName[pageAddress]
 		fmt.Printf("Softswitch poke on $%04x %v with $%02x\n", address, name, value)
 	}

@@ -24,6 +24,10 @@ type cardBuilder struct {
 
 const noCardName = "empty"
 
+var commonParams = []paramSpec{
+	{"tracess", "Trace softswitches", "false"},
+}
+
 var cardFactory map[string]*cardBuilder
 
 func getCardFactory() map[string]*cardBuilder {
@@ -31,7 +35,9 @@ func getCardFactory() map[string]*cardBuilder {
 		return cardFactory
 	}
 	cardFactory = make(map[string]*cardBuilder)
-	cardFactory["brainboard"] = newCardBrainBoardIIBuilder()
+	//cardFactory["brainboard"] = newCardBrainBoardBuilder()
+	cardFactory["brainboard2"] = newCardBrainBoardIIBuilder()
+	//cardFactory["dan2sd"] = newCardDan2ControllerBuilder()
 	cardFactory["diskii"] = newCardDisk2Builder()
 	cardFactory["diskiiseq"] = newCardDisk2SequencerBuilder()
 	cardFactory["fastchip"] = newCardFastChipBuilder()
@@ -57,9 +63,9 @@ func availableCards() []string {
 }
 
 func setupCard(a *Apple2, slot int, paramString string) (Card, error) {
-	paramsArgs := splitConfigurationString(paramString, ',')
+	actualArgs := splitConfigurationString(paramString, ',')
 
-	cardName := paramsArgs[0]
+	cardName := actualArgs[0]
 	if cardName == "" || cardName == noCardName {
 		return nil, nil
 	}
@@ -74,31 +80,41 @@ func setupCard(a *Apple2, slot int, paramString string) (Card, error) {
 	}
 
 	finalParams := make(map[string]string)
+	for _, commonParam := range commonParams {
+		finalParams[commonParam.name] = commonParam.defaultValue
+	}
 	if builder.defaultParams != nil {
 		for _, defaultParam := range *builder.defaultParams {
 			finalParams[defaultParam.name] = defaultParam.defaultValue
 		}
 	}
 
-	for i := 1; i < len(paramsArgs); i++ {
-		paramArgSides := splitConfigurationString(paramsArgs[i], '=')
+	for i := 1; i < len(actualArgs); i++ {
+		actualArgSides := splitConfigurationString(actualArgs[i], '=')
+		actualArgName := strings.ToLower(actualArgSides[0])
 
-		if _, ok := finalParams[paramArgSides[0]]; !ok {
-			return nil, fmt.Errorf("unknown parameter %s", paramArgSides[0])
+		if _, ok := finalParams[actualArgName]; !ok {
+			return nil, fmt.Errorf("unknown parameter %s", actualArgSides[0])
 		}
-		if len(paramArgSides) > 2 {
-			return nil, fmt.Errorf("invalid parameter value for %s", paramArgSides[0])
+		if len(actualArgSides) > 2 {
+			return nil, fmt.Errorf("invalid parameter value for %s", actualArgSides[0])
 		}
-		if len(paramArgSides) == 1 {
-			finalParams[paramArgSides[0]] = "true"
+		if len(actualArgSides) == 1 {
+			finalParams[actualArgName] = "true"
 		} else {
-			finalParams[paramArgSides[0]] = paramArgSides[1]
+			finalParams[actualArgName] = actualArgSides[1]
 		}
 	}
 
 	card, err := builder.buildFunc(finalParams)
 	if err != nil {
 		return nil, err
+	}
+
+	// Common parameters
+	traceSS := paramsGetBool(finalParams, "tracess")
+	if traceSS {
+		a.io.traceSlot(slot)
 	}
 
 	cardBase, ok := card.(*cardBase)
@@ -139,9 +155,26 @@ func paramsGetPath(params map[string]string, name string) string {
 func paramsGetInt(params map[string]string, name string) (int, error) {
 	value, ok := params[name]
 	if !ok {
-		value = "0"
+		return 0, fmt.Errorf("missing parameter %s", name)
 	}
 	return strconv.Atoi(value)
+}
+
+// Returns a 1 based array of bools
+func paramsGetDIPs(params map[string]string, name string, size int) ([]bool, error) {
+	value, ok := params[name]
+	if !ok {
+		return nil, fmt.Errorf("missing parameter %s", name)
+	}
+	if len(value) != 8 {
+		return nil, fmt.Errorf("DIP switches must be 8 characters long")
+	}
+	result := make([]bool, size+1)
+	for i := 0; i < 8; i++ {
+		result[i+1] = value[i] == '1'
+
+	}
+	return result, nil
 }
 
 func splitConfigurationString(s string, separator rune) []string {
