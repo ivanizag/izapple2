@@ -25,6 +25,7 @@ type cardBuilder struct {
 const noCardName = "empty"
 
 var commonParams = []paramSpec{
+	{"debug", "Enable debug messages", "false"},
 	{"tracess", "Trace softswitches", "false"},
 }
 
@@ -37,7 +38,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory = make(map[string]*cardBuilder)
 	cardFactory["brainboard"] = newCardBrainBoardBuilder()
 	cardFactory["brainboard2"] = newCardBrainBoardIIBuilder()
-	//cardFactory["dan2sd"] = newCardDan2ControllerBuilder()
+	cardFactory["dan2sd"] = newCardDan2ControllerBuilder()
 	cardFactory["diskii"] = newCardDisk2Builder()
 	cardFactory["diskiiseq"] = newCardDisk2SequencerBuilder()
 	cardFactory["fastchip"] = newCardFastChipBuilder()
@@ -117,14 +118,12 @@ func setupCard(a *Apple2, slot int, paramString string) (Card, error) {
 		a.io.traceSlot(slot)
 	}
 
-	cardBase, ok := card.(*cardBase)
-	if err == nil && ok {
-		cardBase.name = builder.name
-	}
+	debug := paramsGetBool(finalParams, "debug")
 
+	card.setName(builder.name)
+	card.setDebug(debug)
 	card.assign(a, slot)
 	a.cards[slot] = card
-
 	return card, err
 }
 

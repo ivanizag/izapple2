@@ -10,6 +10,8 @@ type Card interface {
 	assign(a *Apple2, slot int)
 	reset()
 
+	setName(name string)
+	setDebug(debug bool)
 	GetName() string
 	GetInfo() map[string]string
 }
@@ -17,7 +19,8 @@ type Card interface {
 type cardBase struct {
 	a       *Apple2
 	name    string
-	romCsxx memoryHandler
+	trace   bool
+	romCsxx *memoryRangeROM
 	romC8xx memoryHandler
 	romCxxx memoryHandler
 
@@ -28,12 +31,20 @@ type cardBase struct {
 	_sswName [16]string
 }
 
+func (c *cardBase) setName(name string) {
+	c.name = name
+}
+
 func (c *cardBase) GetName() string {
 	return c.name
 }
 
 func (c *cardBase) GetInfo() map[string]string {
 	return nil
+}
+
+func (c *cardBase) setDebug(debug bool) {
+	c.trace = debug
 }
 
 func (c *cardBase) reset() {
@@ -141,5 +152,12 @@ func (c *cardBase) addCardSoftSwitches(sss softSwitches, name string) {
 		c.addCardSoftSwitchW(address, func(value uint8) {
 			sss(address, value, true)
 		}, fmt.Sprintf("%v%XW", name, address))
+	}
+}
+
+func (c *cardBase) tracef(format string, args ...interface{}) {
+	if c.trace {
+		prefixedFormat := fmt.Sprintf("[%s] %v", c.name, format)
+		fmt.Printf(prefixedFormat, args...)
 	}
 }

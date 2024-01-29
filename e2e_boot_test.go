@@ -55,6 +55,10 @@ func TestPlusDOS33Boots(t *testing.T) {
 	testBoots(t, "2plus", "<internal>/dos33.dsk", 100_000_000, "DOS VERSION 3.3", "\n]", false)
 }
 
+func TestProdDOSBoots(t *testing.T) {
+	testBoots(t, "2enh", "<internal>/ProDOS_2_4_3.po", 100_000_000, "BITSY  BYE", "NEW VOL", false)
+}
+
 func TestCPM65Boots(t *testing.T) {
 	testBoots(t, "2enh", "<internal>/cpm65.po", 5_000_000, "CP/M-65 for the Apple II", "\nA>", true)
 }

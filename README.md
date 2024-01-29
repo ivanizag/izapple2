@@ -29,7 +29,10 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - No Slot Clock based on the DS1216
   - Videx Videoterm 80 column card with the Videx Soft Video Switch (Apple ][+ only)
   - SwyftCard (Apple //e only)
+  - Brain Board
   - Brain Board II
+  - MultiROM card
+  - Dan ][ Controller card
 - Useful cards not emulating a real card
   - Bootable SmartPort / ProDOS card with the following smartport devices:
       - Block device (hard disks)
