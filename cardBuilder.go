@@ -25,7 +25,7 @@ type cardBuilder struct {
 const noCardName = "empty"
 
 var commonParams = []paramSpec{
-	{"debug", "Enable debug messages", "false"},
+	{"trace", "Enable debug messages", "false"},
 	{"tracess", "Trace softswitches", "false"},
 }
 
@@ -118,7 +118,7 @@ func setupCard(a *Apple2, slot int, paramString string) (Card, error) {
 		a.io.traceSlot(slot)
 	}
 
-	debug := paramsGetBool(finalParams, "debug")
+	debug := paramsGetBool(finalParams, "trace")
 
 	card.setName(builder.name)
 	card.setDebug(debug)
