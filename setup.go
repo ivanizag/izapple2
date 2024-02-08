@@ -3,6 +3,7 @@ package izapple2
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/ivanizag/iz6502"
 )
@@ -59,6 +60,19 @@ func configure(configuration *configuration) (*Apple2, error) {
 			if err != nil {
 				return nil, err
 			}
+		}
+	}
+
+	// Add mods
+	mods := strings.Split(configuration.get(confMods), ",")
+	for _, mod := range mods {
+		switch strings.TrimSpace(mod) {
+		//case "shift":
+		//	setupShiftedKeyboard(a)
+		case "four-colors":
+			// This removes the mod to have 6 colors sent by Wozniak to Byte
+			// magazine. See: https://archive.org/details/byte-magazine-1979-06/page/n67/mode/2up?view=theater
+			a.isFourColors = true
 		}
 	}
 

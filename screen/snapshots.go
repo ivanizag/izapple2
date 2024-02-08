@@ -52,6 +52,7 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 	isSecondPage := (videoMode & VideoSecondPage) != 0
 	isAltText := (videoMode & VideoAltText) != 0
 	isRGBCard := (videoMode & VideoRGBCard) != 0
+	shiftSupported := (videoMode & VideoFourColors) == 0
 
 	var lightColor color.Color = color.White
 	if screenMode == ScreenModeGreen {
@@ -76,7 +77,7 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 	case VideoDGR:
 		snap = snapshotMeRes(vs, isSecondPage, lightColor)
 	case VideoHGR:
-		snap = snapshotHiRes(vs, isSecondPage, lightColor)
+		snap = snapshotHiRes(vs, isSecondPage, lightColor, shiftSupported)
 	case VideoDHGR:
 		snap, _ = snapshotDoubleHiRes(vs, isSecondPage, false /*isRGBMixMode*/, lightColor)
 	case VideoMono560:

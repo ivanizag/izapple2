@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"golang.org/x/exp/slices"
 )
 
 const configSuffix = ".cfg"
@@ -28,6 +30,7 @@ const (
 	confForceCaps = "forceCaps"
 	confRgb       = "rgb"
 	confRomx      = "romx"
+	confMods      = "mods"
 	confS0        = "s0"
 	confS1        = "s1"
 	confS2        = "s2"
@@ -204,6 +207,7 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 		confCharRom:   "rom file for the character generator",
 		confCpu:       "cpu type, can be '6502' or '65c02'",
 		confSpeed:     "cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber",
+		confMods:      "comma separated list of mods applied to the board, available mods are 'shift', 'four-colors",
 		confRamworks:  "memory to use with RAMWorks card, max is 16384",
 		confNsc:       "add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM",
 		confTrace:     "trace CPU execution with one or more comma separated tracers",
@@ -221,10 +225,6 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 		confS7:        "slot 7 configuration.",
 	}
 
-	stringParams := []string{
-		confRom, confCharRom, confCpu, confSpeed, confRamworks, confNsc, confTrace, confModel,
-		confS0, confS1, confS2, confS3, confS4, confS5, confS6, confS7,
-	}
 	boolParams := []string{confProfile, confForceCaps, confRgb, confRomx}
 
 	configuration, err := configurationModels.getFromModel(defaultConfiguration)
@@ -233,20 +233,16 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 	}
 	configuration.set(confModel, defaultConfiguration)
 
-	for _, name := range stringParams {
+	for name, description := range paramDescription {
 		defaultValue, ok := configuration.getHas(name)
 		if !ok {
 			return nil, "", fmt.Errorf("default value not found for %s", name)
 		}
-		flag.String(name, defaultValue, paramDescription[name])
-	}
-
-	for _, name := range boolParams {
-		defaultValue, ok := configuration.getHas(name)
-		if !ok {
-			return nil, "", fmt.Errorf("default value not found for %s", name)
+		if slices.Contains(boolParams, name) {
+			flag.Bool(name, defaultValue == "true", description)
+		} else {
+			flag.String(name, defaultValue, description)
 		}
-		flag.Bool(name, defaultValue == "true", paramDescription[name])
 	}
 
 	flag.Usage = func() {

@@ -124,11 +124,15 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	case sdl.K_F12:
 		fallthrough
 	case sdl.K_PRINTSCREEN:
-		err := screen.SaveSnapshot(k.a, screen.ScreenModeNTSC, "snapshot.png")
-		if err != nil {
-			fmt.Printf("Error saving snapshoot: %v.\n.", err)
+		if ctrl {
+			screen.AddScenario(k.a, "../../screen/test_resources/")
 		} else {
-			fmt.Println("Saving snapshot 'snapshot.png'")
+			err := screen.SaveSnapshot(k.a, screen.ScreenModeNTSC, "snapshot.png")
+			if err != nil {
+				fmt.Printf("Error saving snapshoot: %v.\n.", err)
+			} else {
+				fmt.Println("Saving snapshot 'snapshot.png'")
+			}
 		}
 	case sdl.K_PAUSE:
 		k.a.SendCommand(izapple2.CommandPauseUnpause)

@@ -12,9 +12,9 @@ const (
 	hiResHeightMixed = 160
 )
 
-func snapshotHiRes(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
+func snapshotHiRes(vs VideoSource, isSecondPage bool, light color.Color, shiftSupported bool) *image.RGBA {
 	data := vs.GetVideoMemory(isSecondPage, false)
-	return renderHiRes(data, light)
+	return renderHiRes(data, light, shiftSupported)
 }
 
 func getHiResLineOffset(line int) uint16 {
@@ -26,7 +26,7 @@ func getHiResLineOffset(line int) uint16 {
 	return uint16(section*40 + outerEighth*0x80 + innerEighth*0x400)
 }
 
-func renderHiRes(data []uint8, light color.Color) *image.RGBA {
+func renderHiRes(data []uint8, light color.Color, shiftSupported bool) *image.RGBA {
 	// As described in "Undertanding the Apple II", with half pixel shifts
 	size := image.Rect(0, 0, 2*hiResWidth, hiResHeight)
 	img := image.NewRGBA(size)
@@ -37,7 +37,7 @@ func renderHiRes(data []uint8, light color.Color) *image.RGBA {
 		x := 0
 		var previousColour color.Color = color.Black
 		for _, b := range bytes {
-			shifted := b>>7 == 1
+			shifted := shiftSupported && b>>7 == 1
 			for j := uint(0); j < 7; j++ {
 				bit := (b >> j) & 1
 				colour := light

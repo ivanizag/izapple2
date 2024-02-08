@@ -117,7 +117,7 @@ func (mmu *memoryManager) accessCArea(address uint16) memoryHandler {
 }
 
 func (mmu *memoryManager) accessUpperRAMArea(address uint16) memoryHandler {
-	if mmu.altZeroPage {
+	if mmu.altZeroPage && mmu.hasExtendedRAM() {
 		// Use extended RAM
 		block := mmu.extendedRAMBlock
 		if mmu.lcAltBank && address <= addressLimitDArea {
@@ -135,14 +135,14 @@ func (mmu *memoryManager) accessUpperRAMArea(address uint16) memoryHandler {
 }
 
 func (mmu *memoryManager) getPhysicalMainRAM(ext bool) memoryHandler {
-	if ext {
+	if ext && mmu.hasExtendedRAM() {
 		return mmu.physicalExtRAM[mmu.extendedRAMBlock]
 	}
 	return mmu.physicalMainRAM
 }
 
 func (mmu *memoryManager) getVideoRAM(ext bool) *memoryRange {
-	if ext {
+	if ext && mmu.hasExtendedRAM() {
 		// The video memory uses the first extended RAM block, even with RAMWorks
 		return mmu.physicalExtRAM[0]
 	}
@@ -332,6 +332,10 @@ func (mmu *memoryManager) setExtendedRAMActiveBlock(block uint8) {
 		block = 0
 	}
 	mmu.extendedRAMBlock = block
+}
+
+func (mmu *memoryManager) hasExtendedRAM() bool {
+	return len(mmu.physicalExtRAM) > 0
 }
 
 func (mmu *memoryManager) reset() {

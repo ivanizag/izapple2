@@ -85,6 +85,10 @@ func VideoModeName(vs VideoSource) string {
 		name += "-ALT"
 	}
 
+	if (videoMode & VideoFourColors) != 0 {
+		name += "-4COLORS"
+	}
+
 	switch mixMode {
 	case VideoMixText40:
 		name += "-MIX40"

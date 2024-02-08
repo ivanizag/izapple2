@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/color"
 	"image/png"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -58,7 +57,7 @@ func cloneSlice(src []uint8) []uint8 {
 }
 
 func loadTestScenario(filename string) (*TestScenario, error) {
-	bytes, err := ioutil.ReadFile(filename)
+	bytes, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +78,7 @@ func (ts *TestScenario) save(dir string) (string, error) {
 	}
 
 	pattern := fmt.Sprintf("%v_*.json", strings.ToLower(ts.VideoModeName))
-	file, err := ioutil.TempFile(dir, pattern)
+	file, err := os.CreateTemp(dir, pattern)
 	if err != nil {
 		return "", err
 	}
