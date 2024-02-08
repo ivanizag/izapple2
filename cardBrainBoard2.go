@@ -52,7 +52,7 @@ const noForceBank = -1
 func newCardBrainBoardIIBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "Brain Board II",
-		description: "Firmware card for Apple II. It has ROM banks and can be used to boot wozaniam, Integer BASIC or other çustom ROMs.",
+		description: "Firmware card. It has up to four ROM banks",
 		defaultParams: &[]paramSpec{
 			{"rom", "ROM file to load", "<internal>/ApplesoftInteger.BIN"},
 			{"dip2", "Use the upper half of the ROM", "true"},

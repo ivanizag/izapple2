@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 type paramSpec struct {
@@ -60,7 +61,9 @@ func getCardFactory() map[string]*cardBuilder {
 }
 
 func availableCards() []string {
-	return maps.Keys(getCardFactory())
+	names := maps.Keys(getCardFactory())
+	slices.Sort(names)
+	return names
 }
 
 func setupCard(a *Apple2, slot int, paramString string) (Card, error) {

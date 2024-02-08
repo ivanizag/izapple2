@@ -56,7 +56,7 @@ type CardBrainBoard struct {
 func newCardBrainBoardBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "Brain Board",
-		description: "Firmware card for Apple. It has two ROM banks",
+		description: "Firmware card. It has two ROM banks",
 		defaultParams: &[]paramSpec{
 			{"rom", "ROM file to load", "<internal>/wozaniam_integer.rom"},
 			{"dips", "DIP switches, leftmost is DIP 1", "1-011010"},

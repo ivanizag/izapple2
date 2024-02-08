@@ -68,7 +68,7 @@ type CardSwyft struct {
 func newCardSwyftBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "SwyftCard",
-		description: "Card with the ROM needed to run the Swyftcard word processing system. Must run on slot 3 only on Apple IIe.",
+		description: "Card with the ROM needed to run the Swyftcard word processing system",
 		requiresIIe: true,
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardSwyft
@@ -85,6 +85,10 @@ func newCardSwyftBuilder() *cardBuilder {
 }
 
 func (c *CardSwyft) assign(a *Apple2, slot int) {
+	if slot != 3 {
+		panic("SwyftCard must be installed in slot 3")
+	}
+
 	c.addCardSoftSwitchRW(0, func() uint8 {
 		a.mmu.inhibitROM(c)
 		c.bank2 = false

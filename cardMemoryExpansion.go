@@ -50,7 +50,7 @@ type CardMemoryExpansion struct {
 func newCardMemoryExpansionBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "Memory Expansion Card",
-		description: "Memory expansion card. It can be configured to have 256KB, 512KB, 768KB or 1MB.",
+		description: "Memory expansion card",
 		defaultParams: &[]paramSpec{
 			{"size", "RAM of the card, can be 256, 512, 768 or 1024", "1024"},
 		},

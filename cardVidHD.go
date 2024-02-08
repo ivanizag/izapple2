@@ -16,7 +16,7 @@ type CardVidHD struct {
 func newCardVidHDBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "VidHD Card - limited",
-		description: "Firmware signature of the VidHD card to trick Total Replay to use the GS modes.",
+		description: "Firmware signature of the VidHD card to trick Total Replay to use the SHR mode",
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardVidHD
 			c.loadRom(buildVidHDRom())

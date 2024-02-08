@@ -22,7 +22,7 @@ type CardParallelPrinter struct {
 func newCardParallelPrinterBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "Parallel Printer Interface",
-		description: "Card to dump to a file what would be printed to a parallel printer.",
+		description: "Card to dump to a file what would be printed to a parallel printer",
 		defaultParams: &[]paramSpec{
 			{"file", "File to store the printed code", "printer.out"},
 			{"ascii", "Remove the 7 bit. Useful for normal text printing, but breaks graphics printing ", "false"},

@@ -175,6 +175,7 @@ func (c *configurationModels) availableModels() []string {
 			models = append(models, name)
 		}
 	}
+	slices.Sort(models)
 	return models
 }
 
@@ -246,18 +247,29 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 	}
 
 	flag.Usage = func() {
-		availableModels := strings.Join(configurationModels.availableModels(), ", ")
-		availableCards := strings.Join(availableCards(), ", ")
-		availableTracers := strings.Join(availableTracers(), ", ")
-
 		out := flag.CommandLine.Output()
 		fmt.Fprintf(out, "Usage:  %s [file]\n", os.Args[0])
 		fmt.Fprintf(out, "  file\n")
 		fmt.Fprintf(out, "    	path to image to use on the boot device\n")
 		flag.PrintDefaults()
-		fmt.Fprintf(out, "\nThe available pre configured models are: %s.\n", availableModels)
-		fmt.Fprintf(out, "The available cards are: %s.\n", availableCards)
-		fmt.Fprintf(out, "The available tracers are: %s.\n", availableTracers)
+
+		fmt.Fprintf(out, "\nThe available pre configured models are:\n")
+		for _, model := range configurationModels.availableModels() {
+			config, _ := configurationModels.getFromModel(model)
+			fmt.Fprintf(out, "  %s: %s\n", model, config.get(confName))
+		}
+
+		fmt.Fprintf(out, "\nThe available cards are:\n")
+		for _, card := range availableCards() {
+			builder := getCardFactory()[card]
+			fmt.Fprintf(out, "  %s: %s\n", card, builder.description)
+		}
+
+		fmt.Fprintf(out, "\nThe available tracers are:\n")
+		for _, tracer := range availableTracers() {
+			builder := getTracerFactory()[tracer]
+			fmt.Fprintf(out, "  %s: %s\n", tracer, builder.description)
+		}
 	}
 
 	flag.Parse()

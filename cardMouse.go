@@ -36,7 +36,7 @@ type CardMouse struct {
 func newCardMouseBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "Mouse Card",
-		description: "Mouse card implementation. Does not emulate a real card, only the firmware behaviour.",
+		description: "Mouse card implementation, does not emulate a real card, only the firmware behaviour",
 		defaultParams: &[]paramSpec{
 			{"trace", "Trace accesses to the card", "false"},
 		},

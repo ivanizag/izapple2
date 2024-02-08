@@ -32,7 +32,7 @@ type MultiRomCard struct {
 func newMultiRomCardBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "MultiROM",
-		description: "Multiple Image ROM card.",
+		description: "Multiple Image ROM card",
 		defaultParams: &[]paramSpec{
 			{"rom", "ROM file to load", "<internal>/MultiRom(SP boot)-Prog aid-28C256.BIN"},
 			{"basic", "Bank for D000 to F7FF", "1"},

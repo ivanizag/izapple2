@@ -48,7 +48,7 @@ type cardDan2ControllerSlot struct {
 func newCardDan2ControllerBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "Dan ][ Controller card",
-		description: "Apple II Peripheral Card that Interfaces to a ATMEGA328P for SD card storage.",
+		description: "Apple II Peripheral Card that Interfaces to a ATMEGA328P for SD card storage",
 		defaultParams: &[]paramSpec{
 			{"improved", "Emulate improved firmware from ThorstenBr", "true"},
 			{"slot1", "Image in slot 1. File for raw device, folder for fs mode using files as BLKDEV0x.PO", ""},

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 type executionTracer interface {
@@ -19,7 +20,13 @@ type traceBuilder struct {
 	connectFunc     func(a *Apple2)
 }
 
-func buildTracerFactory() map[string]*traceBuilder {
+var traceFactory map[string]*traceBuilder
+
+func getTracerFactory() map[string]*traceBuilder {
+	if traceFactory != nil {
+		return traceFactory
+	}
+
 	tracerFactory := make(map[string]*traceBuilder)
 
 	tracerFactory["mos"] = &traceBuilder{
@@ -71,11 +78,13 @@ func buildTracerFactory() map[string]*traceBuilder {
 }
 
 func availableTracers() []string {
-	return maps.Keys(buildTracerFactory())
+	names := maps.Keys(getTracerFactory())
+	slices.Sort(names)
+	return names
 }
 
 func setupTracers(a *Apple2, paramString string) error {
-	tracerFactory := buildTracerFactory()
+	tracerFactory := getTracerFactory()
 	tracerNames := splitConfigurationString(paramString, ',')
 	for _, tracer := range tracerNames {
 		tracer = strings.ToLower(strings.TrimSpace(tracer))

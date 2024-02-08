@@ -29,7 +29,7 @@ type CardFastChip struct {
 func newCardFastChipBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "FASTChip IIe Card - limited",
-		description: "Accelerator card for Apple IIe. Limited support.",
+		description: "Accelerator card for Apple IIe (limited support)",
 		buildFunc: func(params map[string]string) (Card, error) {
 			return &CardFastChip{}, nil
 		},
