@@ -11,8 +11,11 @@ Mouse card implementation. Does not emulate a real card, only the behaviour. Ide
 See:
 	https://www.apple.asimov.net/documentation/hardware/io/AppleMouse%20II%20User%27s%20Manual.pdf
 	https://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project/Interface%20Cards/Digitizers/Apple%20Mouse%20Interface%20Card/Documentation/Apple%20II%20Mouse%20Technical%20Notes.pdf
+	http://www.1000bit.it/support/manuali/apple/technotes/mous/tn.mous.2.html
 
 	The management of IN# and PR# is copied from cardInOut
+
+	Not compatible with A2OSX that needs interrupts on VBL
 
 */
 
@@ -37,14 +40,10 @@ func newCardMouseBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "Mouse Card",
 		description: "Mouse card implementation, does not emulate a real card, only the firmware behaviour",
-		defaultParams: &[]paramSpec{
-			{"trace", "Trace accesses to the card", "false"},
-		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			return &CardMouse{
-				maxX:  0x3ff,
-				maxY:  0x3ff,
-				trace: paramsGetBool(params, "trace"),
+				maxX: 0x3ff,
+				maxY: 0x3ff,
 			}, nil
 		},
 	}
@@ -63,7 +62,7 @@ const (
 	mouseModeEnabled          = uint8(1)
 	mouseModeIntMoveEnabled   = uint8(2)
 	mouseModeIntButtonEnabled = uint8(4)
-	mouseModeIntVBlankEnabled = uint8(4)
+	mouseModeIntVBlankEnabled = uint8(8)
 )
 
 func (c *CardMouse) set(field uint16, value uint8) {
@@ -82,12 +81,19 @@ func (c *CardMouse) setMode(mode uint8) {
 	moveInts := mode&mouseModeIntMoveEnabled == 1
 	buttonInts := mode&mouseModeIntButtonEnabled == 1
 	vBlankInts := mode&mouseModeIntVBlankEnabled == 1
-	if c.trace {
-		fmt.Printf("[cardMouse] Mode set to 0x%02x. Enabled %v. Interrups: move=%v, button=%v, vblank=%v.\n",
-			mode, enabled, moveInts, buttonInts, vBlankInts)
-	}
+
+	c.tracef("Mode set to 0x%02x. Enabled %v. Interrups: move=%v, button=%v, vblank=%v.\n",
+		mode, enabled, moveInts, buttonInts, vBlankInts)
+
 	if moveInts || buttonInts || vBlankInts {
 		panic("Mouse interrupts not implemented")
+	}
+}
+
+func (c *CardMouse) checkFromFirmware() {
+	pc, _ := c.a.cpu.GetPCAndSP()
+	if (pc >> 8) != 0xc0+uint16(c.slot) {
+		c.tracef("Softswitch access from outside the firmware. It will not work.\n")
 	}
 }
 
@@ -100,6 +106,7 @@ func (c *CardMouse) readMouse() (uint16, uint16, bool) {
 
 func (c *CardMouse) assign(a *Apple2, slot int) {
 	c.addCardSoftSwitchR(0, func() uint8 {
+		c.checkFromFirmware()
 		if c.iOut == 0 {
 			// Create a new response
 			x, y, pressed := c.readMouse()
@@ -127,16 +134,13 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 		}
 
 		value += 0x80
-		if c.trace {
-			fmt.Printf("[cardMouse] IN#%v -> %02x.\n", slot, value)
-		}
+		c.tracef("IN#%v -> %02x.\n", slot, value)
 		return value
 	}, "MOUSEOUT")
 
 	c.addCardSoftSwitchW(1, func(value uint8) {
-		if c.trace {
-			fmt.Printf("[cardMouse] PR#%v <- %02x\n", slot, value)
-		}
+		c.checkFromFirmware()
+		c.tracef("PR#%v <- %02x\n", slot, value)
 		if c.iIn == 0 {
 			// We care only about the first byte
 			c.setMode(value & 0x0f)
@@ -148,20 +152,19 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 	}, "MOUSEIN")
 
 	c.addCardSoftSwitchW(2, func(value uint8) {
-		if c.trace {
-			fmt.Printf("[cardMouse] SetMouse(0x%02v)\n", value)
-		}
+		c.checkFromFirmware()
+		c.tracef("SetMouse(0x%02v)\n", value)
 		c.setMode(value & 0x0f)
 	}, "SETMOUSE")
 
 	c.addCardSoftSwitchW(3, func(value uint8) {
-		if c.trace {
-			fmt.Printf("[cardMouse] ServeMouse() NOT IMPLEMENTED\n")
-		}
+		c.checkFromFirmware()
+		c.tracef("ServeMouse() NOT IMPLEMENTED\n")
 		panic("Mouse interrupts not implemented")
 	}, "SERVEMOUSE")
 
 	c.addCardSoftSwitchW(4, func(value uint8) {
+		c.checkFromFirmware()
 		if c.mode&mouseModeEnabled == 1 {
 			x, y, pressed := c.readMouse()
 
@@ -182,8 +185,8 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 			c.set(mouseYLo, uint8(y))
 			c.set(mouseStatus, status)
 			c.set(mouseMode, c.mode)
-			if c.trace && ((status&(1<<5) != 0) || (pressed != c.lastPressed)) {
-				fmt.Printf("[cardMouse] ReadMouse(): x: %v, y: %v, pressed: %v\n",
+			if (status&(1<<5) != 0) || (pressed != c.lastPressed) {
+				c.tracef("ReadMouse(): x: %v, y: %v, pressed: %v\n",
 					x, y, pressed)
 			}
 
@@ -194,24 +197,21 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 	}, "READMOUSE")
 
 	c.addCardSoftSwitchW(5, func(value uint8) {
-		if c.trace {
-			fmt.Printf("[cardMouse] ClearMouse() NOT IMPLEMENTED\n")
-		}
+		c.checkFromFirmware()
+		c.tracef("ClearMouse() NOT IMPLEMENTED\n")
 		c.set(mouseXHi, 0)
 		c.set(mouseYHi, 0)
 		c.set(mouseXLo, 0)
 		c.set(mouseYLo, 0)
 	}, "CLEARMOUSE")
 	c.addCardSoftSwitchW(6, func(value uint8) {
-		if c.trace {
-			fmt.Printf("[cardMouse] PosMouse() NOT IMPLEMENTED\n")
-		}
+		c.checkFromFirmware()
+		c.tracef("PosMouse() NOT IMPLEMENTED\n")
 	}, "POSMOUSE")
 
 	c.addCardSoftSwitchW(7, func(value uint8) {
-		if c.trace {
-			fmt.Printf("[cardMouse] ClampMouse(%v)\n", value)
-		}
+		c.checkFromFirmware()
+		c.tracef("ClampMouse(%v)\n", value)
 
 		if value == 0 {
 			c.minX = uint16(c.get(mouseXLo)) + uint16(c.get(mouseXHi))<<8
@@ -221,21 +221,17 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 			c.maxY = uint16(c.get(mouseYLo)) + uint16(c.get(mouseYHi))<<8
 		}
 
-		if c.trace {
-			fmt.Printf("[cardMouse] Current bounds: X[%v-%v], Y[%v-%v],\n", c.minX, c.maxX, c.minY, c.maxY)
-		}
+		c.tracef("Current bounds: X[%v-%v], Y[%v-%v],\n", c.minX, c.maxX, c.minY, c.maxY)
 	}, "CLAMPMOUSE")
 
 	c.addCardSoftSwitchW(8, func(value uint8) {
-		if c.trace {
-			fmt.Printf("[cardMouse] HomeMouse() NOT IMPLEMENTED\n")
-		}
+		c.checkFromFirmware()
+		c.tracef("HomeMouse() NOT IMPLEMENTED\n")
 	}, "HOMEMOUSE")
 
-	c.addCardSoftSwitchW(0xc, func(value uint8) {
-		if c.trace {
-			fmt.Printf("[cardMouse] InitMouse()\n")
-		}
+	c.addCardSoftSwitchW(9, func(value uint8) {
+		c.checkFromFirmware()
+		c.tracef("InitMouse()\n")
 		c.minX = 0
 		c.minY = 0
 		c.maxX = 0x3ff
@@ -243,10 +239,10 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 		c.mode = 0
 	}, "INITMOUSE")
 
-	c.addCardSoftSwitchW(8, func(value uint8) {
-		if c.trace {
-			fmt.Printf("[cardMouse] TimeData(%v) NOT IMPLEMENTED\n", value)
-		}
+	c.addCardSoftSwitchW(0xc, func(value uint8) {
+		c.checkFromFirmware()
+		// See http://www.1000bit.it/support/manuali/apple/technotes/mous/tn.mous.2.html
+		c.tracef("TimeData(%v) NOT IMPLEMENTED\n", value)
 	}, "TIMEDATEMOUSE")
 
 	data := buildBaseInOutRom(slot)
