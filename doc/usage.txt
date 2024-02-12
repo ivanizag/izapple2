@@ -32,7 +32,7 @@ Usage:  izapple2 [file]
   -s3 string
     	slot 3 configuration. (default "fastchip")
   -s4 string
-    	slot 4 configuration. (default "mouse")
+    	slot 4 configuration. (default "empty")
   -s5 string
     	slot 5 configuration. (default "empty")
   -s6 string
