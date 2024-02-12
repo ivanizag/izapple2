@@ -188,8 +188,9 @@ Only valid on SDL mode
 
 ### Command line options
 
+<!-- doc/usage.txt start -->
 ```terminal
-Usage: izapple [file]
+Usage:  izapple2 [file]
   file
     	path to image to use on the boot device
   -charrom string
@@ -200,12 +201,14 @@ Usage: izapple [file]
     	force all letters to be uppercased (no need for caps lock!)
   -model string
     	set base model (default "2enh")
+  -mods string
+    	comma separated list of mods applied to the board, available mods are 'shift', 'four-colors
   -nsc string
-    	add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM (default "none")
+    	add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM (default "main")
   -profile
     	generate profile trace to analyse with pprof
   -ramworks string
-    	memory to use with RAMWorks card, max is 16384 (default "none")
+    	memory to use with RAMWorks card, max is 16384 (default "8192")
   -rgb
     	emulate the RGB modes of the 80col RGB card for DHGR
   -rom string
@@ -215,7 +218,7 @@ Usage: izapple [file]
   -s0 string
     	slot 0 configuration. (default "language")
   -s1 string
-    	slot 1 configuration. (default "parallel")
+    	slot 1 configuration. (default "empty")
   -s2 string
     	slot 2 configuration. (default "vidhd")
   -s3 string
@@ -233,11 +236,49 @@ Usage: izapple [file]
   -trace string
     	trace CPU execution with one or more comma separated tracers (default "none")
 
-The available pre configured models are: swyft, 2e, 2enh, 2plus, base64a.
-The available cards are: brainboard, diskii, memexp, mouse, swyftcard, inout, smartport, thunderclock, fujinet, videx, vidhd, diskiiseq, fastchip, language, softswitchlogger, parallel, saturn.
-The available tracers are: ucsd, cpu, ss, ssreg, panicSS, mos, mosfull, mli.
+The available pre-configured models are:
+  2: Apple ][
+  2e: Apple IIe
+  2enh: Apple //e
+  2plus: Apple ][+
+  base64a: Base 64A
+  swyft: swyft
+
+The available cards are:
+  brainboard: Firmware card. It has two ROM banks
+  brainboard2: Firmware card. It has up to four ROM banks
+  dan2sd: Apple II Peripheral Card that Interfaces to a ATMEGA328P for SD card storage
+  diskii: Disk II interface card
+  diskiiseq: Disk II interface card emulating the Woz state machine
+  fastchip: Accelerator card for Apple IIe (limited support)
+  fujinet: SmartPort interface card hosting the Fujinet
+  inout: Card to test I/O
+  language: Language card with 16 extra KB for the Apple ][ and ][+
+  memexp: Memory expansion card
+  mouse: Mouse card implementation, does not emulate a real card, only the firmware behaviour
+  multirom: Multiple Image ROM card
+  parallel: Card to dump to a file what would be printed to a parallel printer
+  saturn: RAM card with 128Kb, it's like 8 language cards
+  smartport: SmartPort interface card
+  softswitchlogger: Card to log softswitch accesses
+  swyftcard: Card with the ROM needed to run the Swyftcard word processing system
+  thunderclock: Clock card
+  videx: Videx compatible 80 columns card
+  vidhd: Firmware signature of the VidHD card to trick Total Replay to use the SHR mode
+
+The available tracers are:
+  cpm65: Trace CPM65 BDOS calls
+  cpu: Trace CPU execution
+  mli: Trace ProDOS MLI calls
+  mos: Trace MOS calls with Applecorn skipping terminal IO
+  mosfull: Trace MOS calls with Applecorn
+  panicSS: Panic on unimplemented softswitches
+  ss: Trace sotfswiches calls
+  ssreg: Trace sotfswiches registrations
+  ucsd: Trace UCSD system calls
 
 ```
+<!-- doc/usage.txt end -->
 
 ## Building from source
 

@@ -4,7 +4,6 @@ import (
 	"embed"
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 
 	"golang.org/x/exp/slices"
@@ -83,11 +82,11 @@ func (c *configuration) set(key string, value string) {
 	c.data[key] = value
 }
 
-func initConfigurationModels() (*configurationModels, error) {
-	models := configurationModels{}
+func loadConfigurationModelsAndDefault() (*configurationModels, *configuration, error) {
+	models := &configurationModels{}
 	dir, err := configurationFiles.ReadDir("configs")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	models.preconfiguredConfigs = make(map[string]*configuration)
@@ -95,7 +94,7 @@ func initConfigurationModels() (*configurationModels, error) {
 		if file.Type().IsRegular() && strings.HasSuffix(strings.ToLower(file.Name()), configSuffix) {
 			content, err := configurationFiles.ReadFile("configs/" + file.Name())
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			lines := strings.Split(string(content), "\n")
 			config := newConfiguration()
@@ -106,7 +105,7 @@ func initConfigurationModels() (*configurationModels, error) {
 				}
 				colonPos := strings.Index(line, ":")
 				if colonPos < 0 {
-					return nil, fmt.Errorf("invalid configuration in %s:%d", file.Name(), iLine)
+					return nil, nil, fmt.Errorf("invalid configuration in %s:%d", file.Name(), iLine)
 				}
 				key := strings.TrimSpace(line[:colonPos])
 				value := strings.TrimSpace(line[colonPos+1:])
@@ -117,23 +116,13 @@ func initConfigurationModels() (*configurationModels, error) {
 		}
 	}
 
-	// Check validity of base configuration
-	/*	base, ok := configs.preconfiguredConfigs[baseConfigurationName]
-		if !ok {
-			return nil, fmt.Errorf("base configuration %s.cfg not found", baseConfigurationName)
-		}
-		model, ok := base[argModel]
-		if !ok {
-			return nil, fmt.Errorf("model not found in base configuration %s.cfg", baseConfigurationName)
-		}
-		if _, ok := configs.preconfiguredConfigs[model]; !ok {
-			return nil, fmt.Errorf("model %s not found and used in base configuration %s.cfg", model, baseConfigurationName)
-		}
-	*/
+	defaultConfig, err := models.get(defaultConfiguration)
+	if err != nil {
+		return nil, nil, err
+	}
+	defaultConfig.set(confModel, defaultConfiguration)
 
-	// Todo check that all configs have valid keys
-
-	return &models, nil
+	return models, defaultConfig, nil
 }
 
 func mergeConfigs(base *configuration, addition *configuration) *configuration {
@@ -147,7 +136,7 @@ func mergeConfigs(base *configuration, addition *configuration) *configuration {
 	return result
 }
 
-func (c *configurationModels) getFromModel(name string) (*configuration, error) {
+func (c *configurationModels) get(name string) (*configuration, error) {
 	name = strings.TrimSpace(name)
 	config, ok := c.preconfiguredConfigs[name]
 	if !ok {
@@ -159,7 +148,7 @@ func (c *configurationModels) getFromModel(name string) (*configuration, error) 
 		return config, nil
 	}
 
-	parent, err := c.getFromModel(parentName)
+	parent, err := c.get(parentName)
 	if err != nil {
 		return nil, err
 	}
@@ -179,13 +168,8 @@ func (c *configurationModels) availableModels() []string {
 	return models
 }
 
-func getConfigurationFromModel(model string, overrides *configuration) (*configuration, error) {
-	configurationModels, err := initConfigurationModels()
-	if err != nil {
-		return nil, err
-	}
-
-	configValues, err := configurationModels.getFromModel(model)
+func (c *configurationModels) getWithOverrides(model string, overrides *configuration) (*configuration, error) {
+	configValues, err := c.get(model)
 	if err != nil {
 		return nil, err
 	}
@@ -196,12 +180,7 @@ func getConfigurationFromModel(model string, overrides *configuration) (*configu
 	return configValues, nil
 }
 
-func getConfigurationFromCommandLine() (*configuration, string, error) {
-	configurationModels, err := initConfigurationModels()
-	if err != nil {
-		return nil, "", err
-	}
-
+func setupFlags(models *configurationModels, configuration *configuration) error {
 	paramDescription := map[string]string{
 		confModel:     "set base model",
 		confRom:       "main rom file",
@@ -228,16 +207,10 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 
 	boolParams := []string{confProfile, confForceCaps, confRgb, confRomx}
 
-	configuration, err := configurationModels.getFromModel(defaultConfiguration)
-	if err != nil {
-		return nil, "", err
-	}
-	configuration.set(confModel, defaultConfiguration)
-
 	for name, description := range paramDescription {
 		defaultValue, ok := configuration.getHas(name)
 		if !ok {
-			return nil, "", fmt.Errorf("default value not found for %s", name)
+			return fmt.Errorf("default value not found for %s", name)
 		}
 		if slices.Contains(boolParams, name) {
 			flag.Bool(name, defaultValue == "true", description)
@@ -248,14 +221,14 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
-		fmt.Fprintf(out, "Usage:  %s [file]\n", os.Args[0])
+		fmt.Fprintf(out, "Usage:  %s [file]\n", flag.CommandLine.Name())
 		fmt.Fprintf(out, "  file\n")
 		fmt.Fprintf(out, "    	path to image to use on the boot device\n")
 		flag.PrintDefaults()
 
-		fmt.Fprintf(out, "\nThe available pre configured models are:\n")
-		for _, model := range configurationModels.availableModels() {
-			config, _ := configurationModels.getFromModel(model)
+		fmt.Fprintf(out, "\nThe available pre-configured models are:\n")
+		for _, model := range models.availableModels() {
+			config, _ := models.get(model)
 			fmt.Fprintf(out, "  %s: %s\n", model, config.get(confName))
 		}
 
@@ -272,12 +245,23 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 		}
 	}
 
+	return nil
+}
+
+func getConfigurationFromCommandLine() (*configuration, string, error) {
+	models, configuration, err := loadConfigurationModelsAndDefault()
+	if err != nil {
+		return nil, "", err
+	}
+
+	setupFlags(models, configuration)
+
 	flag.Parse()
 
 	modelFlag := flag.Lookup(confModel)
 	if modelFlag != nil && strings.TrimSpace(modelFlag.Value.String()) != defaultConfiguration {
 		// Replace the model
-		configuration, err = configurationModels.getFromModel(modelFlag.Value.String())
+		configuration, err = models.get(modelFlag.Value.String())
 		if err != nil {
 			return nil, "", err
 		}
@@ -287,5 +271,7 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 		configuration.set(f.Name, f.Value.String())
 	})
 
-	return configuration, flag.Arg(0), nil
+	filename := flag.Arg(0)
+
+	return configuration, filename, nil
 }

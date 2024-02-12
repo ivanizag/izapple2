@@ -14,7 +14,12 @@ type apple2Tester struct {
 }
 
 func makeApple2Tester(model string, overrides *configuration) (*apple2Tester, error) {
-	config, err := getConfigurationFromModel(model, overrides)
+	models, _, err := loadConfigurationModelsAndDefault()
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := models.getWithOverrides(model, overrides)
 	if err != nil {
 		return nil, err
 	}
