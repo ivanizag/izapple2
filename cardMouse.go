@@ -32,8 +32,6 @@ type CardMouse struct {
 	response string
 	iOut     int
 	iIn      int
-
-	trace bool
 }
 
 func newCardMouseBuilder() *cardBuilder {
