@@ -65,14 +65,14 @@ func newCardDan2ControllerBuilder() *cardBuilder {
 			c.slotA = &cardDan2ControllerSlot{}
 			c.slotA.card = &c
 			c.slotA.path = params["slot1"]
-			num, _ := paramsGetInt(params, "slot1file")
+			num, _ := paramsGetUInt8(params, "slot1file")
 			c.slotA.fileNo = uint8(num)
 			c.slotA.initializeDrive()
 
 			c.slotB = &cardDan2ControllerSlot{}
 			c.slotB.card = &c
 			c.slotB.path = params["slot2"]
-			num, _ = paramsGetInt(params, "slot2file")
+			num, _ = paramsGetUInt8(params, "slot2file")
 			c.slotB.fileNo = uint8(num)
 			c.slotB.initializeDrive()
 

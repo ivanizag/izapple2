@@ -162,6 +162,15 @@ func paramsGetInt(params map[string]string, name string) (int, error) {
 	return strconv.Atoi(value)
 }
 
+func paramsGetUInt8(params map[string]string, name string) (uint8, error) {
+	value, ok := params[name]
+	if !ok {
+		return 0, fmt.Errorf("missing parameter %s", name)
+	}
+	result, err := strconv.ParseUint(value, 10, 8)
+	return uint8(result), err
+}
+
 // Returns a 1 based array of bools
 func paramsGetDIPs(params map[string]string, name string, size int) ([]bool, error) {
 	value, ok := params[name]
