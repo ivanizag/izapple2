@@ -168,24 +168,6 @@ Line:
 
 ```
 
-### Keys
-
-- Ctrl-F1: Reset button
-- F5: Toggle speed between real and fastest
-- Ctrl-F5: Show current speed in Mhz
-- F6: Toggle between NTSC color TV and green phosphor monochrome monitor
-- F7: Show the video mode and a split screen with the views for NTSC color TV, page 1, page 2 and extra info.
-- F10: Cycle character generator code pages. Only if the character generator ROM has more than one 2Kb page.
-- Ctrl-F10: Show the charater map for the current character generator page.
-- Shift-F10: When showing the character map, use altText.
-- F11: Toggle on and off the trace to console of the CPU execution
-- F12: Save a screen snapshot to a file `snapshot.png`
-- Pause: Pause the emulation
-
-Drag and drop a diskette file on the left side of the window to change Drive 1; to the right side to change the disk on Drive 2.
-
-Only valid on SDL mode
-
 ### Command line options
 
 <!-- doc/usage.txt start -->

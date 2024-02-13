@@ -39,7 +39,9 @@ func sdlRun(a *izapple2.Apple2) {
 
 	defer window.Destroy()
 	defer renderer.Destroy()
-	window.SetTitle("iz-" + a.Name)
+
+	title := "iz-" + a.Name + " (F1 for help)"
+	window.SetTitle(title)
 
 	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "best")
 
@@ -96,16 +98,18 @@ func sdlRun(a *izapple2.Apple2) {
 
 		if paused != a.IsPaused() {
 			if a.IsPaused() {
-				window.SetTitle("iz-" + a.Name + " - PAUSED!")
+				window.SetTitle(title + " - PAUSED!")
 			} else {
-				window.SetTitle("iz-" + a.Name)
+				window.SetTitle(title)
 			}
 			paused = a.IsPaused()
 		}
 
 		if !a.IsPaused() {
 			var img *image.RGBA
-			if kp.showCharGen {
+			if kp.showHelp {
+				img = screen.SnapshotMessageGenerator(a, helpMessage)
+			} else if kp.showCharGen {
 				img = screen.SnapshotCharacterGenerator(a, kp.showAltText)
 				window.SetTitle(fmt.Sprintf("%v character map", a.Name))
 			} else if kp.showPages {
@@ -142,3 +146,29 @@ func sdlRun(a *izapple2.Apple2) {
 	}
 
 }
+
+var helpMessage = `
+
+        F1: Show/Hide help
+   Ctrl-F2: Reset
+        F5: Fast/Normal speed
+   Ctrl-F5: Show speed
+        F6: Next screen mode
+        F7: Show/Hide pages
+       F10: Next character set
+  Ctrl-F10: Show/Hide character set
+ Shift-F10: Show/Hide alternate text
+       F11: Show/Hide CPU trace
+       F12: Save screen snapshot
+	 Pause: Pause the emulation
+
+ Drop a file on the left or right
+ side of the window to load a disk
+
+ Run izapple2 -h for more options
+
+ More info at
+   https://github.com/ivanizag/izapple2
+`
+
+///////////////////////////////////////

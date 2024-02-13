@@ -12,6 +12,7 @@ type sdlKeyboard struct {
 	a          *izapple2.Apple2
 	keyChannel *izapple2.KeyboardChannel
 
+	showHelp    bool
 	showPages   bool
 	showCharGen bool
 	showAltText bool
@@ -40,6 +41,7 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		20 PRINT A, A - 128
 		30 GOTO 10
 	*/
+
 	if keyEvent.Type != sdl.KEYDOWN {
 		// Process only key pushes
 		return
@@ -87,11 +89,13 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		result = 127 // 24 in the Base64A
 
 	// Base64A clone particularities
-	case sdl.K_F2:
+	case sdl.K_F3:
 		result = 127 // Base64A
 
 	// Control of the emulator
 	case sdl.K_F1:
+		k.showHelp = !k.showHelp
+	case sdl.K_F2:
 		if ctrl {
 			k.a.SendCommand(izapple2.CommandReset)
 		}
