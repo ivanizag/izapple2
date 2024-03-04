@@ -141,10 +141,6 @@ func (nsc *noSlotClockDS1216) poke(address uint16, value uint8) {
 	nsc.memory.poke(address, value)
 }
 
-func (nsc *noSlotClockDS1216) setBase(base uint16) {
-	nsc.memory.setBase(base)
-}
-
 func (nsc *noSlotClockDS1216) loadTime() {
 	now := time.Now()
 

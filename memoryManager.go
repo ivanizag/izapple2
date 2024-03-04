@@ -68,7 +68,6 @@ const (
 type memoryHandler interface {
 	peek(uint16) uint8
 	poke(uint16, uint8)
-	setBase(uint16)
 }
 
 func newMemoryManager(a *Apple2) *memoryManager {

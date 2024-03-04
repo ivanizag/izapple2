@@ -135,7 +135,3 @@ func (c *CardSwyft) peek(address uint16) uint8 {
 func (c *CardSwyft) poke(address uint16, value uint8) {
 	// Nothing
 }
-
-func (c *CardSwyft) setBase(base uint16) {
-	// Nothing
-}

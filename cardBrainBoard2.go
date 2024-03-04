@@ -120,7 +120,3 @@ func (c *CardBrainBoardII) peek(address uint16) uint8 {
 func (c *CardBrainBoardII) poke(address uint16, value uint8) {
 	// Nothing
 }
-
-func (c *CardBrainBoardII) setBase(base uint16) {
-	// Nothing
-}

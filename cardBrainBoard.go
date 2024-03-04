@@ -117,10 +117,8 @@ func (c *CardBrainBoard) updateState() {
 		((!c.dip56_lowerInA && !c.isBankB) || (!c.dip78_upperInB && c.isBankB))
 
 	if isMotherboardRomEnabled && !c.isMotherboardRomEnabled {
-		fmt.Print("ROM: main")
 		c.a.mmu.inhibitROM(nil)
 	} else if !isMotherboardRomEnabled && c.isMotherboardRomEnabled {
-		fmt.Print("ROM: brain")
 		c.a.mmu.inhibitROM(c)
 	}
 
@@ -157,9 +155,5 @@ func (c *CardBrainBoard) peek(address uint16) uint8 {
 }
 
 func (c *CardBrainBoard) poke(address uint16, value uint8) {
-	// Nothing
-}
-
-func (c *CardBrainBoard) setBase(base uint16) {
 	// Nothing
 }

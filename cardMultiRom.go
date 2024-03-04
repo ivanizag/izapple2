@@ -105,7 +105,3 @@ func (c *MultiRomCard) peek(address uint16) uint8 {
 func (c *MultiRomCard) poke(address uint16, value uint8) {
 	// Nothing
 }
-
-func (c *MultiRomCard) setBase(base uint16) {
-	// Nothing
-}

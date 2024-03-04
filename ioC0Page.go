@@ -164,10 +164,6 @@ func (p *ioC0Page) poke(address uint16, value uint8) {
 	ss(value)
 }
 
-func (p *ioC0Page) setBase(_ uint16) {
-	// Ignore
-}
-
 func ssFromBool(value bool) uint8 {
 	if value {
 		return ssOn

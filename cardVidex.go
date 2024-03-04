@@ -123,10 +123,6 @@ func (c *CardVidex) poke(address uint16, value uint8) {
 	}
 }
 
-func (c *CardVidex) setBase(base uint16) {
-	// Nothing
-}
-
 const (
 	videxCharWidth = uint8(8)
 )
