@@ -2,7 +2,7 @@
 cd "$( dirname $0)"
 mkdir -p ${PWD}/build
 
-# MacOS builds
+# MacOS ARM builds
 echo "Building MacOS console frontend"
 CGO_ENABLED=1 go build -tags static -ldflags "-s -w" ../frontend/console
 mv console build/izapple2console_mac_arm64
@@ -14,6 +14,19 @@ mv a2sdl build/izapple2sdl_mac_arm64
 echo "Building MacOS Fyne frontend"
 CGO_ENABLED=1 go build -tags static -ldflags "-s -w" ../frontend/a2fyne
 mv a2fyne build/izapple2fyne_mac_arm64
+
+# MacOS x64 builds
+echo "Building MacOS console frontend"
+GOARCH=amd64 CGO_ENABLED=1 go build -tags static -ldflags "-s -w" ../frontend/console
+mv console build/izapple2console_mac_amd64
+
+echo "Building MacOS SDL frontend"
+GOARCH=amd64 CGO_ENABLED=1 go build -tags static -ldflags "-s -w" ../frontend/a2sdl
+mv a2sdl build/izapple2sdl_mac_amd64
+
+echo "Building MacOS Fyne frontend"
+GOARCH=amd64 CGO_ENABLED=1 go build -tags static -ldflags "-s -w" ../frontend/a2fyne
+mv a2fyne build/izapple2fyne_mac_amd64∫
 
 # Linux and Windows dockerized builds
 echo "Building docker container for the Linux and Windows builds"
