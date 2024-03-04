@@ -66,6 +66,7 @@ The available cards are:
   mouse: Mouse card implementation, does not emulate a real card, only the firmware behaviour
   multirom: Multiple Image ROM card
   parallel: Card to dump to a file what would be printed to a parallel printer
+  prodosrom: A bootable 1 MB solid state disk
   saturn: RAM card with 128Kb, it's like 8 language cards
   smartport: SmartPort interface card
   softswitchlogger: Card to log softswitch accesses

@@ -33,6 +33,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Brain Board II
   - MultiROM card
   - Dan ][ Controller card
+  - ProDOS ROM card
 - Useful cards not emulating a real card
   - Bootable SmartPort / ProDOS card with the following smartport devices:
       - Block device (hard disks)
@@ -240,6 +241,7 @@ The available cards are:
   mouse: Mouse card implementation, does not emulate a real card, only the firmware behaviour
   multirom: Multiple Image ROM card
   parallel: Card to dump to a file what would be printed to a parallel printer
+  prodosrom: A bootable 1 MB solid state disk
   saturn: RAM card with 128Kb, it's like 8 language cards
   smartport: SmartPort interface card
   softswitchlogger: Card to log softswitch accesses

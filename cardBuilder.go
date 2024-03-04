@@ -51,6 +51,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory["mouse"] = newCardMouseBuilder()
 	cardFactory["multirom"] = newMultiRomCardBuilder()
 	cardFactory["parallel"] = newCardParallelPrinterBuilder()
+	cardFactory["prodosrom"] = newCardProDOSRomDriveBuilder()
 	cardFactory["saturn"] = newCardSaturnBuilder()
 	cardFactory["smartport"] = newCardSmartPortStorageBuilder()
 	cardFactory["swyftcard"] = newCardSwyftBuilder()
