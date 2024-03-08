@@ -104,7 +104,14 @@ func (mmu *memoryManager) accessCArea(address uint16) memoryHandler {
 	// Extra slot area reset
 	if address == ioC8Off {
 		// Reset extra slot area owner
-		mmu.activeSlot = 0
+
+		// There is not really an activeSlot in c8xx, any card could be active
+		// we should check all of them and maybe have conflicts. As I don't do that I won't disable and
+		// just track teh last active card.
+		// This code is disabled because cards could have different logic for disabling. Most cards disable
+		// on access to 0xCFFF, but the ProDOS ROM card 3 disables only on writes and not on reads.
+		// mmu.activeSlot = 0
+
 		mmu.intC8ROMActive = false
 	}
 

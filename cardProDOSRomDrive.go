@@ -3,7 +3,7 @@ package izapple2
 import "fmt"
 
 /*
-ProDOS-ROM-Drive: A bootable 1 MB solid state disk for Apple ][ computers
+Terence Boldt's ProDOS-ROM-Drive: A bootable 1 MB solid state disk for Apple ][ computers
 
 Emulates version 4.0+
 
@@ -25,10 +25,10 @@ const proDOSRomDriveMask = 0xf_ffff // 1 MB mask
 func newCardProDOSRomDriveBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "ProDOS ROM Drive",
-		description: "A bootable 1 MB solid state disk",
+		description: "A bootable 1 MB solid state disk by Terence Boldt",
 		defaultParams: &[]paramSpec{
-			//∫{"image", "ROM image with the ProDOS volume", "https://github.com/tjboldt/ProDOS-ROM-Drive/raw/v4.0/Firmware/GamesWithFirmware.po"},
-			{"image", "ROM image with the ProDOS volume", "https://github.com/Alex-Kw/ProDOS-ROM-Drive-Images/raw/main/ProDOS242_Beta5.po"},
+			//{"image", "ROM image with the ProDOS volume", "https://github.com/tjboldt/ProDOS-ROM-Drive/raw/v4.0/Firmware/GamesWithFirmware.po"},
+			{"image", "ROM image with the ProDOS volume", "https://github.com/Alex-Kw/ProDOS-ROM-Drive-Images/raw/main/ProDOS_2.4.3_TJ.po"},
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			image := paramsGetPath(params, "image")
