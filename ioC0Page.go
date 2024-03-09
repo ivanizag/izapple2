@@ -5,20 +5,20 @@ import (
 )
 
 type ioC0Page struct {
-	softSwitchesR       [256]softSwitchR
-	softSwitchesW       [256]softSwitchW
-	softSwitchesRName   [256]string
-	softSwitchesWName   [256]string
-	softSwitchesData    [128]uint8
-	keyboard            KeyboardProvider
-	speaker             SpeakerProvider
-	paddlesStrobeCycle  uint64
-	joysticks           JoysticksProvider
-	mouse               MouseProvider
-	apple2              *Apple2
-	traceMask           uint16 // A bit for each 16 softswitches
-	traceRegistrations  bool
-	panicNotImplemented bool
+	softSwitchesR      [256]softSwitchR
+	softSwitchesW      [256]softSwitchW
+	softSwitchesRName  [256]string
+	softSwitchesWName  [256]string
+	softSwitchesData   [128]uint8
+	keyboard           KeyboardProvider
+	speaker            SpeakerProvider
+	paddlesStrobeCycle uint64
+	joysticks          JoysticksProvider
+	mouse              MouseProvider
+	apple2             *Apple2
+	traceMask          uint16 // A bit for each 16 softswitches
+	panicMask          uint16 // A bit for each 16 softswitches
+	traceRegistrations bool
 }
 
 type softSwitchR func() uint8
@@ -65,7 +65,10 @@ func (p *ioC0Page) setTrace(trace bool) {
 
 func (p *ioC0Page) traceSlot(slot int) {
 	p.traceMask |= 1 << (8 + slot)
-	fmt.Printf("Slot %v traced %04x\n", slot, p.traceMask)
+}
+
+func (p *ioC0Page) panicNotImplementedSlot(slot int) {
+	p.panicMask |= 1 << (8 + slot)
 }
 
 func (p *ioC0Page) setTraceRegistrations(traceRegistrations bool) {
@@ -73,7 +76,11 @@ func (p *ioC0Page) setTraceRegistrations(traceRegistrations bool) {
 }
 
 func (p *ioC0Page) setPanicNotImplemented(value bool) {
-	p.panicNotImplemented = value
+	if value {
+		p.panicMask = 0xffff
+	} else {
+		p.panicMask = 0x0000
+	}
 }
 
 func (p *ioC0Page) addSoftSwitchRW(address uint8, ss softSwitchR, name string) {
@@ -125,6 +132,12 @@ func (p *ioC0Page) isTraced(address uint16) bool {
 		(p.traceMask&(1<<(ss>>4))) != 0
 }
 
+func (p *ioC0Page) isPanicNotImplemented(address uint16) bool {
+	ss := address & 0xff
+	return ss != 0xc068 && // Ignore known IIGS softswitch
+		(p.panicMask&(1<<(ss>>4))) != 0
+}
+
 func (p *ioC0Page) peek(address uint16) uint8 {
 	pageAddress := uint8(address)
 	ss := p.softSwitchesR[pageAddress]
@@ -132,7 +145,7 @@ func (p *ioC0Page) peek(address uint16) uint8 {
 		if p.isTraced(address) {
 			fmt.Printf("Unknown softswitch on read to $%04x\n", address)
 		}
-		if p.panicNotImplemented {
+		if p.isPanicNotImplemented(address) {
 			panic(fmt.Sprintf("Unknown softswitch on read to $%04x", address))
 		}
 		return 0
@@ -152,7 +165,7 @@ func (p *ioC0Page) poke(address uint16, value uint8) {
 		if p.isTraced(address) {
 			fmt.Printf("Unknown softswitch on write $%02x to $%04x\n", value, address)
 		}
-		if p.panicNotImplemented {
+		if p.isPanicNotImplemented(address) {
 			panic(fmt.Sprintf("Unknown softswitch on write to $%04x", address))
 		}
 		return

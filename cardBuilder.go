@@ -28,6 +28,7 @@ const noCardName = "empty"
 var commonParams = []paramSpec{
 	{"trace", "Enable debug messages", "false"},
 	{"tracess", "Trace softswitches", "false"},
+	{"panicss", "Panic on unimplemented softswitches", "false"},
 }
 
 var cardFactory map[string]*cardBuilder
@@ -118,9 +119,12 @@ func setupCard(a *Apple2, slot int, paramString string) (Card, error) {
 	}
 
 	// Common parameters
-	traceSS := paramsGetBool(finalParams, "tracess")
-	if traceSS {
+	if paramsGetBool(finalParams, "tracess") {
 		a.io.traceSlot(slot)
+	}
+
+	if paramsGetBool(finalParams, "panicss") {
+		a.io.panicNotImplementedSlot(slot)
 	}
 
 	debug := paramsGetBool(finalParams, "trace")

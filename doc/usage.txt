@@ -82,7 +82,7 @@ The available tracers are:
   mli: Trace ProDOS MLI calls
   mos: Trace MOS calls with Applecorn skipping terminal IO
   mosfull: Trace MOS calls with Applecorn
-  panicSS: Panic on unimplemented softswitches
+  panicss: Panic on unimplemented softswitches
   ss: Trace sotfswiches calls
   ssreg: Trace sotfswiches registrations
   ucsd: Trace UCSD system calls

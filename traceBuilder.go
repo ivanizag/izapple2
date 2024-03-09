@@ -64,8 +64,8 @@ func getTracerFactory() map[string]*traceBuilder {
 		description: "Trace sotfswiches registrations",
 		connectFunc: func(a *Apple2) { a.io.setTraceRegistrations(true) },
 	}
-	tracerFactory["panicSS"] = &traceBuilder{
-		name:        "panicSS",
+	tracerFactory["panicss"] = &traceBuilder{
+		name:        "panicss",
 		description: "Panic on unimplemented softswitches",
 		connectFunc: func(a *Apple2) { a.io.setPanicNotImplemented(true) },
 	}
