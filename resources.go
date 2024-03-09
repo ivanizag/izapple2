@@ -39,6 +39,14 @@ func LoadResource(filename string) ([]uint8, bool, error) {
 		filename = filename[1 : len(filename)-1]
 	}
 
+	// Expand the tilde if prefixed by it
+	if strings.HasPrefix(filename, "~") {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			filename = home + filename[1:]
+		}
+	}
+
 	var writeable bool
 	var file io.Reader
 	if isInternalResource(filename) {
