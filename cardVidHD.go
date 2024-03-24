@@ -19,7 +19,7 @@ func newCardVidHDBuilder() *cardBuilder {
 		description: "Firmware signature of the VidHD card to trick Total Replay to use the SHR mode",
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardVidHD
-			c.loadRom(buildVidHDRom())
+			c.loadRom(buildVidHDRom(), cardRomSimple)
 			return &c, nil
 		},
 	}

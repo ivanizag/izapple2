@@ -112,7 +112,7 @@ func (c *CardSmartPort) AddDevice(device smartPortDevice) {
 }
 
 func (c *CardSmartPort) assign(a *Apple2, slot int) {
-	c.loadRom(buildHardDiskRom(slot))
+	c.loadRom(buildHardDiskRom(slot), cardRomSimple)
 
 	c.addCardSoftSwitchR(0, func() uint8 {
 		// Prodos entry point

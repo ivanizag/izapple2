@@ -33,7 +33,7 @@ func newCardThunderClockPlusBuilder() *cardBuilder {
 		description: "Clock card",
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardThunderClockPlus
-			err := c.loadRomFromResource("<internal>/ThunderclockPlusROM.bin")
+			err := c.loadRomFromResource("<internal>/ThunderclockPlusROM.bin", cardRomUpper)
 			if err != nil {
 				return nil, err
 			}

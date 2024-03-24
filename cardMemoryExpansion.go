@@ -35,6 +35,11 @@ has one Megabyte or less, reading the high address byte will always return a
 value in the range $F0-FF. The top nybble can be any value  when you write it,
 but it will always be “F” when you read it. If the card has more than one
 Megabyte of RAM, the top nybble will be a meaningful part of the address.
+
+Notes for RAMFactor:
+  - https://github.com/mamedev/mame/blob/master/src/devices/bus/a2bus/a2memexp.cpp
+  - ss 5 is for the ROM page, there are two.
+  - https://ae.applearchives.com/all_apple_iis/ramfactor/
 */
 const (
 	memoryExpansionMask = 0x000fffff // 10 bits, 1MB
@@ -65,7 +70,7 @@ func newCardMemoryExpansionBuilder() *cardBuilder {
 
 			var c CardMemoryExpansion
 			c.ram = make([]uint8, size*1024)
-			err = c.loadRomFromResource("<internal>/MemoryExpansionCard-341-0344a.bin")
+			err = c.loadRomFromResource("<internal>/MemoryExpansionCard-341-0344a.bin", cardRomFull)
 			if err != nil {
 				return nil, err
 			}

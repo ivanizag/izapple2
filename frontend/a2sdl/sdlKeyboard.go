@@ -99,6 +99,8 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		if ctrl {
 			k.a.SendCommand(izapple2.CommandReset)
 		}
+	case sdl.K_F4:
+		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case sdl.K_F5:
 		if ctrl {
 			k.a.SendCommand(izapple2.CommandShowSpeed)
@@ -123,8 +125,6 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		} else {
 			k.a.SendCommand(izapple2.CommandNextCharGenPage)
 		}
-	case sdl.K_F11:
-		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case sdl.K_F12:
 		fallthrough
 	case sdl.K_PRINTSCREEN:

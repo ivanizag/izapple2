@@ -151,6 +151,7 @@ var helpMessage = `
 
         F1: Show/Hide help
    Ctrl-F2: Reset
+        F4: Show/Hide CPU trace
         F5: Fast/Normal speed
    Ctrl-F5: Show speed
         F6: Next screen mode
@@ -158,7 +159,6 @@ var helpMessage = `
        F10: Next character set
   Ctrl-F10: Show/Hide character set
  Shift-F10: Show/Hide alternate text
-       F11: Show/Hide CPU trace
        F12: Save screen snapshot
 	 Pause: Pause the emulation
 

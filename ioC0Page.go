@@ -128,7 +128,7 @@ func (p *ioC0Page) setMouseProvider(m MouseProvider) {
 
 func (p *ioC0Page) isTraced(address uint16) bool {
 	ss := address & 0xff
-	return ss != 0xc000 && // Do not trace the spammy keyboard softswitch
+	return address != 0xc000 && // Do not trace the spammy keyboard softswitch
 		(p.traceMask&(1<<(ss>>4))) != 0
 }
 

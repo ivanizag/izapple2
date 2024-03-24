@@ -42,7 +42,7 @@ func newCardVidexBuilder() *cardBuilder {
 			var c CardVidex
 
 			// The C800 area has ROM and RAM
-			err := c.loadRomFromResource("<internal>/Videx Videoterm ROM 2.4.bin")
+			err := c.loadRomFromResource("<internal>/Videx Videoterm ROM 2.4.bin", cardRomUpperHalfEnd)
 			if err != nil {
 				return nil, err
 			}

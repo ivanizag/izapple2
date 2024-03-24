@@ -66,7 +66,7 @@ func newCardDisk2SequencerBuilder() *cardBuilder {
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardDisk2Sequencer
-			err := c.loadRomFromResource("<internal>/DISK2.rom")
+			err := c.loadRomFromResource("<internal>/DISK2.rom", cardRomSimple)
 			if err != nil {
 				return nil, err
 			}

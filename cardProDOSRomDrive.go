@@ -43,7 +43,7 @@ func newCardProDOSRomDriveBuilder() *cardBuilder {
 
 			var c CardProDOSRomDrive
 			c.data = data
-			c.loadRom(data[0x300:0x400])
+			c.loadRom(data[0x300:0x400], cardRomSimple)
 			return &c, nil
 		},
 	}

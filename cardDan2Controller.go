@@ -80,7 +80,7 @@ func newCardDan2ControllerBuilder() *cardBuilder {
 			if c.improved {
 				romFilename = "<internal>/Apple2CardFirmwareImproved.bin"
 			}
-			err := c.loadRomFromResource(romFilename)
+			err := c.loadRomFromResource(romFilename, cardRomSimple)
 			if err != nil {
 				return nil, err
 			}

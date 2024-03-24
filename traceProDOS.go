@@ -189,6 +189,8 @@ func (t *traceProDOS) dumpMLIReturn() {
 		default:
 			fmt.Printf("Ok\n")
 		}
+
+		t.a.cpu.SetTrace(false)
 	}
 }
 
@@ -217,7 +219,7 @@ func (t *traceProDOS) dumpDriverCall() {
 	if int(command) < len(proDosCommandNames) {
 		commandName = proDosCommandNames[command]
 	}
-	fmt.Printf("\n  Prodos driver $%04x command %02x-%s on unit $%x, block %v to $%04x ==> ", pc, command, commandName, unit, block, address)
+	fmt.Printf("\n  Prodos driver $%04x command %02x-%s on unit $%x, block %v to/from $%04x ==> ", pc, command, commandName, unit, block, address)
 }
 
 //lint:ignore U1000 unused but stays as reference

@@ -37,7 +37,7 @@ func (a *Apple2) Start(paused bool) {
 			for i := 0; i < cpuSpinLoops; i++ {
 				// Conditional tracing
 				//pc, _ := a.cpu.GetPCAndSP()
-				//a.cpu.SetTrace(pc >= 0xc75e && pc < 0xc800)
+				//a.cpu.SetTrace(pc >= 0xc700 && pc < 0xc800)
 
 				// Execution
 				a.cpu.ExecuteInstruction()
@@ -144,10 +144,16 @@ func (a *Apple2) dumpDebugInfo() {
 		0xee: "JVAFOLDL",  // Apple Pascal
 		0xef: "JVAFOLDH",  // Apple Pascal
 	}
-
 	fmt.Printf("Page zero values:\n")
 	for _, k := range []int{0x36, 0x37, 0x38, 0x39, 0xe2, 0xe3, 0xec, 0xed, 0xee, 0xef} {
 		d := a.mmu.physicalMainRAM.data[k]
 		fmt.Printf("  %v(0x%x): 0x%02x\n", pageZeroSymbols[k], k, d)
+	}
+
+	pc := uint16(0xc700)
+	for pc < 0xc800 {
+		line, newPc := a.cpu.DisasmInstruction(pc)
+		fmt.Println(line)
+		pc = newPc
 	}
 }

@@ -36,7 +36,7 @@ func newCardParallelPrinterBuilder() *cardBuilder {
 				return nil, err
 			}
 			c.file = f
-			err = c.loadRomFromResource("<internal>/Apple II Parallel Printer Interface Card ROM fixed.bin")
+			err = c.loadRomFromResource("<internal>/Apple II Parallel Printer Interface Card ROM fixed.bin", cardRomSimple)
 			if err != nil {
 				return nil, err
 			}
