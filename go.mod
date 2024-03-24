@@ -11,8 +11,6 @@ require (
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 )
 
-replace github.com/ivanizag/iz6502 => ../iz6502
-
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/fgprof v0.9.3 // indirect
