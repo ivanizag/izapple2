@@ -162,6 +162,9 @@ func SnapshotCharacterGenerator(vs VideoSource, isAltText bool) *image.RGBA {
 
 // SnapshotMessageGenerator shows a message on the screen
 func SnapshotMessageGenerator(vs VideoSource, message string) *image.RGBA {
+	if !vs.SupportsLowercase() {
+		message = strings.ToUpper(message)
+	}
 	lines := strings.Split(message, "\n")
 	text := make([]uint8, textLines*text40Columns)
 	for i := range text {

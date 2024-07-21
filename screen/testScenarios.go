@@ -134,6 +134,11 @@ func (ts *TestScenario) GetCardImage(light color.Color) *image.RGBA {
 	return nil
 }
 
+// SupportsLowercase returns true if the video source supports lowercase
+func (ts *TestScenario) SupportsLowercase() bool {
+	return true
+}
+
 func buildImageName(name string, screenMode int, altSet bool) string {
 	var screenName string
 	switch screenMode {

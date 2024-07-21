@@ -19,6 +19,7 @@ type Apple2 struct {
 	softVideoSwitch *SoftVideoSwitch
 	board           string
 	isApple2e       bool
+	hasLowerCase    bool
 	isFourColors    bool // An Apple II without the 6 color mod
 	commandChannel  chan command
 

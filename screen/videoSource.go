@@ -53,4 +53,6 @@ type VideoSource interface {
 	GetSuperVideoMemory() []uint8
 	// GetCardImage returns an image provided by a card, like the videx card
 	GetCardImage(light color.Color) *image.RGBA
+	// SupportsLowercase returns true if the video source supports lowercase
+	SupportsLowercase() bool
 }

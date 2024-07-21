@@ -19,10 +19,12 @@ func configure(configuration *configuration) (*Apple2, error) {
 
 	addApple2SoftSwitches(a.io)
 	if a.isApple2e {
+		a.hasLowerCase = true
 		a.mmu.initExtendedRAM(1)
 		addApple2ESoftSwitches(a.io)
 	}
 	if board == "base64a" {
+		a.hasLowerCase = true
 		addBase64aSoftSwitches(a.io)
 	}
 

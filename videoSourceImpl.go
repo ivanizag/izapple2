@@ -155,6 +155,11 @@ func (a *Apple2) GetCardImage(light color.Color) *image.RGBA {
 	return a.softVideoSwitch.BuildAlternateImage(light)
 }
 
+// SupportsLowercase returns true if the video source supports lowercase
+func (a *Apple2) SupportsLowercase() bool {
+	return a.hasLowerCase
+}
+
 // DumpTextModeAnsi returns the text mode contents using ANSI escape codes for reverse and flash
 func DumpTextModeAnsi(a *Apple2) string {
 	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
