@@ -25,6 +25,8 @@ NIB: 35 tracks 6656 bytes, 232960 bytes
 // CardDisk2 is a DiskII interface card
 type CardDisk2 struct {
 	cardBase
+	sectors13 bool
+
 	selected int  // q5, Only 0 and 1 supported
 	power    bool // q4
 	drive    [2]cardDisk2Drive
@@ -57,19 +59,21 @@ func newCardDisk2Builder() *cardBuilder {
 			{"disk2", "Diskette image for drive 2", ""},
 			{"tracktracer", "Trace how the disk head moves between tracks", "false"},
 			{"fast", "Enable CPU burst when accessing the disk", "true"},
+			{"sectors13", "Use 13 sectors per track ROM", "false"},
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardDisk2
-			err := c.loadRomFromResource("<internal>/DISK2.rom", cardRomSimple)
-			if err != nil {
-				return nil, err
-			}
+			c.sectors13 = paramsGetBool(params, "sectors13")
 
 			disk1 := paramsGetPath(params, "disk1")
 			if disk1 != "" {
 				err := c.drive[0].insertDiskette(disk1)
 				if err != nil {
 					return nil, err
+				}
+				if c.drive[0].diskette.Is13Sectors() && !c.sectors13 {
+					// Auto configure for 13 sectors per track
+					c.sectors13 = true
 				}
 			}
 			disk2 := paramsGetPath(params, "disk2")
@@ -79,6 +83,17 @@ func newCardDisk2Builder() *cardBuilder {
 					return nil, err
 				}
 			}
+
+			P5RomFile := "<internal>/Apple Disk II 16 Sector Interface Card ROM P5 - 341-0027.bin"
+			if c.sectors13 {
+				P5RomFile = "<internal>/Apple Disk II 13 Sector Interface Card ROM P5 - 341-0009.bin"
+			}
+
+			err := c.loadRomFromResource(P5RomFile, cardRomSimple)
+			if err != nil {
+				return nil, err
+			}
+
 			trackTracer := paramsGetBool(params, "tracktracer")
 			if trackTracer {
 				c.trackTracer = makeTrackTracerLogger()
@@ -92,7 +107,11 @@ func newCardDisk2Builder() *cardBuilder {
 // GetInfo returns smartPort info
 func (c *CardDisk2) GetInfo() map[string]string {
 	info := make(map[string]string)
-	info["rom"] = "16 sector"
+	if c.sectors13 {
+		info["rom"] = "13 sector"
+	} else {
+		info["rom"] = "16 sector"
+	}
 	info["power"] = strconv.FormatBool(c.power)
 
 	info["D1 name"] = c.drive[0].name

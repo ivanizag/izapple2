@@ -53,7 +53,7 @@ const (
 	nscStateEnabled  = uint8(2)
 )
 
-func newNoSlotClockDS1216(a *Apple2, memory memoryHandler) *noSlotClockDS1216 {
+func newNoSlotClockDS1216(_ *Apple2, memory memoryHandler) *noSlotClockDS1216 {
 	var nsc noSlotClockDS1216
 	nsc.memory = memory
 	nsc.state = nscStateDisabled

@@ -89,7 +89,7 @@ func buildNotImplementedSoftSwitchR(io *ioC0Page) softSwitchR {
 	}
 }
 
-func buildNotImplementedSoftSwitchW(io *ioC0Page) softSwitchW {
+func buildNotImplementedSoftSwitchW(_ *ioC0Page) softSwitchW {
 	return func(uint8) {
 		// Do nothing
 	}

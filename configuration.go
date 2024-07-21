@@ -63,9 +63,13 @@ func (c *configuration) getHas(key string) (string, bool) {
 	return value, ok
 }
 
+func (c *configuration) has(key string) bool {
+	_, ok := c.getHas(key)
+	return ok
+}
+
 func (c *configuration) get(key string) string {
-	key = strings.ToLower(key)
-	value, ok := c.data[key]
+	value, ok := c.getHas(key)
 	if !ok {
 		// Should not happen
 		panic(fmt.Errorf("key %s not found", key))

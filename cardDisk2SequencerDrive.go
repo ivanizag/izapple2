@@ -34,9 +34,6 @@ func (d *cardDisk2SequencerDrive) insertDiskette(filename string) error {
 	if f.Info.DiskType != 1 {
 		return errors.New("only 5.25 disks are supported")
 	}
-	if f.Info.BootSectorFormat == 2 { // Info not available in WOZ 1.0
-		return errors.New("woz 13 sector disks are not supported")
-	}
 
 	d.data = f
 	d.writeProtected = !writeable

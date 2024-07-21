@@ -15,6 +15,9 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - DSK
     - PO
     - [WOZ 1.0 or 2.0](storage/WozSupportStatus.md) (read only)
+  - 13 Sector 5 1/4 diskettes. Uncompressed or compressed witth gzip or zip. Supported formats:
+    - NIB (read only)
+    - [WOZ 2.0](storage/WozSupportStatus.md) (read only)
   - 3.5 disks in PO or 2MG format
   - Hard disk in HDV or 2MG format with ProDOS and SmartPort support
 - Emulated extension cards:
@@ -225,6 +228,7 @@ The available pre-configured models are:
   2enh: Apple //e
   2plus: Apple ][+
   base64a: Base 64A
+  dos32: Apple ][+ with 13 sectors disk adapter and DOS 3.2x
   swyft: swyft
 
 The available cards are:

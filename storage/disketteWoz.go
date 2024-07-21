@@ -31,9 +31,6 @@ func newDisquetteWoz(f *FileWoz) (*disketteWoz, error) {
 	if f.Info.DiskType != 1 {
 		return nil, errors.New("Only 5.25 disks are supported")
 	}
-	if f.Info.BootSectorFormat == 2 { // Info not available in WOZ 1.0
-		return nil, errors.New("Woz 13 sector disks are not supported")
-	}
 
 	var d disketteWoz
 	d.data = f
@@ -97,4 +94,8 @@ func (d *disketteWoz) Read(quarterTrack int, cycle uint64) uint8 {
 
 func (d *disketteWoz) Write(quarterTrack int, value uint8, _ uint64) {
 	panic("Write not implemented on woz disk implementation")
+}
+
+func (d *disketteWoz) Is13Sectors() bool {
+	return d.data.version == 2 && d.data.Info.BootSectorFormat == 2
 }

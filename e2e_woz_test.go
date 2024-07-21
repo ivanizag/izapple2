@@ -55,9 +55,9 @@ func TestWoz(t *testing.T) {
 		cycleLimit     uint64
 		expectedTracks []int
 	}{
-		// How to being
-		// DOS 3.2, requires 13 sector disks
-		{"DOS3.3", all, "DOS 3.3 System Master.woz", 11_000_000, []int{0, 8, 0, 76, 68, 84, 68, 84, 68, 92, 16, 24}},
+		// How to begin
+		{"DOS 3.2", all, "DOS 3.2 System Master.woz", 7_000_000, []int{0, 72}},
+		{"DOS 3.3", all, "DOS 3.3 System Master.woz", 11_000_000, []int{0, 8, 0, 76, 68, 84, 68, 84, 68, 92, 16, 24}},
 
 		// Next choices
 		{"Bouncing Kamungas", all, "Bouncing Kamungas - Disk 1, Side A.woz", 30_000_000, []int{0, 32, 0, 40, 0}},

@@ -22,7 +22,9 @@ See:
 type CardDisk2Sequencer struct {
 	cardBase
 
-	p6ROM      []uint8
+	sectors13 bool
+	p6ROM     []uint8
+
 	q          [8]bool // 8-bit latch SN74LS259
 	register   uint8   // 8-bit shift/storage register SN74LS323
 	sequence   uint8   // 4 bits stored in an hex flip-flop SN74LS174
@@ -66,16 +68,6 @@ func newCardDisk2SequencerBuilder() *cardBuilder {
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardDisk2Sequencer
-			err := c.loadRomFromResource("<internal>/DISK2.rom", cardRomSimple)
-			if err != nil {
-				return nil, err
-			}
-
-			data, _, err := LoadResource("<internal>/DISK2P6.rom")
-			if err != nil {
-				return nil, err
-			}
-			c.p6ROM = data
 
 			disk1 := paramsGetString(params, "disk1")
 			if disk1 != "" {
@@ -83,7 +75,9 @@ func newCardDisk2SequencerBuilder() *cardBuilder {
 				if err != nil {
 					return nil, err
 				}
+				c.sectors13 = c.drive[0].data.Info.BootSectorFormat == 2 // Woz 13 sector disk
 			}
+
 			disk2 := paramsGetString(params, "disk2")
 			if disk2 != "" {
 				err := c.drive[1].insertDiskette(disk2)
@@ -91,6 +85,26 @@ func newCardDisk2SequencerBuilder() *cardBuilder {
 					return nil, err
 				}
 			}
+
+			P5RomFile := "<internal>/Apple Disk II 16 Sector Interface Card ROM P5 - 341-0027.bin"
+			P6RomFile := "<internal>/Apple Disk II 16 Sector Interface Card ROM P6 - 341-0028.bin"
+			if c.sectors13 {
+				P5RomFile = "<internal>/Apple Disk II 13 Sector Interface Card ROM P5 - 341-0009.bin"
+				// Buggy sequencer not need for 13 sectors disks to work
+				//P6RomFile = "<internal>/Apple Disk II 13 Sector Interface Card ROM P6 - 341-0010.bin"
+			}
+
+			err := c.loadRomFromResource(P5RomFile, cardRomSimple)
+			if err != nil {
+				return nil, err
+			}
+
+			data, _, err := LoadResource(P6RomFile)
+			if err != nil {
+				return nil, err
+			}
+			c.p6ROM = data
+
 			trackTracer := paramsGetBool(params, "tracktracer")
 			if trackTracer {
 				c.trackTracer = makeTrackTracerLogger()
@@ -103,7 +117,11 @@ func newCardDisk2SequencerBuilder() *cardBuilder {
 // GetInfo returns card info
 func (c *CardDisk2Sequencer) GetInfo() map[string]string {
 	info := make(map[string]string)
-	info["rom"] = "16 sector"
+	if c.sectors13 {
+		info["rom"] = "13 sector"
+	} else {
+		info["rom"] = "16 sector"
+	}
 	// TODO: add drives info
 	return info
 }

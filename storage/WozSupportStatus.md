@@ -4,7 +4,7 @@
 ## With the sequencer:
 - How to begin
     - DOS 3.3: Works
-- DOS 3.2: **Unknown, 13 sector disks boot not supported**
+    - DOS 3.2: Works with 13 sectors ROM
 - Next choices
     - Bouncing Kamungas: Working
     - Commando: Working
