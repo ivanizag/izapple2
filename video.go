@@ -47,7 +47,7 @@ func (v *video) GetCurrentVideoMode() uint32 {
 
 	isMixMode := v.a.io.isSoftSwitchActive(ioFlagMixed)
 	isSecondPage := v.a.io.isSoftSwitchActive(ioFlagSecondPage) && !v.a.mmu.store80Active
-	isAltText := v.a.isApple2e && v.a.io.isSoftSwitchActive(ioFlagAltChar)
+	isAltText := v.a.io.isSoftSwitchActive(ioFlagAltChar)
 
 	var mode uint32
 	if isSuperHighResMode {
@@ -174,7 +174,7 @@ func (v *video) SupportsLowercase() bool {
 func DumpTextModeAnsi(a *Apple2) string {
 	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
 	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
-	isAltText := a.isApple2e && a.io.isSoftSwitchActive(ioFlagAltChar)
+	isAltText := a.io.isSoftSwitchActive(ioFlagAltChar)
 	supportsLowercase := a.hasLowerCase
 	return screen.RenderTextModeAnsi(a.video, is80Columns, isSecondPage, isAltText, supportsLowercase, false)
 }
