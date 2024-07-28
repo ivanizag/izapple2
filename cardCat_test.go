@@ -19,10 +19,10 @@ func testCardDetectedInternal(t *testing.T, model string, card string, cycles ui
 	if err != nil {
 		t.Fatal(err)
 	}
-	at.terminateCondition = buildTerminateConditionText(at, banner, true, cycles)
+	at.terminateCondition = buildTerminateConditionText(banner, testTextMode80, cycles)
 	at.run()
 
-	text := at.getText80()
+	text := at.getText(testTextMode80)
 	if !strings.Contains(text, banner) {
 		t.Errorf("Expected '%s', got '%s'", banner, text)
 	}

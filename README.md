@@ -9,6 +9,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Apple //e with 128Kb of RAM
   - Apple //e enhanced with 128Kb of RAM
   - Base64A clone with 48Kb of base RAM and paged ROM
+  - Basis 108 clone (partial)
 - Storage
   - 16 Sector 5 1/4 diskettes. Uncompressed or compressed witth gzip or zip. Supported formats:
     - NIB (read only)
@@ -228,6 +229,7 @@ The available pre-configured models are:
   2enh: Apple //e
   2plus: Apple ][+
   base64a: Base 64A
+  basis108: Basis 108
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
   swyft: swyft
 

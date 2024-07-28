@@ -107,16 +107,18 @@ func sdlRun(a *izapple2.Apple2) {
 
 		if !a.IsPaused() {
 			var img *image.RGBA
+			vs := a.GetVideoSource()
 			if kp.showHelp {
-				img = screen.SnapshotMessageGenerator(a, helpMessage)
+				img = screen.SnapshotMessageGenerator(vs, helpMessage)
 			} else if kp.showCharGen {
-				img = screen.SnapshotCharacterGenerator(a, kp.showAltText)
-				window.SetTitle(fmt.Sprintf("%v character map", a.Name))
+				cgPage, cgPages := a.GetCgPageInfo()
+				img = screen.SnapshotCharacterGenerator(vs, kp.showAltText)
+				window.SetTitle(fmt.Sprintf("%v character map, page %v/%v", a.Name, cgPage+1, cgPages))
 			} else if kp.showPages {
-				img = screen.SnapshotParts(a, kp.screenMode)
-				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, screen.VideoModeName(a), img.Rect.Dx()/2, img.Rect.Dy()/2))
+				img = screen.SnapshotParts(vs, kp.screenMode)
+				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, screen.VideoModeName(vs), img.Rect.Dx()/2, img.Rect.Dy()/2))
 			} else {
-				img = screen.Snapshot(a, kp.screenMode)
+				img = screen.Snapshot(vs, kp.screenMode)
 			}
 			if img != nil {
 				surface, err := sdl.CreateRGBSurfaceFrom(unsafe.Pointer(&img.Pix[0]),

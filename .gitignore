@@ -7,6 +7,7 @@ frontend/*/*.dsk
 frontend/*/*.po
 frontend/*/*.2mg
 frontend/*/*.hdv
+frontend/*/*.zip
 frontend/a2fyne/a2fyne
 frontend/headless/headless
 frontend/*/snapshot.gif

@@ -9,7 +9,7 @@ type memoryManager struct {
 	apple2 *Apple2
 
 	// Main RAM area: 0x0000 to 0xbfff
-	physicalMainRAM *memoryRange // 0x0000 to 0xbfff, Up to 48 Kb
+	physicalMainRAM memoryRangeHandler // 0x0000 to 0xbfff, Up to 48 Kb
 
 	// Slots area: 0xc000 to 0xcfff
 	cardsROM      [8]memoryHandler //0xcs00 to 0xcSff. 256 bytes for each card
@@ -70,13 +70,15 @@ type memoryHandler interface {
 	poke(uint16, uint8)
 }
 
+type memoryRangeHandler interface {
+	memoryHandler
+	subRange(a, b uint16) []uint8
+}
+
 func newMemoryManager(a *Apple2) *memoryManager {
 	var mmu memoryManager
 	mmu.apple2 = a
-	mmu.physicalMainRAM = newMemoryRange(0, make([]uint8, 0xc000), "Main RAM")
-
 	mmu.slotC3ROMActive = true // For II+, this is the default behaviour
-
 	return &mmu
 }
 
@@ -147,7 +149,7 @@ func (mmu *memoryManager) getPhysicalMainRAM(ext bool) memoryHandler {
 	return mmu.physicalMainRAM
 }
 
-func (mmu *memoryManager) getVideoRAM(ext bool) *memoryRange {
+func (mmu *memoryManager) getVideoRAM(ext bool) memoryRangeHandler {
 	if ext && mmu.hasExtendedRAM() {
 		// The video memory uses the first extended RAM block, even with RAMWorks
 		return mmu.physicalExtRAM[0]
@@ -236,7 +238,7 @@ func (mmu *memoryManager) peekWord(address uint16) uint16 {
 func (mmu *memoryManager) Peek(address uint16) uint8 {
 	mh := mmu.accessRead(address)
 	if mh == nil {
-		return 0xf4 // Or some random number
+		return uint8(address) // Or some random number
 	}
 	value := mh.peek(address)
 	//if address >= 0xc400 && address < 0xc500 {
@@ -308,6 +310,15 @@ func (mmu *memoryManager) initLanguageRAM(groups uint8) {
 		mmu.physicalLangRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x3000), fmt.Sprintf("LC RAM block %v", i))
 		mmu.physicalLangAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000), fmt.Sprintf("LC RAM Alt block %v", i))
 	}
+}
+
+func (mmu *memoryManager) initMainRAM() {
+	// Apple II+ main RAM
+	mmu.physicalMainRAM = newMemoryRange(0, make([]uint8, 0xc000), "Main RAM")
+}
+
+func (mmu *memoryManager) initCustomRAM(customRam memoryRangeHandler) {
+	mmu.physicalMainRAM = customRam
 }
 
 func (mmu *memoryManager) initExtendedRAM(groups int) {

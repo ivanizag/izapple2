@@ -132,7 +132,7 @@ func (a *Apple2) executionTrace() {
 
 func (a *Apple2) dumpDebugInfo() {
 	// See "Apple II Monitors Peeled"
-	pageZeroSymbols := map[int]string{
+	pageZeroSymbols := map[uint16]string{
 		0x36: "CSWL",
 		0x37: "CSWH",
 		0x38: "KSWL",
@@ -145,8 +145,8 @@ func (a *Apple2) dumpDebugInfo() {
 		0xef: "JVAFOLDH",  // Apple Pascal
 	}
 	fmt.Printf("Page zero values:\n")
-	for _, k := range []int{0x36, 0x37, 0x38, 0x39, 0xe2, 0xe3, 0xec, 0xed, 0xee, 0xef} {
-		d := a.mmu.physicalMainRAM.data[k]
+	for _, k := range []uint16{0x36, 0x37, 0x38, 0x39, 0xe2, 0xe3, 0xec, 0xed, 0xee, 0xef} {
+		d := a.mmu.physicalMainRAM.peek(k)
 		fmt.Printf("  %v(0x%x): 0x%02x\n", pageZeroSymbols[k], k, d)
 	}
 

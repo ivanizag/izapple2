@@ -1,7 +1,5 @@
 package izapple2
 
-import "fmt"
-
 /*
 	Copam BASE64A adaptation.
 */
@@ -16,35 +14,14 @@ const (
 )
 
 func loadBase64aRom(a *Apple2) error {
-	// Load the 6 PROM dumps
-	romBanksBytes := make([][]uint8, base64aRomBankCount)
-	for j := range romBanksBytes {
-		romBanksBytes[j] = make([]uint8, 0, base64aRomBankSize)
-	}
-
-	for i := 0; i < base64aRomChipCount; i++ {
-		filename := fmt.Sprintf("<internal>/BASE64A_%X.BIN", 0xd0+i*0x08)
-		data, _, err := LoadResource(filename)
-		if err != nil {
-			return err
-		}
-		for j := range romBanksBytes {
-			start := (j * base64aRomWindowSize) % len(data)
-			romBanksBytes[j] = append(romBanksBytes[j], data[start:start+base64aRomWindowSize]...)
-		}
-	}
-
-	// Create paged ROM
-	romData := make([]uint8, 0, base64aRomBankSize*base64aRomBankCount)
-	for _, bank := range romBanksBytes {
-		romData = append(romData, bank...)
-	}
-	rom := newMemoryRangePagedROM(0xd000, romData, "Base64 ROM", base64aRomBankCount)
-
-	// Start with first bank active
-	rom.setPage(0)
-	a.mmu.physicalROM = rom
-	return nil
+	return loadMultiPageRom(a, []string{
+		"<internal>/BASE64A_D0.BIN",
+		"<internal>/BASE64A_D8.BIN",
+		"<internal>/BASE64A_E0.BIN",
+		"<internal>/BASE64A_E8.BIN",
+		"<internal>/BASE64A_F0.BIN",
+		"<internal>/BASE64A_F8.BIN",
+	})
 }
 
 func addBase64aSoftSwitches(io *ioC0Page) {

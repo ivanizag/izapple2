@@ -51,7 +51,7 @@ func (k *keyboard) putKeyAction(keyEvent *fyne.KeyEvent, press bool) {
 		case fyne.KeyF1:
 			k.s.a.SendCommand(izapple2.CommandReset)
 		case fyne.KeyF12:
-			screen.AddScenario(k.s.a, "../../screen/test_resources/")
+			screen.AddScenario(k.s.a.GetVideoSource(), "../../screen/test_resources/")
 		}
 	}
 
@@ -128,7 +128,7 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 		k.s.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case fyne.KeyF12:
 		//case fyne.KeyPrintScreen:
-		err := screen.SaveSnapshot(k.s.a, k.s.screenMode, "snapshot.png")
+		err := screen.SaveSnapshot(k.s.a.GetVideoSource(), k.s.screenMode, "snapshot.png")
 		if err != nil {
 			fmt.Printf("Error saving snapshoot: %v.\n.", err)
 		} else {

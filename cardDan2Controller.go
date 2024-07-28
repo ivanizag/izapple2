@@ -195,7 +195,7 @@ func (s *cardDan2ControllerSlot) openFile() (*os.File, error) {
 	return nil, err
 }
 
-func (s *cardDan2ControllerSlot) status(unit uint8) error {
+func (s *cardDan2ControllerSlot) status(_ uint8) error {
 	file, err := s.openFile()
 	if err != nil {
 		return err

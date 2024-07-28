@@ -66,7 +66,12 @@ func (m *memoryRangeROM) getPage() uint8 {
 }
 
 func (m *memoryRangeROM) peek(address uint16) uint8 {
-	return m.data[address-m.base+m.pageOffset]
+	pos := address - m.base + m.pageOffset
+	if pos >= uint16(len(m.data)) {
+		return uint8(address) // Non existent memory
+	}
+
+	return m.data[pos]
 }
 func (m *memoryRangeROM) poke(address uint16, value uint8) {
 	// Ignore
@@ -81,7 +86,7 @@ func identifyMemory(m memoryHandler) string {
 
 	rom, ok := m.(*memoryRangeROM)
 	if ok {
-		return fmt.Sprintf("ROM 0x%04x %s", rom.base, ram.name)
+		return fmt.Sprintf("ROM 0x%04x %s", rom.base, rom.name)
 	}
 
 	return ("Unknown memory")

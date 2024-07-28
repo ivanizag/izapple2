@@ -44,7 +44,7 @@ func snapshotLoRes(vs VideoSource, isSecondPage bool, light color.Color) *image.
 }
 
 func snapshotMeRes(vs VideoSource, isSecondPage bool, light color.Color) *image.RGBA {
-	data := getText80FromMemory(vs, isSecondPage)
+	data := getText80FromMemory(vs, isSecondPage, false)
 	return renderGr(data, true /*isMeres*/, light)
 }
 

@@ -4,6 +4,7 @@ import (
 	"sync/atomic"
 
 	"github.com/ivanizag/iz6502"
+	"github.com/ivanizag/izapple2/screen"
 )
 
 // Apple2 represents all the components and state of the emulated machine
@@ -12,6 +13,7 @@ type Apple2 struct {
 	cpu     *iz6502.State
 	mmu     *memoryManager
 	io      *ioC0Page
+	video   screen.VideoSource
 	cg      *CharacterGenerator
 	cards   [8]Card
 	tracers []executionTracer
@@ -88,6 +90,10 @@ func (a *Apple2) IsForceCaps() bool {
 	return a.forceCaps
 }
 
+func (a *Apple2) GetCgPageInfo() (int, int) {
+	return a.cg.getPage(), a.cg.getPages()
+}
+
 func (a *Apple2) RequestFastMode() {
 	// Note: if the fastMode is shorter than maxWaitDuration, there won't be any gain.
 	atomic.AddInt32(&a.fastRequestsCounter, 1)
@@ -99,4 +105,8 @@ func (a *Apple2) ReleaseFastMode() {
 
 func (a *Apple2) registerRemovableMediaDrive(d drive) {
 	a.removableMediaDrives = append(a.removableMediaDrives, d)
+}
+
+func (a *Apple2) GetVideoSource() screen.VideoSource {
+	return a.video
 }

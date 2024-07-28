@@ -14,11 +14,11 @@ func TestDan2Controller(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	at.terminateCondition = buildTerminateConditionText(at, "NEW VOL", true, 10_000_000)
+	at.terminateCondition = buildTerminateConditionText("NEW VOL", testTextMode40, 10_000_000)
 
 	at.run()
 
-	text := at.getText()
+	text := at.getText(testTextMode40)
 	if !strings.Contains(text, "NEW VOL") {
 		t.Errorf("Expected Bitsy Bye screen, got '%s'", text)
 	}

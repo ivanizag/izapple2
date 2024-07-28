@@ -52,10 +52,11 @@ func newCardProDOSRomCard3Builder() *cardBuilder {
 	}
 }
 
+//lint:ignore U1000 this is used to write debug code
 func newCardProDOSNVRAMDriveBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "ProDOS 4MB NVRAM DRive",
-		description: "A bootable 4 MB NVRAM card by Ralle Palaveev",
+		description: "A bootable 4 MB NVRAM card by Ralle Palaveev, WIP",
 		defaultParams: &[]paramSpec{
 			{"image", "ROM image with the ProDOS volume", ""},
 		},

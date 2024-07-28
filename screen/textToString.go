@@ -6,11 +6,11 @@ import (
 )
 
 // RenderTextModeString returns the text mode contents ignoring reverse and flash
-func RenderTextModeString(vs VideoSource, is80Columns bool, isSecondPage bool, isAltText bool, isApple2e bool) string {
+func RenderTextModeString(vs VideoSource, is80Columns bool, isSecondPage bool, isAltText bool, supportsLowercase bool, hasAltOrder bool) string {
 
 	var text []uint8
 	if is80Columns {
-		text = getText80FromMemory(vs, isSecondPage)
+		text = getText80FromMemory(vs, isSecondPage, hasAltOrder)
 	} else {
 		text = getTextFromMemory(vs, isSecondPage, false)
 	}
@@ -21,7 +21,7 @@ func RenderTextModeString(vs VideoSource, is80Columns bool, isSecondPage bool, i
 		line := ""
 		for c := 0; c < columns; c++ {
 			char := text[l*columns+c]
-			line += textMemoryByteToString(char, isAltText, isApple2e, false)
+			line += textMemoryByteToString(char, isAltText, supportsLowercase, false)
 		}
 		line = strings.TrimRight(line, " ")
 		content += fmt.Sprintf("%v\n", line)

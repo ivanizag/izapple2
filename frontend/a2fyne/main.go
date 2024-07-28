@@ -95,11 +95,12 @@ func fyneRun(s *state) {
 			case <-ticker.C:
 				if !s.a.IsPaused() {
 					var img *image.RGBA
+					vs := s.a.GetVideoSource()
 					if s.showPages {
-						img = screen.SnapshotParts(s.a, s.screenMode)
-						s.win.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, screen.VideoModeName(s.a), img.Rect.Dx()/2, img.Rect.Dy()/2))
+						img = screen.SnapshotParts(vs, s.screenMode)
+						s.win.SetTitle(fmt.Sprintf("%v %v %vx%v", s.a.Name, screen.VideoModeName(vs), img.Rect.Dx()/2, img.Rect.Dy()/2))
 					} else {
-						img = screen.Snapshot(s.a, s.screenMode)
+						img = screen.Snapshot(vs, s.screenMode)
 					}
 					display.Image = img
 					canvas.Refresh(display)

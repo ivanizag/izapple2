@@ -46,13 +46,14 @@ func SnapshotPaletted(vs VideoSource, screenMode int) *image.Paletted {
 // See: https://superuser.com/questions/361297/what-colour-is-the-dark-green-on-old-fashioned-green-screen-computer-displays
 var greenPhosphorColor = color.RGBA{65, 255, 0, 255}
 
-func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGBA {
+func snapshotByMode(vs VideoSource, videoMode uint32, screenMode int) *image.RGBA {
 	videoBase := videoMode & VideoBaseMask
 	mixMode := videoMode & VideoMixTextMask
 	isSecondPage := (videoMode & VideoSecondPage) != 0
 	isAltText := (videoMode & VideoAltText) != 0
 	isRGBCard := (videoMode & VideoRGBCard) != 0
 	shiftSupported := (videoMode & VideoFourColors) == 0
+	hasAltOrder := (videoMode & VideoText80AltOrder) != 0
 
 	var lightColor color.Color = color.White
 	if screenMode == ScreenModeGreen {
@@ -67,7 +68,7 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 		snap = snapshotText40(vs, isSecondPage, isAltText, lightColor)
 		applyNTSCFilter = false
 	case VideoText80:
-		snap = snapshotText80(vs, isSecondPage, isAltText, lightColor)
+		snap = snapshotText80(vs, isSecondPage, isAltText, hasAltOrder, lightColor)
 		applyNTSCFilter = false
 	case VideoText40RGB:
 		snap = snapshotText40RGB(vs, isSecondPage, isAltText)
@@ -106,7 +107,7 @@ func snapshotByMode(vs VideoSource, videoMode uint16, screenMode int) *image.RGB
 		case VideoMixText40:
 			bottom = snapshotText40(vs, isSecondPage, isAltText, lightColor)
 		case VideoMixText80:
-			bottom = snapshotText80(vs, isSecondPage, isAltText, lightColor)
+			bottom = snapshotText80(vs, isSecondPage, isAltText, hasAltOrder, lightColor)
 		case VideoMixText40RGB:
 			bottom = snapshotText40RGB(vs, isSecondPage, isAltText)
 			applyNTSCFilter = false

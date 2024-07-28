@@ -6,15 +6,11 @@ import (
 )
 
 // RenderTextModeAnsi returns the text mode contents using ANSI escape codes for reverse and flash
-func RenderTextModeAnsi(vs VideoSource, is80Columns bool, isSecondPage bool, isAltText bool, isApple2e bool) string {
-	//func DumpTextModeAnsi(a *Apple2) string {
-	//	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
-	//	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
-	//	isAltText := a.isApple2e && a.io.isSoftSwitchActive(ioFlagAltChar)
+func RenderTextModeAnsi(vs VideoSource, is80Columns bool, isSecondPage bool, isAltText bool, supportsLowercase bool, hasAltOrder bool) string {
 
 	var text []uint8
 	if is80Columns {
-		text = getText80FromMemory(vs, isSecondPage)
+		text = getText80FromMemory(vs, isSecondPage, hasAltOrder)
 	} else {
 		text = getTextFromMemory(vs, isSecondPage, false)
 	}
@@ -26,7 +22,7 @@ func RenderTextModeAnsi(vs VideoSource, is80Columns bool, isSecondPage bool, isA
 		line := ""
 		for c := 0; c < columns; c++ {
 			char := text[l*columns+c]
-			line += textMemoryByteToString(char, isAltText, isApple2e, true)
+			line += textMemoryByteToString(char, isAltText, supportsLowercase, true)
 		}
 		content += fmt.Sprintf("# %v #\n", line)
 	}
@@ -49,7 +45,7 @@ $e0-$ff           Low Nor  Low Nor  Low Nor  Low Nor
 ----------------------------------------------------
 */
 
-func textMemoryByteToString(value uint8, isAltCharSet bool, isApple2e bool, ansi bool) string {
+func textMemoryByteToString(value uint8, isAltCharSet bool, supportsLowercase bool, ansi bool) string {
 	// Normal, inverse or flash
 	topBits := value >> 6
 	isInverse := topBits == 0
@@ -61,8 +57,8 @@ func textMemoryByteToString(value uint8, isAltCharSet bool, isApple2e bool, ansi
 
 	// Move blocks
 	value = value & 0x7f
-	if !isApple2e {
-		// No uppercase
+	if !supportsLowercase {
+		// No lowercase
 		value = value & 0x3f
 	}
 	if isFlash || isInverse && !isAltCharSet {

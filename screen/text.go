@@ -18,8 +18,8 @@ func snapshotText40(vs VideoSource, isSecondPage bool, isAltText bool, light col
 	return renderText(vs, text, isAltText, nil /*colorMap*/, light)
 }
 
-func snapshotText80(vs VideoSource, isSecondPage bool, isAltText bool, light color.Color) *image.RGBA {
-	text := getText80FromMemory(vs, isSecondPage)
+func snapshotText80(vs VideoSource, isSecondPage bool, isAltText bool, hasAltOrder bool, light color.Color) *image.RGBA {
+	text := getText80FromMemory(vs, isSecondPage, hasAltOrder)
 	return renderText(vs, text, isAltText, nil /*colorMap*/, light)
 }
 
@@ -34,9 +34,15 @@ func snapshotText40RGBColors(vs VideoSource, isSecondPage bool) *image.RGBA {
 	return renderText(vs, nil /*text*/, false, colorMap, nil)
 }
 
-func getText80FromMemory(vs VideoSource, isSecondPage bool) []uint8 {
+func getText80FromMemory(vs VideoSource, isSecondPage bool, hasAltOrder bool) []uint8 {
 	text40Columns := getTextFromMemory(vs, isSecondPage, false)
 	text40ColumnsAlt := getTextFromMemory(vs, isSecondPage, true)
+
+	if hasAltOrder {
+		tmp := text40ColumnsAlt
+		text40ColumnsAlt = text40Columns
+		text40Columns = tmp
+	}
 
 	// Merge the two 40 cols to return 80 cols
 	text80Columns := make([]uint8, 2*len(text40Columns))

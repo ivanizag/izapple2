@@ -12,7 +12,7 @@ import (
 
 // TestScenario is the computer video state
 type TestScenario struct {
-	VideoMode     uint16     `json:"mode"`
+	VideoMode     uint32     `json:"mode"`
 	VideoModeName string     `json:"name"`
 	ScreenModes   []int      `json:"screens"`
 	TextPages     [4][]uint8 `json:"text"`
@@ -89,7 +89,7 @@ func (ts *TestScenario) save(dir string) (string, error) {
 }
 
 // GetCurrentVideoMode returns the active video mode
-func (ts *TestScenario) GetCurrentVideoMode() uint16 {
+func (ts *TestScenario) GetCurrentVideoMode() uint32 {
 	return ts.VideoMode
 }
 

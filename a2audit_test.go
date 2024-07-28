@@ -22,10 +22,10 @@ func testA2AuditInternal(t *testing.T, model string, removeLangCard bool, cycles
 	if err != nil {
 		t.Fatal(err)
 	}
-	at.terminateCondition = buildTerminateConditionTexts(at, messages, false, cycles)
+	at.terminateCondition = buildTerminateConditionTexts(messages, testTextMode40, cycles)
 	at.run()
 
-	text := at.getText()
+	text := at.getText(testTextMode40)
 	for _, message := range messages {
 		if !strings.Contains(text, message) {
 			t.Errorf("Expected '%s', got '%s'", message, text)

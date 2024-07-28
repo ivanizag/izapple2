@@ -9,23 +9,45 @@ import (
 )
 
 func configure(configuration *configuration) (*Apple2, error) {
-	a := newApple2()
+	var a Apple2
 	a.Name = configuration.get(confName)
+	a.mmu = newMemoryManager(&a)
+	a.video = newVideo(&a)
+	a.io = newIoC0Page(&a)
+	a.commandChannel = make(chan command, 100)
 
 	// Configure the board
 	board := configuration.get(confBoard)
 	a.board = board
-	a.isApple2e = board == "2e"
+
+	err := setupCharactedGenerator(&a, board, configuration.get(confCharRom))
+	if err != nil {
+		return nil, err
+	}
 
 	addApple2SoftSwitches(a.io)
-	if a.isApple2e {
-		a.hasLowerCase = true
+	switch board {
+	case "2plus":
+		a.mmu.initMainRAM()
+	case "2e":
+		a.isApple2e = true
+		a.mmu.initMainRAM()
 		a.mmu.initExtendedRAM(1)
+		a.hasLowerCase = true
 		addApple2ESoftSwitches(a.io)
-	}
-	if board == "base64a" {
+	case "base64a":
+		a.mmu.initMainRAM()
 		a.hasLowerCase = true
 		addBase64aSoftSwitches(a.io)
+	case "basis108":
+		memBasis108 := newMemoryRangeBasis108()
+		videoBasis108 := newVideoBasis108(&a, memBasis108)
+		a.mmu.initCustomRAM(memBasis108)
+		a.video = videoBasis108
+		a.hasLowerCase = true
+		addBasis108SoftSwitches(a.io, memBasis108, videoBasis108, a.cg)
+	default:
+		return nil, fmt.Errorf("board %s not supported it must be '2plus', '2e', 'base64a', 'basis108", board)
 	}
 
 	cpu := configuration.get(confCpu)
@@ -36,12 +58,7 @@ func configure(configuration *configuration) (*Apple2, error) {
 		a.cpu = iz6502.NewCMOS65c02(a.mmu)
 	}
 
-	err := a.loadRom(configuration.get(confRom))
-	if err != nil {
-		return nil, err
-	}
-
-	err = setupCharactedGenerator(a, board, configuration.get(confCharRom))
+	err = a.loadRom(configuration.get(confRom))
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +75,7 @@ func configure(configuration *configuration) (*Apple2, error) {
 	for i := 0; i < 8; i++ {
 		cardConfig := configuration.get(fmt.Sprintf("s%v", i))
 		if cardConfig != "" {
-			_, err := setupCard(a, i, cardConfig)
+			_, err := setupCard(&a, i, cardConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -81,48 +98,37 @@ func configure(configuration *configuration) (*Apple2, error) {
 	// Add optional accesories including the aux slot
 	ramWorksSize := configuration.get(confRamworks)
 	if ramWorksSize != "" && ramWorksSize != "none" {
-		err = setupRAMWorksCard(a, ramWorksSize)
+		err = setupRAMWorksCard(&a, ramWorksSize)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if configuration.getFlag(confRgb) {
-		setupRGBCard(a)
+		setupRGBCard(&a)
 	}
 
 	nsc := configuration.get(confNsc)
 	if nsc != "none" && nsc != "" {
-		err = setupNoSlotClock(a, nsc)
+		err = setupNoSlotClock(&a, nsc)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if configuration.getFlag(confRomx) {
-		err := setupRomX(a)
+		err := setupRomX(&a)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = setupTracers(a, configuration.get(confTrace))
+	err = setupTracers(&a, configuration.get(confTrace))
 	if err != nil {
 		return nil, err
 	}
 
-	return a, nil
-}
-
-func newApple2() *Apple2 {
-	var a Apple2
-
-	a.Name = "Pending"
-	a.mmu = newMemoryManager(&a)
-	a.io = newIoC0Page(&a)
-	a.commandChannel = make(chan command, 100)
-
-	return &a
+	return &a, nil
 }
 
 func (a *Apple2) setClockSpeed(speed string) error {
@@ -152,10 +158,15 @@ func (a *Apple2) SetForceCaps(value bool) {
 }
 
 func (a *Apple2) loadRom(filename string) error {
-	if a.board == "base64a" && filename == "<custom>" {
-		// The ROM of the base64a has several file and pages
-		loadBase64aRom(a)
-		return nil
+	if filename == "<custom>" {
+		switch a.board {
+		case "base64a":
+			return loadBase64aRom(a)
+		case "basis108":
+			return loadBasis108Rom(a)
+		default:
+			return fmt.Errorf("no custom ROM defined for board %s", a.board)
+		}
 	}
 
 	data, _, err := LoadResource(filename)
@@ -167,6 +178,57 @@ func (a *Apple2) loadRom(filename string) error {
 
 	romBase := 0x10000 - size
 	a.mmu.physicalROM = newMemoryRangeROM(uint16(romBase), data, "Main ROM")
+	return nil
+}
+
+const pagedRomChipWindowSize = 0x800                                  // 2 KB
+const pagedRomChipCount = 6                                           // There has to be six ROM chips
+const pagedRomWindowSize = pagedRomChipWindowSize * pagedRomChipCount // To cover 0xd000 to 0xffff
+func loadMultiPageRom(a *Apple2, filenames []string) error {
+	if len(filenames) != pagedRomChipCount {
+		return fmt.Errorf("expected %d ROM files, got %d", pagedRomChipCount, len(filenames))
+	}
+
+	// Load the 6 PROM dumps
+	proms := make([][]uint8, pagedRomChipCount)
+	banks := 1
+	for i, filename := range filenames {
+		var err error
+		proms[i], _, err = LoadResource(filename)
+		if err != nil {
+			return err
+		}
+		pages := len(proms[i]) / pagedRomChipWindowSize
+		if pages > banks {
+			banks = pages
+		}
+	}
+
+	// Init the array of banks
+	romBanksBytes := make([][]uint8, banks)
+	for bank := range romBanksBytes {
+		romBanksBytes[bank] = make([]uint8, 0, pagedRomWindowSize)
+	}
+
+	// Distribute the per chip banks on the full rom banks
+	for _, romData := range proms {
+		for bank := range romBanksBytes {
+			start := (bank * pagedRomChipWindowSize) % len(romData)
+			romBanksBytes[bank] = append(romBanksBytes[bank], romData[start:start+pagedRomChipWindowSize]...)
+		}
+	}
+
+	// Create paged ROM
+	romData := make([]uint8, 0, pagedRomWindowSize*banks)
+	for _, bank := range romBanksBytes {
+		romData = append(romData, bank...)
+	}
+	rom := newMemoryRangePagedROM(0xd000, romData, "Multipage main ROM", uint8(banks))
+
+	// Start with first bank active
+	rom.setPage(0)
+
+	a.mmu.physicalROM = rom
 	return nil
 }
 

@@ -50,6 +50,7 @@ The available pre-configured models are:
   2enh: Apple //e
   2plus: Apple ][+
   base64a: Base 64A
+  basis108: Basis 108
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
   swyft: swyft
 
