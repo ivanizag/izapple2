@@ -56,7 +56,7 @@ func newSDLJoysticks(useMouseAlt bool) *sdlJoysticks {
 	}
 
 	// To enter Apple IIe on self test mode
-	//j.keys[1] = true
+	// j.keys[1] = true
 
 	return &j
 }
@@ -94,8 +94,8 @@ func mouseToJoyCentered(x int32, w int32) uint8 {
 func (j *sdlJoysticks) putMouseMotionEvent(e *sdl.MouseMotionEvent, width int32, height int32) {
 	if j.useMouse {
 		// The mouse moves on all the window
-		//j.paddle[0] = mouseToJoyFull(e.X, width)
-		//j.paddle[1] = mouseToJoyFull(e.Y, height)
+		// j.paddle[0] = mouseToJoyFull(e.X, width)
+		// j.paddle[1] = mouseToJoyFull(e.Y, height)
 
 		// The mouse moves around the center of the window
 		j.paddle[0] = mouseToJoyCentered(e.X, width)
@@ -106,11 +106,11 @@ func (j *sdlJoysticks) putMouseMotionEvent(e *sdl.MouseMotionEvent, width int32,
 func (j *sdlJoysticks) putMouseButtonEvent(e *sdl.MouseButtonEvent) {
 	pressed := e.State == sdl.PRESSED
 	switch e.Button {
-	case 1: //BUTTON_LEFT
+	case 1: // BUTTON_LEFT
 		j.mousebuttons[0] = pressed
-	case 3: //BUTTON_RIGHT
+	case 3: // BUTTON_RIGHT
 		j.mousebuttons[1] = pressed
-	case 2: //BUTTON_MIDDLE
+	case 2: // BUTTON_MIDDLE
 		j.mousebuttons[2] = pressed
 	}
 }
@@ -129,8 +129,8 @@ func (j *sdlJoysticks) putKey(keyEvent *sdl.KeyboardEvent) {
 		j.keys[0] = pressed
 	case sdl.K_RALT:
 		j.keys[1] = pressed
-		//case sdl.K_LGUI:
-		//	j.keys[2] = pressed
+		// case sdl.K_LGUI:
+		//   j.keys[2] = pressed
 	}
 
 }

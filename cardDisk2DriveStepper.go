@@ -46,7 +46,7 @@ var cogPositions = []int{
 
 func moveDriveStepper(phases uint8, prevStep int) int {
 
-	//fmt.Printf("magnets: 0x%x\n", phases)
+	// fmt.Printf("magnets: 0x%x\n", phases)
 
 	cogPosition := cogPositions[phases]
 	if cogPosition == undefinedPosition {
@@ -57,7 +57,7 @@ func moveDriveStepper(phases uint8, prevStep int) int {
 	prevPosition := prevStep % stepsPerGroup // Direction, step in the current group of magnets.
 	delta := cogPosition - prevPosition
 	if delta < 0 {
-		delta = delta + stepsPerGroup
+		delta += stepsPerGroup
 	}
 
 	var nextStep int
@@ -78,6 +78,6 @@ func moveDriveStepper(phases uint8, prevStep int) int {
 		}
 	}
 
-	//fmt.Printf("[DiskII] 1/4 track: %03d %vO\n", nextStep, strings.Repeat(" ", nextStep))
+	// fmt.Printf("[DiskII] 1/4 track: %03d %vO\n", nextStep, strings.Repeat(" ", nextStep))
 	return nextStep
 }

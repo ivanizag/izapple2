@@ -29,7 +29,7 @@ type SmartPortFujinetNetwork struct {
 
 	jsonData *fujinet.FnJson
 	data     []uint8
-	//connected    uint8
+	// connected    uint8
 }
 
 // NewSmartPortFujinetNetwork creates a new fujinet device
@@ -180,12 +180,12 @@ func (d *SmartPortFujinetNetwork) controlOpen(method uint8, translation uint8, r
 	urlParsed, err := url.Parse(rawUrl)
 	if err != nil {
 		d.errorCode = fujinet.NetworkErrorInvalidDeviceSpec
-		d.statusByte = 4 //client_error
+		d.statusByte = 4 // client_error
 	}
 
 	d.protocol, d.errorCode = fujinet.InstantiateProtocol(urlParsed, method)
 	if d.protocol == nil {
-		d.statusByte = 4 //client_error
+		d.statusByte = 4 // client_error
 		return
 	}
 

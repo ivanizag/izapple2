@@ -12,7 +12,7 @@ type memoryManager struct {
 	physicalMainRAM memoryRangeHandler // 0x0000 to 0xbfff, Up to 48 Kb
 
 	// Slots area: 0xc000 to 0xcfff
-	cardsROM      [8]memoryHandler //0xcs00 to 0xcSff. 256 bytes for each card
+	cardsROM      [8]memoryHandler // 0xcs00 to 0xcSff. 256 bytes for each card
 	cardsROMExtra [8]memoryHandler // 0xc800 to 0xcfff. 2048 bytes for each card
 
 	// Upper area ROM: 0xc000 to 0xffff (or 0xd000 to 0xffff on the II+)
@@ -241,9 +241,9 @@ func (mmu *memoryManager) Peek(address uint16) uint8 {
 		return uint8(address) // Or some random number
 	}
 	value := mh.peek(address)
-	//if address >= 0xc400 && address < 0xc500 {
-	//	fmt.Printf("[MMU] Peek at %04x: %02x\n", address, value)
-	//}
+	// if address >= 0xc400 && address < 0xc500 {
+	//	 fmt.Printf("[MMU] Peek at %04x: %02x\n", address, value)
+	// }
 
 	return value
 }
@@ -268,9 +268,9 @@ func (mmu *memoryManager) PeekCode(address uint16) uint8 {
 	}
 
 	value := mh.peek(address)
-	//if address >= 0xc400 && address < 0xc500 {
-	//	fmt.Printf("[MMU] PeekCode at %04x: %02x\n", address, value)
-	//}
+	// if address >= 0xc400 && address < 0xc500 {
+	//	 fmt.Printf("[MMU] PeekCode at %04x: %02x\n", address, value)
+	// }
 
 	return value
 }
@@ -288,9 +288,9 @@ func (mmu *memoryManager) Poke(address uint16, value uint8) {
 		mh.poke(address, value)
 	}
 
-	//if address >= 0x0036 && address <= 0x0039 {
-	//	fmt.Printf("[MMU] Poke at %04x: %02x\n", address, value)
-	//}
+	// if address >= 0x0036 && address <= 0x0039 {
+	// 	fmt.Printf("[MMU] Poke at %04x: %02x\n", address, value)
+	// }
 }
 
 // Memory initialization
@@ -339,7 +339,7 @@ func (mmu *memoryManager) setLanguageRAM(readActive bool, writeActive bool, altB
 }
 
 func (mmu *memoryManager) setLanguageRAMActiveBlock(block uint8) {
-	block = block % uint8(len(mmu.physicalLangRAM))
+	block %= uint8(len(mmu.physicalLangRAM))
 	mmu.lcSelectedBlock = block
 }
 

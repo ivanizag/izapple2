@@ -19,7 +19,7 @@ const (
 	ScreenModeGreen = iota
 	// ScreenModePlain to render in color with filled areas
 	ScreenModePlain
-	//ScreenModeNTSC shows spaces between pixels
+	// ScreenModeNTSC shows spaces between pixels
 	ScreenModeNTSC
 )
 

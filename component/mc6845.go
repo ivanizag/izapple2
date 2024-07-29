@@ -35,7 +35,7 @@ func (m *MC6845) Write(rs bool, value uint8) {
 	} else if m.sel <= 15 {
 		// R0 to R15 are writable
 		m.reg[m.sel] = value
-		//fmt.Printf("Set %v to %v\n", m.sel, value)
+		// fmt.Printf("Set %v to %v\n", m.sel, value)
 	}
 }
 

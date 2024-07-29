@@ -41,7 +41,6 @@ type CardDisk2Sequencer struct {
 
 // Shared methods between both versions on the Disk II card
 type cardDisk2Shared interface {
-	//insertDiskette(drive int, ...)
 	setTrackTracer(tt trackTracer)
 }
 
@@ -91,7 +90,7 @@ func newCardDisk2SequencerBuilder() *cardBuilder {
 			if c.sectors13 {
 				P5RomFile = "<internal>/Apple Disk II 13 Sector Interface Card ROM P5 - 341-0009.bin"
 				// Buggy sequencer not need for 13 sectors disks to work
-				//P6RomFile = "<internal>/Apple Disk II 13 Sector Interface Card ROM P6 - 341-0010.bin"
+				// P6RomFile = "<internal>/Apple Disk II 13 Sector Interface Card ROM P6 - 341-0010.bin"
 			}
 
 			err := c.loadRomFromResource(P5RomFile, cardRomSimple)
@@ -308,7 +307,7 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 			c.register = (c.register << 1) | ((inst >> 2) & 1)
 		case 2:
 			// Shift right bringing wProt
-			c.register = c.register >> 1
+			c.register >>= 1
 			if wProt {
 				c.register |= 0x80
 			}
@@ -327,7 +326,7 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 		}
 	}
 
-	//fmt.Printf("[D2SEQ] Step. seq:%x inst:%x next:%x reg:%02x\n",
+	// fmt.Printf("[D2SEQ] Step. seq:%x inst:%x next:%x reg:%02x\n",
 	//	c.sequence, inst, next, c.register)
 
 	c.sequence = next

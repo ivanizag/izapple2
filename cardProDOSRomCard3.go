@@ -114,7 +114,7 @@ func (c *CardProDOSRomCard3) translateAddress(address uint16) int {
 	offset := address - 0xC800
 	pageAddress := int(c.bank&0x7FF) * 0x0800
 
-	//fmt.Printf("CardProDOSRomCard3.translateAddress: address=%04X, bank=%04X, offset=%04X, pageAddress=%08X\n", address, c.bank, offset, pageAddress)
+	// fmt.Printf("CardProDOSRomCard3.translateAddress: address=%04X, bank=%04X, offset=%04X, pageAddress=%08X\n", address, c.bank, offset, pageAddress)
 
 	return pageAddress + int(offset)
 }

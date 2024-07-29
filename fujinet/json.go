@@ -88,12 +88,12 @@ func getJsonValue(data any) []uint8 {
 			return []uint8("FALSE")
 		}
 	case float64:
-		//if math.Floor(v) == v { // As done in FNJSON__getValue()
-		// It's an integer
+		// if math.Floor(v) == v { // As done in FNJSON__getValue()
+		//  It's an integer
 		return []uint8(strconv.Itoa(int(v)))
-		//} else {
-		//	return []uint8(fmt.Sprintf("%.10f", v))
-		//}
+		// } else {
+		//	 return []uint8(fmt.Sprintf("%.10f", v))
+		// }
 	case string:
 		return []uint8(v)
 	case []any:

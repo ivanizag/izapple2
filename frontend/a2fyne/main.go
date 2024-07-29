@@ -123,21 +123,21 @@ func registerKeyboardEvents(s *state) {
 
 	// Events
 	canvas.SetOnTypedKey(func(ke *fyne.KeyEvent) {
-		//fmt.Printf("Event: %v\n", ke.Name)
+		// fmt.Printf("Event: %v\n", ke.Name)
 		kp.putKey(ke)
 	})
 	canvas.SetOnTypedRune(func(ch rune) {
-		//fmt.Printf("Rune: %v\n", ch)
+		// fmt.Printf("Rune: %v\n", ch)
 		kp.putRune(ch)
 	})
 	if deskCanvas, ok := canvas.(desktop.Canvas); ok {
 		deskCanvas.SetOnKeyDown(func(ke *fyne.KeyEvent) {
 			kp.putKeyAction(ke, true)
-			//fmt.Printf("Event down: %v\n", ke.Name)
+			// fmt.Printf("Event down: %v\n", ke.Name)
 		})
 		deskCanvas.SetOnKeyUp(func(ke *fyne.KeyEvent) {
 			kp.putKeyAction(ke, false)
-			//fmt.Printf("Event up: %v\n", ke.Name)
+			// fmt.Printf("Event up: %v\n", ke.Name)
 		})
 	}
 }

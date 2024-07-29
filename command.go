@@ -70,10 +70,10 @@ func (a *Apple2) executeCommand(command command) {
 	switch command.getId() {
 	case CommandToggleSpeed:
 		if a.cycleDurationNs == 0 {
-			//fmt.Println("Slow")
+			// fmt.Println("Slow")
 			a.cycleDurationNs = 1000.0 / CPUClockMhz
 		} else {
-			//fmt.Println("Fast")
+			// fmt.Println("Fast")
 			a.cycleDurationNs = 0
 		}
 	case CommandShowSpeed:

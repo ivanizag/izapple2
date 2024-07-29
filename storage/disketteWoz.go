@@ -71,7 +71,7 @@ func (d *disketteWoz) Read(quarterTrack int, cycle uint64) uint8 {
 		d.latch = (d.latch << 1) + bit
 		if d.latch >= 0x80 {
 			// Valid byte, store value a bit longer and clear the internal latch
-			//fmt.Printf("Valid 0x%.2x\n", d.latch)
+			// fmt.Printf("Valid 0x%.2x\n", d.latch)
 			d.visibleLatch = d.latch
 			d.visibleLatchCountDown = 1
 			d.latch = 0
@@ -84,7 +84,7 @@ func (d *disketteWoz) Read(quarterTrack int, cycle uint64) uint8 {
 		}
 	}
 
-	//fmt.Printf("Visible: 0x%.2x, latch: 0x%.2x, bits: %v, cycles: %v\n", d.visibleLatch, d.latch, deltaBits, cycle-d.cycle)
+	// fmt.Printf("Visible: 0x%.2x, latch: 0x%.2x, bits: %v, cycles: %v\n", d.visibleLatch, d.latch, deltaBits, cycle-d.cycle)
 
 	// Update the internal last cycle without losing the remainder not processed
 	d.cycle += deltaBits * cyclesPerBit

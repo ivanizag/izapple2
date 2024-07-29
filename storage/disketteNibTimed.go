@@ -31,7 +31,7 @@ func (d *disketteNibTimed) Read(quarterTrack int, cycle uint64) uint8 {
 	}
 	value := track[bytePosition]
 	value >>= shift
-	//fmt.Printf("%v, %v, %v, %x\n", bitPosition, shift, bytePosition, uint8(value))
+	// fmt.Printf("%v, %v, %v, %x\n", bitPosition, shift, bytePosition, uint8(value))
 	return value
 }
 

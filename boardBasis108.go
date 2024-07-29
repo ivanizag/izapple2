@@ -56,6 +56,7 @@ func (v *videoBasis108) GetCurrentVideoMode() uint32 {
 
 		isTextMode := v.a.io.isSoftSwitchActive(ioFlagText)
 		isHiResMode := v.a.io.isSoftSwitchActive(ioFlagHiRes)
+
 		if isTextMode {
 			mode |= screen.VideoText80
 		} else if isHiResMode {

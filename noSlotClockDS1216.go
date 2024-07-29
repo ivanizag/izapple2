@@ -37,14 +37,14 @@ type noSlotClockDS1216 struct {
 }
 
 var nscBitPattern = [64]bool{
-	true, false, true, false, false, false, true, true, //C5
-	false, true, false, true, true, true, false, false, //3A
-	true, true, false, false, false, true, false, true, //A3
-	false, false, true, true, true, false, true, false, //5C
-	true, false, true, false, false, false, true, true, //C5
-	false, true, false, true, true, true, false, false, //3A
-	true, true, false, false, false, true, false, true, //A3
-	false, false, true, true, true, false, true, false, //5C
+	true, false, true, false, false, false, true, true, // C5
+	false, true, false, true, true, true, false, false, // 3A
+	true, true, false, false, false, true, false, true, // A3
+	false, false, true, true, true, false, true, false, // 5C
+	true, false, true, false, false, false, true, true, // C5
+	false, true, false, true, true, true, false, false, // 3A
+	true, true, false, false, false, true, false, true, // A3
+	false, false, true, true, true, false, true, false, // 5C
 }
 
 const (
@@ -166,7 +166,7 @@ func (nsc *noSlotClockDS1216) loadTime() {
 
 	// Bits 4 and 5 of the day register are used to control the RST and oscillator
 	// functions. These bits are shipped from the factory set to logic 1.
-	register += 0x0 //0x3, but zero on read.
+	register += 0x0 // 0x3, but zero on read.
 	register <<= 4
 	register += uint64(now.Weekday()) + 1
 	register <<= 4

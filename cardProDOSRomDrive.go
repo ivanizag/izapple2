@@ -27,7 +27,7 @@ func newCardProDOSRomDriveBuilder() *cardBuilder {
 		name:        "ProDOS ROM Drive",
 		description: "A bootable 1 MB solid state disk by Terence Boldt",
 		defaultParams: &[]paramSpec{
-			//{"image", "ROM image with the ProDOS volume", "https://github.com/tjboldt/ProDOS-ROM-Drive/raw/v4.0/Firmware/GamesWithFirmware.po"},
+			// {"image", "ROM image with the ProDOS volume", "https://github.com/tjboldt/ProDOS-ROM-Drive/raw/v4.0/Firmware/GamesWithFirmware.po"},
 			{"image", "ROM image with the ProDOS volume", "https://github.com/Alex-Kw/ProDOS-ROM-Drive-Images/raw/main/ProDOS_2.4.3_TJ.po"},
 		},
 		buildFunc: func(params map[string]string) (Card, error) {

@@ -135,10 +135,9 @@ func (c *CardDan2Controller) writeSoftSwitch(address uint8, data uint8) {
 				c.portC |= uint8(1) << bit
 			}
 			c.romCsxx.setPage((c.portC & 0x07) | ((c.portB << 4) & 0xf0))
-		} else {
-			if data != 0xfa {
-				c.tracef("Not supported status %v, it must be 0xfa\n", data)
-			}
+		} else if data != 0xfa {
+			c.tracef("Not supported status %v, it must be 0xfa\n", data)
+
 			/* Sets the 8255 with status 0xfa, 1111_1010:
 			1:  set mode
 			11: port A mode 2

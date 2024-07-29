@@ -244,7 +244,7 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 	}, "TIMEDATEMOUSE")
 
 	data := buildBaseInOutRom(slot)
-	c.romCsxx = newMemoryRangeROM(0xC200, data[:], "Mouse card")
+	c.romCsxx = newMemoryRangeROM(0xC200, data, "Mouse card")
 
 	// Identification as a mouse card
 	// From Technical Note Misc #8, "Pascal 1.1 Firmware Protocol ID Bytes":
@@ -253,7 +253,6 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 	data[0x0b] = 0x01
 	data[0x0c] = 0x20
 	// From "AppleMouse // User's Manual", Appendix B:
-	//data[0x0c] = 0x20
 	data[0xfb] = 0xd6
 
 	// Set 8 entrypoints to sofstwitches 2 to 1f

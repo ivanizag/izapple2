@@ -103,7 +103,7 @@ func (c *CardLanguage) ssAction(ss uint8, write bool) {
 		c.readState = false
 		c.writeState = lcWriteDisabled
 	case 3:
-		//RAM read, RAM write
+		// RAM read, RAM write
 		c.readState = true
 		if !write {
 			c.writeState++

@@ -56,14 +56,14 @@ func textMemoryByteToString(value uint8, isAltCharSet bool, supportsLowercase bo
 	}
 
 	// Move blocks
-	value = value & 0x7f
+	value &= 0x7f
 	if !supportsLowercase {
 		// No lowercase
-		value = value & 0x3f
+		value &= 0x3f
 	}
 	if isFlash || isInverse && !isAltCharSet {
 		// No flash or inverse lowercase
-		value = value & 0x3f
+		value &= 0x3f
 	}
 	if value < 0x20 {
 		// Control is Uppercase

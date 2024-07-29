@@ -57,11 +57,11 @@ func addApple2ESoftSwitches(io *ioC0Page) {
 		return ssOff
 	}, "VERTBLANK")
 
-	//io.softSwitchesData[ioFlagAltChar] = ssOn // Not sure about this.
+	// io.softSwitchesData[ioFlagAltChar] = ssOn // Not sure about this.
 
 }
 
-func addSoftSwitchesMmu(io *ioC0Page, addressClear uint8, addressSet uint8, AddressGet uint8, flag *bool, name string) {
+func addSoftSwitchesMmu(io *ioC0Page, addressClear uint8, addressSet uint8, addressGet uint8, flag *bool, name string) {
 	io.addSoftSwitchW(addressClear, func(uint8) {
 		*flag = false
 	}, name+"OFF")
@@ -70,12 +70,12 @@ func addSoftSwitchesMmu(io *ioC0Page, addressClear uint8, addressSet uint8, Addr
 		*flag = true
 	}, name+"ON")
 
-	io.addSoftSwitchR(AddressGet, func() uint8 {
+	io.addSoftSwitchR(addressGet, func() uint8 {
 		return ssFromBool(*flag)
 	}, name)
 }
 
-func addSoftSwitchesIou(io *ioC0Page, addressClear uint8, addressSet uint8, AddressGet uint8, ioFlag uint8, name string) {
+func addSoftSwitchesIou(io *ioC0Page, addressClear uint8, addressSet uint8, addressGet uint8, ioFlag uint8, name string) {
 	io.addSoftSwitchW(addressClear, func(uint8) {
 		io.softSwitchesData[ioFlag] = ssOff
 	}, name+"OFF")
@@ -84,7 +84,7 @@ func addSoftSwitchesIou(io *ioC0Page, addressClear uint8, addressSet uint8, Addr
 		io.softSwitchesData[ioFlag] = ssOn
 	}, name+"ON")
 
-	io.addSoftSwitchR(AddressGet, func() uint8 {
+	io.addSoftSwitchR(addressGet, func() uint8 {
 		return io.softSwitchesData[ioFlag]
 	}, name)
 }

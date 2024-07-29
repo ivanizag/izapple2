@@ -74,7 +74,7 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 	*/
 
 	// Keys with control are not generating events in putKey()
-	//ctrl := k.controlLeft || k.controlRight
+	// ctrl := k.controlLeft || k.controlRight
 
 	result := uint8(0)
 	switch keyEvent.Name {
@@ -127,14 +127,14 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 	case fyne.KeyF11:
 		k.s.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case fyne.KeyF12:
-		//case fyne.KeyPrintScreen:
+		// case fyne.KeyPrintScreen:
 		err := screen.SaveSnapshot(k.s.a.GetVideoSource(), k.s.screenMode, "snapshot.png")
 		if err != nil {
 			fmt.Printf("Error saving snapshoot: %v.\n.", err)
 		} else {
 			fmt.Println("Saving snapshot")
 		}
-		//case fyne.KeyPause:
+		// case fyne.KeyPause:
 		//	k.s.a.SendCommand(izapple2.CommandPauseUnpause)
 	}
 

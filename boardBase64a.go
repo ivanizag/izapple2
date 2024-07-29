@@ -4,15 +4,6 @@ package izapple2
 	Copam BASE64A adaptation.
 */
 
-const (
-	// There are 6 ROM chips. Each can have 4Kb or 8Kb. They can fill
-	// 2 or 4 banks with 2kb windows.
-	base64aRomBankSize   = 12 * 1024
-	base64aRomBankCount  = 4
-	base64aRomWindowSize = 2 * 1024
-	base64aRomChipCount  = 6
-)
-
 func loadBase64aRom(a *Apple2) error {
 	return loadMultiPageRom(a, []string{
 		"<internal>/BASE64A_D0.BIN",

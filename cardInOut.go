@@ -48,11 +48,11 @@ func (c *CardInOut) assign(a *Apple2, slot int) {
 		if value&0x7f == 10 {
 			value = 13 + 0x80
 		}
-		//fmt.Printf("[cardInOut] Read access to softswith 0x%x for slot %v, value %x.\n", 0, slot, value)
+		// fmt.Printf("[cardInOut] Read access to softswith 0x%x for slot %v, value %x.\n", 0, slot, value)
 		return value
 	}, "INOUTR")
 	c.addCardSoftSwitchW(1, func(value uint8) {
-		//fmt.Printf("[cardInOut] Write access to softswith 0x%x for slot %v, value 0x%x: %v, %v.\n", 1, slot, value, value&0x7f, string(value&0x7f))
+		// fmt.Printf("[cardInOut] Write access to softswith 0x%x for slot %v, value 0x%x: %v, %v.\n", 1, slot, value, value&0x7f, string(value&0x7f))
 		if value&0x7f == 13 {
 			fmt.Printf("\n")
 		} else {
@@ -62,7 +62,7 @@ func (c *CardInOut) assign(a *Apple2, slot int) {
 	}, "INOUTW")
 
 	data := buildBaseInOutRom(slot)
-	c.romCsxx = newMemoryRangeROM(0xC200, data[:], "InOUt card")
+	c.romCsxx = newMemoryRangeROM(0xC200, data, "InOUt card")
 	c.cardBase.assign(a, slot)
 }
 

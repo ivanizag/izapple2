@@ -5,21 +5,22 @@ import (
 )
 
 /*
-	microPD1990ac Serial I/O Calendar Clock IC
-	See:
-		https://www.semiee.com/file/backup/NEC-D1990.pdf
+microPD1990ac Serial I/O Calendar Clock IC
+See:
 
-	Used by the ThunderClock+ real time clock card.
+	https://www.semiee.com/file/backup/NEC-D1990.pdf
 
-	The 40 bit register has 5 bytes (10 nibbles):
-		byte 4:
-			month, binary from 1 to 12
-			day of week, BCD 0 to 6
-		byte 3: day of month, BCD 1 to 31
-		byte 2: hour, BCD 0 to 23
-		byte 1: minute, BCD 0 to 59
-		byte 0: seconds, BCD 0 to 59
+Used by the ThunderClock+ real time clock card.
 
+The 40 bit register has 5 bytes (10 nibbles):
+
+	byte 4:
+		month, binary from 1 to 12
+		day of week, BCD 0 to 6
+	byte 3: day of month, BCD 1 to 31
+	byte 2: hour, BCD 0 to 23
+	byte 1: minute, BCD 0 to 59
+	byte 0: seconds, BCD 0 to 59
 */
 type MicroPD1990ac struct {
 	clock    bool   // CLK state
@@ -55,7 +56,7 @@ func (m *MicroPD1990ac) In(clock bool, strobe bool, command uint8, dataIn bool) 
 			m.loadTime()
 		default:
 			// Ignore unknown commands (like set time)
-			//panic(fmt.Sprintf("PD1990ac command %v not implemented.", m.command))
+			// panic(fmt.Sprintf("PD1990ac command %v not implemented.", m.command))
 		}
 	}
 

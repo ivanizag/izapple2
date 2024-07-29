@@ -38,7 +38,7 @@ func testWoz(t *testing.T, sequencer bool, file string, expectedTracks []int, cy
 		t.Errorf("Quarter tracks, expected %#v, got %#v", expectedTracks, tt.quarterTracks)
 	}
 
-	//t.Errorf("Cycles: %d vs  %d", at.a.cpu.GetCycles(), cycleLimit)
+	// t.Errorf("Cycles: %d vs  %d", at.a.cpu.GetCycles(), cycleLimit)
 }
 
 const (

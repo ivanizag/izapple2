@@ -91,7 +91,7 @@ func main() {
 		case "clearkeys":
 			fe.clearKeyQueue()
 
-		//Screen related commands
+		// Screen related commands
 		case "text":
 			fmt.Print(izapple2.DumpTextModeAnsi(a))
 

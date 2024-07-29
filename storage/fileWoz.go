@@ -168,7 +168,7 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 		chunks[id] = data[i:iNext]
 		i = iNext
 
-		//fmt.Printf("Chunk %v, size %v - %v\n", id, chunkHeader.Size, len(chunks[id]))
+		// fmt.Printf("Chunk %v, size %v - %v\n", id, chunkHeader.Size, len(chunks[id]))
 	}
 
 	// Read the INFO chunk
@@ -193,7 +193,7 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 			parts := strings.Split(entry, "\t")
 			if len(parts) >= 2 {
 				f.meta[parts[0]] = parts[1]
-				//fmt.Printf("*** %v: %v\n", parts[0], parts[1])
+				// fmt.Printf("*** %v: %v\n", parts[0], parts[1])
 			}
 		}
 	}
@@ -231,7 +231,7 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 
 				dataPos := woz2TrackBlockSize*(int(trackHeader.StartingBlock)-woz2FirstTrackBlock) + woz2TrackBitsOffset
 				dataSize := woz2TrackBlockSize * int(trackHeader.BlockCount)
-				//fmt.Printf("@%v %v:%v (%v) of %v\n", trackHeader.StartingBlock, dataPos, dataPos+dataSize, dataSize, len(tracksData))
+				// fmt.Printf("@%v %v:%v (%v) of %v\n", trackHeader.StartingBlock, dataPos, dataPos+dataSize, dataSize, len(tracksData))
 				f.tracks[i].data = tracksData[dataPos : dataPos+dataSize]
 			}
 		}
@@ -293,6 +293,6 @@ func (f *FileWoz) dump() {
 		}
 	}
 
-	//nibs := f.dumpTrackAsNib(0)
-	//fmt.Printf("  Zero track: {%v} %x\n", len(nibs), nibs)
+	// nibs := f.dumpTrackAsNib(0)
+	// fmt.Printf("  Zero track: {%v} %x\n", len(nibs), nibs)
 }

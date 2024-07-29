@@ -36,8 +36,8 @@ func (a *Apple2) Start(paused bool) {
 		if !a.paused {
 			for i := 0; i < cpuSpinLoops; i++ {
 				// Conditional tracing
-				//pc, _ := a.cpu.GetPCAndSP()
-				//a.cpu.SetTrace(pc >= 0xc700 && pc < 0xc800)
+				// pc, _ := a.cpu.GetPCAndSP()
+				// a.cpu.SetTrace(pc >= 0xc700 && pc < 0xc800)
 
 				// Execution
 				a.cpu.ExecuteInstruction()

@@ -70,7 +70,7 @@ func (c *CardSaturn) ssAction(ss uint8) {
 		c.readState = false
 		c.writeState = lcWriteDisabled
 	case 3:
-		//RAM read, RAM write
+		// RAM read, RAM write
 		c.altBank = false
 		c.readState = true
 		c.writeState++
@@ -98,7 +98,7 @@ func (c *CardSaturn) ssAction(ss uint8) {
 		c.readState = false
 		c.writeState = lcWriteDisabled
 	case 11:
-		//RAM read, RAM write
+		// RAM read, RAM write
 		c.altBank = true
 		c.readState = true
 		c.writeState++

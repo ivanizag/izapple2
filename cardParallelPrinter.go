@@ -60,7 +60,7 @@ func (c *CardParallelPrinter) assign(a *Apple2, slot int) {
 func (c *CardParallelPrinter) printByte(value uint8) {
 	if c.ascii {
 		// As text the MSB has to be removed, but if done, graphics modes won't work
-		value = value & 0x7f // Remove the MSB bit
+		value &= 0x7f // Remove the MSB bit
 	}
 	c.file.Write([]byte{value})
 }

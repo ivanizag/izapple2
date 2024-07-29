@@ -39,9 +39,7 @@ func getText80FromMemory(vs VideoSource, isSecondPage bool, hasAltOrder bool) []
 	text40ColumnsAlt := getTextFromMemory(vs, isSecondPage, true)
 
 	if hasAltOrder {
-		tmp := text40ColumnsAlt
-		text40ColumnsAlt = text40Columns
-		text40Columns = tmp
+		text40ColumnsAlt, text40Columns = text40Columns, text40ColumnsAlt
 	}
 
 	// Merge the two 40 cols to return 80 cols

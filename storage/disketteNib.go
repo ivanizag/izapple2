@@ -22,7 +22,7 @@ func (d *disketteNib) Read(quarterTrack int, cycle uint64) uint8 {
 	track := d.nib.track[quarterTrack/4]
 	value := track[d.position]
 	d.position = (d.position + 1) % nibBytesPerTrack
-	//fmt.Printf("%v, %v, %v, %x\n", 0, 0, d.position, uint8(value))
+	// fmt.Printf("%v, %v, %v, %x\n", 0, 0, d.position, uint8(value))
 	return value
 }
 

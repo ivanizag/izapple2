@@ -49,10 +49,10 @@ const (
 	romXPlusSetTextBankBaseAddress   = uint16(0xcfd0)
 
 	// Unknown
-	//romXFirmwareMark0Address = uint16(0xdffe)
-	//romXFirmwareMark0Value   = uint8(0x4a)
-	//romXFirmwareMark1Address = uint16(0xdfff)
-	//romXFirmwareMark1Value   = uint8(0xcd)
+	// romXFirmwareMark0Address = uint16(0xdffe)
+	// romXFirmwareMark0Value   = uint8(0x4a)
+	// romXFirmwareMark1Address = uint16(0xdfff)
+	// romXFirmwareMark1Value   = uint8(0xcd)
 
 	romXceSelectTempBank  = uint16(0xf850)
 	romXceSelectMainBank  = uint16(0xf851)
