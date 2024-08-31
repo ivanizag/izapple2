@@ -1,6 +1,6 @@
 module github.com/ivanizag/izapple2
 
-go 1.18
+go 1.21
 
 require (
 	fyne.io/fyne/v2 v2.1.4

@@ -1,4 +1,4 @@
-FROM golang:1.18.0
+FROM golang:1.21.0
 
 LABEL MAINTAINER="Ivan Izaguirre <ivanizag@gmail.com>"
 

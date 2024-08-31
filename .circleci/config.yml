@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.21
     steps:
       - checkout
       - run: sudo apt update
