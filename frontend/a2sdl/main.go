@@ -151,25 +151,26 @@ func sdlRun(a *izapple2.Apple2) {
 
 var helpMessage = `
 
-        F1: Show/Hide help
-   Ctrl-F2: Reset
-        F4: Show/Hide CPU trace
-        F5: Fast/Normal speed
-   Ctrl-F5: Show speed
-        F6: Next screen mode
-        F7: Show/Hide pages
-       F10: Next character set
-  Ctrl-F10: Show/Hide character set
- Shift-F10: Show/Hide alternate text
-       F12: Save screen snapshot
-	 Pause: Pause the emulation
+          F1: Show/Hide help
+     Ctrl-F2: Reset
+          F4: Show/Hide CPU trace
+          F5: Fast/Normal speed
+     Ctrl-F5: Show speed
+          F6: Next screen mode
+          F7: Show/Hide pages
+         F10: Next character set
+    Ctrl-F10: Show/Hide character set
+   Shift-F10: Show/Hide alternate text
+         F12: Save screen snapshot
+       Pause: Pause the emulation
 
- Drop a file on the left or right
- side of the window to load a disk
+  Left alt or option key: Open-Apple
+ Right alt or option key: Closed-Apple
+
+Drop a file on the left or right
+side of the window to load a disk
 
  Run izapple2 -h for more options
-
- More info at
    https://github.com/ivanizag/izapple2
 `
 
