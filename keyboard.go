@@ -41,7 +41,6 @@ func (k *KeyboardChannel) PutRune(ch rune) {
 	// Some substitutions useful for Macs that transform chars with the option key
 	pos := slices.Index(macOptionChars, ch)
 	if pos >= 0 {
-		println("Mac option char: ", string(ch), " -> ", string(macOptionSubs[pos]))
 		ch = rune(macOptionSubs[pos])
 	}
 

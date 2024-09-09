@@ -2,7 +2,6 @@ package screen
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -10,7 +9,7 @@ import (
 
 func TestSnapshots(t *testing.T) {
 	// Verifies all the scenarios on the ./test_resources folder
-	files, err := ioutil.ReadDir("./test_resources/")
+	files, err := os.ReadDir("./test_resources/")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,16 +33,16 @@ func testScenario(t *testing.T, fileName string) {
 		referenceName := buildImageName(fileName, screenMode, false)
 		actualName := buildImageName(fileName, screenMode, true)
 
-		reference, err := ioutil.ReadFile(referenceName)
+		reference, err := os.ReadFile(referenceName)
 		if err != nil {
 			t.Fatal(err)
 		}
-		actual, err := ioutil.ReadFile(actualName)
+		actual, err := os.ReadFile(actualName)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if bytes.Compare(reference, actual) != 0 {
+		if !bytes.Equal(reference, actual) {
 			t.Errorf("Files %s and %s should be equal", referenceName, actualName)
 			replaceIfNeeded(referenceName, actualName)
 		} else {

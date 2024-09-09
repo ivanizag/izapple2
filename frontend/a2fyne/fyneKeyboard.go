@@ -113,11 +113,7 @@ func (k *keyboard) putKey(keyEvent *fyne.KeyEvent) {
 	case fyne.KeyF5:
 		k.s.a.SendCommand(izapple2.CommandShowSpeed)
 	case fyne.KeyF6:
-		if k.s.screenMode != screen.ScreenModeGreen {
-			k.s.screenMode = screen.ScreenModeGreen
-		} else {
-			k.s.screenMode = screen.ScreenModeNTSC
-		}
+		k.s.screenMode = screen.NextScreenMode(k.s.screenMode)
 	case fyne.KeyF7:
 		k.s.showPages = !k.s.showPages
 	case fyne.KeyF9:

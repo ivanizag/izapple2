@@ -108,11 +108,7 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 			k.a.SendCommand(izapple2.CommandToggleSpeed)
 		}
 	case sdl.K_F6:
-		if k.screenMode == screen.ScreenModeNTSC {
-			k.screenMode = screen.ScreenModeGreen
-		} else {
-			k.screenMode = screen.ScreenModeNTSC
-		}
+		k.screenMode = screen.NextScreenMode(k.screenMode)
 	case sdl.K_F7:
 		k.showPages = !k.showPages
 	case sdl.K_F9:

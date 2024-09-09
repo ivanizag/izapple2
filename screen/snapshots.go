@@ -23,6 +23,17 @@ const (
 	ScreenModeNTSC
 )
 
+func NextScreenMode(screenMode int) int {
+	switch screenMode {
+	case ScreenModeGreen:
+		return ScreenModePlain
+	case ScreenModePlain:
+		return ScreenModeNTSC
+	default:
+		return ScreenModeGreen
+	}
+}
+
 // Snapshot the currently visible screen
 func Snapshot(vs VideoSource, screenMode int) *image.RGBA {
 	videoMode := vs.GetCurrentVideoMode()

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -20,7 +19,7 @@ func main() {
 	}
 
 	// Read the contents of the usage file
-	usageBytes, err := ioutil.ReadFile(usagePath)
+	usageBytes, err := os.ReadFile(usagePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,7 +28,7 @@ func main() {
 	usage := string(usageBytes)
 
 	// Read the contents of the readme file
-	readmeBytes, err := ioutil.ReadFile(readmePath)
+	readmeBytes, err := os.ReadFile(readmePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +46,7 @@ func main() {
 	newReadme := readme[:startIndex+len(startMarker)] + "\n```terminal\n" + usage + "\n```\n" + readme[endIndex:]
 
 	// Write the updated readme back to the file
-	err = ioutil.WriteFile(readmePath, []byte(newReadme), os.ModePerm)
+	err = os.WriteFile(readmePath, []byte(newReadme), os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
