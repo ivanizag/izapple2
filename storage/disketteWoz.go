@@ -29,7 +29,7 @@ type disketteWoz struct {
 func newDisquetteWoz(f *FileWoz) (*disketteWoz, error) {
 	// Discard not supported features
 	if f.Info.DiskType != 1 {
-		return nil, errors.New("Only 5.25 disks are supported")
+		return nil, errors.New("only 5.25 disks are supported")
 	}
 
 	var d disketteWoz

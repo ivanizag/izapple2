@@ -53,12 +53,12 @@ func OpenBlockDisk(filename string) (*BlockDisk, error) {
 	}
 
 	if fileInfo.Size() > int64(ProDosBlockSize*proDosMaxBlocks) {
-		return nil, fmt.Errorf("File is too big OR %s", err2mg.Error())
+		return nil, fmt.Errorf("file is too big OR %s", err2mg.Error())
 	}
 
 	size := uint32(fileInfo.Size())
 	if size%ProDosBlockSize != 0 {
-		return nil, fmt.Errorf("File size os invalid OR %s", err2mg.Error())
+		return nil, fmt.Errorf("file size os invalid OR %s", err2mg.Error())
 	}
 
 	// It's a valid raw file

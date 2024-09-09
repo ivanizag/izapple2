@@ -33,6 +33,6 @@ func (d *disketteNib) Write(quarterTrack int, value uint8, _ uint64) {
 }
 
 func (d *disketteNib) Is13Sectors() bool {
-	// It amy be 13 sectors but we don't know
+	// It may be 13 sectors but we don't know
 	return false
 }

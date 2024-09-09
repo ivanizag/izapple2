@@ -21,7 +21,7 @@ func IsDiskette(data []byte) bool {
 // MakeDiskette returns a Diskette by detecting the format
 func MakeDiskette(data []byte, filename string, writeable bool) (Diskette, error) {
 	if isFileD13(data) {
-		return nil, errors.New("files with .d13 format not supported for 13 sectors disk, use .nib or .woz")
+		return nil, errors.New("files with .d13 format are not supported for 13 sectors disk, use .nib or .woz")
 	}
 
 	if isFileNib(data) {
@@ -46,5 +46,5 @@ func MakeDiskette(data []byte, filename string, writeable bool) (Diskette, error
 		return newDisquetteWoz(f)
 	}
 
-	return nil, errors.New("Diskette format not supported")
+	return nil, errors.New("diskette format not supported")
 }

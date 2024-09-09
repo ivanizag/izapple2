@@ -44,7 +44,7 @@ func parse2mg(bd *BlockDisk) error {
 	var header file2mgHeader
 	minHeaderSize := binary.Size(&header)
 	if fileInfo.Size() < int64(minHeaderSize) {
-		return errors.New("Invalid 2MG file")
+		return errors.New("invalid 2MG file")
 	}
 
 	err = readHeader(bd.file, &header)
@@ -56,7 +56,7 @@ func parse2mg(bd *BlockDisk) error {
 	bd.dataOffset = header.OffsetData
 
 	if fileInfo.Size() < int64(bd.dataOffset+bd.blocks*ProDosBlockSize) {
-		return errors.New("The 2MG file is too small")
+		return errors.New("the 2MG file is too small")
 	}
 
 	return nil
@@ -69,15 +69,15 @@ func readHeader(buf io.Reader, header *file2mgHeader) error {
 	}
 
 	if header.Preamble != file2mgPreamble {
-		return errors.New("The 2mg file must start with '2IMG'")
+		return errors.New("the 2mg file must start with '2IMG'")
 	}
 
 	if header.Format != file2mgFormatProdos {
-		return errors.New("Only prodos disks are supported")
+		return errors.New("only prodos disks are supported")
 	}
 
 	if header.Version != file2mgVersion {
-		return errors.New("Version of 2MG image not supported")
+		return errors.New("version of 2MG image not supported")
 	}
 
 	return nil

@@ -101,6 +101,7 @@ func (f *fileNib) saveTrack(track int) {
 	}
 }
 
+//lint:ignore U1000 This should be done per track
 func (f *fileNib) saveNib(filename string) error {
 	file, err := os.Create(filename)
 	if err != nil {
@@ -301,7 +302,7 @@ func nibDecodeTrack(data []byte, logicalOrder *[16]int) ([]byte, error) {
 		for j := 0; j < secondaryBufferSize; j++ {
 			w := sixAndTwoUntranslateTable[data[i%l]]
 			if w == -1 {
-				return nil, errors.New("Invalid byte from nib data")
+				return nil, errors.New("invalid byte from nib data")
 			}
 			v := byte(w) ^ prevV
 			prevV = v
@@ -320,7 +321,7 @@ func nibDecodeTrack(data []byte, logicalOrder *[16]int) ([]byte, error) {
 		for j := 0; j < primaryBufferSize; j++ {
 			w := sixAndTwoUntranslateTable[data[i%l]]
 			if w == -1 {
-				return nil, errors.New("Invalid byte from nib data")
+				return nil, errors.New("invalid byte from nib data")
 			}
 			v := byte(w) ^ prevV
 			b[dst+j] |= v << 2 // The elements of the secondary buffer are the 6 MSB bits

@@ -148,7 +148,7 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 	} else if bytes.Equal(headerWoz2, header) {
 		f.version = 2
 	} else {
-		return nil, errors.New("Invalid WOZ header")
+		return nil, errors.New("invalid WOZ header")
 	}
 
 	// Extract the chunks
@@ -161,7 +161,7 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 		i += wozChunkHeaderLen
 		iNext := i + int(chunkHeader.Size)
 		if i == iNext || iNext > len(data) {
-			return nil, errors.New("Invalid chunk in WOZ file")
+			return nil, errors.New("invalid chunk in WOZ file")
 		}
 
 		id := string(chunkHeader.ID[:])
@@ -174,7 +174,7 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 	// Read the INFO chunk
 	infoData, ok := chunks["INFO"]
 	if !ok {
-		return nil, errors.New("Chunk INFO missing from WOZ file")
+		return nil, errors.New("chunk INFO missing from WOZ file")
 	}
 	switch f.version {
 	case 1:
@@ -201,14 +201,14 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 	// Read the TMAP chunk
 	trackMap, ok := chunks["TMAP"]
 	if !ok {
-		return nil, errors.New("Chunk TMAP missing from WOZ file")
+		return nil, errors.New("chunk TMAP missing from WOZ file")
 	}
 	f.trackMap = trackMap
 
 	// Read the TRKS chunk
 	tracksData, ok := chunks["TRKS"]
 	if !ok {
-		return nil, errors.New("Chunk TRKS missing from WOZ file")
+		return nil, errors.New("chunk TRKS missing from WOZ file")
 	}
 	if f.version == 1 {
 		i := 0
@@ -236,7 +236,7 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 			}
 		}
 	} else {
-		return nil, errors.New("Woz version not supported")
+		return nil, errors.New("woz version not supported")
 	}
 
 	return &f, nil
@@ -263,7 +263,7 @@ func (f *FileWoz) DumpTrackAsNib(quarterTrack int) []uint8 {
 	return out
 }
 
-func (f *FileWoz) dump() {
+func (f *FileWoz) Dump() {
 	fmt.Printf("Woz image:\n")
 	fmt.Printf("  Version: %v\n", f.Info.Version)
 	fmt.Printf("  Disk type: %v\n", f.Info.DiskType)
