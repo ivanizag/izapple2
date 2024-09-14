@@ -32,8 +32,8 @@ func (k *KeyboardChannel) PutText(text string) {
 	}
 }
 
-var macOptionChars = []rune("ı˝•£‰ ⁄‘’≈œæ€®†¥øπå∫∂ƒ™¶§∑©√ßµ„…≤≥çñŒÆ€‡∏ﬂ¯ˇ˘‹›◊˙˚")
-var macOptionSubs = []rune("!\"·$%&/()=qwertyopasdfghjkxcvbm,.<>cnQWETPGJKLZXVNM")
+var macOptionChars = []rune("ı•£‰⁄‘’≈œæ€®†¥øπå∫∂ƒ™¶§∑©√ßµ„…≤≥çñŒÆ€‡∏ﬂ¯ˇ˘‹›◊˙˚˝")
+var macOptionSubst = []rune("!·$%/()=qwertyopasdfghjkxcvbm,.<>cnQWETPGJKLZXVNM\"")
 
 // PutRune sends a rune to the emulator if it is valid printable ASCII
 func (k *KeyboardChannel) PutRune(ch rune) {
@@ -41,7 +41,7 @@ func (k *KeyboardChannel) PutRune(ch rune) {
 	// Some substitutions useful for Macs that transform chars with the option key
 	pos := slices.Index(macOptionChars, ch)
 	if pos >= 0 {
-		ch = rune(macOptionSubs[pos])
+		ch = rune(macOptionSubst[pos])
 	}
 
 	// We will use computed text only for printable ASCII chars
