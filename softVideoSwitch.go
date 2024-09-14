@@ -15,19 +15,25 @@ import (
 
 // SoftVideoSwitch represents a Videx soft video switch
 type SoftVideoSwitch struct {
-	card *CardVidex
+	card   *CardVidex
+	forced bool
 }
 
 // NewSoftVideoSwitch creates a new SoftVideoSwitch
-func NewSoftVideoSwitch(card *CardVidex) *SoftVideoSwitch {
+func NewSoftVideoSwitch(card *CardVidex, force bool) *SoftVideoSwitch {
 	var vs SoftVideoSwitch
 	vs.card = card
+	vs.forced = force
 	return &vs
 }
 
 func (vs *SoftVideoSwitch) isActive() bool {
 	if vs == nil {
 		return false
+	}
+
+	if vs.forced {
+		return true
 	}
 
 	isTextMode := vs.card.a.io.isSoftSwitchActive(ioFlagText)

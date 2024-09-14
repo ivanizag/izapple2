@@ -23,11 +23,12 @@ See:
 // CardVidex represents a Videx compatible 80 column card
 type CardVidex struct {
 	cardBase
-	mc6845   component.MC6845
-	sramPage uint8
-	sram     [0x800]uint8
-	upperROM memoryHandler
-	charGen  []uint8
+	mc6845     component.MC6845
+	sramPage   uint8
+	sram       [0x800]uint8
+	upperROM   memoryHandler
+	charGen    []uint8
+	alwaysShow bool
 }
 
 func newCardVidexBuilder() *cardBuilder {
@@ -37,6 +38,7 @@ func newCardVidexBuilder() *cardBuilder {
 		defaultParams: &[]paramSpec{
 			{"rom", "ROM file to load", "<internal>/Videx Videoterm ROM 2.4.bin"},
 			{"charmap", "Character map file to load", "<internal>/80ColumnP110.BIN"},
+			{"always", "Always show the 80 columns output", "false"},
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardVidex
@@ -53,6 +55,8 @@ func newCardVidexBuilder() *cardBuilder {
 			if err != nil {
 				return nil, err
 			}
+
+			c.alwaysShow = paramsGetBool(params, "always")
 			return &c, nil
 		},
 	}
@@ -101,7 +105,7 @@ func (c *CardVidex) assign(a *Apple2, slot int) {
 	}
 
 	c.cardBase.assign(a, slot)
-	a.softVideoSwitch = NewSoftVideoSwitch(c)
+	a.softVideoSwitch = NewSoftVideoSwitch(c, c.alwaysShow)
 }
 
 const videxRomLimit = uint16(0xcc00)
