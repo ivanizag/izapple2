@@ -25,6 +25,10 @@ type Apple2 struct {
 	isFourColors    bool // An Apple II without the 6 color mod
 	commandChannel  chan command
 
+	dmaActive bool
+	dmaSlot   int
+
+	cycles               uint64
 	cycleDurationNs      float64 // Current speed. Inverse of the cpu clock in Ghz
 	fastRequestsCounter  int32
 	cycleBreakpoint      uint64
@@ -32,6 +36,7 @@ type Apple2 struct {
 	profile              bool
 	showSpeed            bool
 	paused               bool
+	cpuTrace             bool
 	forceCaps            bool
 	removableMediaDrives []drive
 }
@@ -67,7 +72,7 @@ func (a *Apple2) IsPaused() bool {
 }
 
 func (a *Apple2) GetCycles() uint64 {
-	return a.cpu.GetCycles()
+	return a.cycles
 }
 
 // SetCycleBreakpoint sets a cycle number to pause the emulator. 0 to disable

@@ -30,7 +30,7 @@ func testWoz(t *testing.T, sequencer bool, file string, expectedTracks []int, cy
 		tracksMayMatch := len(tt.quarterTracks) >= expectedLen &&
 			tt.quarterTracks[expectedLen-1] == expectedTracks[expectedLen-1]
 
-		return tracksMayMatch || a.cpu.GetCycles() > cycleLimit
+		return tracksMayMatch || a.GetCycles() > cycleLimit
 	}
 	at.run()
 
@@ -38,7 +38,7 @@ func testWoz(t *testing.T, sequencer bool, file string, expectedTracks []int, cy
 		t.Errorf("Quarter tracks, expected %#v, got %#v", expectedTracks, tt.quarterTracks)
 	}
 
-	// t.Errorf("Cycles: %d vs  %d", at.a.cpu.GetCycles(), cycleLimit)
+	// t.Errorf("Cycles: %d vs  %d", at.a.GetCycles(), cycleLimit)
 }
 
 const (

@@ -50,7 +50,7 @@ func addApple2ESoftSwitches(io *ioC0Page) {
 		//      12480 cycles drawing lines, VERTBLANK = $00
 		//       4550 cycles doing the return to position (0,0), VERTBLANK = $80
 		// Vert blank takes 12480 cycles every page redraw
-		cycles := io.apple2.cpu.GetCycles() % screenDrawCycles
+		cycles := io.apple2.GetCycles() % screenDrawCycles
 		if cycles <= screenVertBlankingCycles {
 			return ssOn
 		}

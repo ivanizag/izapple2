@@ -25,6 +25,8 @@ func (a *Apple2) Run() {
 func (a *Apple2) Start(paused bool) {
 	// Start the processor
 	a.cpu.Reset()
+	a.cycles = a.cpu.GetCycles()
+
 	referenceTime := time.Now()
 	speedReferenceTime := referenceTime
 	speedReferenceCycles := uint64(0)
@@ -34,19 +36,29 @@ func (a *Apple2) Start(paused bool) {
 	for {
 		// Run 6502 steps
 		if !a.paused {
-			for i := 0; i < cpuSpinLoops; i++ {
-				// Conditional tracing
-				// pc, _ := a.cpu.GetPCAndSP()
-				// a.cpu.SetTrace(pc >= 0xc700 && pc < 0xc800)
+			if !a.dmaActive {
+				spinStartCycles := a.cpu.GetCycles()
+				for i := 0; i < cpuSpinLoops && !a.dmaActive; i++ {
+					// Conditional tracing
+					// pc, _ := a.cpu.GetPCAndSP()
+					// a.cpu.SetTrace(pc >= 0xc700 && pc < 0xc800)
 
-				// Execution
-				a.cpu.ExecuteInstruction()
+					// Execution
+					a.cpu.ExecuteInstruction()
 
-				// Special tracing
-				a.executionTrace()
+					// Special tracing
+					a.executionTrace()
+				}
+				a.cycles += a.cpu.GetCycles() - spinStartCycles
+			} else {
+				card := a.cards[a.dmaSlot]
+				for i := 0; i < cpuSpinLoops && a.dmaActive; i++ {
+					card.runDMACycle()
+					a.cycles++
+				}
 			}
 
-			if a.cycleBreakpoint != 0 && a.cpu.GetCycles() >= a.cycleBreakpoint {
+			if a.cycleBreakpoint != 0 && a.cycles >= a.cycleBreakpoint {
 				a.breakPoint = true
 				a.cycleBreakpoint = 0
 				a.paused = true
@@ -89,7 +101,7 @@ func (a *Apple2) Start(paused bool) {
 		if a.cycleDurationNs != 0 && a.fastRequestsCounter <= 0 {
 			// Wait until next 6502 step has to run
 			clockDuration := time.Since(referenceTime)
-			simulatedDuration := time.Duration(float64(a.cpu.GetCycles()) * a.cycleDurationNs)
+			simulatedDuration := time.Duration(float64(a.cycles) * a.cycleDurationNs)
 			waitDuration := simulatedDuration - clockDuration
 			if waitDuration > maxWaitDuration || -waitDuration > maxWaitDuration {
 				// We have to wait too long or are too much behind. Let's fast forward
@@ -101,15 +113,14 @@ func (a *Apple2) Start(paused bool) {
 			}
 		}
 
-		if a.showSpeed && a.cpu.GetCycles()-speedReferenceCycles > 1000000 {
+		if a.showSpeed && a.cycles-speedReferenceCycles > 1000000 {
 			// Calculate speed in MHz every million cycles
 			newTime := time.Now()
-			newCycles := a.cpu.GetCycles()
-			elapsedCycles := float64(newCycles - speedReferenceCycles)
+			elapsedCycles := float64(a.cycles - speedReferenceCycles)
 			freq := 1000.0 * elapsedCycles / float64(newTime.Sub(speedReferenceTime).Nanoseconds())
 			fmt.Printf("Freq: %f Mhz\n", freq)
 			speedReferenceTime = newTime
-			speedReferenceCycles = newCycles
+			speedReferenceCycles = a.cycles
 		}
 	}
 }

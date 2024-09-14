@@ -166,7 +166,7 @@ func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
 }
 
 func (c *CardDisk2Sequencer) catchUp(data uint8) {
-	currentCycle := c.a.cpu.GetCycles() << 1 // Disk2 cycles are x2 cpu cycle
+	currentCycle := c.a.GetCycles() << 1 // Disk2 cycles are x2 cpu cycle
 
 	motorOn := c.step(data, true)
 	if motorOn && currentCycle > c.lastCycle+disk2CyclestoLoseSsync {

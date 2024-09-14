@@ -212,7 +212,7 @@ func (c *CardDisk2) softSwitchQ4(value bool) {
 		}
 		drive := &c.drive[c.selected]
 		if drive.diskette != nil {
-			drive.diskette.PowerOff(c.a.cpu.GetCycles())
+			drive.diskette.PowerOff(c.a.GetCycles())
 		}
 	} else if value && !c.power {
 		// Turn on
@@ -222,7 +222,7 @@ func (c *CardDisk2) softSwitchQ4(value bool) {
 		}
 		drive := &c.drive[c.selected]
 		if drive.diskette != nil {
-			drive.diskette.PowerOn(c.a.cpu.GetCycles())
+			drive.diskette.PowerOn(c.a.GetCycles())
 		}
 	}
 }
@@ -231,10 +231,10 @@ func (c *CardDisk2) softSwitchQ5(selected int) {
 	if c.power && c.selected != selected {
 		// Selected changed with power on, power goes to the other disk
 		if c.drive[c.selected].diskette != nil {
-			c.drive[c.selected].diskette.PowerOff(c.a.cpu.GetCycles())
+			c.drive[c.selected].diskette.PowerOff(c.a.GetCycles())
 		}
 		if c.drive[selected].diskette != nil {
-			c.drive[selected].diskette.PowerOn(c.a.cpu.GetCycles())
+			c.drive[selected].diskette.PowerOn(c.a.GetCycles())
 		}
 	}
 
@@ -271,9 +271,9 @@ func (c *CardDisk2) processQ6Q7(in uint8) {
 	}
 	if !c.q6 { // shift
 		if !c.q7 { // Q6L-Q7L: Read
-			c.dataLatch = d.diskette.Read(d.trackStep, c.a.cpu.GetCycles())
+			c.dataLatch = d.diskette.Read(d.trackStep, c.a.GetCycles())
 		} else { // Q6L-Q7H: Write the dataLatch value to disk. Shift data out
-			d.diskette.Write(d.trackStep, c.dataLatch, c.a.cpu.GetCycles())
+			d.diskette.Write(d.trackStep, c.dataLatch, c.a.GetCycles())
 		}
 	} else { // load
 		if !c.q7 { // Q6H-Q7L: Sense write protect / prewrite state
@@ -286,7 +286,7 @@ func (c *CardDisk2) processQ6Q7(in uint8) {
 
 	/*
 		if c.dataLatch >= 0x80 {
-			fmt.Printf("Datalach: 0x%.2x in cycle %v\n", c.dataLatch, c.a.cpu.GetCycles())
+			fmt.Printf("Datalach: 0x%.2x in cycle %v\n", c.dataLatch, c.a.GetCycles())
 		}
 	*/
 }

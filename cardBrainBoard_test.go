@@ -25,7 +25,7 @@ func TestBrainBoardCardWozaniam(t *testing.T) {
 	at := buildBrainBoardTester(t, "brainboard,switch=up")
 
 	at.terminateCondition = func(a *Apple2) bool {
-		return a.cpu.GetCycles() > 10_000_000
+		return a.GetCycles() > 10_000_000
 	}
 	at.run()
 

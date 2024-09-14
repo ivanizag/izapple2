@@ -85,7 +85,7 @@ func addApple2SoftSwitches(io *ioC0Page) {
 func buildNotImplementedSoftSwitchR(io *ioC0Page) softSwitchR {
 	return func() uint8 {
 		// Return random info. Some games (Serpentine) used CASSETTE and get stuck if not changing.
-		return uint8(io.apple2.cpu.GetCycles())
+		return uint8(io.apple2.GetCycles())
 	}
 }
 
@@ -121,7 +121,7 @@ func getSoftSwitch(io *ioC0Page, ioFlag uint8, isSet bool) softSwitchR {
 func buildSpeakerSoftSwitch(io *ioC0Page) softSwitchR {
 	return func() uint8 {
 		if io.speaker != nil {
-			io.speaker.Click(io.apple2.cpu.GetCycles())
+			io.speaker.Click(io.apple2.GetCycles())
 		}
 		return 0
 	}
@@ -179,7 +179,7 @@ func buildPaddleSoftSwitch(io *ioC0Page, i int) softSwitchR {
 			return 255 // Capacitors never discharge if there is not joystick
 		}
 		cyclesNeeded := uint64(reading) * paddleToCyclesFactor
-		cyclesElapsed := io.apple2.cpu.GetCycles() - io.paddlesStrobeCycle
+		cyclesElapsed := io.apple2.GetCycles() - io.paddlesStrobeCycle
 		if cyclesElapsed < cyclesNeeded {
 			// The capacitor is not charged yet
 			return 128
@@ -191,7 +191,7 @@ func buildPaddleSoftSwitch(io *ioC0Page, i int) softSwitchR {
 func buildStrobePaddlesSoftSwitch(io *ioC0Page) softSwitchR {
 	return func() uint8 {
 		// On the real machine this discharges the capacitors.
-		io.paddlesStrobeCycle = io.apple2.cpu.GetCycles()
+		io.paddlesStrobeCycle = io.apple2.GetCycles()
 		return 0
 	}
 }

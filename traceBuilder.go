@@ -52,7 +52,10 @@ func getTracerFactory() map[string]*traceBuilder {
 	tracerFactory["cpu"] = &traceBuilder{
 		name:        "cpu",
 		description: "Trace CPU execution",
-		connectFunc: func(a *Apple2) { a.cpu.SetTrace(true) },
+		connectFunc: func(a *Apple2) {
+			a.cpuTrace = true
+			a.cpu.SetTrace(true)
+		},
 	}
 	tracerFactory["ss"] = &traceBuilder{
 		name:        "ss",

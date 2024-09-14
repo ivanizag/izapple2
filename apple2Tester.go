@@ -69,7 +69,7 @@ func (at *apple2Tester) getText(textMode testTextModeFunc) string {
 /*
 	func buildTerminateConditionCycles(cycles uint64) terminateConditionFunc {
 		return func(a *Apple2) bool {
-			return a.cpu.GetCycles() > cycles
+			return a.cycles() > cycles
 		}
 	}
 */
@@ -85,7 +85,7 @@ func buildTerminateConditionTexts(needles []string, textMode testTextModeFunc, t
 	lastCheck := uint64(0)
 	found := false
 	return func(a *Apple2) bool {
-		cycles := a.cpu.GetCycles()
+		cycles := a.GetCycles()
 		if cycles > timeoutCycles {
 			return true
 		}

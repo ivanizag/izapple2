@@ -57,11 +57,9 @@ func (t *traceProDOS) inspect() {
 		t.dumpMLICall()
 		t.refreshDeviceDrives()
 		t.callPending = true
-		// t.a.cpu.SetTrace(true)
 	} else if t.callPending && pc == t.returnAddress {
 		t.dumpMLIReturn()
 		t.callPending = false
-		// t.a.cpu.SetTrace(false)
 	} else if pc == biAddress {
 		t.dumpBIExec()
 	} else if /*t.callPending &&*/ t.isDriverAddress(pc) {
@@ -189,8 +187,6 @@ func (t *traceProDOS) dumpMLIReturn() {
 		default:
 			fmt.Printf("Ok\n")
 		}
-
-		t.a.cpu.SetTrace(false)
 	}
 }
 

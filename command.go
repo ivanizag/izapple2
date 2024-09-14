@@ -84,7 +84,8 @@ func (a *Apple2) executeCommand(command command) {
 		a.cg.nextPage()
 		fmt.Printf("Chargen page %v\n", a.cg.page)
 	case CommandToggleCPUTrace:
-		a.cpu.SetTrace(!a.cpu.GetTrace())
+		a.cpuTrace = !a.cpuTrace
+		a.cpu.SetTrace(a.cpuTrace)
 	case CommandReset:
 		a.reset()
 	case CommandComplex:

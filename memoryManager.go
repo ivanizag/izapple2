@@ -27,7 +27,7 @@ type memoryManager struct {
 	physicalExtAltRAM []*memoryRange // 0xd000 to 0xdfff, 4Kb. Up to 256 banks.
 
 	// Configuration switches, Language cards
-	lcSelectedBlock uint8 // Language card block selected. Usually, allways 0. But Saturn has 8
+	lcSelectedBlock uint8 // Language card block selected. Usually, always 0. But Saturn has 8
 	lcActiveRead    bool  // Upper RAM active for read
 	lcActiveWrite   bool  // Upper RAM active for write
 	lcAltBank       bool  // Alternate

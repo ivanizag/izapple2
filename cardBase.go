@@ -9,6 +9,7 @@ type Card interface {
 	loadRom(data []uint8, layout cardRomLayout) error
 	assign(a *Apple2, slot int)
 	reset()
+	runDMACycle()
 
 	setName(name string)
 	setDebug(debug bool)
@@ -152,6 +153,22 @@ func (c *cardBase) assign(a *Apple2, slot int) {
 			a.io.addSoftSwitchW(uint8(0xC80+slot*0x10+i), c._ssw[i], c._sswName[i])
 		}
 	}
+}
+
+func (c *cardBase) runDMACycle() {
+	// No DMA
+}
+
+func (c *cardBase) activateDMA() {
+	if c.a.dmaActive {
+		panic("DMA chain not supported")
+	}
+	c.a.dmaActive = true
+	c.a.dmaSlot = c.slot
+}
+
+func (c *cardBase) deactivateDMA() {
+	c.a.dmaActive = false
 }
 
 func (c *cardBase) addCardSoftSwitchR(address uint8, ss softSwitchR, name string) {
