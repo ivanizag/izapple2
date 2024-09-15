@@ -42,10 +42,10 @@ func (m *MC6845) Write(rs bool, value uint8) {
 func (m *MC6845) ImageData() MC6845ImageData {
 	var data MC6845ImageData
 
-	data.firstChar = uint16(m.reg[12]&0x3f)<<8 + uint16(m.reg[13])
+	data.FirstChar = uint16(m.reg[12]&0x3f)<<8 + uint16(m.reg[13])
 	data.charLines = (m.reg[9] + 1) & 0x1f
-	data.columns = m.reg[1]
-	data.lines = m.reg[6] & 0x7f
+	data.Columns = m.reg[1]
+	data.Lines = m.reg[6] & 0x7f
 	data.adjustLines = m.reg[5] & 0x1f
 
 	data.cursorPos = uint16(m.reg[14]&0x3f)<<8 + uint16(m.reg[15])
@@ -63,10 +63,10 @@ const (
 )
 
 type MC6845ImageData struct {
-	firstChar   uint16 // 14 bits, address of the firt char on the first line
+	FirstChar   uint16 // 14 bits, address of the firt char on the first line
 	charLines   uint8  // 5 bits, lines par character
-	columns     uint8  // 8 bits, chars per line
-	lines       uint8  // 7 bits, char lines per screen
+	Columns     uint8  // 8 bits, chars per line
+	Lines       uint8  // 7 bits, char lines per screen
 	adjustLines uint8  // 5 bits, extra blank lines
 
 	cursorPos   uint16 // 14 bits, address? of the cursor position
@@ -77,8 +77,8 @@ type MC6845ImageData struct {
 }
 
 func (data *MC6845ImageData) DisplayedWidthHeight(charWidth uint8) (int, int) {
-	return int(data.columns) * int(charWidth),
-		int(data.lines)*int(data.charLines) + int(data.adjustLines)
+	return int(data.Columns) * int(charWidth),
+		int(data.Lines)*int(data.charLines) + int(data.adjustLines)
 }
 
 type MC6845RasterCallBack func(address uint16, charLine uint8, // Lookup in char ROM
@@ -86,13 +86,13 @@ type MC6845RasterCallBack func(address uint16, charLine uint8, // Lookup in char
 	column uint8, y int) // Position in screen
 
 func (data *MC6845ImageData) IterateScreen(callBack MC6845RasterCallBack) {
-	lineAddress := data.firstChar
+	lineAddress := data.FirstChar
 	y := 0
 	var address uint16
-	for line := uint8(0); line < data.lines; line++ {
+	for line := uint8(0); line < data.Lines; line++ {
 		for charLine := uint8(0); charLine < data.charLines; charLine++ {
 			address = lineAddress // Back to the first char of the line
-			for column := uint8(0); column < data.columns; column++ {
+			for column := uint8(0); column < data.Columns; column++ {
 				cursorMode := MC6845CursorNone
 				isCursor := (address == data.cursorPos) &&
 					(charLine >= data.cursorStart) &&
@@ -109,7 +109,7 @@ func (data *MC6845ImageData) IterateScreen(callBack MC6845RasterCallBack) {
 		lineAddress = address
 	}
 	for adjust := uint8(0); adjust <= data.adjustLines; adjust++ {
-		for column := uint8(0); column < data.columns; column++ {
+		for column := uint8(0); column < data.Columns; column++ {
 			callBack(0, 0, MC6845CursorNone, false, column, y) // lines with display not enabled
 		}
 		y++

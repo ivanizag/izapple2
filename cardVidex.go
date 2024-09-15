@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"strings"
 	"time"
 
 	"github.com/ivanizag/izapple2/component"
@@ -191,4 +192,20 @@ func (c *CardVidex) buildImage(light color.Color) *image.RGBA {
 	})
 
 	return img
+}
+
+func (c *CardVidex) getText() string {
+	text := ""
+	params := c.mc6845.ImageData()
+	address := params.FirstChar
+	for line := uint8(0); line < params.Lines; line++ {
+		for column := uint8(0); column < params.Columns; column++ {
+			char := c.sram[address&0x7ff]
+			text += string(char)
+			address++
+		}
+		text = strings.TrimRight(text, " ")
+		text += "\n"
+	}
+	return text
 }

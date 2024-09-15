@@ -5,15 +5,17 @@ import (
 	"testing"
 )
 
-func testCardDetectedInternal(t *testing.T, model string, card string, cycles uint64, banner string) {
+func testCardDetectedInternal(t *testing.T, model string, card string, slot string, cycles uint64, banner string) {
 	overrides := newConfiguration()
+	overrides.set(confS2, "empty")
 	overrides.set(confS3, "empty")
 	overrides.set(confS4, "empty")
 	overrides.set(confS5, "empty")
 	overrides.set(confS7, "empty")
+	overrides.set(confRamworks, "none")
+	overrides.set(slot, card)
 
-	overrides.set(confS2, card)
-	overrides.set(confS6, "diskii,disk1=\"<internal>/Card Cat 1.0b9.dsk\"")
+	overrides.set(confS6, "diskii,disk1=\"<internal>/Card Cat 1.6.dsk\"")
 
 	at, err := makeApple2Tester(model, overrides)
 	if err != nil {
@@ -22,7 +24,7 @@ func testCardDetectedInternal(t *testing.T, model string, card string, cycles ui
 	at.terminateCondition = buildTerminateConditionText(banner, testTextMode80, cycles)
 	at.run()
 
-	text := at.getText(testTextMode80)
+	text := at.getTextBest()
 	if !strings.Contains(text, banner) {
 		t.Errorf("Expected '%s', got '%s'", banner, text)
 	}
@@ -31,24 +33,49 @@ func testCardDetectedInternal(t *testing.T, model string, card string, cycles ui
 func TestCardsDetected(t *testing.T) {
 
 	t.Run("test Memory Expansion card", func(t *testing.T) {
-		testCardDetectedInternal(t, "2enh", "memexp", 50_000_000, "2   03-00-05-D0  Apple II Memory Expansion Card (SP)")
+		testCardDetectedInternal(t, "2enh", "memexp", "s2", 50_000_000, "2   03-00-05-D0  Apple II Memory Expansion Card (SP)")
 	})
 
 	t.Run("test Mouse card", func(t *testing.T) {
-		testCardDetectedInternal(t, "2enh", "mouse", 50_000_000, "2   38-18-01-20  Apple II Mouse Card")
+		testCardDetectedInternal(t, "2enh", "mouse", "s2", 50_000_000, "2   38-18-01-20  Apple II Mouse Card")
 	})
 
 	t.Run("test Parallel printer card", func(t *testing.T) {
-		testCardDetectedInternal(t, "2enh", "parallel", 50_000_000, "2   48-48-58-FF  Apple Parallel Interface Card")
+		testCardDetectedInternal(t, "2enh", "parallel", "s2", 50_000_000, "2   48-48-58-FF  Apple Parallel Interface Card")
 	})
 
 	t.Run("test ThunderClock Plus card", func(t *testing.T) {
-		testCardDetectedInternal(t, "2enh", "thunderclock", 50_000_000, "2   FF-05-18-B8  ThunderClock Plus Card")
+		testCardDetectedInternal(t, "2enh", "thunderclock", "s2", 50_000_000, "2   FF-05-18-B8  ThunderClock Plus Card")
 	})
 
-	// Saturn not detected
-	// VidHD not detected
-	// Swyftcard not compatible with Card Cat
-	// Pending to try Saturn, 80col with 2plus but fails with an illegal opcode
+	t.Run("test Z80 Softcard card", func(t *testing.T) {
+		testCardDetectedInternal(t, "2enh", "z80softcard", "s2", 50_000_000, "2   :: :: :: ::  Z80 Card")
+	})
 
+	t.Run("test VidHD card", func(t *testing.T) {
+		testCardDetectedInternal(t, "2enh", "vidhd", "s2", 50_000_000, "2   :: :: :: ::  No Firmware Card Detected")
+	})
+
+	t.Run("test Saturn card", func(t *testing.T) {
+		testCardDetectedInternal(t, "2plus", "saturn", "s0", 50_000_000, "SATURN 128K CARD IN SLOT 0")
+	})
+
+	t.Run("test Videx card", func(t *testing.T) {
+		testCardDetectedInternal(t, "2plus", "videx", "s3", 50_000_000, "3   38-18-01-82  Videx 80 Column Text Display Card")
+	})
+
+	t.Run("test Dan 2 SD card", func(t *testing.T) {
+		testCardDetectedInternal(t, "2enh", "dan2sd", "s2", 50_000_000, "2   03-3C-01-9D  DAN II Card")
+	})
+
+	t.Run("test ProDOS ROM Drive card", func(t *testing.T) {
+		testCardDetectedInternal(t, "2enh", "prodosromdrive", "s2", 50_000_000, "2   03-3C-C9-9B  ProDOS ROM Drive Card")
+	})
+
+	t.Run("test RAMWorks aux card", func(t *testing.T) {
+		testCardDetectedInternal(t, "2enh", "4096", "ramworks", 50_000_000, "RAMWorks 4096K Card in Aux Slot")
+	})
+
+	// Swyftcard not compatible with Card Cat
+	// Unknonw cards: prodosromcard3
 }

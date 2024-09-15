@@ -72,8 +72,10 @@ func (c *CardZ80SoftCard) flipDMA() {
 
 func (c *CardZ80SoftCard) runDMACycle() {
 	if c.a.cpuTrace {
-		fmt.Printf("Z80 pc=$%04x ($%04x for the 6502) Opcode: $%02x \n",
-			c.cpu.PC, z80AddressTranslation(c.cpu.PC), c.cpu.Memory.Get(c.cpu.PC))
+		fmt.Printf("Z80 PC: $%04X, A: $%02X, B: $%02X, C: $%02X, D: $%02X, E: $%02X, HL: $%04X\n",
+			c.cpu.States.PC, c.cpu.States.AF.Hi, c.cpu.States.BC.Hi,
+			c.cpu.States.BC.Lo, c.cpu.States.DE.Hi, c.cpu.States.DE.Lo,
+			c.cpu.States.HL)
 	}
 	c.cpu.Step()
 }

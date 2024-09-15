@@ -66,6 +66,21 @@ func (at *apple2Tester) getText(textMode testTextModeFunc) string {
 	return textMode(at.a)
 }
 
+func (at *apple2Tester) getTextBest() string {
+	videxMaybe := at.a.cards[3]
+	if videxMaybe != nil {
+		if videx, ok := videxMaybe.(*CardVidex); ok {
+			return videx.getText()
+		}
+	}
+
+	videoMode := at.a.video.GetCurrentVideoMode()
+	if videoMode&screen.VideoBaseMask == screen.VideoText80 {
+		return at.getText(testTextMode80)
+	}
+	return at.getText(testTextMode40)
+}
+
 /*
 	func buildTerminateConditionCycles(cycles uint64) terminateConditionFunc {
 		return func(a *Apple2) bool {
