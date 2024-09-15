@@ -79,7 +79,7 @@ func (c *CardZ80SoftCard) runDMACycle() {
 		fmt.Printf("Z80 PC: $%04X, A: $%02X, B: $%02X, C: $%02X, D: $%02X, E: $%02X, HL: $%04X\n",
 			c.cpu.States.PC, c.cpu.States.AF.Hi, c.cpu.States.BC.Hi,
 			c.cpu.States.BC.Lo, c.cpu.States.DE.Hi, c.cpu.States.DE.Lo,
-			c.cpu.States.HL)
+			c.cpu.States.HL.U16())
 	}
 	c.cpu.Step()
 }

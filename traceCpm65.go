@@ -40,15 +40,15 @@ func (t *traceCpm65) inspect() {
 		switch regY {
 		case 2: // CONSOLE_OUTPUT
 			if !t.skipConsole {
-				fmt.Printf("CPM65 BDOS call $%02x:%s from $%04x with \"%c\"\n", regY, bdosCodeToName(regY), pc, regA)
+				fmt.Printf("CPM65 BDOS call $%02x:%s from $%04x with \"%c\"\n", regY, bdos65CodeToName(regY), pc, regA)
 			}
 		case 9: // WRITE_STRING
 			if !t.skipConsole {
-				text := t.getCpmString(param)
-				fmt.Printf("CPM65 BDOS call $%02x:%s from $%04x with \"%s\"\n", regY, bdosCodeToName(regY), pc, text)
+				text := t.getCpm65String(param)
+				fmt.Printf("CPM65 BDOS call $%02x:%s from $%04x with \"%s\"\n", regY, bdos65CodeToName(regY), pc, text)
 			}
 		default:
-			fmt.Printf("CPM65 BDOS call $%02x:%s from $%04x\n", regY, bdosCodeToName(regY), pc)
+			fmt.Printf("CPM65 BDOS call $%02x:%s from $%04x\n", regY, bdos65CodeToName(regY), pc)
 		}
 	}
 }
@@ -99,14 +99,14 @@ var cpm65BdosNames = []string{
 	"GETTPA",                 // 42
 }
 
-func bdosCodeToName(code uint8) string {
+func bdos65CodeToName(code uint8) string {
 	if code < uint8(len(cpm65BdosNames)) {
 		return cpm65BdosNames[code]
 	}
 	return fmt.Sprintf("BDOS_%d", code)
 }
 
-func (t *traceCpm65) getCpmString(address uint16) string {
+func (t *traceCpm65) getCpm65String(address uint16) string {
 	s := ""
 	for {
 		ch := t.a.mmu.Peek(address)

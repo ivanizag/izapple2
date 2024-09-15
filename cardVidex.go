@@ -142,7 +142,7 @@ func (c *CardVidex) buildImage(light color.Color) *image.RGBA {
 		img.Set(1, 1, color.White)
 		return img
 	}
-	ms := time.Now().Nanosecond() / (1000 * 1000) // Host time, used for the cursoR blink
+	ms := time.Now().Nanosecond() / (1000 * 1000) // Host time, used for the cursor blink
 
 	size := image.Rect(0, 0, width, height)
 	img := image.NewRGBA(size)

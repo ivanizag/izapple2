@@ -81,6 +81,7 @@ The available cards are:
   z80softcard: Microsoft Z80 SoftCard to run CP/M
 
 The available tracers are:
+  cpm: Trace CPM BDOS calls
   cpm65: Trace CPM65 BDOS calls
   cpu: Trace CPU execution
   mli: Trace ProDOS MLI calls
