@@ -61,6 +61,10 @@ func (t *traceApplecorn) connect(a *Apple2) {
 }
 
 func (t *traceApplecorn) inspect() {
+	if t.a.dmaActive {
+		return
+	}
+
 	if !t.a.mmu.altMainRAMActiveRead {
 		// We want to trace only the activity on the Acorn memory space
 		return

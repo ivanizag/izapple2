@@ -37,6 +37,10 @@ func (t *traceProDOS) connect(a *Apple2) {
 }
 
 func (t *traceProDOS) inspect() {
+	if t.a.dmaActive {
+		return
+	}
+
 	pc, _ := t.a.cpu.GetPCAndSP()
 	if pc == mliAddress {
 		/*

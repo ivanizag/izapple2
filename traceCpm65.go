@@ -29,6 +29,10 @@ func (t *traceCpm65) connect(a *Apple2) {
 }
 
 func (t *traceCpm65) inspect() {
+	if t.a.dmaActive {
+		return
+	}
+
 	pc, _ := t.a.cpu.GetPCAndSP()
 	if pc == cpm65BdosEntrypoint {
 		regA, regX, regY, _ := t.a.cpu.GetAXYP()

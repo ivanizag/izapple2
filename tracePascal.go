@@ -31,6 +31,10 @@ See:
 Experimental. Not sure the paramters for DREAD and DWRITE are correct.
 */
 func (t *tracePascal) inspect() {
+	if t.a.dmaActive {
+		return
+	}
+
 	bios := uint16(t.a.mmu.physicalMainRAM.peek(pascalJvabfoldL)) +
 		uint16(t.a.mmu.physicalMainRAM.peek(pascalJvabfoldH))<<8
 	pc, _ := t.a.cpu.GetPCAndSP()

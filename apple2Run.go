@@ -34,27 +34,30 @@ func (a *Apple2) Start(paused bool) {
 	a.paused = paused
 
 	for {
-		// Run 6502 steps
+		// Run cpu steps
 		if !a.paused {
 			if !a.dmaActive {
-				spinStartCycles := a.cpu.GetCycles()
+				// 6502 is running
 				for i := 0; i < cpuSpinLoops && !a.dmaActive; i++ {
 					// Conditional tracing
 					// pc, _ := a.cpu.GetPCAndSP()
 					// a.cpu.SetTrace(pc >= 0xc700 && pc < 0xc800)
 
 					// Execution
+					startCycles := a.cpu.GetCycles()
 					a.cpu.ExecuteInstruction()
+					a.cycles += a.cpu.GetCycles() - startCycles
 
-					// Special tracing
 					a.executionTrace()
 				}
-				a.cycles += a.cpu.GetCycles() - spinStartCycles
 			} else {
+				// a card, like the Z80 Softcard, is running
 				card := a.cards[a.dmaSlot]
 				for i := 0; i < cpuSpinLoops && a.dmaActive; i++ {
 					card.runDMACycle()
 					a.cycles++
+
+					a.executionTrace()
 				}
 			}
 
