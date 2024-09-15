@@ -60,6 +60,10 @@ func (c *CardZ80SoftCard) assign(a *Apple2, slot int) {
 	c.cardBase.assign(a, slot)
 }
 
+func (c *CardZ80SoftCard) reset() {
+	c.cpu.States = z80.States{}
+}
+
 func (c *CardZ80SoftCard) flipDMA() {
 	c.tracef("Z80 DMA flip\n")
 	c.z80Active = !c.z80Active
