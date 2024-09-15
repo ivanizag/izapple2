@@ -38,6 +38,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - MultiROM card
   - Dan ][ Controller card
   - ProDOS ROM card
+  - Microsoft Z80 Softcard using the [Z80](https://github.com/koron-go/z80) emulation from Koron
 - Useful cards not emulating a real card
   - Bootable SmartPort / ProDOS card with the following smartport devices:
       - Block device (hard disks)
@@ -230,6 +231,7 @@ The available pre-configured models are:
   2plus: Apple ][+
   base64a: Base 64A
   basis108: Basis 108
+  cpm: Apple ][+ with CP/M
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
   swyft: swyft
 
@@ -256,6 +258,7 @@ The available cards are:
   thunderclock: Clock card
   videx: Videx compatible 80 columns card
   vidhd: Firmware signature of the VidHD card to trick Total Replay to use the SHR mode
+  z80softcard: Microsoft Z80 SoftCard to run CP/M
 
 The available tracers are:
   cpm65: Trace CPM65 BDOS calls

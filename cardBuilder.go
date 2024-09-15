@@ -61,6 +61,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory["thunderclock"] = newCardThunderClockPlusBuilder()
 	cardFactory["videx"] = newCardVidexBuilder()
 	cardFactory["vidhd"] = newCardVidHDBuilder()
+	cardFactory["z80softcard"] = newCardZ80SoftCardBuilder()
 	return cardFactory
 }
 

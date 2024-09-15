@@ -42,6 +42,8 @@ github.com/ivanizag/iz6502 v1.4.0 h1:7eYygUkCPwFRH0tf2JSg1k+Sy27wwPi3ActuVNVv1Uc
 github.com/ivanizag/iz6502 v1.4.0/go.mod h1:h4gbw3IK6WCYawi00kBhQ4ACeQkGWgqbUeAgDaQpy6s=
 github.com/jackmordaunt/icns v0.0.0-20181231085925-4f16af745526/go.mod h1:UQkeMHVoNcyXYq9otUupF7/h/2tmHlhrS2zw7ZVvUqc=
 github.com/josephspurrier/goversioninfo v0.0.0-20200309025242-14b0ab84c6ca/go.mod h1:eJTEwMjXb7kZ633hO3Ln9mBUCOjX2+FlTljvpl9SYdE=
+github.com/koron-go/z80 v0.10.1 h1:Jfb0esP/QFL4cvcr+eFECVG0Y/mA9JBLC4EKbMU5zAY=
+github.com/koron-go/z80 v0.10.1/go.mod h1:ry+Zl9kRKelzaDG9UzEtUpUnXy0Yv/kk1YEaX958xdk=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=

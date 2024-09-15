@@ -6,6 +6,7 @@ require (
 	fyne.io/fyne/v2 v2.1.4
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3
 	github.com/ivanizag/iz6502 v1.4.0
+	github.com/koron-go/z80 v0.10.1
 	github.com/pkg/profile v1.7.0
 	github.com/veandco/go-sdl2 v0.4.38
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
