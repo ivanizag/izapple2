@@ -232,6 +232,7 @@ The available pre-configured models are:
   base64a: Base 64A
   basis108: Basis 108
   cpm: Apple ][+ with CP/M
+  cpm3: Apple //e with CP/M 3.0
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
   swyft: swyft
 
