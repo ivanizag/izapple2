@@ -19,12 +19,12 @@ type memoryManager struct {
 	physicalROM memoryHandler // 0xc000 (or 0xd000) to 0xffff, 16 (or 12) Kb. Up to four banks
 
 	// Language card upper area RAM: 0xd000 to 0xffff. One bank for regular LC cards, up to 8 with Saturn
-	physicalLangRAM    []*memoryRange // 0xd000 to 0xffff, 12KB. Up to 8 banks.
-	physicalLangAltRAM []*memoryRange // 0xd000 to 0xdfff, 4KB. Up to 8 banks.
+	physicalLangRAM    []memoryHandler // 0xd000 to 0xffff, 12KB. Up to 8 banks.
+	physicalLangAltRAM []memoryHandler // 0xd000 to 0xdfff, 4KB. Up to 8 banks.
 
 	// Extended RAM: 0x0000 to 0xffff (with 4Kb moved from 0xc000 to 0xd000 alt). One bank for extended Apple 2e card, up to 256 with RamWorks
-	physicalExtRAM    []*memoryRange // 0x0000 to 0xffff. 60Kb, 0xc000 to 0xcfff not used. Up to 256 banks
-	physicalExtAltRAM []*memoryRange // 0xd000 to 0xdfff, 4Kb. Up to 256 banks.
+	physicalExtRAM    []memoryRangeHandler // 0x0000 to 0xffff. 60Kb, 0xc000 to 0xcfff not used. Up to 256 banks
+	physicalExtAltRAM []memoryHandler      // 0xd000 to 0xdfff, 4Kb. Up to 256 banks.
 
 	// Configuration switches, Language cards
 	lcSelectedBlock uint8 // Language card block selected. Usually, always 0. But Saturn has 8
@@ -304,8 +304,8 @@ func (mmu *memoryManager) setCardROMExtra(slot int, mh memoryHandler) {
 
 func (mmu *memoryManager) initLanguageRAM(groups uint8) {
 	// Apple II+ language card or Saturn (up to 8 groups)
-	mmu.physicalLangRAM = make([]*memoryRange, groups)
-	mmu.physicalLangAltRAM = make([]*memoryRange, groups)
+	mmu.physicalLangRAM = make([]memoryHandler, groups)
+	mmu.physicalLangAltRAM = make([]memoryHandler, groups)
 	for i := uint8(0); i < groups; i++ {
 		mmu.physicalLangRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x3000), fmt.Sprintf("LC RAM block %v", i))
 		mmu.physicalLangAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000), fmt.Sprintf("LC RAM Alt block %v", i))
@@ -323,8 +323,8 @@ func (mmu *memoryManager) initCustomRAM(customRam memoryRangeHandler) {
 
 func (mmu *memoryManager) initExtendedRAM(groups int) {
 	// Apple IIe 80 col card with 64Kb style RAM or RAMWorks (up to 256 banks)
-	mmu.physicalExtRAM = make([]*memoryRange, groups)
-	mmu.physicalExtAltRAM = make([]*memoryRange, groups)
+	mmu.physicalExtRAM = make([]memoryRangeHandler, groups)
+	mmu.physicalExtAltRAM = make([]memoryHandler, groups)
 	for i := 0; i < groups; i++ {
 		mmu.physicalExtRAM[i] = newMemoryRange(0, make([]uint8, 0x10000), fmt.Sprintf("Extra RAM block %v", i))
 		mmu.physicalExtAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000), fmt.Sprintf("Extra RAM Alt block %v", i))

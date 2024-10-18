@@ -29,6 +29,7 @@ var commonParams = []paramSpec{
 	{"trace", "Enable debug messages", "false"},
 	{"tracess", "Trace softswitches", "false"},
 	{"panicss", "Panic on unimplemented softswitches", "false"},
+	{"tracemem", "Trace slot addressing accesses", "false"},
 }
 
 var cardFactory map[string]*cardBuilder
@@ -134,10 +135,12 @@ func setupCard(a *Apple2, slot int, paramString string) (Card, error) {
 		a.io.panicNotImplementedSlot(slot)
 	}
 
-	debug := paramsGetBool(finalParams, "trace")
+	card.configure(
+		builder.name,
+		paramsGetBool(finalParams, "trace"),
+		paramsGetBool(finalParams, "tracemem"),
+	)
 
-	card.setName(builder.name)
-	card.setDebug(debug)
 	card.assign(a, slot)
 	a.cards[slot] = card
 	return card, err
