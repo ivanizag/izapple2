@@ -233,6 +233,7 @@ The available pre-configured models are:
   basis108: Basis 108
   cpm: Apple ][+ with CP/M
   cpm3: Apple //e with CP/M 3.0
+  cpm65: Apple //e with CPM-65
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
   swyft: swyft
 
@@ -263,7 +264,8 @@ The available cards are:
 
 The available tracers are:
   cpm: Trace CPM BDOS calls
-  cpm65: Trace CPM65 BDOS calls
+  cpm65: Trace CPM65 BDOS calls skipping terminal IO
+  cpm65full: Trace CPM65 BDOS calls
   cpu: Trace CPU execution
   mli: Trace ProDOS MLI calls
   mos: Trace MOS calls with Applecorn skipping terminal IO

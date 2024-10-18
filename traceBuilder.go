@@ -74,8 +74,18 @@ func getTracerFactory() map[string]*traceBuilder {
 	}
 	tracerFactory["cpm65"] = &traceBuilder{
 		name:            "cpm65",
+		description:     "Trace CPM65 BDOS calls skipping terminal IO",
+		executionTracer: newTraceCpm65(true),
+	}
+	tracerFactory["cpm65full"] = &traceBuilder{
+		name:            "cpm65full",
 		description:     "Trace CPM65 BDOS calls",
 		executionTracer: newTraceCpm65(false),
+	}
+	tracerFactory["cpm"] = &traceBuilder{
+		name:            "cpm",
+		description:     "Trace CPM BDOS calls skipping terminal IO",
+		executionTracer: newTraceCpm(true),
 	}
 	tracerFactory["cpm"] = &traceBuilder{
 		name:            "cpm",
@@ -109,6 +119,8 @@ func setupTracers(a *Apple2, paramString string) error {
 		if builder.executionTracer != nil {
 			a.addTracer(builder.executionTracer)
 		}
+
+		fmt.Printf("Tracer %s enabled\n", builder.name)
 	}
 	return nil
 }
