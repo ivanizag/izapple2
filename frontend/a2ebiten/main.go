@@ -15,6 +15,7 @@ type Game struct {
 	a        *izapple2.Apple2
 	image    *ebiten.Image
 	keyboard *ebitenKeyboard
+	speaker  *ebitenSpeaker
 
 	paused bool
 	title  string
@@ -27,6 +28,7 @@ const (
 
 func (g *Game) Update() error {
 	g.keyboard.update()
+	g.speaker.update()
 
 	if g.paused != g.a.IsPaused() {
 		if g.a.IsPaused() {
@@ -93,7 +95,7 @@ func main() {
 }
 
 func ebitenRun(a *izapple2.Apple2) {
-	ebiten.SetWindowSize(virtualWidth, virtualHeight)
+	ebiten.SetWindowSize(virtualWidth/2, virtualHeight/2)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	title := "iz-" + a.Name + " (F1 for help)"
@@ -104,7 +106,10 @@ func ebitenRun(a *izapple2.Apple2) {
 	game := &Game{
 		a:        a,
 		keyboard: newEbitenKeyBoard(a),
+		speaker:  newEbitenSpeaker(),
 	}
+
+	a.SetSpeakerProvider(game.speaker)
 
 	if err := ebiten.RunGame(game); err != nil {
 		fmt.Printf("Error: %v\n", err)
