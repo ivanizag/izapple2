@@ -1,30 +1,41 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image"
+	"image/color"
 
 	"github.com/ivanizag/izapple2"
 	a_screen "github.com/ivanizag/izapple2/screen"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/pkg/profile"
 )
 
 type Game struct {
-	a        *izapple2.Apple2
-	image    *ebiten.Image
-	keyboard *ebitenKeyboard
-	speaker  *ebitenSpeaker
+	a          *izapple2.Apple2
+	image      *ebiten.Image
+	keyboard   *ebitenKeyboard
+	speaker    *ebitenSpeaker
+	fontSource *text.GoTextFaceSource
 
 	paused bool
 	title  string
+
+	updates uint64
+	freq    float64
 }
 
 const (
 	virtualWidth  = 1128
 	virtualHeight = 768
+	hudFontSize   = 50
 )
+
+var hudColor = color.RGBA{208, 241, 141, 255} // Yellow
 
 func (g *Game) Update() error {
 	g.keyboard.update()
@@ -39,7 +50,7 @@ func (g *Game) Update() error {
 		g.paused = g.a.IsPaused()
 	}
 
-	if !g.a.IsPaused() {
+	if g.updates%3 == 0 && !g.a.IsPaused() { // 20 times per second
 		var img *image.RGBA
 		vs := g.a.GetVideoSource()
 		if g.keyboard.showHelp {
@@ -59,6 +70,11 @@ func (g *Game) Update() error {
 		}
 	}
 
+	if g.updates%60 == 0 { // Once per second
+		g.freq = g.a.GetCurrentFreqMHz()
+	}
+
+	g.updates++
 	return nil
 }
 
@@ -71,6 +87,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		op.GeoM.Scale(scaleX, scaleY)
 
 		screen.DrawImage(g.image, op)
+	}
+
+	if g.keyboard.showFreq {
+		msg := fmt.Sprintf("%0.2f Hz, FPS %0.0f", g.freq, ebiten.ActualFPS())
+		op := &text.DrawOptions{}
+		op.GeoM.Translate(20, 20)
+		op.ColorScale.ScaleWithColor(hudColor)
+		text.Draw(screen, msg, &text.GoTextFace{
+			Source: g.fontSource,
+			Size:   hudFontSize,
+		}, op)
+
 	}
 }
 
@@ -101,16 +129,20 @@ func ebitenRun(a *izapple2.Apple2) {
 	title := "iz-" + a.Name + " (F1 for help)"
 	ebiten.SetWindowTitle(title)
 
-	go a.Run()
-
 	game := &Game{
 		a:        a,
 		keyboard: newEbitenKeyBoard(a),
 		speaker:  newEbitenSpeaker(),
 	}
-
 	a.SetSpeakerProvider(game.speaker)
 
+	var err error
+	game.fontSource, err = text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
+	if err != nil {
+		panic(err)
+	}
+
+	go a.Run()
 	if err := ebiten.RunGame(game); err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
@@ -140,3 +172,8 @@ side of the window to load a disk
  Run izapple2 -h for more options
    https://github.com/ivanizag/izapple2
 `
+
+/*
+To test the WebAssembly version, run:
+	go run github.com/hajimehoshi/wasmserve@latest .
+*/

@@ -18,7 +18,10 @@ type ebitenKeyboard struct {
 	showPages   bool
 	showCharGen bool
 	showAltText bool
+	showFreq    bool
 	screenMode  int
+
+	debug bool
 }
 
 func newEbitenKeyBoard(a *izapple2.Apple2) *ebitenKeyboard {
@@ -33,14 +36,18 @@ func newEbitenKeyBoard(a *izapple2.Apple2) *ebitenKeyboard {
 func (k *ebitenKeyboard) update() {
 	runes := ebiten.AppendInputChars(nil)
 	if len(runes) > 0 {
-		fmt.Println("Runes: ", string(runes))
+		if k.debug {
+			fmt.Println("Runes: ", string(runes))
+		}
 		k.putText(string(runes))
 	}
 
 	keys := inpututil.AppendJustPressedKeys(nil)
 	for _, key := range keys {
-		s := key.String()
-		fmt.Println("Key pressed: ", s)
+		if k.debug {
+			s := key.String()
+			fmt.Println("Key pressed: ", s)
+		}
 		k.putKey(key)
 	}
 }
@@ -115,7 +122,7 @@ func (k *ebitenKeyboard) putKey(key ebiten.Key) {
 		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case ebiten.KeyF5:
 		if ctrl {
-			k.a.SendCommand(izapple2.CommandShowSpeed)
+			k.showFreq = !k.showFreq
 		} else {
 			k.a.SendCommand(izapple2.CommandToggleSpeed)
 		}

@@ -116,12 +116,11 @@ func (a *Apple2) Start(paused bool) {
 			}
 		}
 
-		if a.showSpeed && a.cycles-speedReferenceCycles > 1000000 {
+		if a.cycles-speedReferenceCycles > 1000000 {
 			// Calculate speed in MHz every million cycles
 			newTime := time.Now()
 			elapsedCycles := float64(a.cycles - speedReferenceCycles)
-			freq := 1000.0 * elapsedCycles / float64(newTime.Sub(speedReferenceTime).Nanoseconds())
-			fmt.Printf("Freq: %f Mhz\n", freq)
+			a.currentFreqMHz = 1000.0 * elapsedCycles / float64(newTime.Sub(speedReferenceTime).Nanoseconds())
 			speedReferenceTime = newTime
 			speedReferenceCycles = a.cycles
 		}

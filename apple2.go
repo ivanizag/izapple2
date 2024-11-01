@@ -34,11 +34,12 @@ type Apple2 struct {
 	cycleBreakpoint      uint64
 	breakPoint           bool
 	profile              bool
-	showSpeed            bool
 	paused               bool
 	cpuTrace             bool
 	forceCaps            bool
 	removableMediaDrives []drive
+
+	currentFreqMHz float64
 }
 
 // GetCards returns the array of inserted cards
@@ -73,6 +74,10 @@ func (a *Apple2) IsPaused() bool {
 
 func (a *Apple2) GetCycles() uint64 {
 	return a.cycles
+}
+
+func (a *Apple2) GetCurrentFreqMHz() float64 {
+	return a.currentFreqMHz
 }
 
 // SetCycleBreakpoint sets a cycle number to pause the emulator. 0 to disable

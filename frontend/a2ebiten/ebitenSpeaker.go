@@ -84,11 +84,7 @@ func (s *ebitenSpeaker) Read(buf []byte) (n int, err error) {
 	// Build wave
 	const bytesPerSample = 8 // Two floats32, 4 bytes each, one for each channel
 	samples := len(buf) / bytesPerSample
-	//fmt.Printf("smples: %v\n", smples)
 
-	if len(s.pendingClicks) > 0 {
-		fmt.Printf("pendingClicks: %v\n", len(s.pendingClicks))
-	}
 	var i, r int
 	level := s.lastLevel
 	for p := 0; p < len(s.pendingClicks); p++ {
@@ -125,7 +121,6 @@ func (s *ebitenSpeaker) Read(buf []byte) (n int, err error) {
 	// If the buffer is empty lets stop the signal
 	if i == 0 && level != 0.0 {
 		level = 0.0
-		fmt.Printf("Speaker buffer empty, to zero.\n")
 	}
 
 	// Complete the buffer if needed
