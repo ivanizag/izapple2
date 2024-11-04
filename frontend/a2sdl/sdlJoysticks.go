@@ -104,14 +104,16 @@ func (j *sdlJoysticks) putMouseMotionEvent(e *sdl.MouseMotionEvent, width int32,
 }
 
 func (j *sdlJoysticks) putMouseButtonEvent(e *sdl.MouseButtonEvent) {
-	pressed := e.State == sdl.PRESSED
-	switch e.Button {
-	case 1: // BUTTON_LEFT
-		j.mousebuttons[0] = pressed
-	case 3: // BUTTON_RIGHT
-		j.mousebuttons[1] = pressed
-	case 2: // BUTTON_MIDDLE
-		j.mousebuttons[2] = pressed
+	if j.useMouse {
+		pressed := e.State == sdl.PRESSED
+		switch e.Button {
+		case 1: // BUTTON_LEFT
+			j.mousebuttons[0] = pressed
+		case 3: // BUTTON_RIGHT
+			j.mousebuttons[1] = pressed
+		case 2: // BUTTON_MIDDLE
+			j.mousebuttons[2] = pressed
+		}
 	}
 }
 

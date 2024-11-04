@@ -103,6 +103,7 @@ func (c *CardMouse) readMouse() (uint16, uint16, bool) {
 }
 
 func (c *CardMouse) assign(a *Apple2, slot int) {
+	a.usesMouse = true
 	c.addCardSoftSwitchR(0, func() uint8 {
 		c.checkFromFirmware()
 		if c.iOut == 0 {

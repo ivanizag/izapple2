@@ -51,7 +51,7 @@ func sdlRun(a *izapple2.Apple2) {
 	s.start()
 	a.SetSpeakerProvider(s)
 
-	j := newSDLJoysticks(true)
+	j := newSDLJoysticks(!a.UsesMouse())
 	a.SetJoysticksProvider(j)
 
 	m := newSDLMouse()

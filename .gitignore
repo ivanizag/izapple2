@@ -4,10 +4,12 @@ a2sdl.exe
 frontend/a2sdl/a2sdl
 frontend/*/*.woz
 frontend/*/*.dsk
+frontend/*/*.DSK
 frontend/*/*.po
 frontend/*/*.2mg
 frontend/*/*.hdv
 frontend/*/*.zip
+frontend/*/images
 frontend/a2fyne/a2fyne
 frontend/headless/headless
 frontend/*/snapshot.gif

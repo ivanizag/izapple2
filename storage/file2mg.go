@@ -35,31 +35,23 @@ type file2mgHeader struct {
 	LengthCreator uint32
 }
 
-func parse2mg(bd *BlockDisk) error {
-	fileInfo, err := bd.file.Stat()
-	if err != nil {
-		return err
-	}
-
+func parse2mg(reader io.Reader, size uint32) (*file2mgHeader, error) {
 	var header file2mgHeader
 	minHeaderSize := binary.Size(&header)
-	if fileInfo.Size() < int64(minHeaderSize) {
-		return errors.New("invalid 2MG file")
+	if size < uint32(minHeaderSize) {
+		return nil, errors.New("invalid 2MG file")
 	}
 
-	err = readHeader(bd.file, &header)
+	err := readHeader(reader, &header)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	bd.blocks = header.Blocks
-	bd.dataOffset = header.OffsetData
-
-	if fileInfo.Size() < int64(bd.dataOffset+bd.blocks*ProDosBlockSize) {
-		return errors.New("the 2MG file is too small")
+	if size < header.OffsetData+header.Blocks*ProDosBlockSize {
+		return nil, errors.New("the 2MG file is too small")
 	}
 
-	return nil
+	return &header, nil
 }
 
 func readHeader(buf io.Reader, header *file2mgHeader) error {

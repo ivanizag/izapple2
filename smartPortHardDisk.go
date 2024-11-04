@@ -20,7 +20,7 @@ type SmartPortHardDisk struct {
 	host     *CardSmartPort // For DMA
 	filename string
 	trace    bool
-	disk     *storage.BlockDisk
+	disk     storage.BlockDisk
 }
 
 // NewSmartPortHardDisk creates a new hard disk with the smartPort interface
@@ -29,7 +29,7 @@ func NewSmartPortHardDisk(host *CardSmartPort, filename string) (*SmartPortHardD
 	d.host = host
 	d.filename = filename
 
-	hd, err := storage.OpenBlockDisk(filename)
+	hd, err := LoadBlockDisk(filename)
 	if err != nil {
 		return nil, err
 	}

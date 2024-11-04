@@ -234,6 +234,7 @@ The available pre-configured models are:
   cpm: Apple ][+ with CP/M
   cpm3: Apple //e with CP/M 3.0
   cpm65: Apple //e with CPM-65
+  desktop: Apple II DeskTop
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
   swyft: swyft
 

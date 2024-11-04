@@ -23,6 +23,7 @@ type Apple2 struct {
 	isApple2e       bool
 	hasLowerCase    bool
 	isFourColors    bool // An Apple II without the 6 color mod
+	usesMouse       bool
 	commandChannel  chan command
 
 	dmaActive bool
@@ -65,6 +66,11 @@ func (a *Apple2) SetJoysticksProvider(j JoysticksProvider) {
 // SetMouseProvider attaches an external joysticks provider
 func (a *Apple2) SetMouseProvider(m MouseProvider) {
 	a.io.setMouseProvider(m)
+}
+
+// UsesMouse returns true when the emulator uses the mouse
+func (a *Apple2) UsesMouse() bool {
+	return a.usesMouse
 }
 
 // IsPaused returns true when emulator is paused
