@@ -12,17 +12,17 @@ import (
 )
 
 /*
-	Videx 80 columns card for the Apple II+
+	Videx Videoterm 80 columns card for the Apple II+
 
 See:
 	https://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project/Interface%20Cards/80%20Column%20Cards/Videx%20Videoterm/Manuals/Videx%20Videoterm%20-%20Installation%20and%20Operation%20Manual.pdf
-	http://bitsavers.trailing-edge.com/components/motorola/_dataSheets/6845.pdf
+	http://www.bitsavers.org/components/motorola/_dataSheets/6845.pdf
 	https://glasstty.com/?p=660
 
 */
 
-// CardVidex represents a Videx compatible 80 column card
-type CardVidex struct {
+// CardVidexVideoterm represents a Videx compatible 80 column card
+type CardVidexVideoterm struct {
 	cardBase
 	mc6845     component.MC6845
 	sramPage   uint8
@@ -32,20 +32,20 @@ type CardVidex struct {
 	alwaysShow bool
 }
 
-func newCardVidexBuilder() *cardBuilder {
+func newCardVidexVideotermBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "Videx 80 columns Card",
-		description: "Videx compatible 80 columns card",
+		description: "Videx Videoterm compatible 80 columns card",
 		defaultParams: &[]paramSpec{
 			{"rom", "ROM file to load", "<internal>/Videx Videoterm ROM 2.4.bin"},
 			{"charmap", "Character map file to load", "<internal>/80ColumnP110.BIN"},
 			{"always", "Always show the 80 columns output", "false"},
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
-			var c CardVidex
+			var c CardVidexVideoterm
 
 			// The C800 area has ROM and RAM
-			err := c.loadRomFromResource("<internal>/Videx Videoterm ROM 2.4.bin", cardRomUpperHalfEnd)
+			err := c.loadRomFromResource(paramsGetPath(params, "rom"), cardRomUpperHalfEnd)
 			if err != nil {
 				return nil, err
 			}
@@ -63,7 +63,7 @@ func newCardVidexBuilder() *cardBuilder {
 	}
 }
 
-func (c *CardVidex) loadCharacterMap(filename string) error {
+func (c *CardVidexVideoterm) loadCharacterMap(filename string) error {
 	bytes, _, err := LoadResource(filename)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (c *CardVidex) loadCharacterMap(filename string) error {
 	return nil
 }
 
-func (c *CardVidex) assign(a *Apple2, slot int) {
+func (c *CardVidexVideoterm) assign(a *Apple2, slot int) {
 
 	// TODO: use addCardSoftSwitches()
 	for i := uint8(0x0); i <= 0xf; i++ {
@@ -106,14 +106,14 @@ func (c *CardVidex) assign(a *Apple2, slot int) {
 	}
 
 	c.cardBase.assign(a, slot)
-	a.softVideoSwitch = NewSoftVideoSwitch(c, c.alwaysShow)
+	a.setSoftVideoSwitch(c)
 }
 
 const videxRomLimit = uint16(0xcc00)
 const videxSramLimit = uint16(0xce00)
 const videxSramMask = uint16(0x01ff)
 
-func (c *CardVidex) peek(address uint16) uint8 {
+func (c *CardVidexVideoterm) peek(address uint16) uint8 {
 	if address < videxRomLimit {
 		return c.upperROM.peek(address)
 	} else if address < videxSramLimit {
@@ -122,17 +122,27 @@ func (c *CardVidex) peek(address uint16) uint8 {
 	return 0
 }
 
-func (c *CardVidex) poke(address uint16, value uint8) {
+func (c *CardVidexVideoterm) poke(address uint16, value uint8) {
 	if address >= videxRomLimit && address < videxSramLimit {
 		c.sram[address&videxSramMask+uint16(c.sramPage)*0x200] = value
 	}
+}
+
+func (c *CardVidexVideoterm) isSoftSwitchActive() bool {
+	if c.alwaysShow {
+		return true
+	}
+
+	isTextMode := c.a.io.isSoftSwitchActive(ioFlagText)
+	ann0 := c.a.io.isSoftSwitchActive(ioFlagAnnunciator0)
+	return isTextMode && ann0
 }
 
 const (
 	videxCharWidth = uint8(8)
 )
 
-func (c *CardVidex) buildImage(light color.Color) *image.RGBA {
+func (c *CardVidexVideoterm) buildImage(light color.Color) *image.RGBA {
 	params := c.mc6845.ImageData()
 	width, height := params.DisplayedWidthHeight(videxCharWidth)
 	if (width == 0) || (height == 0) {
@@ -194,7 +204,7 @@ func (c *CardVidex) buildImage(light color.Color) *image.RGBA {
 	return img
 }
 
-func (c *CardVidex) getText() string {
+func (c *CardVidexVideoterm) getText() string {
 	text := ""
 	params := c.mc6845.ImageData()
 	address := params.FirstChar

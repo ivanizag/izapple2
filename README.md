@@ -32,6 +32,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Apple //e 80 columns card with 64Kb extra RAM and optional RGB modes
   - No Slot Clock based on the DS1216
   - Videx Videoterm 80 column card with the Videx Soft Video Switch (Apple ][+ only)
+  - Videx Ultraterm 80 to 160 column card wuth integrated Video Switch
   - SwyftCard (Apple //e only)
   - Brain Board
   - Brain Board II
@@ -52,7 +53,9 @@ Portable emulator of an Apple II+ or //e. Written in Go.
 
 - Graphic modes:
   - Text 40 columns
-  - Text 80 columns (Apple //e and Videx VideoTerm)
+  - Text 80 columns Apple //e
+  - Text 80 columns Videx VideoTerm
+  - Text up to 160 columns and 48 lines Videx UltraTerm
   - Low-Resolution graphics
   - Double-Width Low-Resolution graphics (Apple //e only)
   - High-Resolution graphics
@@ -237,6 +240,7 @@ The available pre-configured models are:
   desktop: Apple II DeskTop
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
   swyft: swyft
+  ultraterm: Apple ][+ with Videx Ultraterm demo
 
 The available cards are:
   brainboard: Firmware card. It has two ROM banks
@@ -259,7 +263,8 @@ The available cards are:
   softswitchlogger: Card to log softswitch accesses
   swyftcard: Card with the ROM needed to run the Swyftcard word processing system
   thunderclock: Clock card
-  videx: Videx compatible 80 columns card
+  videx: Videx Videoterm compatible 80 columns card
+  videxultraterm: Videx Utraterm compatible 80 columns card
   vidhd: Firmware signature of the VidHD card to trick Total Replay to use the SHR mode
   z80softcard: Microsoft Z80 SoftCard to run CP/M
 

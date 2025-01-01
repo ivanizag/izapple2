@@ -18,7 +18,7 @@ type Apple2 struct {
 	cards   [8]Card
 	tracers []executionTracer
 
-	softVideoSwitch *SoftVideoSwitch
+	softVideoSwitch softVideoSwitch
 	board           string
 	isApple2e       bool
 	hasLowerCase    bool

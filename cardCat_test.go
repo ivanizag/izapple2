@@ -60,8 +60,12 @@ func TestCardsDetected(t *testing.T) {
 		testCardDetectedInternal(t, "2plus", "saturn", "s0", 50_000_000, "SATURN 128K CARD IN SLOT 0")
 	})
 
-	t.Run("test Videx card", func(t *testing.T) {
+	t.Run("test Videx Videoterm card", func(t *testing.T) {
 		testCardDetectedInternal(t, "2plus", "videx", "s3", 50_000_000, "3   38-18-01-82  Videx 80 Column Text Display Card")
+	})
+
+	t.Run("test Videx Ultraterm card", func(t *testing.T) {
+		testCardDetectedInternal(t, "2plus", "videxultraterm", "s3", 50_000_000, "3   38-18-01-87  ? Unknown 80-Column Display Card")
 	})
 
 	t.Run("test Dan 2 SD card", func(t *testing.T) {

@@ -36,7 +36,7 @@ func (v *video) GetCurrentVideoMode() uint32 {
 	isStore80Active := v.a.mmu.store80Active
 	isDoubleResMode := !isTextMode && is80Columns && !v.a.io.isSoftSwitchActive(ioFlagAnnunciator3)
 	isSuperHighResMode := v.a.io.isSoftSwitchActive(ioDataNewVideo)
-	isVidex := v.a.softVideoSwitch.isActive()
+	isVidex := v.a.isSoftVideoSwitchActive()
 
 	isRGBCard := v.a.io.isSoftSwitchActive(ioFlagRGBCardActive)
 	rgbFlag1 := v.a.io.isSoftSwitchActive(ioFlag1RGBCard)
@@ -162,7 +162,7 @@ func (v *video) GetCharacterPixel(char uint8, rowInChar int, colInChar int, isAl
 
 // GetCardImage returns an image provided by a card, like the videx card
 func (v *video) GetCardImage(light color.Color) *image.RGBA {
-	return v.a.softVideoSwitch.BuildAlternateImage(light)
+	return v.a.softVideoSwitch.buildImage(light)
 }
 
 // SupportsLowercase returns true if the video source supports lowercase

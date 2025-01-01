@@ -101,7 +101,7 @@ func (c *cardBase) loadRom(data []uint8, layout cardRomLayout) error {
 		if len(data) == 0x400 {
 			// The file has C800 to CBFF for ROM
 			// The 256 bytes in Cx00 are copied from the last page in C800-CBFF
-			// Used on the Videx 80 columns card
+			// Used on the Videx Videoterm 80 columns card
 			c.romCsxx = newMemoryRangeROM(0, data[0x300:], "Slot ROM")
 			c.romC8xx = newMemoryRangeROM(0xc800, data, "Slot C8 ROM")
 		} else {
@@ -141,7 +141,7 @@ func (c *cardBase) assign(a *Apple2, slot int) {
 		}
 		if c.romCxxx != nil {
 			rom := traceMemory(c.romCxxx, c.name, c.traceMemory)
-			a.mmu.setCardROM(slot, c.romCxxx)
+			a.mmu.setCardROM(slot, rom)
 			a.mmu.setCardROMExtra(slot, rom)
 		}
 	}

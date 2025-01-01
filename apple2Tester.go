@@ -69,8 +69,11 @@ func (at *apple2Tester) getText(textMode testTextModeFunc) string {
 func (at *apple2Tester) getTextBest() string {
 	videxMaybe := at.a.cards[3]
 	if videxMaybe != nil {
-		if videx, ok := videxMaybe.(*CardVidex); ok {
+		if videx, ok := videxMaybe.(*CardVidexVideoterm); ok {
 			return videx.getText()
+		}
+		if videxUltraterm, ok := videxMaybe.(*CardVidexUltraterm); ok {
+			return videxUltraterm.getText()
 		}
 	}
 

@@ -57,6 +57,7 @@ The available pre-configured models are:
   desktop: Apple II DeskTop
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
   swyft: swyft
+  ultraterm: Apple ][+ with Videx Ultraterm demo
 
 The available cards are:
   brainboard: Firmware card. It has two ROM banks
@@ -79,7 +80,8 @@ The available cards are:
   softswitchlogger: Card to log softswitch accesses
   swyftcard: Card with the ROM needed to run the Swyftcard word processing system
   thunderclock: Clock card
-  videx: Videx compatible 80 columns card
+  videx: Videx Videoterm compatible 80 columns card
+  videxultraterm: Videx Utraterm compatible 80 columns card
   vidhd: Firmware signature of the VidHD card to trick Total Replay to use the SHR mode
   z80softcard: Microsoft Z80 SoftCard to run CP/M
 

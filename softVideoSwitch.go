@@ -6,45 +6,25 @@ import (
 )
 
 /*
-	Videx Soft Video Switch
+	Videx Soft Video Switch external on the Videx Videoterm and integrated on the Videx Ultraterm
 
 	See:
 		https://archive.org/details/videx-soft-video-switch
-
 */
 
-// SoftVideoSwitch represents a Videx soft video switch
-type SoftVideoSwitch struct {
-	card   *CardVidex
-	forced bool
+type softVideoSwitch interface {
+	buildImage(light color.Color) *image.RGBA
+	isSoftSwitchActive() bool
 }
 
-// NewSoftVideoSwitch creates a new SoftVideoSwitch
-func NewSoftVideoSwitch(card *CardVidex, force bool) *SoftVideoSwitch {
-	var vs SoftVideoSwitch
-	vs.card = card
-	vs.forced = force
-	return &vs
+func (a *Apple2) setSoftVideoSwitch(card softVideoSwitch) {
+	a.softVideoSwitch = card
 }
 
-func (vs *SoftVideoSwitch) isActive() bool {
-	if vs == nil {
+func (a *Apple2) isSoftVideoSwitchActive() bool {
+	if a.softVideoSwitch == nil {
 		return false
 	}
 
-	if vs.forced {
-		return true
-	}
-
-	isTextMode := vs.card.a.io.isSoftSwitchActive(ioFlagText)
-	ann0 := vs.card.a.io.isSoftSwitchActive(ioFlagAnnunciator0)
-	return isTextMode && ann0
-}
-
-func (vs *SoftVideoSwitch) BuildAlternateImage(light color.Color) *image.RGBA {
-	return vs.card.buildImage(light)
-}
-
-func (a *Apple2) SoftVideoSwitch() *SoftVideoSwitch {
-	return a.softVideoSwitch
+	return a.softVideoSwitch.isSoftSwitchActive()
 }
