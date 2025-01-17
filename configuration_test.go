@@ -24,7 +24,7 @@ func TestConfigurationModel(t *testing.T) {
 
 		requiredFields := []string{
 			confRom, confCharRom, confCpu, confSpeed, confRamworks, confNsc,
-			confTrace, confProfile, confForceCaps, confRgb, confRomx,
+			confTrace, confProfile, confShowConfig, confForceCaps, confRgb, confRomx,
 			confS0, confS1, confS2, confS3, confS4, confS5, confS6, confS7,
 		}
 		availabledModels := models.availableModels()

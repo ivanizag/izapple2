@@ -39,6 +39,8 @@ Usage:  izapple2 [file]
     	slot 6 configuration. (default "diskii,disk1=<internal>/dos33.dsk")
   -s7 string
     	slot 7 configuration. (default "empty")
+  -showConfig
+    	show the calculated configuration and exit
   -speed string
     	cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber (default "ntsc")
   -trace string

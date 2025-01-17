@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -9,6 +10,12 @@ import (
 )
 
 func configure(configuration *configuration) (*Apple2, error) {
+
+	if configuration.getFlag(confShowConfig) {
+		configuration.dump()
+		os.Exit(0)
+	}
+
 	var a Apple2
 	a.Name = configuration.get(confName)
 	a.mmu = newMemoryManager(&a)

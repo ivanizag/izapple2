@@ -18,26 +18,28 @@ const (
 	confName   = "name"
 	confBoard  = "board"
 
-	confRom       = "rom"
-	confCharRom   = "charrom"
-	confCpu       = "cpu"
-	confSpeed     = "speed"
-	confRamworks  = "ramworks"
-	confNsc       = "nsc"
-	confTrace     = "trace"
-	confProfile   = "profile"
-	confForceCaps = "forceCaps"
-	confRgb       = "rgb"
-	confRomx      = "romx"
-	confMods      = "mods"
-	confS0        = "s0"
-	confS1        = "s1"
-	confS2        = "s2"
-	confS3        = "s3"
-	confS4        = "s4"
-	confS5        = "s5"
-	confS6        = "s6"
-	confS7        = "s7"
+	confRom        = "rom"
+	confCharRom    = "charrom"
+	confCpu        = "cpu"
+	confSpeed      = "speed"
+	confRamworks   = "ramworks"
+	confNsc        = "nsc"
+	confTrace      = "trace"
+	confProfile    = "profile"
+	confShowConfig = "showConfig"
+	confForceCaps  = "forceCaps"
+	confRgb        = "rgb"
+	confRomx       = "romx"
+	confMods       = "mods"
+
+	confS0 = "s0"
+	confS1 = "s1"
+	confS2 = "s2"
+	confS3 = "s3"
+	confS4 = "s4"
+	confS5 = "s5"
+	confS6 = "s6"
+	confS7 = "s7"
 )
 
 //go:embed configs/*.cfg
@@ -186,30 +188,31 @@ func (c *configurationModels) getWithOverrides(model string, overrides *configur
 
 func setupFlags(models *configurationModels, configuration *configuration) error {
 	paramDescription := map[string]string{
-		confModel:     "set base model",
-		confRom:       "main rom file",
-		confCharRom:   "rom file for the character generator",
-		confCpu:       "cpu type, can be '6502' or '65c02'",
-		confSpeed:     "cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber",
-		confMods:      "comma separated list of mods applied to the board, available mods are 'shift', 'four-colors",
-		confRamworks:  "memory to use with RAMWorks card, max is 16384",
-		confNsc:       "add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM",
-		confTrace:     "trace CPU execution with one or more comma separated tracers",
-		confProfile:   "generate profile trace to analyse with pprof",
-		confForceCaps: "force all letters to be uppercased (no need for caps lock!)",
-		confRgb:       "emulate the RGB modes of the 80col RGB card for DHGR",
-		confRomx:      "emulate a RomX",
-		confS0:        "slot 0 configuration.",
-		confS1:        "slot 1 configuration.",
-		confS2:        "slot 2 configuration.",
-		confS3:        "slot 3 configuration.",
-		confS4:        "slot 4 configuration.",
-		confS5:        "slot 5 configuration.",
-		confS6:        "slot 6 configuration.",
-		confS7:        "slot 7 configuration.",
+		confModel:      "set base model",
+		confRom:        "main rom file",
+		confCharRom:    "rom file for the character generator",
+		confCpu:        "cpu type, can be '6502' or '65c02'",
+		confSpeed:      "cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber",
+		confMods:       "comma separated list of mods applied to the board, available mods are 'shift', 'four-colors",
+		confRamworks:   "memory to use with RAMWorks card, max is 16384",
+		confNsc:        "add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM",
+		confTrace:      "trace CPU execution with one or more comma separated tracers",
+		confProfile:    "generate profile trace to analyse with pprof",
+		confShowConfig: "show the calculated configuration and exit",
+		confForceCaps:  "force all letters to be uppercased (no need for caps lock!)",
+		confRgb:        "emulate the RGB modes of the 80col RGB card for DHGR",
+		confRomx:       "emulate a RomX",
+		confS0:         "slot 0 configuration.",
+		confS1:         "slot 1 configuration.",
+		confS2:         "slot 2 configuration.",
+		confS3:         "slot 3 configuration.",
+		confS4:         "slot 4 configuration.",
+		confS5:         "slot 5 configuration.",
+		confS6:         "slot 6 configuration.",
+		confS7:         "slot 7 configuration.",
 	}
 
-	boolParams := []string{confProfile, confForceCaps, confRgb, confRomx}
+	boolParams := []string{confProfile, confShowConfig, confForceCaps, confRgb, confRomx}
 
 	for name, description := range paramDescription {
 		defaultValue, ok := configuration.getHas(name)
@@ -278,4 +281,11 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 	filename := flag.Arg(0)
 
 	return configuration, filename, nil
+}
+
+func (c *configuration) dump() {
+	fmt.Println("Configuration:")
+	for k, v := range c.data {
+		fmt.Printf("  %s: %s\n", k, v)
+	}
 }
