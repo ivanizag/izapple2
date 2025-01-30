@@ -31,18 +31,18 @@ chown --reference /build izapple2sdl.exe
 cp izapple2sdl.exe /build/izapple2sdl_windows_amd64.exe
 
 # Build izapple2fyne for Linux
-echo "Building Linux Fyne frontend"
-cd /tmp/izapple2/frontend/a2fyne
-env CGO_ENABLED=1 go build -tags static -ldflags "-s -w" .
-chown --reference /build a2fyne
-cp a2fyne /build/izapple2fyne_linux_amd64
+#echo "Building Linux Fyne frontend"
+#cd /tmp/izapple2/frontend/a2fyne
+#env CGO_ENABLED=1 go build -tags static -ldflags "-s -w" .
+#chown --reference /build a2fyne
+#cp a2fyne /build/izapple2fyne_linux_amd64
 
 # Build izapple2fyne.exe for Windows
-echo "Building Windows Fyne frontend"
-cd /tmp/izapple2/frontend/a2fyne
-env CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows CGO_LDFLAGS="-L/usr/x86_64-w64-mingw32/lib " CGO_FLAGS="-I/usr/x86_64-w64-mingw32/include -D_REENTRANT" go build -tags static -ldflags "-s -w" -o izapple2fyne.exe .
-chown --reference /build izapple2fyne.exe
-cp izapple2fyne.exe /build/izapple2fyne_windows_amd64.exe
+#echo "Building Windows Fyne frontend"
+#cd /tmp/izapple2/frontend/a2fyne
+#env CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows CGO_LDFLAGS="-L/usr/x86_64-w64-mingw32/lib " CGO_FLAGS="-I/usr/x86_64-w64-mingw32/include -D_REENTRANT" go build -tags static -ldflags "-s -w" -o izapple2fyne.exe .
+#chown --reference /build izapple2fyne.exe
+#cp izapple2fyne.exe /build/izapple2fyne_windows_amd64.exe
 
 
 # Copy SDL2 Runtime
