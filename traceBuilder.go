@@ -92,6 +92,11 @@ func getTracerFactory() map[string]*traceBuilder {
 		description:     "Trace CPM BDOS calls",
 		executionTracer: newTraceCpm(false),
 	}
+	tracerFactory["rom"] = &traceBuilder{
+		name:            "rom",
+		description:     "Trace monitor ROM calls",
+		executionTracer: newTraceMonitor(),
+	}
 	return tracerFactory
 }
 

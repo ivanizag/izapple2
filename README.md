@@ -279,6 +279,7 @@ The available tracers are:
   mos: Trace MOS calls with Applecorn skipping terminal IO
   mosfull: Trace MOS calls with Applecorn
   panicss: Panic on unimplemented softswitches
+  rom: Trace monitor ROM calls
   ss: Trace sotfswiches calls
   ssreg: Trace sotfswiches registrations
   ucsd: Trace UCSD system calls
