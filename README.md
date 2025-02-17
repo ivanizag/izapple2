@@ -241,6 +241,7 @@ The available pre-configured models are:
   cpm65: Apple //e with CPM-65
   desktop: Apple II DeskTop
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
+  prodos: Apple //e Prodos
   swyft: swyft
   ultraterm: Apple ][+ with Videx Ultraterm demo
 

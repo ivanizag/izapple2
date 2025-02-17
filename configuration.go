@@ -4,9 +4,10 @@ import (
 	"embed"
 	"flag"
 	"fmt"
+	"maps"
 	"strings"
 
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 const configSuffix = ".cfg"
@@ -255,10 +256,10 @@ func setupFlags(models *configurationModels, configuration *configuration) error
 	return nil
 }
 
-func getConfigurationFromCommandLine() (*configuration, string, error) {
+func getConfigurationFromCommandLine() (*configuration, []string, error) {
 	models, configuration, err := loadConfigurationModelsAndDefault()
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
 	setupFlags(models, configuration)
@@ -270,7 +271,7 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 		// Replace the model
 		configuration, err = models.get(modelFlag.Value.String())
 		if err != nil {
-			return nil, "", err
+			return nil, nil, err
 		}
 	}
 
@@ -278,14 +279,17 @@ func getConfigurationFromCommandLine() (*configuration, string, error) {
 		configuration.set(f.Name, f.Value.String())
 	})
 
-	filename := flag.Arg(0)
+	filenames := flag.Args()
 
-	return configuration, filename, nil
+	return configuration, filenames, nil
 }
 
 func (c *configuration) dump() {
 	fmt.Println("Configuration:")
-	for k, v := range c.data {
-		fmt.Printf("  %s: %s\n", k, v)
+
+	keys := slices.Sorted(maps.Keys(c.data))
+
+	for _, key := range keys {
+		fmt.Printf("  %s: %s\n", key, c.data[key])
 	}
 }
