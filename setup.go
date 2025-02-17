@@ -278,11 +278,17 @@ func CreateConfiguredApple() (*Apple2, error) {
 			return nil, fmt.Errorf("up to 8 block devices can be loaded, %v found", len(blockDevices))
 		}
 		if len(blockDevices) > 0 {
-			smartportConfig := "smartport"
-			for i, filename := range blockDevices {
-				smartportConfig += fmt.Sprintf(",image%v=\"%s\"", i+1, filename)
+			configuration.set(confS7, fmt.Sprintf("smartport,image1=\"%s\"", blockDevices[0]))
+			if len(blockDevices) > 1 {
+				smartportConfig := "smartport"
+				for i, filename := range blockDevices {
+					if i == 0 {
+						continue
+					}
+					smartportConfig += fmt.Sprintf(",image%v=\"%s\"", i+1, filename)
+				}
+				configuration.set(confS5, smartportConfig)
 			}
-			configuration.set(confS5, smartportConfig)
 		}
 	}
 

@@ -17,7 +17,7 @@ type traceMonitor struct {
 }
 
 const (
-	wozmonPrompt uint16 = 0x0033
+	//wozmonPrompt uint16 = 0x0033
 
 	wozmonGETLNZ      uint16 = 0xfd67
 	woamonGETLN       uint16 = 0xfd6a
