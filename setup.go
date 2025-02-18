@@ -261,14 +261,14 @@ func CreateConfiguredApple() (*Apple2, error) {
 		}
 
 		if len(diskettes) == 1 {
-			configuration.set(confS6, fmt.Sprintf("diskii,disk1=\"%s\"", filenames[0]))
+			configuration.set(confS6, fmt.Sprintf("diskii,disk1=\"%s\"", diskettes[0]))
 		} else if len(diskettes) >= 2 {
-			configuration.set(confS6, fmt.Sprintf("diskii,disk1=\"%s\",disk2=\"%s\"", filenames[0], filenames[1]))
+			configuration.set(confS6, fmt.Sprintf("diskii,disk1=\"%s\",disk2=\"%s\"", diskettes[0], diskettes[1]))
 		}
 		if len(diskettes) == 3 {
-			configuration.set(confS5, fmt.Sprintf("diskii,disk1=\"%s\"", filenames[2]))
+			configuration.set(confS5, fmt.Sprintf("diskii,disk1=\"%s\"", diskettes[2]))
 		} else if len(diskettes) >= 4 {
-			configuration.set(confS5, fmt.Sprintf("diskii,disk1=\"%s\",disk2=\"%s\"", filenames[2], filenames[3]))
+			configuration.set(confS5, fmt.Sprintf("diskii,disk1=\"%s\",disk2=\"%s\"", diskettes[2], diskettes[3]))
 		}
 		if len(diskettes) > 4 {
 			return nil, fmt.Errorf("up to 4 diskettes can be loaded, %v found", len(diskettes))
