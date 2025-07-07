@@ -53,6 +53,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory["mouse"] = newCardMouseBuilder()
 	cardFactory["multirom"] = newMultiRomCardBuilder()
 	cardFactory["parallel"] = newCardParallelPrinterBuilder()
+	cardFactory["prodosblock"] = newCardProDOSBlockStorageBuilder()
 	cardFactory["prodosromdrive"] = newCardProDOSRomDriveBuilder()
 	cardFactory["prodosromcard3"] = newCardProDOSRomCard3Builder()
 	// cardFactory["prodosnvramdrive"] = newCardProDOSNVRAMDriveBuilder()

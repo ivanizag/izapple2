@@ -20,8 +20,9 @@ See:
 // CardSmartPort represents a SmartPort card
 type CardSmartPort struct {
 	cardBase
-	devices        []smartPortDevice
-	hardDiskBlocks uint32
+	devices               []smartPortDevice
+	hardDiskBlocks        uint32
+	proDOSBlockDeviceType uint8 // 0 for SmartPort, non zero or ff for ProDOS
 
 	mliParams uint16
 	trace     bool
@@ -56,6 +57,33 @@ func newCardSmartPortStorageBuilder() *cardBuilder {
 					}
 				}
 			}
+			return &c, nil
+		},
+	}
+}
+
+func newCardProDOSBlockStorageBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:        "ProDOS",
+		description: "ProDOS block device interface card",
+		defaultParams: &[]paramSpec{
+			{"image1", "Disk image for unit 1", ""},
+			{"image2", "Disk image for unit 2", ""},
+			{"tracehd", "Trace image accesses", "false"},
+		},
+		buildFunc: func(params map[string]string) (Card, error) {
+			var c CardSmartPort
+			traceHD := paramsGetBool(params, "tracehd")
+			for i := 1; i <= 8; i++ {
+				image := paramsGetPath(params, "image"+strconv.Itoa(i))
+				if image != "" {
+					err := c.LoadImage(image, traceHD)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+			c.proDOSBlockDeviceType = 0x01 // Generic ProDOS ID
 			return &c, nil
 		},
 	}
@@ -112,7 +140,7 @@ func (c *CardSmartPort) AddDevice(device smartPortDevice) {
 }
 
 func (c *CardSmartPort) assign(a *Apple2, slot int) {
-	c.loadRom(buildHardDiskRom(slot), cardRomSimple)
+	c.loadRom(buildHardDiskRom(slot, c.proDOSBlockDeviceType), cardRomSimple)
 
 	c.addCardSoftSwitchR(0, func() uint8 {
 		// Prodos entry point
@@ -217,7 +245,7 @@ func (c *CardSmartPort) hostStatus(call *smartPortCall) uint8 {
 	return smartPortNoError
 }
 
-func buildHardDiskRom(slot int) []uint8 {
+func buildHardDiskRom(slot int, proDOSBlockDeviceType uint8) []uint8 {
 	data := make([]uint8, 256)
 	ssBase := 0x80 + uint8(slot<<4)
 
@@ -226,7 +254,7 @@ func buildHardDiskRom(slot int) []uint8 {
 		0xa9, 0x20, // LDA #$20
 		0xa9, 0x00, // LDA #$00
 		0xa9, 0x03, // LDA #$03
-		0xa9, 0x00, // LDA #$00
+		0xa9, proDOSBlockDeviceType, // LDA #$xx
 		0xd0, 0x36, // BNE bootcode, there is no space for a jmp
 	})
 

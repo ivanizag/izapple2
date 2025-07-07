@@ -77,6 +77,7 @@ The available cards are:
   mouse: Mouse card implementation, does not emulate a real card, only the firmware behaviour
   multirom: Multiple Image ROM card
   parallel: Card to dump to a file what would be printed to a parallel printer
+  prodosblock: ProDOS block device interface card
   prodosromcard3: A bootable 4 MB ROM card by Ralle Palaveev
   prodosromdrive: A bootable 1 MB solid state disk by Terence Boldt
   saturn: RAM card with 128Kb, it's like 8 language cards
