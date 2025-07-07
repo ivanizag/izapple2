@@ -9,6 +9,7 @@ See:
 type disketteNibWritable struct {
 	nib      *fileNib
 	position int
+	powered  bool
 
 	// Needed to write back
 	hasDirtyTrack bool
@@ -16,16 +17,19 @@ type disketteNibWritable struct {
 }
 
 func (d *disketteNibWritable) PowerOn(cycle uint64) {
-	// Not used
+	d.powered = true
 }
 func (d *disketteNibWritable) PowerOff(_ uint64) {
+	d.powered = false
 	d.commit()
 }
 
 func (d *disketteNibWritable) Read(quarterTrack int, cycle uint64) uint8 {
 	track := d.nib.track[quarterTrack/4]
 	value := track[d.position]
-	d.position = (d.position + 1) % nibBytesPerTrack
+	if d.powered { // the position can't change if the drive is off
+		d.position = (d.position + 1) % nibBytesPerTrack
+	}
 	return value
 }
 
@@ -37,8 +41,9 @@ func (d *disketteNibWritable) Write(quarterTrack int, value uint8, _ uint64) {
 	}
 
 	d.nib.track[track][d.position] = value
-	d.position = (d.position + 1) % nibBytesPerTrack
-
+	if d.powered { // the position can't change if the drive is off
+		d.position = (d.position + 1) % nibBytesPerTrack
+	}
 	d.hasDirtyTrack = true
 	d.dirtyTrack = track
 }
