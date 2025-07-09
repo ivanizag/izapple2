@@ -2,10 +2,12 @@ package izapple2
 
 import (
 	"embed"
+	"errors"
 	"flag"
 	"fmt"
 	"maps"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"slices"
@@ -156,8 +158,14 @@ func (c *configurationModels) get(name string) (*configuration, error) {
 	name = strings.TrimSpace(name)
 	config, ok := c.preconfiguredConfigs[name]
 	if !ok {
-		if !strings.HasSuffix(strings.ToLower(name), ".cfg") {
+		if filepath.Ext(strings.ToLower(name)) != ".cfg" {
 			name = name + ".cfg"
+		}
+		if _, err := os.Stat(name); errors.Is(err, os.ErrNotExist) {
+			path, exists := os.LookupEnv("IZAPPLE2_CUSTOM_MODEL")
+			if exists {
+				name = filepath.Join(path, name)
+			}
 		}
 		content, err := os.ReadFile(name)
 		if err != nil {
@@ -258,6 +266,7 @@ func setupFlags(models *configurationModels, configuration *configuration) error
 			config, _ := models.get(model)
 			fmt.Fprintf(out, "  %s: %s\n", model, config.get(confName))
 		}
+		fmt.Fprintf(out, "Custom models may be specified by filename.  Use 'IZAPPLE2_CUSTOM_MODEL' to set default location.\n")
 
 		fmt.Fprintf(out, "\nThe available cards are:\n")
 		for _, card := range availableCards() {
