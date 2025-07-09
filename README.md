@@ -245,6 +245,7 @@ The available pre-configured models are:
   prodos: Apple //e Prodos
   swyft: swyft
   ultraterm: Apple ][+ with Videx Ultraterm demo
+Custom models may be specified by filename.  Use 'IZAPPLE2_CUSTOM_MODEL' to set default location.
 
 The available cards are:
   brainboard: Firmware card. It has two ROM banks
