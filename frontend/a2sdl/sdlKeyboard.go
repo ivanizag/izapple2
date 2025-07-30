@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ivanizag/izapple2"
 	"github.com/ivanizag/izapple2/screen"
@@ -136,6 +137,11 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		}
 	case sdl.K_PAUSE:
 		k.a.SendCommand(izapple2.CommandPauseUnpause)
+	case sdl.K_INSERT:
+		if shift {
+			text, _ := sdl.GetClipboardText()
+			go k.performPaste(text)
+		}
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_
@@ -143,5 +149,18 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 
 	if result != 0 {
 		k.keyChannel.PutChar(result)
+	}
+}
+
+func (k *sdlKeyboard) performPaste(text string) {
+	// Note 1: Pasting is too fast, so we slow it down.
+	// Note 2: Need to translate CR/LF's
+	for _, ch := range text {
+		if ch == '\r' || ch == '\n' {
+			k.keyChannel.PutChar(13)
+		} else {
+			k.keyChannel.PutRune(ch)
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }
