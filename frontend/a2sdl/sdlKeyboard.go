@@ -51,6 +51,7 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	key := keyEvent.Keysym
 	ctrl := key.Mod&sdl.KMOD_CTRL != 0
 	shift := key.Mod&sdl.KMOD_SHIFT != 0
+	command := key.Mod&sdl.KMOD_GUI != 0
 
 	if ctrl {
 		if key.Sym >= 'a' && key.Sym <= 'z' {
@@ -139,6 +140,11 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		k.a.SendCommand(izapple2.CommandPauseUnpause)
 	case sdl.K_INSERT:
 		if shift {
+			text, _ := sdl.GetClipboardText()
+			go k.performPaste(text)
+		}
+	case sdl.K_v:
+		if command {
 			text, _ := sdl.GetClipboardText()
 			go k.performPaste(text)
 		}
