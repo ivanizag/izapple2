@@ -240,9 +240,10 @@ func loadMultiPageRom(a *Apple2, filenames []string) error {
 }
 
 var diskAliases = map[string]string{
-	"dos33":  "<internal>/dos33.dsk",
-	"prodos": "<internal>/ProDOS_2_4_3.po",
-	"cpm":    "<internal>/cpm_2.20B_56K.po",
+	"dos33":   "<internal>/dos33.dsk",
+	"prodos":  "<internal>/ProDOS_2_4_3.po",
+	"cpm":     "<internal>/cpm_2.20B_56K.po",
+	"cardcat": "<internal>/Card Cat 1.7.dsk",
 }
 
 func applyDiskAliases(filename string) string {

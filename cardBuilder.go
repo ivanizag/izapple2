@@ -20,6 +20,7 @@ type cardBuilder struct {
 	description   string
 	defaultParams *[]paramSpec
 	requiresIIe   bool
+	hide          bool
 	buildFunc     func(params map[string]string) (Card, error)
 }
 
@@ -57,6 +58,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory["prodosromdrive"] = newCardProDOSRomDriveBuilder()
 	cardFactory["prodosromcard3"] = newCardProDOSRomCard3Builder()
 	// cardFactory["prodosnvramdrive"] = newCardProDOSNVRAMDriveBuilder()
+	cardFactory["profile"] = newCardProfileBuilder()
 	cardFactory["saturn"] = newCardSaturnBuilder()
 	cardFactory["smartport"] = newCardSmartPortStorageBuilder()
 	cardFactory["swyftcard"] = newCardSwyftBuilder()

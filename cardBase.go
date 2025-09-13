@@ -54,8 +54,9 @@ type cardRomLayout int
 
 const (
 	cardRomSimple       cardRomLayout = iota // The ROM is on the slot area, there can be more than one page
-	cardRomUpper                             // The ROM is on the full C800 area. The slot area copies C8xx
+	cardRomUpperStart                        // The ROM is on the full C800 area. The slot area copies C8xx
 	cardRomUpperHalfEnd                      // The ROM is on half of the C800 areas. The slot area copies CBxx
+	cardRomUpperEnd                          // The ROM is on the full C800 area. The slot area copies CFxx
 	cardRomFull                              // The ROM is on the full Cxxx area, with pages for each slot position
 )
 
@@ -88,14 +89,14 @@ func (c *cardBase) loadRom(data []uint8, layout cardRomLayout) error {
 		} else {
 			return fmt.Errorf("invalid ROM size for simple layout")
 		}
-	case cardRomUpper:
+	case cardRomUpperStart:
 		if len(data) == 0x800 {
 			// The file has C800 to CFFF
 			// The 256 bytes in Cx00 are copied from the first page in C800
 			c.romCsxx = newMemoryRangeROM(0, data, "Slot ROM")
 			c.romC8xx = newMemoryRangeROM(0xc800, data, "Slot C8 ROM")
 		} else {
-			return fmt.Errorf("invalid ROM size for upper layout")
+			return fmt.Errorf("invalid ROM size for upper start layout")
 		}
 	case cardRomUpperHalfEnd:
 		if len(data) == 0x400 {
@@ -106,6 +107,15 @@ func (c *cardBase) loadRom(data []uint8, layout cardRomLayout) error {
 			c.romC8xx = newMemoryRangeROM(0xc800, data, "Slot C8 ROM")
 		} else {
 			return fmt.Errorf("invalid ROM size for upper half end layout")
+		}
+	case cardRomUpperEnd:
+		if len(data) == 0x800 {
+			// The file has C800 to CFFF for ROM
+			// The 256 bytes in Cx00 are copied from the last page in C800-CFFF
+			c.romCsxx = newMemoryRangeROM(0, data[0x700:], "Slot ROM")
+			c.romC8xx = newMemoryRangeROM(0xc800, data, "Slot C8 ROM")
+		} else {
+			return fmt.Errorf("invalid ROM size for upper end layout")
 		}
 	case cardRomFull:
 		if len(data) == 0x1000 {

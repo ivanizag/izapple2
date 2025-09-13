@@ -271,7 +271,9 @@ func setupFlags(models *configurationModels, configuration *configuration) error
 		fmt.Fprintf(out, "\nThe available cards are:\n")
 		for _, card := range availableCards() {
 			builder := getCardFactory()[card]
-			fmt.Fprintf(out, "  %s: %s\n", card, builder.description)
+			if !builder.hide {
+				fmt.Fprintf(out, "  %s: %s\n", card, builder.description)
+			}
 		}
 
 		fmt.Fprintf(out, "\nThe available tracers are:\n")

@@ -28,6 +28,7 @@ func newCardInOutBuilder() *cardBuilder {
 	return &cardBuilder{
 		name:        "InOut test card",
 		description: "Card to test I/O",
+		hide:        true,
 		buildFunc: func(params map[string]string) (Card, error) {
 			return &CardInOut{}, nil
 		},

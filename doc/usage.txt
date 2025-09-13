@@ -72,7 +72,6 @@ The available cards are:
   diskiiseq: Disk II interface card emulating the Woz state machine
   fastchip: Accelerator card for Apple IIe (limited support)
   fujinet: SmartPort interface card hosting the Fujinet
-  inout: Card to test I/O
   language: Language card with 16 extra KB for the Apple ][ and ][+
   memexp: Memory expansion card
   mouse: Mouse card implementation, does not emulate a real card, only the firmware behaviour
