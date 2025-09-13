@@ -239,6 +239,19 @@ func loadMultiPageRom(a *Apple2, filenames []string) error {
 	return nil
 }
 
+var diskAliases = map[string]string{
+	"dos33":  "<internal>/dos33.dsk",
+	"prodos": "<internal>/ProDOS_2_4_3.po",
+	"cpm":    "<internal>/cpm_2.20B_56K.po",
+}
+
+func applyDiskAliases(filename string) string {
+	if alias, ok := diskAliases[filename]; ok {
+		return alias
+	}
+	return filename
+}
+
 // CreateConfiguredApple is a device independent main. Video, keyboard and speaker won't be defined
 func CreateConfiguredApple() (*Apple2, error) {
 	// Get configuration from defaults and the command line
@@ -251,6 +264,7 @@ func CreateConfiguredApple() (*Apple2, error) {
 		diskettes := []string{}
 		blockDevices := []string{}
 		for _, filename := range filenames {
+			filename = applyDiskAliases(filename)
 			_, err := LoadDiskette(filename)
 			isDiskette := err == nil
 			if isDiskette {
