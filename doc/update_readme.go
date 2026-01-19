@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// Define the file paths
-	readmePath := "../README.md"
+	commandLinePath := "command_line.md"
 	usagePath := "usage.txt"
 	newUsagePath := "usage_new.txt"
 
@@ -27,29 +27,29 @@ func main() {
 	// Convert the usage bytes to string
 	usage := string(usageBytes)
 
-	// Read the contents of the readme file
-	readmeBytes, err := os.ReadFile(readmePath)
+	// Read the contents of the command_line.md file
+	commandLineBytes, err := os.ReadFile(commandLinePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Convert the readme bytes to string
-	readme := string(readmeBytes)
+	// Convert the command_line bytes to string
+	commandLine := string(commandLineBytes)
 
 	// Find the start and end markers
 	startMarker := "<!-- doc/usage.txt start -->"
 	endMarker := "<!-- doc/usage.txt end -->"
-	startIndex := strings.Index(readme, startMarker)
-	endIndex := strings.Index(readme, endMarker)
+	startIndex := strings.Index(commandLine, startMarker)
+	endIndex := strings.Index(commandLine, endMarker)
 
 	// Replace the lines between start and end markers with the usage
-	newReadme := readme[:startIndex+len(startMarker)] + "\n```terminal\n" + usage + "\n```\n" + readme[endIndex:]
+	newCommandLine := commandLine[:startIndex+len(startMarker)] + "\n```terminal\n" + usage + "\n```\n" + commandLine[endIndex:]
 
-	// Write the updated readme back to the file
-	err = os.WriteFile(readmePath, []byte(newReadme), os.ModePerm)
+	// Write the updated command_line.md back to the file
+	err = os.WriteFile(commandLinePath, []byte(newCommandLine), os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("README.md updated successfully!")
+	fmt.Println("command_line.md updated successfully!")
 }
