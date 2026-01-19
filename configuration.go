@@ -286,10 +286,172 @@ func setupFlags(models *configurationModels, configuration *configuration) error
 	return nil
 }
 
-func getConfigurationFromCommandLine() (*configuration, []string, error) {
+var diskAliases = map[string]string{
+	"dos33":   "<internal>/dos33.dsk",
+	"prodos":  "<internal>/ProDOS_2_4_3.po",
+	"cpm":     "<internal>/cpm_2.20B_56K.po",
+	"cardcat": "<internal>/Card Cat 1.7.dsk",
+}
+
+func applyDiskAliases(filename string) string {
+	if alias, ok := diskAliases[filename]; ok {
+		return alias
+	}
+	return filename
+}
+
+// classifyFile determines if a file is a diskette or block device
+// Returns true if the file is a diskette, false if it's a block device
+func classifyFile(filename string) bool {
+	filename = applyDiskAliases(filename)
+	_, err := LoadDiskette(filename)
+	return err == nil
+}
+
+// processPositionalFilenames handles filenames passed as positional arguments
+// and configures slots s6, s5, s7 based on the file types
+func processPositionalFilenames(config *configuration, filenames []string) error {
+	if len(filenames) == 0 {
+		return nil
+	}
+
+	diskettes := []string{}
+	blockDevices := []string{}
+
+	for _, filename := range filenames {
+		filename = applyDiskAliases(filename)
+		if classifyFile(filename) {
+			diskettes = append(diskettes, filename)
+		} else {
+			blockDevices = append(blockDevices, filename)
+		}
+	}
+
+	// Configure diskette slots (s6 and s5)
+	if len(diskettes) == 1 {
+		config.set(confS6, fmt.Sprintf("diskii,disk1=\"%s\"", diskettes[0]))
+	} else if len(diskettes) >= 2 {
+		config.set(confS6, fmt.Sprintf("diskii,disk1=\"%s\",disk2=\"%s\"", diskettes[0], diskettes[1]))
+	}
+	if len(diskettes) == 3 {
+		config.set(confS5, fmt.Sprintf("diskii,disk1=\"%s\"", diskettes[2]))
+	} else if len(diskettes) >= 4 {
+		config.set(confS5, fmt.Sprintf("diskii,disk1=\"%s\",disk2=\"%s\"", diskettes[2], diskettes[3]))
+	}
+	if len(diskettes) > 4 {
+		return fmt.Errorf("up to 4 diskettes can be loaded, %v found", len(diskettes))
+	}
+
+	// Configure block device slots (s7 and s5)
+	if len(blockDevices) > 8 {
+		return fmt.Errorf("up to 8 block devices can be loaded, %v found", len(blockDevices))
+	}
+	if len(blockDevices) > 0 {
+		config.set(confS7, fmt.Sprintf("smartport,image1=\"%s\"", blockDevices[0]))
+		if len(blockDevices) > 1 {
+			smartportConfig := "smartport"
+			for i, filename := range blockDevices {
+				if i == 0 {
+					continue
+				}
+				smartportConfig += fmt.Sprintf(",image%v=\"%s\"", i+1, filename)
+			}
+			config.set(confS5, smartportConfig)
+		}
+	}
+
+	return nil
+}
+
+// expandSlotConfiguration expands a partial slot configuration into a full one
+// If the configuration is just filenames, it detects the file type and creates
+// the appropriate card configuration (diskii for diskettes, smartport for block devices)
+func expandSlotConfiguration(configString string) (string, error) {
+	if configString == "" {
+		return "", nil
+	}
+
+	// Split by comma to get parts (but respect quotes)
+	parts := splitConfigurationString(configString, ',')
+	if len(parts) == 0 {
+		return configString, nil
+	}
+
+	// Check if first part is a card name or a filename
+	firstPart := strings.TrimSpace(parts[0])
+
+	// Skip expansion for special values
+	if firstPart == noCardName {
+		return configString, nil
+	}
+
+	// If it contains '=' it's already a parameter, so it's a full config
+	if strings.Contains(firstPart, "=") {
+		return configString, nil
+	}
+
+	// Check if first part is a known card name
+	_, isCard := getCardFactory()[strings.ToLower(firstPart)]
+	if isCard {
+		// Already a full configuration
+		return configString, nil
+	}
+
+	// It's a partial configuration - just filenames
+	// Detect the file types and build the appropriate configuration
+	diskettes := []string{}
+	blockDevices := []string{}
+
+	for _, part := range parts {
+		filename := strings.TrimSpace(part)
+		if filename == "" {
+			continue
+		}
+
+		// Apply disk aliases
+		filename = applyDiskAliases(filename)
+
+		// Try to load as diskette
+		_, err := LoadDiskette(filename)
+		if err == nil {
+			diskettes = append(diskettes, part) // Keep original part (may have quotes)
+		} else {
+			blockDevices = append(blockDevices, part)
+		}
+	}
+
+	// Build the configuration based on what we found
+	if len(diskettes) > 0 && len(blockDevices) == 0 {
+		// All diskettes - create diskii configuration
+		config := "diskii"
+		for i, disk := range diskettes {
+			diskNum := i + 1
+			if diskNum > 2 {
+				return "", fmt.Errorf("diskii card supports maximum 2 disks, got %d", len(diskettes))
+			}
+			config += fmt.Sprintf(",disk%d=%s", diskNum, disk)
+		}
+		return config, nil
+	} else if len(blockDevices) > 0 && len(diskettes) == 0 {
+		// All block devices - create smartport configuration
+		config := "smartport"
+		for i, device := range blockDevices {
+			imageNum := i + 1
+			config += fmt.Sprintf(",image%d=%s", imageNum, device)
+		}
+		return config, nil
+	} else if len(diskettes) > 0 && len(blockDevices) > 0 {
+		return "", fmt.Errorf("cannot mix diskettes and block devices in the same slot configuration")
+	}
+
+	// No valid files found
+	return configString, nil
+}
+
+func getConfigurationFromCommandLine() (*configuration, error) {
 	models, configuration, err := loadConfigurationModelsAndDefault()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	setupFlags(models, configuration)
@@ -301,7 +463,7 @@ func getConfigurationFromCommandLine() (*configuration, []string, error) {
 		// Replace the model
 		configuration, err = models.get(modelFlag.Value.String())
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
@@ -309,9 +471,29 @@ func getConfigurationFromCommandLine() (*configuration, []string, error) {
 		configuration.set(f.Name, f.Value.String())
 	})
 
-	filenames := flag.Args()
+	// Expand partial slot configurations (e.g., "-s4 disk.dsk" -> "-s4 diskii,disk1=disk.dsk")
+	slotParams := []string{confS0, confS1, confS2, confS3, confS4, confS5, confS6, confS7}
+	for _, slotParam := range slotParams {
+		if configuration.has(slotParam) {
+			slotConfig := configuration.get(slotParam)
+			expandedConfig, err := expandSlotConfiguration(slotConfig)
+			if err != nil {
+				return nil, fmt.Errorf("error expanding slot configuration for %s: %w", slotParam, err)
+			}
+			if expandedConfig != slotConfig {
+				configuration.set(slotParam, expandedConfig)
+			}
+		}
+	}
 
-	return configuration, filenames, nil
+	// Process positional filenames (e.g., "program disk.dsk")
+	filenames := flag.Args()
+	err = processPositionalFilenames(configuration, filenames)
+	if err != nil {
+		return nil, err
+	}
+
+	return configuration, nil
 }
 
 func (c *configuration) dump() {

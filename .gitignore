@@ -14,6 +14,7 @@ frontend/a2fyne/a2fyne
 frontend/headless/headless
 frontend/*/snapshot.gif
 frontend/*/snapshot.png
+izapple2headless
 printer.out
 .DS_STORE
 .scannerwork

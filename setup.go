@@ -239,72 +239,12 @@ func loadMultiPageRom(a *Apple2, filenames []string) error {
 	return nil
 }
 
-var diskAliases = map[string]string{
-	"dos33":   "<internal>/dos33.dsk",
-	"prodos":  "<internal>/ProDOS_2_4_3.po",
-	"cpm":     "<internal>/cpm_2.20B_56K.po",
-	"cardcat": "<internal>/Card Cat 1.7.dsk",
-}
-
-func applyDiskAliases(filename string) string {
-	if alias, ok := diskAliases[filename]; ok {
-		return alias
-	}
-	return filename
-}
-
 // CreateConfiguredApple is a device independent main. Video, keyboard and speaker won't be defined
 func CreateConfiguredApple() (*Apple2, error) {
 	// Get configuration from defaults and the command line
-	configuration, filenames, err := getConfigurationFromCommandLine()
+	configuration, err := getConfigurationFromCommandLine()
 	if err != nil {
 		return nil, err
-	}
-
-	if len(filenames) > 0 {
-		diskettes := []string{}
-		blockDevices := []string{}
-		for _, filename := range filenames {
-			filename = applyDiskAliases(filename)
-			_, err := LoadDiskette(filename)
-			isDiskette := err == nil
-			if isDiskette {
-				diskettes = append(diskettes, filename)
-			} else {
-				blockDevices = append(blockDevices, filename)
-			}
-		}
-
-		if len(diskettes) == 1 {
-			configuration.set(confS6, fmt.Sprintf("diskii,disk1=\"%s\"", diskettes[0]))
-		} else if len(diskettes) >= 2 {
-			configuration.set(confS6, fmt.Sprintf("diskii,disk1=\"%s\",disk2=\"%s\"", diskettes[0], diskettes[1]))
-		}
-		if len(diskettes) == 3 {
-			configuration.set(confS5, fmt.Sprintf("diskii,disk1=\"%s\"", diskettes[2]))
-		} else if len(diskettes) >= 4 {
-			configuration.set(confS5, fmt.Sprintf("diskii,disk1=\"%s\",disk2=\"%s\"", diskettes[2], diskettes[3]))
-		}
-		if len(diskettes) > 4 {
-			return nil, fmt.Errorf("up to 4 diskettes can be loaded, %v found", len(diskettes))
-		}
-
-		if len(blockDevices) > 8 {
-			return nil, fmt.Errorf("up to 8 block devices can be loaded, %v found", len(blockDevices))
-		}
-		if len(blockDevices) > 0 {
-			configuration.set(confS7, fmt.Sprintf("smartport,image1=\"%s\"", blockDevices[0]))
-			if len(blockDevices) > 1 {
-				smartportConfig := "smartport"
-				for i, filename := range blockDevices {
-					if i == 0 {
-						continue
-					}
-					smartportConfig += fmt.Sprintf(",image%v=\"%s\"", i+1, filename)
-				}
-				configuration.set(confS5, smartportConfig)
-			}
-		}
 	}
 
 	a, err := configure(configuration)
