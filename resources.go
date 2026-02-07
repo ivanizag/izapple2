@@ -139,6 +139,11 @@ func LoadDiskette(filename string) (storage.Diskette, error) {
 	return storage.MakeDiskette(data, filename, writeable)
 }
 
+// LoadDisketteFromBytes returns a Diskette from byte array (useful for WASM/browser file loading)
+func LoadDisketteFromBytes(data []byte, filename string, writeable bool) (storage.Diskette, error) {
+	return storage.MakeDiskette(data, filename, writeable)
+}
+
 // LoadBlockDisk returns a BlockDisk
 func LoadBlockDisk(filename string) (storage.BlockDisk, error) {
 	filename = normalizeFilename(filename)

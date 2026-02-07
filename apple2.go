@@ -1,10 +1,12 @@
 package izapple2
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"github.com/ivanizag/iz6502"
 	"github.com/ivanizag/izapple2/screen"
+	"github.com/ivanizag/izapple2/storage"
 )
 
 // Apple2 represents all the components and state of the emulated machine
@@ -121,6 +123,25 @@ func (a *Apple2) ReleaseFastMode() {
 
 func (a *Apple2) registerRemovableMediaDrive(d drive) {
 	a.removableMediaDrives = append(a.removableMediaDrives, d)
+}
+
+// InsertDiskette inserts a diskette into a drive (for WASM/in-memory loading)
+func (a *Apple2) InsertDiskette(unit int, diskette storage.Diskette, name string) error {
+	if unit < 0 || unit >= len(a.removableMediaDrives) {
+		return fmt.Errorf("unit %v not defined", unit)
+	}
+
+	// Type assert to access the diskette field
+	switch d := a.removableMediaDrives[unit].(type) {
+	case *cardDisk2Drive:
+		d.name = name
+		d.diskette = diskette
+		return nil
+	default:
+		// For other drive types (like sequencer), fall back to path-based loading
+		// This won't work in WASM for non-standard drive types
+		return fmt.Errorf("drive type %T does not support direct diskette insertion", d)
+	}
 }
 
 func (a *Apple2) GetVideoSource() screen.VideoSource {
