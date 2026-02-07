@@ -37,6 +37,7 @@ var macOptionSubst = []rune("!·$%/()=qwertyopasdfghjkxcvbm,.<>cnQWETPGJKLZXVNM\
 
 // PutRune sends a rune to the emulator if it is valid printable ASCII
 func (k *KeyboardChannel) PutRune(ch rune) {
+	println("PutRune called with ch:", ch, "char:", string(ch))
 
 	// Some substitutions useful for Macs that transform chars with the option key
 	pos := slices.Index(macOptionChars, ch)
@@ -46,16 +47,22 @@ func (k *KeyboardChannel) PutRune(ch rune) {
 
 	// We will use computed text only for printable ASCII chars
 	if ch >= ' ' && ch <= '~' {
+		println("  ch is printable ASCII, forceCaps:", k.a.IsForceCaps())
 		if k.a.IsForceCaps() && ch >= 'a' && ch <= 'z' {
 			ch = unicode.ToUpper(ch)
 		}
+		println("  calling PutChar with:", uint8(ch))
 		k.PutChar(uint8(ch))
+	} else {
+		println("  ch NOT printable ASCII, skipping")
 	}
 }
 
 // PutChar sends a character to the emulator
 func (k *KeyboardChannel) PutChar(ch uint8) {
+	println("PutChar: sending", ch, "to channel, buffer:", len(k.keyChannel), "/", cap(k.keyChannel))
 	k.keyChannel <- ch
+	println("PutChar: sent")
 }
 
 // GetKey returns a pressed key if available
@@ -63,6 +70,7 @@ func (k *KeyboardChannel) GetKey(_ bool) (key uint8, ok bool) {
 	select {
 	case key = <-k.keyChannel:
 		ok = true
+		println("GetKey: returning key", key, "char:", string(key))
 	default:
 		ok = false
 	}
