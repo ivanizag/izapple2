@@ -31,6 +31,10 @@ async function initWASM() {
             wasmReady = true;
             hideLoading();
             initUI();
+
+            // Move Ebiten canvas into our container
+            moveEbitenCanvas();
+
             console.log('izapple2 WebAssembly ready!');
 
             // Check for URL parameters to load disks
@@ -55,6 +59,35 @@ function updateLoadingStatus(message) {
 function hideLoading() {
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'block';
+}
+
+// Move Ebiten canvas into our container
+function moveEbitenCanvas() {
+    // Ebiten creates a canvas element and appends it to body
+    // We need to move it into our container
+    const checkCanvas = setInterval(() => {
+        const canvas = document.querySelector('canvas');
+        if (canvas) {
+            const container = document.getElementById('emulator-canvas-container');
+            if (container) {
+                // Remove canvas from body and add to container
+                canvas.parentNode.removeChild(canvas);
+                container.appendChild(canvas);
+
+                // Style the canvas to fit properly
+                canvas.style.maxWidth = '100%';
+                canvas.style.maxHeight = '100%';
+                canvas.style.display = 'block';
+                canvas.style.margin = 'auto';
+
+                console.log('Moved Ebiten canvas into container');
+                clearInterval(checkCanvas);
+            }
+        }
+    }, 100);
+
+    // Stop checking after 5 seconds
+    setTimeout(() => clearInterval(checkCanvas), 5000);
 }
 
 // Initialize UI event handlers
