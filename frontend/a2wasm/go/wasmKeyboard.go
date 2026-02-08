@@ -46,6 +46,10 @@ func (k *wasmKeyboard) putText(text string) {
 	k.keyChannel.PutText(text)
 }
 
+func (k *wasmKeyboard) putChar(ch uint8) {
+	k.keyChannel.PutChar(ch)
+}
+
 func (k *wasmKeyboard) putKey(key ebiten.Key) {
 	/*
 		See "Apple II reference manual", page 5

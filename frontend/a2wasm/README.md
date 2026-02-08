@@ -288,7 +288,7 @@ interface EmulatorAPI {
   loadDiskFromURL(drive: number, url: string): Promise<string | null>;
 
   // Input (for advanced use - keyboard is handled automatically)
-  sendKey(keyCode: number): void;
+  sendChar(char: number): void;
   sendText(text: string): void;
 
   // State queries

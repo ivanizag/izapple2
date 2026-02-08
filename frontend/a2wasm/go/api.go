@@ -46,7 +46,7 @@ func setupAPI(a *izapple2.Apple2, game *Game) {
 			return nil
 		}
 		keyCode := uint8(args[0].Int())
-		game.keyChannel.PutChar(keyCode)
+		game.keyboard.putChar(keyCode)
 		return nil
 	})
 
@@ -55,7 +55,7 @@ func setupAPI(a *izapple2.Apple2, game *Game) {
 			return nil
 		}
 		text := args[0].String()
-		game.keyChannel.PutText(text)
+		game.keyboard.putText(text)
 		return nil
 	})
 

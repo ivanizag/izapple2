@@ -1,23 +1,19 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/ivanizag/izapple2"
 	a_screen "github.com/ivanizag/izapple2/screen"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 type Game struct {
-	a          *izapple2.Apple2
-	image      *ebiten.Image
-	keyboard   *wasmKeyboard
-	speaker    *wasmSpeaker
-	fontSource *text.GoTextFaceSource
+	a        *izapple2.Apple2
+	image    *ebiten.Image
+	keyboard *wasmKeyboard
+	speaker  *wasmSpeaker
 
 	updates    uint64
 	screenMode int
@@ -60,15 +56,15 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return virtualWidth, virtualHeight
 }
 
-var globalGame *Game
-var initialized bool
+var appInitialized bool
+var gameInitialized bool
 
 func main() {
-	if initialized {
+	if appInitialized {
 		fmt.Println("main() called again - ignoring to prevent duplicate Game instances")
 		return
 	}
-	initialized = true
+	appInitialized = true
 
 	a, err := izapple2.CreateConfiguredApple()
 	if err != nil {
@@ -81,10 +77,11 @@ func main() {
 }
 
 func ebitenRun(a *izapple2.Apple2) {
-	if globalGame != nil {
+	if gameInitialized {
 		fmt.Println("ebitenRun() called again - ignoring to prevent duplicate Game instances")
 		return
 	}
+	gameInitialized = true
 
 	game := &Game{
 		a:          a,
@@ -95,14 +92,6 @@ func ebitenRun(a *izapple2.Apple2) {
 
 	// Set up providers
 	a.SetSpeakerProvider(game.speaker)
-
-	var err error
-	game.fontSource, err = text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
-	if err != nil {
-		panic(err)
-	}
-
-	globalGame = game
 
 	// Setup API exports for React
 	setupAPI(a, game)
