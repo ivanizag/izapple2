@@ -16,7 +16,7 @@ A modern React + TypeScript frontend for the izapple2 Apple II emulator, compile
   - Pause/Resume
   - Reset
   - Speed toggle
-  - Screen mode selection (NTSC, Plain, Green, Amber)
+  - Screen mode selection (NTSC, Plain, Green)
   - Screenshot download
 - ✅ Real-time status display (CPU frequency, disk status)
 - ✅ Responsive design
@@ -113,7 +113,7 @@ The production files will be in `dist/`.
 - **Reset**: Reboot the Apple II
 - **Toggle Speed**: Switch between normal and fast speed
 - **Screenshot**: Download current screen as PNG
-- **Screen Mode**: Select display mode (NTSC, Plain, Green, Amber)
+- **Screen Mode**: Select display mode (NTSC, Plain, Green)
 
 **Status Bar** (bottom):
 - Shows CPU frequency in MHz
@@ -298,7 +298,7 @@ interface EmulatorAPI {
 
   // Configuration
   toggleSpeed(): void;
-  setScreenMode(mode: 'ntsc' | 'plain' | 'green' | 'amber'): void;
+  setScreenMode(mode: 'ntsc' | 'plain' | 'green'): void;
 
   // Screenshot
   screenshot(): void;

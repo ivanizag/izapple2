@@ -105,8 +105,15 @@ func (g *Game) putKey(key ebiten.Key) {
 }
 
 var globalGame *Game
+var initialized bool
 
 func main() {
+	if initialized {
+		fmt.Println("main() called again - ignoring to prevent duplicate Game instances")
+		return
+	}
+	initialized = true
+
 	a, err := izapple2.CreateConfiguredApple()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -118,6 +125,11 @@ func main() {
 }
 
 func ebitenRun(a *izapple2.Apple2) {
+	if globalGame != nil {
+		fmt.Println("ebitenRun() called again - ignoring to prevent duplicate Game instances")
+		return
+	}
+
 	game := &Game{
 		a:          a,
 		speaker:    newWasmSpeaker(),

@@ -32,7 +32,7 @@ export interface DiskInfo {
   loaded: boolean;
 }
 
-export type ScreenMode = 'ntsc' | 'plain' | 'green' | 'amber';
+export type ScreenMode = 'ntsc' | 'plain' | 'green';
 
 // Extend Window interface for WASM API
 declare global {

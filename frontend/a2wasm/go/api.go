@@ -77,11 +77,6 @@ func setupAPI(a *izapple2.Apple2, game *Game) {
 	})
 
 	// Configuration
-	api["toggleSpeed"] = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		a.SendCommand(izapple2.CommandToggleSpeed)
-		return nil
-	})
-
 	api["setScreenMode"] = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if len(args) < 1 {
 			return nil
@@ -93,9 +88,6 @@ func setupAPI(a *izapple2.Apple2, game *Game) {
 		case "plain":
 			game.screenMode = screen.ScreenModePlain
 		case "green":
-			game.screenMode = screen.ScreenModeGreen
-		case "amber":
-			// Amber not available, use green as fallback
 			game.screenMode = screen.ScreenModeGreen
 		}
 		return nil

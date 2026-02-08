@@ -12,7 +12,6 @@ import {
   PlayArrow,
   Pause,
   Refresh,
-  Speed,
   CameraAlt,
 } from '@mui/icons-material';
 import { emulator } from '../api/emulator';
@@ -32,9 +31,7 @@ export function ControlPanel({ paused }: ControlPanelProps) {
   };
 
   const handleReset = () => {
-    if (window.confirm('Reset the emulator? This will clear memory.')) {
-      emulator.reset();
-    }
+    emulator.reset();
   };
 
   const handleScreenModeChange = (event: SelectChangeEvent) => {
@@ -43,10 +40,6 @@ export function ControlPanel({ paused }: ControlPanelProps) {
 
   const handleScreenshot = () => {
     emulator.screenshot();
-  };
-
-  const handleSpeedToggle = () => {
-    emulator.toggleSpeed();
   };
 
   return (
@@ -73,12 +66,6 @@ export function ControlPanel({ paused }: ControlPanelProps) {
         </IconButton>
       </Tooltip>
 
-      <Tooltip title="Toggle Speed (Full/NTSC)">
-        <IconButton onClick={handleSpeedToggle}>
-          <Speed />
-        </IconButton>
-      </Tooltip>
-
       <Tooltip title="Screenshot">
         <IconButton onClick={handleScreenshot}>
           <CameraAlt />
@@ -95,7 +82,6 @@ export function ControlPanel({ paused }: ControlPanelProps) {
           <MenuItem value="ntsc">NTSC</MenuItem>
           <MenuItem value="plain">Plain</MenuItem>
           <MenuItem value="green">Green</MenuItem>
-          <MenuItem value="amber">Amber</MenuItem>
         </Select>
       </FormControl>
     </Box>
