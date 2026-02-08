@@ -9,6 +9,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
@@ -29,12 +30,18 @@ const (
 )
 
 func (g *Game) Update() error {
-	// Handle keyboard input from Ebiten (AppendInputChars)
+	// Handle keyboard input from Ebiten (AppendInputChars for printable chars)
 	runes := ebiten.AppendInputChars(nil)
 	if len(runes) > 0 {
 		text := string(runes)
 		fmt.Printf("Ebiten keyboard: '%s'\n", text)
 		g.keyChannel.PutText(text)
+	}
+
+	// Handle special keys (Enter, arrows, etc.)
+	keys := inpututil.AppendJustPressedKeys(nil)
+	for _, key := range keys {
+		g.putKey(key)
 	}
 
 	g.speaker.update()
@@ -65,6 +72,38 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return virtualWidth, virtualHeight
+}
+
+// putKey handles special keys from Ebiten
+func (g *Game) putKey(key ebiten.Key) {
+	result := uint8(0)
+
+	switch key {
+	case ebiten.KeyEscape:
+		result = 27
+	case ebiten.KeyBackspace:
+		result = 8
+	case ebiten.KeyEnter:
+		result = 13
+	case ebiten.KeyNumpadEnter:
+		result = 13
+	case ebiten.KeyLeft:
+		result = 8
+	case ebiten.KeyRight:
+		result = 21
+	case ebiten.KeyUp:
+		result = 11
+	case ebiten.KeyDown:
+		result = 10
+	case ebiten.KeyTab:
+		result = 9
+	case ebiten.KeyDelete:
+		result = 127
+	}
+
+	if result != 0 {
+		g.keyChannel.PutChar(result)
+	}
 }
 
 var globalGame *Game
