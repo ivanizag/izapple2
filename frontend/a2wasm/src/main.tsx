@@ -4,7 +4,7 @@ import App from './App';
 
 // Setup download trigger function for screenshots
 window.triggerDownload = (data: Uint8Array, filename: string) => {
-  const blob = new Blob([data], { type: 'application/octet-stream' });
+  const blob = new Blob([data as BlobPart], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

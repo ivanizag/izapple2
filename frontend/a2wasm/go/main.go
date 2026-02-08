@@ -19,9 +19,9 @@ type Game struct {
 	speaker    *wasmSpeaker
 	fontSource *text.GoTextFaceSource
 
-	updates     uint64
-	screenMode  int
-	keyChannel  *izapple2.KeyboardChannel
+	updates    uint64
+	screenMode int
+	keyChannel *izapple2.KeyboardChannel
 }
 
 const (
@@ -33,9 +33,7 @@ func (g *Game) Update() error {
 	// Handle keyboard input from Ebiten (AppendInputChars for printable chars)
 	runes := ebiten.AppendInputChars(nil)
 	if len(runes) > 0 {
-		text := string(runes)
-		fmt.Printf("Ebiten keyboard: '%s'\n", text)
-		g.keyChannel.PutText(text)
+		g.keyChannel.PutText(string(runes))
 	}
 
 	// Handle special keys (Enter, arrows, etc.)
@@ -120,13 +118,6 @@ func main() {
 }
 
 func ebitenRun(a *izapple2.Apple2) {
-	// Note: Window functions don't apply in WASM - canvas size is controlled by CSS
-	// ebiten.SetWindowSize(virtualWidth/2, virtualHeight/2)
-	// ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	// ebiten.SetWindowTitle("iz-" + a.Name)
-
-	fmt.Printf("ebitenRun: Apple2 instance at %p\n", a)
-
 	game := &Game{
 		a:          a,
 		speaker:    newWasmSpeaker(),
@@ -134,11 +125,8 @@ func ebitenRun(a *izapple2.Apple2) {
 		screenMode: a_screen.ScreenModeNTSC,
 	}
 
-	fmt.Printf("ebitenRun: keyChannel at %p\n", game.keyChannel)
-
 	// Set up providers
 	a.SetSpeakerProvider(game.speaker)
-	// Don't set keyboard provider - NewKeyboardChannel already did it
 
 	var err error
 	game.fontSource, err = text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))

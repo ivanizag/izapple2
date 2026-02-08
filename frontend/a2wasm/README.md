@@ -1,166 +1,235 @@
 # izapple2 WebAssembly Frontend
 
-A web browser frontend for the izapple2 Apple II emulator, compiled to WebAssembly.
+A modern React + TypeScript frontend for the izapple2 Apple II emulator, compiled to WebAssembly.
 
 ## Features
 
 - ✅ Runs Apple II emulation in any modern web browser
-- ✅ Full keyboard support
+- ✅ Modern React + TypeScript + Material-UI interface
+- ✅ Full keyboard support (letters, numbers, special keys, arrows)
 - ✅ Audio support (speaker clicks and beeps)
 - ✅ Multiple disk loading methods:
   - File picker (local files)
   - Drag and drop
   - Load from URLs
-  - Sample disk library
-- ✅ Screenshot download
-- ✅ Responsive design (desktop, tablet, mobile)
-- ✅ Reset and pause controls
+- ✅ Emulator controls:
+  - Pause/Resume
+  - Reset
+  - Speed toggle
+  - Screen mode selection (NTSC, Plain, Green, Amber)
+  - Screenshot download
+- ✅ Real-time status display (CPU frequency, disk status)
+- ✅ Responsive design
 - ✅ No installation required
+
+## Technology Stack
+
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI Framework**: Material-UI (MUI) 5
+- **Emulation Core**: Go + Ebiten (compiled to WebAssembly)
+- **Build Tools**: Vite, Go 1.23+
 
 ## Requirements
 
 ### For Building
 
-- Go 1.16 or later
-- Standard build tools (make, bash)
+- Go 1.23 or later
+- Node.js 18+ and npm
+- Bash (for build script)
 
 ### For Running (Browser)
 
 - Modern web browser with WebAssembly support:
-  - Chrome/Edge 57+
+  - Chrome/Edge 79+
   - Firefox 52+
   - Safari 11+
   - Opera 44+
 
 ## Quick Start
 
-### Build
+### Initial Setup
 
 ```bash
 cd frontend/a2wasm
-./build.sh
+
+# Install npm dependencies
+npm install
+
+# Build the WASM binary
+./build-wasm.sh
 ```
 
-This will:
-1. Compile Go code to WebAssembly (`web/izapple2.wasm`)
-2. Copy the Go WASM runtime (`web/wasm_exec.js`)
-3. Create a compressed version (`web/izapple2.wasm.gz`)
-
-### Run Locally
+### Development
 
 ```bash
-./serve.sh
+# Start Vite dev server (with hot reload)
+npm run dev
 ```
 
-Then open http://localhost:8080 in your browser.
+Then open http://localhost:5173 in your browser.
 
-The emulator will boot to Applesoft BASIC. Use the file picker or drag-and-drop to load disk images.
+The emulator will boot to the `]` prompt. You can then load disk images or start typing commands.
+
+### Production Build
+
+```bash
+# Build WASM
+./build-wasm.sh
+
+# Build React app for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+The production files will be in `dist/`.
 
 ## Using the Emulator
 
 ### Loading Disk Images
 
 **Method 1: File Picker**
-1. Click "Load Disk 1" or "Load Disk 2"
+1. Click "Choose File" under Drive 1 or Drive 2
 2. Select a disk image file (.dsk, .woz, .nib, .po, .2mg, .zip, .gz)
-3. The disk will be loaded and the emulator will boot from it
+3. The disk will be loaded into the selected drive
 
 **Method 2: Drag and Drop**
 1. Drag a disk image file from your computer
-2. Drop it on the emulator screen
-3. Multiple files will load into Drive 1 and Drive 2 respectively
+2. Drop it on the disk manager panel
+3. The first file loads into Drive 1, second into Drive 2
 
 **Method 3: URL Loading**
-1. Use URL parameters:
-   ```
-   http://localhost:8080?disk1=https://example.com/disk.dsk
-   ```
-2. Or load from JavaScript:
-   ```javascript
-   window.loadDiskFromURL(1, "https://example.com/disk.dsk");
-   ```
-
-**Method 4: Sample Disks**
-- Click sample disk buttons in the control panel
-- These load pre-configured disk images
-
-### Keyboard Shortcuts
-
-| Key | Action |
-|-----|--------|
-| F1 | Show/Hide help |
-| Ctrl+F2 | Reset emulator |
-| F4 | Toggle CPU trace |
-| F5 | Fast/Normal speed |
-| Ctrl+F5 | Show speed/FPS |
-| F6 | Next screen mode (NTSC, Green, etc.) |
-| F7 | Show/Hide screen pages |
-| F10 | Next character set |
-| Ctrl+F10 | Show/Hide character generator |
-| Shift+F10 | Show/Hide alternate text |
-| F12 | Save screenshot |
-| Pause | Pause/Resume emulation |
-| Left Alt | Open-Apple |
-| Right Alt | Closed-Apple |
+- Enter a URL in the disk manager (feature available via UI)
+- Or use JavaScript:
+  ```javascript
+  window.wasmAPI.loadDiskFromURL(1, "https://example.com/disk.dsk");
+  ```
 
 ### Controls
 
-**Reset Button**: Resets the Apple II (same as Ctrl+F2)
+**Top Control Panel**:
+- **Pause/Resume**: Freeze/unfreeze emulation
+- **Reset**: Reboot the Apple II
+- **Toggle Speed**: Switch between normal and fast speed
+- **Screenshot**: Download current screen as PNG
+- **Screen Mode**: Select display mode (NTSC, Plain, Green, Amber)
 
-**Pause Button**: Pauses/resumes emulation
+**Status Bar** (bottom):
+- Shows CPU frequency in MHz
+- Displays pause state
+- Shows keyboard help text
 
-**Screenshot Button**: Captures current screen as PNG and downloads it
+### Keyboard
+
+All standard Apple II keys work:
+- Letters, numbers, symbols
+- Enter, Escape, Backspace
+- Arrow keys (Up, Down, Left, Right)
+- Tab, Delete
+
+The emulator uses Ebiten's native keyboard handling for accurate input.
 
 ## File Structure
 
 ```
 frontend/a2wasm/
-├── main.go           # Entry point and Ebiten game loop
-├── keyboard.go       # Keyboard input handling
-├── speaker.go        # Audio output
-├── disk_loader.go    # JavaScript bridge for disk loading (WASM-only)
-├── build.sh          # Build script
-├── serve.sh          # Development server script
-├── README.md         # This file
-└── web/              # Web assets
-    ├── index.html    # Main HTML page
-    ├── loader.js     # WASM initialization and UI logic
-    ├── styles.css    # Styling
-    ├── izapple2.wasm # Compiled WASM binary (after build)
-    └── wasm_exec.js  # Go WASM runtime (after build)
+├── go/                      # Go source code
+│   ├── main.go             # Ebiten game loop, keyboard handling
+│   ├── api.go              # JavaScript API exports
+│   ├── speaker.go          # Audio output
+│   └── disk_loader.go      # Disk loading (placeholder)
+├── src/                     # React/TypeScript source
+│   ├── main.tsx            # React entry point
+│   ├── App.tsx             # Main app component
+│   ├── api/                # WASM API client
+│   │   ├── types.ts        # TypeScript type definitions
+│   │   ├── emulator.ts     # Emulator API wrapper
+│   │   └── wasm-loader.ts  # WASM initialization
+│   ├── components/         # React components
+│   │   ├── EmulatorScreen.tsx  # Canvas container
+│   │   ├── ControlPanel.tsx    # Top controls
+│   │   ├── DiskManager.tsx     # Disk operations UI
+│   │   ├── StatusBar.tsx       # Bottom status display
+│   │   └── KeyboardHandler.tsx # Keyboard event capture
+│   ├── hooks/              # Custom React hooks
+│   │   ├── useEmulator.ts  # Emulator state management
+│   │   └── useDiskLoader.ts # Disk loading logic
+│   └── styles/             # Styling
+│       └── theme.ts        # MUI theme customization
+├── public/                 # Static assets
+│   └── wasm/              # WASM build output
+│       ├── izapple2.wasm   # Compiled WASM binary
+│       ├── izapple2.wasm.gz # Compressed version
+│       └── wasm_exec.js    # Go WASM runtime
+├── index.html             # HTML entry point
+├── vite.config.ts         # Vite configuration
+├── tsconfig.json          # TypeScript configuration
+├── package.json           # npm dependencies
+├── build-wasm.sh          # WASM build script
+└── README.md              # This file
+```
+
+## Architecture
+
+```
+┌─────────────────────────────────────────┐
+│        React + TypeScript UI            │
+│  (Controls, Disk Manager, Status Bar)   │
+├─────────────────────────────────────────┤
+│        TypeScript API Client            │
+│         (wasmAPI wrapper)               │
+├─────────────────────────────────────────┤
+│           Go/WASM Bridge                │
+│      (Exported JS functions)            │
+├─────────────────────────────────────────┤
+│   Go Emulation + Ebiten Rendering       │
+│    (Apple II core + Canvas output)      │
+└─────────────────────────────────────────┘
 ```
 
 ## Deployment
 
 ### Static Hosting
 
-The `web/` directory contains everything needed for deployment:
+The built application is fully static and can be deployed anywhere:
 
-1. Build the WASM binary:
+1. **Build everything**:
    ```bash
-   ./build.sh
+   ./build-wasm.sh
+   npm run build
    ```
 
-2. Upload the `web/` directory to any static hosting service:
-   - GitHub Pages
+2. **Upload the `dist/` directory** to any static hosting:
    - Netlify
    - Vercel
+   - GitHub Pages
    - AWS S3 + CloudFront
-   - Your own web server
+   - Any web server
 
 ### Server Configuration
 
 **MIME Types**
 
-Ensure your server is configured with the correct MIME type for WASM:
+Ensure your server serves the correct MIME type for WASM:
 
 ```
 .wasm -> application/wasm
 ```
 
+**Headers for WASM**
+
+Vite automatically configures these in development:
+```
+Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Opener-Policy: same-origin
+```
+
+For production, configure your server/CDN similarly.
+
 **Compression**
 
-Enable gzip or brotli compression for better performance:
+Enable gzip or brotli compression:
 
 ```nginx
 # Nginx example
@@ -170,16 +239,28 @@ location ~ \.wasm$ {
 }
 ```
 
-**CORS**
+### Example: Netlify
 
-If loading disk images from external URLs, ensure CORS is properly configured on the source server.
+1. Create `netlify.toml`:
+   ```toml
+   [build]
+     command = "./build-wasm.sh && npm run build"
+     publish = "dist"
 
-### Example: GitHub Pages
+   [[headers]]
+     for = "/*"
+     [headers.values]
+       Cross-Origin-Embedder-Policy = "require-corp"
+       Cross-Origin-Opener-Policy = "same-origin"
 
-1. Copy `web/` contents to `docs/` in your repository
-2. Enable GitHub Pages in repository settings
-3. Set source to `docs/` folder
-4. Access at: `https://yourusername.github.io/yourrepo/`
+   [[headers]]
+     for = "*.wasm"
+     [headers.values]
+       Content-Type = "application/wasm"
+   ```
+
+2. Connect your repository to Netlify
+3. Deploy!
 
 ## Supported Disk Formats
 
@@ -188,44 +269,62 @@ If loading disk images from external URLs, ensure CORS is properly configured on
 - `.nib` - Nibble format
 - `.po` - ProDOS order disk image
 - `.2mg` - 2IMG format (with header)
-- `.zip` - Compressed disk images (will extract first .dsk file)
+- `.zip` - Compressed disk images
 - `.gz` - Gzipped disk images
 
-## Browser Compatibility
+## WASM API Reference
 
-### Desktop
+The Go code exports the following API to JavaScript:
 
-| Browser | Version | Status |
-|---------|---------|--------|
-| Chrome | 57+ | ✅ Fully supported |
-| Firefox | 52+ | ✅ Fully supported |
-| Safari | 11+ | ✅ Supported |
-| Edge | 79+ | ✅ Fully supported |
-| Opera | 44+ | ✅ Supported |
+```typescript
+interface EmulatorAPI {
+  // Core control
+  reset(): void;
+  pause(): void;
+  resume(): void;
 
-### Mobile
+  // Disk operations
+  loadDisk(drive: number, data: Uint8Array, filename: string): Promise<string | null>;
+  loadDiskFromURL(drive: number, url: string): Promise<string | null>;
 
-| Browser | Status | Notes |
-|---------|--------|-------|
-| Chrome Android | ✅ Supported | No virtual keyboard yet |
-| Safari iOS | ✅ Supported | No virtual keyboard yet |
-| Firefox Android | ⚠️ Limited | May have audio issues |
+  // Input (for advanced use - keyboard is handled automatically)
+  sendKey(keyCode: number): void;
+  sendText(text: string): void;
+
+  // State queries
+  isPaused(): boolean;
+  getFrequency(): number;
+  getDiskInfo(drive: number): DiskInfo | null;
+
+  // Configuration
+  toggleSpeed(): void;
+  setScreenMode(mode: 'ntsc' | 'plain' | 'green' | 'amber'): void;
+
+  // Screenshot
+  screenshot(): void;
+}
+
+// Access via:
+window.wasmAPI.reset();
+window.wasmAPI.loadDisk(1, data, "game.dsk");
+```
 
 ## Performance
 
-- **WASM Size**: ~8-12 MB uncompressed, ~2-3 MB gzipped
+- **WASM Size**: ~26 MB uncompressed, ~7 MB gzipped
 - **Load Time**: 2-5 seconds on broadband
 - **CPU Usage**: ~50-70% of one core on modern hardware
-- **Emulation Speed**: 90-100% of native speed
-- **Audio Latency**: ~100-200ms (acceptable for emulation)
+- **Emulation Speed**: 100% of native speed
+- **Frame Rate**: 60 FPS (Ebiten rendering)
 
 ## Troubleshooting
 
-### "Error loading WASM"
+### "Failed to load emulator"
 
-- Check that `izapple2.wasm` exists in the `web/` directory
-- Run `./build.sh` to rebuild
+- Check that WASM files exist in `public/wasm/`
+- Run `./build-wasm.sh` to rebuild
 - Check browser console for detailed errors
+- Verify CORS headers are set correctly
 
 ### "Disk loading failed"
 
@@ -235,88 +334,83 @@ If loading disk images from external URLs, ensure CORS is properly configured on
 
 ### No audio
 
-- Check browser console for audio context errors
 - Some browsers require user interaction before playing audio
-- Click the emulator screen to enable audio
-
-### Slow performance
-
-- Close other browser tabs
-- Try Chrome or Edge for best WebAssembly performance
-- Check CPU usage in browser task manager
+- Click the emulator screen to enable audio context
+- Check browser console for audio errors
 
 ### Keys not working
 
 - Click on the emulator canvas to focus it
-- Check that browser extensions aren't intercepting keys
-- Try using on-screen buttons as fallback
+- Keyboard is handled by Ebiten's native input system
+- Ensure no browser extensions are intercepting keys
+
+### Build errors
+
+```bash
+# Clean and rebuild
+rm -rf node_modules package-lock.json
+npm install
+./build-wasm.sh
+npm run build
+```
 
 ## Development
 
-### Building for Development
+### Project Scripts
 
 ```bash
-# Build
-./build.sh
+# Development server with hot reload
+npm run dev
 
-# Serve locally
-./serve.sh
+# Build WASM binary
+./build-wasm.sh
 
-# Or use wasmserve (auto-rebuilds)
-go run github.com/hajimehoshi/wasmserve@latest .
-```
+# Build React app for production
+npm run build
 
-### JavaScript Bridge API
+# Type checking
+npm run type-check
 
-The Go code exports these functions to JavaScript:
-
-```javascript
-// Load disk from bytes
-window.loadDisk(drive, uint8Array, filename)
-// Returns: null on success, error string on failure
-
-// Load disk from URL
-window.loadDiskFromURL(drive, url)
-// Returns: null on success, error string on failure
-
-// Reset emulator
-window.resetEmulator()
-
-// Toggle pause
-window.togglePause()
-
-// Download screenshot
-window.downloadScreenshot()
+# Preview production build
+npm run preview
 ```
 
 ### Modifying the UI
 
-- Edit `web/index.html` for structure
-- Edit `web/styles.css` for styling
-- Edit `web/loader.js` for JavaScript logic
-- Rebuild not needed for web file changes (just refresh browser)
+- Edit files in `src/` - Vite will auto-reload
+- React components use Material-UI
+- TypeScript ensures type safety
+- WASM rebuild only needed for Go changes
+
+### Modifying the Emulator
+
+- Edit files in `go/`
+- Run `./build-wasm.sh` to rebuild
+- Refresh browser to load new WASM
 
 ## Known Limitations
 
 1. **No virtual keyboard** - Mobile devices need external keyboard
-2. **No save states** - Page refresh loses state (planned for future)
-3. **No gamepad** - Only keyboard and mouse supported
-4. **File system access** - Can't modify loaded disks (read-only)
+2. **No save states** - Page refresh loses state
+3. **Read-only disks** - Can't write to loaded disk images
+4. **No gamepad** - Only keyboard supported
 
 ## Future Enhancements
 
-- Virtual keyboard overlay for mobile
-- Touch joystick support
+- Virtual keyboard overlay for mobile devices
 - Save/load state with IndexedDB
 - PWA support (offline capability)
-- Multiplayer over WebRTC
-- GamePad API support
+- Disk write support
+- Multiple screen sizes/zoom levels
+- More sample disk library
 
 ## Credits
 
 - [izapple2](https://github.com/ivanizag/izapple2) by Ivan Izaguirre
 - [Ebiten](https://ebiten.org/) game engine
-- Go WebAssembly support
+- [React](https://react.dev/) UI library
+- [Material-UI](https://mui.com/) component library
+- [Vite](https://vitejs.dev/) build tool
 
 ## License
 

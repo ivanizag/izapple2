@@ -8,10 +8,8 @@ export function EmulatorScreen() {
     // Move Ebiten canvas into our container
     const checkCanvas = setInterval(() => {
       // Look for canvas in body (where Ebiten creates it)
-      const canvas = document.querySelector('body > canvas');
+      const canvas = document.querySelector('body > canvas') as HTMLCanvasElement | null;
       if (canvas && containerRef.current) {
-        console.log('Found Ebiten canvas, moving to container');
-
         // Remove canvas from body
         if (canvas.parentNode) {
           canvas.parentNode.removeChild(canvas);
@@ -39,10 +37,8 @@ export function EmulatorScreen() {
         // Make canvas focusable and focus it
         canvas.setAttribute('tabindex', '0');
         canvas.focus();
-        console.log('Canvas focused');
 
         clearInterval(checkCanvas);
-        console.log('Canvas moved and styled successfully');
       }
     }, 100);
 

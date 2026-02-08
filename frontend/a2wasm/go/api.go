@@ -55,12 +55,7 @@ func setupAPI(a *izapple2.Apple2, game *Game) {
 			return nil
 		}
 		text := args[0].String()
-		fmt.Printf("API sendText: '%s' (len=%d)\n", text, len(text))
-		for i, ch := range text {
-			fmt.Printf("  char[%d]: '%c' (rune=%d)\n", i, ch, ch)
-		}
 		game.keyChannel.PutText(text)
-		fmt.Println("API sendText: done")
 		return nil
 	})
 

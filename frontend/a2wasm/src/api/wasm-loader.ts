@@ -20,24 +20,19 @@ async function initWASM(
   reject: (error: Error) => void
 ): Promise<void> {
   try {
-    console.log('Starting WASM initialization...');
     const go = new window.Go!();
 
-    console.log('Fetching WASM binary...');
     const result = await WebAssembly.instantiateStreaming(
       fetch('/wasm/izapple2.wasm'),
       go.importObject
     );
 
-    console.log('Running Go WASM module...');
     // Run the Go WASM module (this starts the emulator)
     go.run(result.instance);
 
-    console.log('Waiting for WASM API to be exported...');
     // Wait a bit for the emulator to initialize and export functions
     setTimeout(() => {
       if (window.wasmAPI) {
-        console.log('WASM initialized successfully, API available:', Object.keys(window.wasmAPI));
         resolve();
       } else {
         console.error('WASM API not found on window object');
