@@ -64,6 +64,7 @@ func stateToLevel(state bool) C.Uint8 {
 }
 
 // SpeakerCallback is called to get more sound buffer data
+//
 //export SpeakerCallback
 func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	s := theSDLSpeaker

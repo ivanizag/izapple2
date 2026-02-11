@@ -90,7 +90,7 @@ func ansiCursorUp(steps int) string {
 func (fe *ansiConsoleFrontend) textModeGoRoutine(a *apple2.Apple2) {
 	fe.extraLineFeeds = make(chan int, 100)
 
-	fmt.Printf(strings.Repeat("\n", 24+3))
+	fmt.Print(strings.Repeat("\n", 24+3))
 	for {
 		// Go up
 		content := ansiCursorUp(24 + 3)
