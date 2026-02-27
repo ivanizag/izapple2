@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"image"
 
 	"github.com/ivanizag/izapple2"
 	a_screen "github.com/ivanizag/izapple2/screen"
@@ -19,6 +20,9 @@ type Game struct {
 
 	updates    uint64
 	screenMode int
+
+	// Reusable buffer for screen snapshots to avoid allocations
+	lastSnapshot *image.RGBA
 }
 
 const (
@@ -32,9 +36,25 @@ func (g *Game) Update() error {
 
 	if g.updates%3 == 0 && !g.a.IsPaused() { // 20 times per second
 		vs := g.a.GetVideoSource()
+
 		img := a_screen.Snapshot(vs, g.screenMode)
+
 		if img != nil {
-			g.image = ebiten.NewImageFromImage(img)
+			// Check if the image dimensions changed (shouldn't happen often)
+			if g.lastSnapshot == nil ||
+				g.lastSnapshot.Bounds().Dx() != img.Bounds().Dx() ||
+				g.lastSnapshot.Bounds().Dy() != img.Bounds().Dy() {
+
+				// Dimensions changed or first run - create new resources
+				g.lastSnapshot = img
+				g.image = ebiten.NewImage(img.Bounds().Dx(), img.Bounds().Dy())
+				fmt.Printf("Screen size changed to %dx%d\n", img.Bounds().Dx(), img.Bounds().Dy())
+			} else {
+				// Reuse existing Ebiten image - just update pixels
+				// This avoids creating a new WebGL texture every frame
+				g.image.WritePixels(img.Pix)
+			}
+
 		}
 	}
 
