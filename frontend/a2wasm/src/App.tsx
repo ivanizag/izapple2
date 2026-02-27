@@ -6,7 +6,6 @@ import { EmulatorScreen } from './components/EmulatorScreen';
 import { ControlPanel } from './components/ControlPanel';
 import { DiskManager } from './components/DiskManager';
 import { StatusBar } from './components/StatusBar';
-import { KeyboardHandler } from './components/KeyboardHandler';
 
 function App() {
   const emulatorState = useEmulator();
@@ -62,7 +61,6 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <KeyboardHandler />
       <Box
         sx={{
           display: 'flex',
