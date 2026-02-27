@@ -22,7 +22,7 @@ type Game struct {
 	screenMode int
 
 	// Reusable buffer for screen snapshots to avoid allocations
-	lastSnapshot *image.RGBA
+	lastSnapshotBounds image.Rectangle
 }
 
 const (
@@ -41,12 +41,12 @@ func (g *Game) Update() error {
 
 		if img != nil {
 			// Check if the image dimensions changed (shouldn't happen often)
-			if g.lastSnapshot == nil ||
-				g.lastSnapshot.Bounds().Dx() != img.Bounds().Dx() ||
-				g.lastSnapshot.Bounds().Dy() != img.Bounds().Dy() {
+			if g.lastSnapshotBounds == (image.Rectangle{}) ||
+				g.lastSnapshotBounds.Dx() != img.Bounds().Dx() ||
+				g.lastSnapshotBounds.Dy() != img.Bounds().Dy() {
 
 				// Dimensions changed or first run - create new resources
-				g.lastSnapshot = img
+				g.lastSnapshotBounds = img.Bounds()
 				g.image = ebiten.NewImage(img.Bounds().Dx(), img.Bounds().Dy())
 				fmt.Printf("Screen size changed to %dx%d\n", img.Bounds().Dx(), img.Bounds().Dy())
 			} else {
