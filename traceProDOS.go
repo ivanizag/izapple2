@@ -1,5 +1,9 @@
 package izapple2
 
+import "slices"
+
+import "strings"
+
 import "fmt"
 
 /*
@@ -161,11 +165,11 @@ func (t *traceProDOS) dumpMLIReturn() {
 				size := b & 0xf
 				if size != 0 {
 					// No error
-					name := ""
-					for i := uint8(0); i < size; i++ {
-						name += string(t.a.mmu.Peek(dataAddress+uint16(i)) & 0x7f)
+					var name strings.Builder
+					for i := range size {
+						name.WriteString(string(t.a.mmu.Peek(dataAddress+uint16(i)) & 0x7f))
 					}
-					fmt.Printf("%s: \"%s\" ", unit, name)
+					fmt.Printf("%s: \"%s\" ", unit, name.String())
 				} else {
 					err := t.a.mmu.Peek(dataAddress)
 					fmt.Printf("%s: error $%02x ", unit, err)
@@ -195,15 +199,15 @@ func (t *traceProDOS) dumpMLIReturn() {
 }
 
 func (t *traceProDOS) dumpBIExec() {
-	s := ""
+	var s strings.Builder
 	for i := uint16(1); i < 256; i++ {
 		ch := t.a.mmu.Peek(0x200 + i)
 		if ch == 0 || ch == 0x8d {
 			break
 		}
-		s += string(ch)
+		s.WriteString(string(ch))
 	}
-	fmt.Printf("Prodos BI exec: \"%s\".\n", s)
+	fmt.Printf("Prodos BI exec: \"%s\".\n", s.String())
 }
 
 var proDosCommandNames = []string{"STATUS", "READ", "WRITE", "FORMAT"}
@@ -231,7 +235,7 @@ func (t *traceProDOS) dumpDevices() {
 	mem := t.a.mmu.getPhysicalMainRAM(false)
 	count := mem.peek(deviceCountAddress) + 1
 	fmt.Printf("Prodos disk devices: \n")
-	for i := uint8(0); i < count; i++ {
+	for i := range count {
 		value := mem.peek(deviceListAddress + uint16(i))
 		id := "unknown"
 		switch value & 0xf {
@@ -248,7 +252,7 @@ func (t *traceProDOS) dumpDevices() {
 	// Device drivers
 	fmt.Printf("ProDOS device drivers:\n")
 	for slot := uint16(0); slot <= 7; slot++ {
-		for drive := uint16(0); drive < 2; drive++ {
+		for drive := range uint16(2) {
 			address := deviceDriverVectors + (slot+drive*8)*2
 			value := uint16(mem.peek(address)) + 0x100*uint16(mem.peek(address+1))
 			fmt.Printf("  S%vD%v: $%04x\n", slot, drive+1, value)
@@ -262,7 +266,7 @@ func (t *traceProDOS) dumpDevices() {
 func (t *traceProDOS) refreshDeviceDrives() {
 	mem := t.a.mmu.getPhysicalMainRAM(false)
 	drivers := make([]uint16, 0, 15)
-	for i := uint16(0); i < 16; i++ {
+	for i := range uint16(16) {
 		address := deviceDriverVectors + i*2
 		value := uint16(mem.peek(address)) + 0x100*uint16(mem.peek(address+1))
 		drivers = append(drivers, value)
@@ -276,12 +280,7 @@ func (t *traceProDOS) refreshDeviceDrives() {
 }
 
 func (t *traceProDOS) isDriverAddress(pc uint16) bool {
-	for _, vector := range t.deviceDrivers {
-		if vector == pc {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(t.deviceDrivers, pc)
 }
 
 func (t *traceProDOS) paramByte(pos uint16) uint8 {
@@ -301,11 +300,11 @@ func (t *traceProDOS) paramLen(pos uint16) uint32 {
 func (t *traceProDOS) paramString(pos uint16) string {
 	address := t.paramWord(pos)
 	size := t.a.mmu.Peek(address)
-	s := ""
-	for i := uint8(0); i < size; i++ {
-		s += string(t.a.mmu.Peek(address+1+uint16(i)) & 0x7f)
+	var s strings.Builder
+	for i := range size {
+		s.WriteString(string(t.a.mmu.Peek(address+1+uint16(i)) & 0x7f))
 	}
-	return s
+	return s.String()
 }
 
 func parseUnit(unit uint8) string {

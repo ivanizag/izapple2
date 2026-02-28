@@ -201,7 +201,7 @@ func paramsGetDIPs(params map[string]string, name string, size int) ([]bool, err
 		return nil, fmt.Errorf("DIP switches must be 8 characters long")
 	}
 	result := make([]bool, size+1)
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		result[i+1] = value[i] == '1'
 
 	}

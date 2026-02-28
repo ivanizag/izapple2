@@ -74,13 +74,10 @@ func (j *joysticks) queryJoystick(joy glfw.Joystick) *joystickInfo {
 		}
 	}
 	axes := joy.GetAxes()
-	for i := 0; i < len(info.paddles); i++ {
+	for i := range len(info.paddles) {
 		info.paddles[i] = unplugged
 		if i < len(axes) {
-			v := uint16((axes[i] + 1.0) / 2.0 * 256.0)
-			if v > 255 {
-				v = 255
-			}
+			v := min(uint16((axes[i]+1.0)/2.0*256.0), 255)
 			info.paddles[i] = uint8(v)
 		}
 	}

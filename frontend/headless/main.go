@@ -186,7 +186,7 @@ func SaveGif(a *izapple2.Apple2, filename string) error {
 	frames := 20 // 1 second
 
 	planned := time.Now()
-	for i := 0; i < frames; i++ {
+	for range frames {
 		lapse := time.Until(planned)
 		fmt.Printf("%v\n", lapse)
 		if lapse > 0 {

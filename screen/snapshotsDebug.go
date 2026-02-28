@@ -114,8 +114,8 @@ func mixFourSnapshots(snaps []*image.RGBA) *image.RGBA {
 		}
 	}
 
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := range height {
+		for x := range width {
 			out.Set(x, y, snaps[0].At(x, y))
 			out.Set(x+width, y, snaps[1].At(x, y))
 			out.Set(x, y+height, snaps[2].At(x, y))
@@ -143,14 +143,14 @@ func doubleWidthFilter(in *image.RGBA) *image.RGBA {
 // SnapshotCharacterGenerator shows the current character set
 func SnapshotCharacterGenerator(vs VideoSource, isAltText bool) *image.RGBA {
 	text := make([]uint8, textLines*text40Columns)
-	for l := 0; l < textLines; l++ {
-		for c := 0; c < text40Columns; c++ {
+	for l := range textLines {
+		for c := range text40Columns {
 			text[text40Columns*l+c] = 0x20 + 0x80 // Space
 		}
 	}
 
-	for l := 0; l < 8; l++ {
-		for c := 0; c < 32; c++ {
+	for l := range 8 {
+		for c := range 32 {
 			text[text40Columns*(2*l+4)+c+4] = uint8(l*32 + c)
 		}
 	}

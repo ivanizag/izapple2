@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"fmt"
+	"strings"
 )
 
 /*
@@ -97,14 +98,14 @@ func toAscii(b uint8) rune {
 }
 
 func (t *traceMonitor) getInputBuffer() string {
-	buffer := ""
+	var buffer strings.Builder
 	for address := uint16(0x200); address < 0x300; address++ {
 		b := t.a.mmu.Peek(address)
-		buffer += string(toAscii(b))
+		buffer.WriteString(string(toAscii(b)))
 		if b == 0x8d {
 			break
 		}
 	}
 
-	return buffer
+	return buffer.String()
 }

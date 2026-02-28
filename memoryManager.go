@@ -276,7 +276,7 @@ func (mmu *memoryManager) PeekCode(address uint16) uint8 {
 }
 
 func (mmu *memoryManager) pokeRange(address uint16, data []uint8) {
-	for i := 0; i < len(data); i++ {
+	for i := range data {
 		mmu.Poke(address+uint16(i), data[i])
 	}
 }
@@ -306,7 +306,7 @@ func (mmu *memoryManager) initLanguageRAM(groups uint8) {
 	// Apple II+ language card or Saturn (up to 8 groups)
 	mmu.physicalLangRAM = make([]memoryHandler, groups)
 	mmu.physicalLangAltRAM = make([]memoryHandler, groups)
-	for i := uint8(0); i < groups; i++ {
+	for i := range groups {
 		mmu.physicalLangRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x3000), fmt.Sprintf("LC RAM block %v", i))
 		mmu.physicalLangAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000), fmt.Sprintf("LC RAM Alt block %v", i))
 	}
@@ -325,7 +325,7 @@ func (mmu *memoryManager) initExtendedRAM(groups int) {
 	// Apple IIe 80 col card with 64Kb style RAM or RAMWorks (up to 256 banks)
 	mmu.physicalExtRAM = make([]memoryRangeHandler, groups)
 	mmu.physicalExtAltRAM = make([]memoryHandler, groups)
-	for i := 0; i < groups; i++ {
+	for i := range groups {
 		mmu.physicalExtRAM[i] = newMemoryRange(0, make([]uint8, 0x10000), fmt.Sprintf("Extra RAM block %v", i))
 		mmu.physicalExtAltRAM[i] = newMemoryRange(0xd000, make([]uint8, 0x1000), fmt.Sprintf("Extra RAM Alt block %v", i))
 	}

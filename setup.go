@@ -79,7 +79,7 @@ func configure(configuration *configuration) (*Apple2, error) {
 	}
 
 	// Add cards on the slots
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		cardConfig := configuration.get(fmt.Sprintf("s%v", i))
 		if cardConfig != "" {
 			_, err := setupCard(&a, i, cardConfig)
@@ -90,8 +90,8 @@ func configure(configuration *configuration) (*Apple2, error) {
 	}
 
 	// Add mods
-	mods := strings.Split(configuration.get(confMods), ",")
-	for _, mod := range mods {
+	mods := strings.SplitSeq(configuration.get(confMods), ",")
+	for mod := range mods {
 		switch strings.TrimSpace(mod) {
 		// case "shift":
 		//	 setupShiftedKeyboard(a)

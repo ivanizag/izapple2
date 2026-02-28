@@ -45,7 +45,7 @@ func (js *FnJson) Query(query []uint8) {
 
 	js.Result = getJsonValue(nil)
 	current := js.data
-	for i := 0; i < len(path); i++ {
+	for i := range path {
 		switch v := current.(type) {
 		case map[string]any:
 			var found bool
@@ -98,7 +98,7 @@ func getJsonValue(data any) []uint8 {
 		return []uint8(v)
 	case []any:
 		s := make([]uint8, 0)
-		for i := 0; i < len(v); i++ {
+		for i := range v {
 			s = append(s, getJsonValue(v[i])...)
 		}
 		return s

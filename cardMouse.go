@@ -257,7 +257,7 @@ func (c *CardMouse) assign(a *Apple2, slot int) {
 	data[0xfb] = 0xd6
 
 	// Set 8 entrypoints to sofstwitches 2 to 1f
-	for i := uint8(0); i < 14; i++ {
+	for i := range uint8(14) {
 		base := 0x60 + 0x05*i
 		data[0x12+i] = base
 		data[base+0] = 0x8D // STA $C0x2

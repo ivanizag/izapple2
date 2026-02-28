@@ -35,7 +35,7 @@ var attenuatedColorMap = buildAttenuatedColorMap(ntscColorMap)
 
 func buildAttenuatedColorMap(colorMap [16]color.Color) [16]color.Color {
 	colors := [16]color.Color{}
-	for i := 0; i < len(colorMap); i++ {
+	for i := range len(colorMap) {
 		r, g, b, _ := colorMap[i].RGBA()
 		colors[i] = color.RGBA64{
 			uint16(4 * r / 5), uint16(4 * g / 5), uint16(4 * b / 5),
@@ -83,10 +83,10 @@ func filterNTSCColor(in *image.RGBA, mask *image.Alpha, screenMode int) *image.R
 		panic(fmt.Sprintf("The image has width %v. We can't apply the NTSC filter.", width))
 	}
 
-	for y := 0; y < height; y++ {
+	for y := range height {
 		// We store the last four bits. We start with 0000
 		v := 0
-		for x := 0; x < width; x++ {
+		for x := range width {
 			cIn := in.At(x, y)
 			r, _, _, _ := cIn.RGBA()
 

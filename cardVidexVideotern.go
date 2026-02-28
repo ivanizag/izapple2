@@ -189,7 +189,7 @@ func (c *CardVidexVideoterm) buildImage(light color.Color) *image.RGBA {
 
 		x := int(column) * int(videxCharWidth)
 
-		for i := 0; i < int(videxCharWidth); i++ {
+		for range int(videxCharWidth) {
 			pixel := (bits & 0x80) != 0
 			if pixel {
 				img.Set(x, y, light)

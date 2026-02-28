@@ -82,10 +82,7 @@ func (j *sdlJoysticks) putButtonEvent(e *sdl.JoyButtonEvent) {
 }
 
 func mouseToJoyCentered(x int32, w int32) uint8 {
-	r := x - (w / 2) + 127
-	if r >= 255 {
-		r = 255
-	}
+	r := min(x-(w/2)+127, 255)
 	if r < 0 {
 		r = 0
 	}

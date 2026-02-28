@@ -7,7 +7,7 @@ import (
 func TestNibBackAndForth(t *testing.T) {
 	// Init data
 	data := make([]byte, bytesPerTrack)
-	for i := 0; i < bytesPerTrack; i++ {
+	for i := range bytesPerTrack {
 		data[i] = byte(i % 100)
 	}
 
@@ -17,7 +17,7 @@ func TestNibBackAndForth(t *testing.T) {
 		t.Error(err)
 	}
 
-	for i := 0; i < bytesPerTrack; i++ {
+	for i := range bytesPerTrack {
 		if data[i] != data2[i] {
 			t.Errorf("Mismatch in %v: %02x -> %02x", i, data[i], data2[i])
 		}

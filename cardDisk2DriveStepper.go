@@ -63,19 +63,13 @@ func moveDriveStepper(phases uint8, prevStep int) int {
 	var nextStep int
 	if delta < 4 {
 		// Steps up
-		nextStep = prevStep + delta
-		if nextStep > maxStep {
-			nextStep = maxStep
-		}
+		nextStep = min(prevStep+delta, maxStep)
 	} else if delta == 4 {
 		// Don't move if magnets push on the opposite direction
 		nextStep = prevStep
 	} else { // delta > 4
 		// Steps down
-		nextStep = prevStep + delta - stepsPerGroup
-		if nextStep < 0 {
-			nextStep = 0
-		}
+		nextStep = max(prevStep+delta-stepsPerGroup, 0)
 	}
 
 	// fmt.Printf("[DiskII] 1/4 track: %03d %vO\n", nextStep, strings.Repeat(" ", nextStep))

@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"fmt"
+	"strings"
 )
 
 /*
@@ -277,16 +278,16 @@ func (t *traceApplecorn) inspect() {
 }
 
 func (t *traceApplecorn) getTerminatedString(address uint16, terminator uint8) string {
-	s := ""
+	var s strings.Builder
 	for {
 		ch := t.a.mmu.Peek(address)
 		if ch == terminator {
 			break
 		}
-		s += string(ch)
+		s.WriteString(string(ch))
 		address++
 	}
-	return s
+	return s.String()
 }
 
 func (t *traceApplecorn) vector(address uint16) uint16 {

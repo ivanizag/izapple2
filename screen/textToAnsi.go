@@ -16,19 +16,20 @@ func RenderTextModeAnsi(vs VideoSource, is80Columns bool, isSecondPage bool, isA
 	}
 	columns := len(text) / textLines
 
-	content := "\n"
-	content += fmt.Sprintln(strings.Repeat("#", columns+4))
-	for l := 0; l < textLines; l++ {
-		line := ""
-		for c := 0; c < columns; c++ {
+	var content strings.Builder
+	content.WriteString("\n")
+	content.WriteString(fmt.Sprintln(strings.Repeat("#", columns+4)))
+	for l := range textLines {
+		var line strings.Builder
+		for c := range columns {
 			char := text[l*columns+c]
-			line += textMemoryByteToString(char, isAltText, supportsLowercase, true)
+			line.WriteString(textMemoryByteToString(char, isAltText, supportsLowercase, true))
 		}
-		content += fmt.Sprintf("# %v #\n", line)
+		content.WriteString(fmt.Sprintf("# %v #\n", line.String()))
 	}
 
-	content += fmt.Sprintln(strings.Repeat("#", columns+4))
-	return content
+	content.WriteString(fmt.Sprintln(strings.Repeat("#", columns+4)))
+	return content.String()
 }
 
 /*

@@ -31,14 +31,14 @@ func renderHiRes(data []uint8, light color.Color, shiftSupported bool) *image.RG
 	size := image.Rect(0, 0, 2*hiResWidth, hiResHeight)
 	img := image.NewRGBA(size)
 
-	for y := 0; y < hiResHeight; y++ {
+	for y := range hiResHeight {
 		offset := getHiResLineOffset(y)
 		bytes := data[offset : offset+hiResLineBytes]
 		x := 0
 		var previousColour color.Color = color.Black
 		for _, b := range bytes {
 			shifted := shiftSupported && b>>7 == 1
-			for j := uint(0); j < 7; j++ {
+			for j := range uint(7) {
 				bit := (b >> j) & 1
 				colour := light
 				if bit == 0 {

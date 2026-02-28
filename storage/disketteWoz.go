@@ -53,7 +53,7 @@ func (d *disketteWoz) Read(quarterTrack int, cycle uint64) uint8 {
 
 	// Process bits from woz
 	// TODO: avoid processing too many bits if delta is big
-	for i := uint64(0); i < deltaBits; i++ {
+	for range deltaBits {
 		// Get next bit taking into account the MC3470 latency and weak bits
 		var fluxBit bool
 		fluxBit, d.position, d.positionMax = d.data.GetNextBitAndPosition(d.position, d.positionMax, quarterTrack)

@@ -20,8 +20,8 @@ func getColorPatterns(light color.Color) [16][16]color.Color {
 
 	var data [16][16]color.Color
 
-	for ci := 0; ci < 16; ci++ {
-		for cb := uint8(0); cb < 4; cb++ {
+	for ci := range 16 {
+		for cb := range uint8(4) {
 			bit := (ci >> cb) & 1
 			var colour color.Color
 			if bit == 0 {
@@ -29,7 +29,7 @@ func getColorPatterns(light color.Color) [16][16]color.Color {
 			} else {
 				colour = light
 			}
-			for i := uint8(0); i < 4; i++ {
+			for i := range uint8(4) {
 				data[ci][cb+4*i] = colour
 			}
 		}
@@ -60,8 +60,8 @@ func renderGr(data []uint8, isDoubleResMode bool, light color.Color) *image.RGBA
 	img := image.NewRGBA(size)
 
 	patterns := getColorPatterns(light)
-	for l := 0; l < grLines; l++ {
-		for c := 0; c < columns; c++ {
+	for l := range grLines {
+		for c := range columns {
 			char := data[(l/2)*columns+c]
 			grPixel := char >> 4
 			if l%2 == 0 {
@@ -81,7 +81,7 @@ func renderGr(data []uint8, isDoubleResMode bool, light color.Color) *image.RGBA
 			for i := 0; i < pixelWidth; i++ {
 				v := patterns[grPixel][i+offset]
 				// Repeat the same color for 4 lines
-				for r := 0; r < loResPixelHeight; r++ {
+				for r := range loResPixelHeight {
 					img.Set(c*pixelWidth+i, l*4+r, v)
 				}
 			}

@@ -188,8 +188,8 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 	if ok {
 		f.meta = make(map[string]string)
 		text := string(metaData)
-		entries := strings.Split(text, "\n")
-		for _, entry := range entries {
+		entries := strings.SplitSeq(text, "\n")
+		for entry := range entries {
 			parts := strings.Split(entry, "\t")
 			if len(parts) >= 2 {
 				f.meta[parts[0]] = parts[1]
@@ -223,7 +223,7 @@ func NewFileWoz(data []uint8) (*FileWoz, error) {
 		}
 	} else if f.version == 2 {
 		reader := bytes.NewReader(tracksData)
-		for i := 0; i < wozMaxTrack; i++ {
+		for i := range wozMaxTrack {
 			var trackHeader woz2TrackHeader
 			binary.Read(reader, binary.LittleEndian, &trackHeader)
 			if trackHeader.BitCount != 0 {

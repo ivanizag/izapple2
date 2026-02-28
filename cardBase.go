@@ -156,7 +156,7 @@ func (c *cardBase) assign(a *Apple2, slot int) {
 		}
 	}
 
-	for i := 0; i < 0x10; i++ {
+	for i := range 0x10 {
 		if c._ssr[i] != nil {
 			a.io.addSoftSwitchR(uint8(0xC80+slot*0x10+i), c._ssr[i], c._ssrName[i])
 		}
@@ -217,7 +217,7 @@ func (c *cardBase) addCardSoftSwitches(sss softSwitches, name string) {
 	}
 }
 
-func (c *cardBase) tracef(format string, args ...interface{}) {
+func (c *cardBase) tracef(format string, args ...any) {
 	if c.trace {
 		prefixedFormat := fmt.Sprintf("[%s] %v", c.name, format)
 		fmt.Printf(prefixedFormat, args...)

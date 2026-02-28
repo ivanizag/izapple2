@@ -132,12 +132,12 @@ func parseConfiguration(content []byte, name string) (*configuration, error) {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		colonPos := strings.Index(line, ":")
-		if colonPos < 0 {
+		before, after, ok := strings.Cut(line, ":")
+		if !ok {
 			return nil, fmt.Errorf("invalid configuration in %s:%d", name, iLine)
 		}
-		key := strings.TrimSpace(line[:colonPos])
-		value := strings.TrimSpace(line[colonPos+1:])
+		key := strings.TrimSpace(before)
+		value := strings.TrimSpace(after)
 		config.data[key] = value
 	}
 	return config, nil
@@ -349,14 +349,15 @@ func processPositionalFilenames(config *configuration, filenames []string) error
 	if len(blockDevices) > 0 {
 		config.set(confS7, fmt.Sprintf("smartport,image1=\"%s\"", blockDevices[0]))
 		if len(blockDevices) > 1 {
-			smartportConfig := "smartport"
+			var smartportConfig strings.Builder
+			smartportConfig.WriteString("smartport")
 			for i, filename := range blockDevices {
 				if i == 0 {
 					continue
 				}
-				smartportConfig += fmt.Sprintf(",image%v=\"%s\"", i+1, filename)
+				smartportConfig.WriteString(fmt.Sprintf(",image%v=\"%s\"", i+1, filename))
 			}
-			config.set(confS5, smartportConfig)
+			config.set(confS5, smartportConfig.String())
 		}
 	}
 
@@ -423,23 +424,25 @@ func expandSlotConfiguration(configString string) (string, error) {
 	// Build the configuration based on what we found
 	if len(diskettes) > 0 && len(blockDevices) == 0 {
 		// All diskettes - create diskii configuration
-		config := "diskii"
+		var config strings.Builder
+		config.WriteString("diskii")
 		for i, disk := range diskettes {
 			diskNum := i + 1
 			if diskNum > 2 {
 				return "", fmt.Errorf("diskii card supports maximum 2 disks, got %d", len(diskettes))
 			}
-			config += fmt.Sprintf(",disk%d=%s", diskNum, disk)
+			config.WriteString(fmt.Sprintf(",disk%d=%s", diskNum, disk))
 		}
-		return config, nil
+		return config.String(), nil
 	} else if len(blockDevices) > 0 && len(diskettes) == 0 {
 		// All block devices - create smartport configuration
-		config := "smartport"
+		var config strings.Builder
+		config.WriteString("smartport")
 		for i, device := range blockDevices {
 			imageNum := i + 1
-			config += fmt.Sprintf(",image%d=%s", imageNum, device)
+			config.WriteString(fmt.Sprintf(",image%d=%s", imageNum, device))
 		}
-		return config, nil
+		return config.String(), nil
 	} else if len(diskettes) > 0 && len(blockDevices) > 0 {
 		return "", fmt.Errorf("cannot mix diskettes and block devices in the same slot configuration")
 	}

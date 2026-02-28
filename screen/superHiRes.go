@@ -29,7 +29,7 @@ func renderSuperHiRes(data []uint8) *image.RGBA {
 	// Load the palettes
 	colors := make([]color.Color, palettesCount)
 	iMem := uint16(0)
-	for i := 0; i < palettesCount; i++ {
+	for i := range palettesCount {
 		b0 := data[iMem+shrColorPalettesOffset]
 		iMem++
 		b1 := data[iMem+shrColorPalettesOffset]
@@ -46,7 +46,7 @@ func renderSuperHiRes(data []uint8) *image.RGBA {
 	palettesSelectionTable := []uint8{0x4, 0x0, 0xc, 0x8}
 
 	// Build the lines
-	for y := 0; y < shrHeight; y++ {
+	for y := range shrHeight {
 		controlByte := data[uint16(y)+shrScanLineControlOffset]
 		is640Wide := (controlByte & 0x80) != 0
 		isColorFill := (controlByte & 0x20) != 0
@@ -57,7 +57,7 @@ func renderSuperHiRes(data []uint8) *image.RGBA {
 		if is640Wide {
 			// Line is 640 pixels, two bits per pixel
 			x := 0
-			for i := 0; i < shrWidthBytes; i++ {
+			for i := range shrWidthBytes {
 				b := lineBytes[i]
 				for j := 3; j >= 0; j-- {
 					p := (b >> (uint(j) * 2)) & 0x03
@@ -71,7 +71,7 @@ func renderSuperHiRes(data []uint8) *image.RGBA {
 			// Line is 320 pixels, two pixels per byte
 			x := 0
 			previousColor := uint8(0)
-			for i := 0; i < shrWidthBytes; i++ {
+			for i := range shrWidthBytes {
 				p0 := (lineBytes[i] & 0xf0) >> 4
 				if isColorFill && p0 == 0 {
 					p0 = previousColor

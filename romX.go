@@ -117,7 +117,7 @@ func (rx *romX) Poke(address uint16, value uint8) {
 	rx.memory.Poke(address, value)
 }
 
-func (rx *romX) logf(format string, a ...interface{}) {
+func (rx *romX) logf(format string, a ...any) {
 	msg := fmt.Sprintf(format, a...)
 	fmt.Printf("[romX]%s\n", msg)
 }

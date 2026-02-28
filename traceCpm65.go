@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"fmt"
+	"strings"
 )
 
 /*
@@ -146,14 +147,14 @@ func bios65CodeToName(code uint8) string {
 }
 
 func (t *traceCpm65) getCpm65String(address uint16) string {
-	s := ""
+	var s strings.Builder
 	for {
 		ch := t.a.mmu.Peek(address)
 		if ch == '$' || ch == 0 {
 			break
 		}
-		s += string(ch)
+		s.WriteString(string(ch))
 		address++
 	}
-	return s
+	return s.String()
 }

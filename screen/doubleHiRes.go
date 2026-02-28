@@ -29,7 +29,7 @@ func renderDoubleHiRes(dataMain []uint8, dataAux []uint8, getNTSCMask bool, ligh
 		ntscMask = image.NewAlpha(size)
 	}
 
-	for y := 0; y < hiResHeight; y++ {
+	for y := range hiResHeight {
 		offset := getHiResLineOffset(y)
 		lineParts := [][]uint8{
 			dataAux[offset : offset+hiResLineBytes],
@@ -42,8 +42,8 @@ func renderDoubleHiRes(dataMain []uint8, dataAux []uint8, getNTSCMask bool, ligh
 			ntscMask.Set(x, y, color.Opaque)
 		}
 		x++
-		for iByte := 0; iByte < hiResLineBytes; iByte++ {
-			for iPart := 0; iPart < 2; iPart++ {
+		for iByte := range hiResLineBytes {
+			for iPart := range 2 {
 				b := lineParts[iPart][iByte]
 
 				mask := color.Transparent // Apply the NTSC filter
@@ -51,7 +51,7 @@ func renderDoubleHiRes(dataMain []uint8, dataAux []uint8, getNTSCMask bool, ligh
 					mask = color.Opaque // Do not apply the NTSC filter
 				}
 
-				for j := uint(0); j < 7; j++ {
+				for j := range uint(7) {
 					// Set color
 					bit := (b >> j) & 1
 					colour := light
@@ -82,17 +82,17 @@ func renderDoubleHiRes160(dataMain []uint8, dataAux []uint8, light color.Color) 
 	size := image.Rect(0, 0, rgb160Width, hiResHeight)
 	img := image.NewRGBA(size)
 
-	for y := 0; y < hiResHeight; y++ {
+	for y := range hiResHeight {
 		offset := getHiResLineOffset(y)
 		lineParts := [][]uint8{
 			dataAux[offset : offset+hiResLineBytes],
 			dataMain[offset : offset+hiResLineBytes],
 		}
 		x := 0
-		for iByte := 0; iByte < hiResLineBytes; iByte++ {
-			for iPart := 0; iPart < 2; iPart++ {
+		for iByte := range hiResLineBytes {
+			for iPart := range 2 {
 				b := lineParts[iPart][iByte]
-				for j := uint(0); j < 8; j++ {
+				for j := range uint(8) {
 					// Set color
 					bit := (b >> j) & 1
 					colour := light

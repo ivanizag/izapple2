@@ -103,7 +103,7 @@ func (c *CardVidexUltraterm) loadCharacterMap(filename string) error {
 
 func (c *CardVidexUltraterm) assign(a *Apple2, slot int) {
 
-	for page := uint8(0); page < 4; page++ {
+	for page := range uint8(4) {
 		bitsA3A2 := page << 2
 		ssName := fmt.Sprintf("ULTRATERMPAGE%v", page)
 
@@ -317,7 +317,7 @@ func (c *CardVidexUltraterm) buildImage(light color.Color) *image.RGBA {
 
 		x := int(column) * int(videxUltratermCharWidth)
 		color := colorOff
-		for i := 0; i < int(videxUltratermCharWidth-1); i++ {
+		for range int(videxUltratermCharWidth - 1) {
 			pixel := (bits & 0x80) != 0
 			if pixel {
 				color = colorOn

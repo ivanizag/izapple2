@@ -56,8 +56,8 @@ func getTextFromMemory(vs VideoSource, isSecondPage bool, isExt bool) []uint8 {
 	data := vs.GetTextMemory(isSecondPage, isExt)
 
 	text := make([]uint8, textLines*text40Columns)
-	for l := 0; l < textLines; l++ {
-		for c := 0; c < text40Columns; c++ {
+	for l := range textLines {
+		for c := range text40Columns {
 			char := data[getTextCharOffset(c, l)]
 			text[text40Columns*l+c] = char
 		}
@@ -96,8 +96,8 @@ func renderText(vs VideoSource, text []uint8, isAltText bool, colorMap []uint8, 
 	size := image.Rect(0, 0, 2*hiResWidth, hiResHeight)
 	img := image.NewRGBA(size)
 
-	for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
+	for x := range width {
+		for y := range height {
 			line := y / charHeight
 			col := x / charWidth
 			rowInChar := y % charHeight

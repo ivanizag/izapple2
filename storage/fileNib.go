@@ -42,7 +42,7 @@ func isFileNib(data []uint8) bool {
 func newFileNib(data []uint8) *fileNib {
 	var f fileNib
 
-	for i := 0; i < numberOfTracks; i++ {
+	for i := range numberOfTracks {
 		f.track[i] = data[nibBytesPerTrack*i : nibBytesPerTrack*(i+1)]
 	}
 
@@ -69,7 +69,7 @@ func newFileDsk(data []uint8, filename string) *fileNib {
 	f.filename = filename
 	f.supportsWrite = true
 
-	for i := 0; i < numberOfTracks; i++ {
+	for i := range numberOfTracks {
 		trackData := data[i*bytesPerTrack : (i+1)*bytesPerTrack]
 		f.track[i] = nibEncodeTrack(trackData, defaultVolumeTag, byte(i), f.logicalOrder)
 	}
@@ -211,7 +211,7 @@ func nibEncodeTrack(data []byte, volume byte, track byte, logicalOrder *[16]int)
 	for i := range gap2 {
 		gap2[i] = 0xff
 	}
-	for physicalSector := byte(0); physicalSector < numberOfSectors; physicalSector++ {
+	for physicalSector := range byte(numberOfSectors) {
 		/* On the DSK file the sectors are in DOS3.3 logical order
 		but on the physical encoded track as well as in the nib
 		files they are in physical order.
@@ -299,14 +299,14 @@ func nibDecodeTrack(data []byte, logicalOrder *[16]int) ([]byte, error) {
 
 		// Read secondary buffer
 		prevV := byte(0)
-		for j := 0; j < secondaryBufferSize; j++ {
+		for j := range secondaryBufferSize {
 			w := sixAndTwoUntranslateTable[data[i%l]]
 			if w == -1 {
 				return nil, errors.New("invalid byte from nib data")
 			}
 			v := byte(w) ^ prevV
 			prevV = v
-			for k := 0; k < 3; k++ {
+			for k := range 3 {
 				// The elements of the secondary buffer add two bits to three bytes
 				offset := j + k*secondaryBufferSize
 				if offset < bytesPerSector {
@@ -318,7 +318,7 @@ func nibDecodeTrack(data []byte, logicalOrder *[16]int) ([]byte, error) {
 		}
 
 		// Read primary buffer
-		for j := 0; j < primaryBufferSize; j++ {
+		for j := range primaryBufferSize {
 			w := sixAndTwoUntranslateTable[data[i%l]]
 			if w == -1 {
 				return nil, errors.New("invalid byte from nib data")

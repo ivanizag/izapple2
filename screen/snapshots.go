@@ -137,7 +137,7 @@ func mixSnapshots(top, bottom *image.RGBA) *image.RGBA {
 
 	// Copy bottom's bottom on top's bottom
 	for y := hiResHeightMixed; y < hiResHeight; y++ {
-		for x := 0; x < bottomWidth; x++ {
+		for x := range bottomWidth {
 			c := bottom.At(x, y)
 			top.Set(x, y, c)
 		}
@@ -169,7 +169,7 @@ func squarishPixelsFilter(in *image.RGBA) *image.RGBA {
 	for x := b.Min.X; x < b.Max.X; x++ {
 		for y := b.Min.Y; y < b.Max.Y; y++ {
 			c := in.At(x, y)
-			for i := 0; i < factor; i++ {
+			for i := range factor {
 				out.Set(factor*x+i, y, c)
 			}
 		}

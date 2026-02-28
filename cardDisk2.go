@@ -141,7 +141,7 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 	a.registerRemovableMediaDrive(&c.drive[1])
 
 	// Q1, Q2, Q3 and Q4 phase control soft switches,
-	for i := uint8(0); i < 4; i++ {
+	for i := range uint8(4) {
 		phase := i
 		c.addCardSoftSwitchRW(phase<<1, func() uint8 {
 			// Update magnets and position

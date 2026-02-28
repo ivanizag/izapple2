@@ -16,15 +16,15 @@ func RenderTextModeString(vs VideoSource, is80Columns bool, isSecondPage bool, i
 	}
 	columns := len(text) / textLines
 
-	content := ""
-	for l := 0; l < textLines; l++ {
+	var content strings.Builder
+	for l := range textLines {
 		line := ""
-		for c := 0; c < columns; c++ {
+		for c := range columns {
 			char := text[l*columns+c]
 			line += textMemoryByteToString(char, isAltText, supportsLowercase, false)
 		}
 		line = strings.TrimRight(line, " ")
-		content += fmt.Sprintf("%v\n", line)
+		content.WriteString(fmt.Sprintf("%v\n", line))
 	}
-	return content
+	return content.String()
 }
