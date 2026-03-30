@@ -20,7 +20,7 @@ type Apple2 struct {
 	cards   [8]Card
 	tracers []executionTracer
 
-	softVideoSwitch softVideoSwitch
+	softVideoSwitch softVideoSwitchProvider
 	board           string
 	isApple2e       bool
 	hasLowerCase    bool
@@ -55,7 +55,7 @@ func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
 	a.io.setKeyboardProvider(kb)
 }
 
-// SetSpeakerProvider attaches an external keyboard provider
+// SetSpeakerProvider attaches an external speaker provider
 func (a *Apple2) SetSpeakerProvider(s SpeakerProvider) {
 	a.io.setSpeakerProvider(s)
 }
@@ -65,7 +65,7 @@ func (a *Apple2) SetJoysticksProvider(j JoysticksProvider) {
 	a.io.setJoysticksProvider(j)
 }
 
-// SetMouseProvider attaches an external joysticks provider
+// SetMouseProvider attaches an external mouse provider
 func (a *Apple2) SetMouseProvider(m MouseProvider) {
 	a.io.setMouseProvider(m)
 }

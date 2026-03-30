@@ -63,6 +63,8 @@ func configure(configuration *configuration) (*Apple2, error) {
 		a.cpu = iz6502.NewNMOS6502(a.mmu)
 	case "65c02":
 		a.cpu = iz6502.NewCMOS65c02(a.mmu)
+	default:
+		return nil, fmt.Errorf("cpu %s not supported, must be '6502' or '65c02'", cpu)
 	}
 
 	err = a.loadRom(configuration.get(confRom))

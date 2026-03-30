@@ -12,12 +12,12 @@ import (
 		https://archive.org/details/videx-soft-video-switch
 */
 
-type softVideoSwitch interface {
+type softVideoSwitchProvider interface {
 	buildImage(light color.Color) *image.RGBA
 	isSoftSwitchActive() bool
 }
 
-func (a *Apple2) setSoftVideoSwitch(card softVideoSwitch) {
+func (a *Apple2) setSoftVideoSwitch(card softVideoSwitchProvider) {
 	a.softVideoSwitch = card
 }
 

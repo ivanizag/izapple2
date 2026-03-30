@@ -157,8 +157,7 @@ func SaveSnapshot(vs VideoSource, screenMode int, filename string) error {
 	}
 	defer f.Close()
 
-	png.Encode(f, img)
-	return nil
+	return png.Encode(f, img)
 }
 
 func squarishPixelsFilter(in *image.RGBA) *image.RGBA {

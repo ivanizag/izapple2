@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
+	"maps"
+	"slices"
 )
 
 type paramSpec struct {
@@ -71,7 +71,7 @@ func getCardFactory() map[string]*cardBuilder {
 }
 
 func availableCards() []string {
-	names := maps.Keys(getCardFactory())
+	names := slices.Collect(maps.Keys(getCardFactory()))
 	slices.Sort(names)
 	return names
 }
@@ -209,23 +209,23 @@ func paramsGetDIPs(params map[string]string, name string, size int) ([]bool, err
 }
 
 func splitConfigurationString(s string, separator rune) []string {
-	// Split by comma, but not inside quotes
+	// Split by separator, but not inside quotes
 	var result []string
-	var current string
+	var current strings.Builder
 	inQuote := false
 	for _, c := range s {
 		if c == '"' {
 			inQuote = !inQuote
 		}
 		if c == separator && !inQuote {
-			result = append(result, current)
-			current = ""
+			result = append(result, current.String())
+			current.Reset()
 		} else {
-			current += string(c)
+			current.WriteRune(c)
 		}
 	}
-	if current != "" {
-		result = append(result, current)
+	if current.Len() > 0 {
+		result = append(result, current.String())
 	}
 	return result
 }

@@ -46,7 +46,7 @@ type cardDisk2Shared interface {
 
 const (
 	disk2MotorOffDelay = uint64(2 * 1000 * 1000) // 2 Mhz cycles. Total 1 second.
-	disk2PulseCyles    = uint8(8)                // 8 cycles = 4ms * 2Mhz
+	disk2PulseCycles    = uint8(8)                // 8 cycles = 4ms * 2Mhz
 
 	/*
 	   We skip register calculations for long periods with the motor
@@ -246,7 +246,7 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 	*/
 	pulse := false
 	c.lastPulseCycles++
-	if c.lastPulseCycles == disk2PulseCyles {
+	if c.lastPulseCycles == disk2PulseCycles {
 		// Read
 		pulse = c.drive[0].readPulse() ||
 			c.drive[1].readPulse()
