@@ -31,11 +31,11 @@ func (a *Apple2) Start(paused bool) {
 	speedReferenceTime := referenceTime
 	speedReferenceCycles := uint64(0)
 
-	a.paused = paused
+	a.paused.Store(paused)
 
 	for {
 		// Run cpu steps
-		if !a.paused {
+		if !a.paused.Load() {
 			if !a.dmaActive {
 				// 6502 is running
 				for i := 0; i < cpuSpinLoops && !a.dmaActive; i++ {
@@ -61,10 +61,10 @@ func (a *Apple2) Start(paused bool) {
 				}
 			}
 
-			if a.cycleBreakpoint != 0 && a.cycles >= a.cycleBreakpoint {
-				a.breakPoint = true
-				a.cycleBreakpoint = 0
-				a.paused = true
+			if bp := a.cycleBreakpoint.Load(); bp != 0 && a.cycles >= bp {
+				a.breakPoint.Store(true)
+				a.cycleBreakpoint.Store(0)
+				a.paused.Store(true)
 			}
 		} else {
 			time.Sleep(200 * time.Millisecond)
@@ -79,17 +79,17 @@ func (a *Apple2) Start(paused bool) {
 				case CommandKill:
 					return
 				case CommandPause:
-					if !a.paused {
-						a.paused = true
+					if !a.paused.Load() {
+						a.paused.Store(true)
 					}
 				case CommandStart:
-					if a.paused {
-						a.paused = false
+					if a.paused.Load() {
+						a.paused.Store(false)
 						referenceTime = time.Now()
 						speedReferenceTime = referenceTime
 					}
 				case CommandPauseUnpause:
-					a.paused = !a.paused
+					a.paused.Store(!a.paused.Load())
 					referenceTime = time.Now()
 					speedReferenceTime = referenceTime
 				default:

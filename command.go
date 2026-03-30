@@ -77,7 +77,7 @@ func (a *Apple2) executeCommand(command command) {
 			a.cycleDurationNs = 0
 		}
 	case CommandShowSpeed:
-		fmt.Printf("Freq: %f Mhz\n", a.currentFreqMHz)
+		fmt.Printf("Freq: %f Mhz\n", a.GetCurrentFreqMHz())
 	case CommandDumpDebugInfo:
 		a.dumpDebugInfo()
 	case CommandNextCharGenPage:

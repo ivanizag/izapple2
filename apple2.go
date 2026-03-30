@@ -34,10 +34,10 @@ type Apple2 struct {
 	cycles               uint64
 	cycleDurationNs      float64 // Current speed. Inverse of the cpu clock in Ghz
 	fastRequestsCounter  int32
-	cycleBreakpoint      uint64
-	breakPoint           bool
+	cycleBreakpoint      atomic.Uint64
+	breakPoint           atomic.Bool
 	profile              bool
-	paused               bool
+	paused               atomic.Bool
 	cpuTrace             bool
 	forceCaps            bool
 	removableMediaDrives []drive
@@ -77,7 +77,7 @@ func (a *Apple2) UsesMouse() bool {
 
 // IsPaused returns true when emulator is paused
 func (a *Apple2) IsPaused() bool {
-	return a.paused
+	return a.paused.Load()
 }
 
 func (a *Apple2) GetCycles() uint64 {
@@ -90,12 +90,12 @@ func (a *Apple2) GetCurrentFreqMHz() float64 {
 
 // SetCycleBreakpoint sets a cycle number to pause the emulator. 0 to disable
 func (a *Apple2) SetCycleBreakpoint(cycle uint64) {
-	a.cycleBreakpoint = cycle
-	a.breakPoint = false
+	a.cycleBreakpoint.Store(cycle)
+	a.breakPoint.Store(false)
 }
 
 func (a *Apple2) BreakPoint() bool {
-	return a.breakPoint
+	return a.breakPoint.Load()
 }
 
 // IsProfiling returns true when profiling
