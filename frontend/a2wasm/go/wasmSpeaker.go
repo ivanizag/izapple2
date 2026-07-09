@@ -21,8 +21,8 @@ type wasmSpeaker struct {
 	samples      []float32
 }
 
-func newWasmSpeaker() *wasmSpeaker {
-	return &wasmSpeaker{speaker: a2audio.NewSpeaker()}
+func newWasmSpeaker(clockMhz float64) *wasmSpeaker {
+	return &wasmSpeaker{speaker: a2audio.NewSpeaker(clockMhz)}
 }
 
 // Click receives a speaker click. The argument is the CPU cycle when it is generated

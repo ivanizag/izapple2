@@ -32,8 +32,11 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	io.addSoftSwitchRW(0x00, buildKeySoftSwitch(io), "KEYBOARD")           // Keyboard
 	io.addSoftSwitchRW(0x10, buildStrobeKeyboardSoftSwitch(io), "AKD")     // Keyboard Strobe
 	io.addSoftSwitchR(0x20, buildNotImplementedSoftSwitchR(io), "TAPEOUT") // Cassette Output
-	io.addSoftSwitchRW(0x30, buildSpeakerSoftSwitch(io), "SPEAKER")        // Speaker
-	io.addSoftSwitchR(0x40, buildNotImplementedSoftSwitchR(io), "STROBE")  // Game connector Strobe
+	speaker := buildSpeakerSoftSwitch(io)
+	for i := uint8(0x30); i < 0x40; i++ {
+		io.addSoftSwitchRW(i, speaker, "SPEAKER") // Speaker, any access to $C030-$C03F toggles it
+	}
+	io.addSoftSwitchR(0x40, buildNotImplementedSoftSwitchR(io), "STROBE") // Game connector Strobe
 	// Note: Some sources indicate that all these cover 16 positions
 	// for read and write. But the Apple2e takes over some of them, with
 	// the prevention on acting only on writes.

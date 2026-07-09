@@ -19,8 +19,8 @@ type ebitenSpeaker struct {
 	samples      []float32
 }
 
-func newEbitenSpeaker() *ebitenSpeaker {
-	return &ebitenSpeaker{speaker: a2audio.NewSpeaker()}
+func newEbitenSpeaker(clockMhz float64) *ebitenSpeaker {
+	return &ebitenSpeaker{speaker: a2audio.NewSpeaker(clockMhz)}
 }
 
 // Click receives a speaker click. The argument is the CPU cycle when it is generated

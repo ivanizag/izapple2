@@ -49,7 +49,7 @@ func sdlRun(a *izapple2.Apple2) {
 
 	kp := newSDLKeyBoard(a)
 
-	s := newSDLSpeaker()
+	s := newSDLSpeaker(a.GetClockMhz())
 	s.start()
 	a.SetSpeakerProvider(s)
 

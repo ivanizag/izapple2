@@ -107,7 +107,7 @@ func ebitenRun(a *izapple2.Apple2) {
 
 	game := &Game{
 		a:          a,
-		speaker:    newWasmSpeaker(),
+		speaker:    newWasmSpeaker(a.GetClockMhz()),
 		keyboard:   newWasmKeyBoard(a),
 		screenMode: a_screen.ScreenModeNTSC,
 	}

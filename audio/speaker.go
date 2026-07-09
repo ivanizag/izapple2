@@ -25,23 +25,16 @@ The synthesis works as follows:
 */
 package audio
 
-import (
-	"github.com/ivanizag/izapple2"
-)
-
 const (
 	// SampleRate is the sample rate of the generated audio stream
 	SampleRate = 48000
 
-	// Each sample covers ~21.31 CPU cycles
-	cyclesPerSample = 1_000_000 * izapple2.CPUClockMhz / SampleRate
-
 	// The render clock stays this far behind the newest click, as a
 	// cushion against jitter of the emulation clock
-	targetLatencyCycles = 30_000 * izapple2.CPUClockMhz // 30 ms
+	targetLatencyMs = 30
 
 	// Resynchronize if the newest click is further ahead than this
-	maxLatencyCycles = 200_000 * izapple2.CPUClockMhz // 200 ms
+	maxLatencyMs = 200
 
 	// Speaker cone positions, giving half of the full scale peak to peak
 	speakerLevel = 0.25
@@ -58,6 +51,11 @@ type Speaker struct {
 	clickChannel  chan uint64
 	pendingClicks []uint64
 
+	// Conversions for the configured CPU clock
+	cyclesPerSample     float64 // ~21.31 cycles at the standard clock
+	targetLatencyCycles float64
+	maxLatencyCycles    float64
+
 	synced      bool    // False until the first click arrives
 	renderCycle float64 // Render clock, the CPU cycle of the next sample
 	level       float64 // Current speaker position
@@ -67,11 +65,14 @@ type Speaker struct {
 	dcPrevOut float64
 }
 
-// NewSpeaker creates a Speaker
-func NewSpeaker() *Speaker {
+// NewSpeaker creates a Speaker for a CPU running at clockMhz
+func NewSpeaker(clockMhz float64) *Speaker {
 	var s Speaker
 	s.clickChannel = make(chan uint64, clickChannelSize)
 	s.pendingClicks = make([]uint64, 0, clickChannelSize)
+	s.cyclesPerSample = 1000 * clockMhz * 1000 / SampleRate
+	s.targetLatencyCycles = 1000 * clockMhz * targetLatencyMs
+	s.maxLatencyCycles = 1000 * clockMhz * maxLatencyMs
 	s.level = speakerLevel
 	return &s
 }
@@ -104,8 +105,8 @@ func (s *Speaker) ReadSamples(buf []float32) {
 	if len(s.pendingClicks) > 0 {
 		oldest := float64(s.pendingClicks[0])
 		newest := float64(s.pendingClicks[len(s.pendingClicks)-1])
-		if !s.synced || oldest < s.renderCycle || newest > s.renderCycle+maxLatencyCycles {
-			s.renderCycle = newest - targetLatencyCycles
+		if !s.synced || oldest < s.renderCycle || newest > s.renderCycle+s.maxLatencyCycles {
+			s.renderCycle = newest - s.targetLatencyCycles
 			s.synced = true
 		}
 	}
@@ -120,7 +121,7 @@ func (s *Speaker) ReadSamples(buf []float32) {
 
 	consumed := 0
 	for i := range buf {
-		windowEnd := s.renderCycle + cyclesPerSample
+		windowEnd := s.renderCycle + s.cyclesPerSample
 
 		// Average the speaker position over the sample window, toggling
 		// at the exact click positions
@@ -139,7 +140,7 @@ func (s *Speaker) ReadSamples(buf []float32) {
 			consumed++
 		}
 		acc += s.level * (windowEnd - pos)
-		sample := acc / cyclesPerSample
+		sample := acc / s.cyclesPerSample
 
 		// DC-blocking filter
 		out := sample - s.dcPrevIn + dcFilterPole*s.dcPrevOut

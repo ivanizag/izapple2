@@ -132,7 +132,7 @@ func ebitenRun(a *izapple2.Apple2) {
 	game := &Game{
 		a:        a,
 		keyboard: newEbitenKeyBoard(a),
-		speaker:  newEbitenSpeaker(),
+		speaker:  newEbitenSpeaker(a.GetClockMhz()),
 	}
 	a.SetSpeakerProvider(game.speaker)
 

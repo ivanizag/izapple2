@@ -7,6 +7,7 @@ void SpeakerCallback(void *userdata, Uint8 *stream, int len);
 import "C"
 import (
 	"fmt"
+	"sync/atomic"
 	"unsafe"
 
 	"github.com/ivanizag/izapple2/audio"
@@ -24,12 +25,13 @@ type sdlSpeaker struct {
 
 /*
 I have not found a way to encode the pointer to sdlSpeaker on the userdata of
-the call to SpeakerCallback(). I use a global as workaround...
+the call to SpeakerCallback(). I use a global as workaround... It is atomic
+because the callback runs on the SDL audio thread.
 */
-var theSDLSpeaker *sdlSpeaker
+var theSDLSpeaker atomic.Pointer[sdlSpeaker]
 
-func newSDLSpeaker() *sdlSpeaker {
-	return &sdlSpeaker{speaker: audio.NewSpeaker()}
+func newSDLSpeaker(clockMhz float64) *sdlSpeaker {
+	return &sdlSpeaker{speaker: audio.NewSpeaker(clockMhz)}
 }
 
 // Click receives a speaker click. The argument is the CPU cycle when it is generated
@@ -41,13 +43,18 @@ func (s *sdlSpeaker) Click(cycle uint64) {
 //
 //export SpeakerCallback
 func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
-	s := theSDLSpeaker
+	// Adapt the C buffer to a slice of float32 samples
+	buf := unsafe.Slice((*float32)(unsafe.Pointer(stream)), int(length)/4)
+
+	s := theSDLSpeaker.Load()
 	if s == nil {
+		// SDL does not guarantee the buffer to be initialized
+		for i := range buf {
+			buf[i] = 0
+		}
 		return
 	}
 
-	// Adapt the C buffer to a slice of float32 samples
-	buf := unsafe.Slice((*float32)(unsafe.Pointer(stream)), int(length)/4)
 	s.speaker.ReadSamples(buf)
 }
 
@@ -70,8 +77,8 @@ func (s *sdlSpeaker) start() {
 		fmt.Printf("Error opening the SDL audio channel: %v.\n", err)
 		return
 	}
+	theSDLSpeaker.Store(s)
 	sdl.PauseAudio(false)
-	theSDLSpeaker = s
 }
 
 func (s *sdlSpeaker) close() {

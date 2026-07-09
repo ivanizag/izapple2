@@ -5,8 +5,11 @@ import (
 	"testing"
 )
 
+// The standard NTSC Apple II clock
+const testClockMhz = 14.318 / 14
+
 func TestSilenceBeforeFirstClick(t *testing.T) {
-	s := NewSpeaker()
+	s := NewSpeaker(testClockMhz)
 	buf := make([]float32, 1024)
 	buf[10] = 42.0 // Ensure the buffer is overwritten
 	s.ReadSamples(buf)
@@ -30,7 +33,7 @@ const driverChunkSamples = 480 // 10 ms
 
 func newWaveDriver(startCycle uint64) *waveDriver {
 	return &waveDriver{
-		s:         NewSpeaker(),
+		s:         NewSpeaker(testClockMhz),
 		nextClick: startCycle,
 		cycle:     startCycle,
 	}
@@ -38,7 +41,7 @@ func newWaveDriver(startCycle uint64) *waveDriver {
 
 // step advances 10 ms, toggling every halfPeriodCycles, 0 for silence
 func (d *waveDriver) step(halfPeriodCycles uint64) []float32 {
-	chunkCycles := float64(driverChunkSamples) * cyclesPerSample
+	chunkCycles := float64(driverChunkSamples) * d.s.cyclesPerSample
 	d.cycle += uint64(chunkCycles)
 	if halfPeriodCycles != 0 {
 		for d.nextClick < d.cycle {
@@ -79,7 +82,7 @@ func TestSquareWaveFrequency(t *testing.T) {
 	}
 
 	gotPeriod := float64(risings[len(risings)-1]-risings[0]) / float64(len(risings)-1)
-	wantPeriod := 2 * 512 / cyclesPerSample // ~48 samples
+	wantPeriod := 2 * 512 / d.s.cyclesPerSample // ~48 samples
 	if math.Abs(gotPeriod-wantPeriod) > 0.1 {
 		t.Errorf("expected a period of %.2f samples, got %.2f", wantPeriod, gotPeriod)
 	}

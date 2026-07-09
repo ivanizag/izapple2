@@ -88,6 +88,15 @@ func (a *Apple2) GetCurrentFreqMHz() float64 {
 	return a.currentFreqMHz
 }
 
+// GetClockMhz returns the configured CPU clock in MHz
+func (a *Apple2) GetClockMhz() float64 {
+	if a.cycleDurationNs == 0 {
+		// Unlimited speed, report the standard clock
+		return CPUClockMhz
+	}
+	return 1000.0 / a.cycleDurationNs
+}
+
 // SetCycleBreakpoint sets a cycle number to pause the emulator. 0 to disable
 func (a *Apple2) SetCycleBreakpoint(cycle uint64) {
 	a.cycleBreakpoint.Store(cycle)
