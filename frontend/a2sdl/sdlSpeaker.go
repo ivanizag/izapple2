@@ -9,26 +9,17 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/audio"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-const (
-	samplingHz = 48000
-	bufferSize = 1000
-	// bufferSize/samplingHz will be the max delay of the sound
-	sampleDurationCycles = 1000000 * izapple2.CPUClockMhz / samplingHz
-	// each sample on the sound stream is 21.31 cpu cycles approx
-	maxOutOfSyncMs = 2000
-	decayLevel     = 128
-)
+// Samples per SDL audio buffer, ~21 ms
+const bufferSamples = 1024
 
+// sdlSpeaker sends the audio from the shared synthesizer to the SDL audio
+// device. It implements izapple2.SpeakerProvider.
 type sdlSpeaker struct {
-	clickChannel  chan uint64
-	pendingClicks []uint64
-	lastCycle     uint64
-	lastState     bool
-	lastLevel     C.Uint8
+	speaker *audio.Speaker
 }
 
 /*
@@ -38,29 +29,12 @@ the call to SpeakerCallback(). I use a global as workaround...
 var theSDLSpeaker *sdlSpeaker
 
 func newSDLSpeaker() *sdlSpeaker {
-	var s sdlSpeaker
-	s.clickChannel = make(chan uint64, bufferSize)
-	s.pendingClicks = make([]uint64, 0, bufferSize)
-	s.lastLevel = decayLevel // Mid position to avoid starting clicks.
-	return &s
+	return &sdlSpeaker{speaker: audio.NewSpeaker()}
 }
 
 // Click receives a speaker click. The argument is the CPU cycle when it is generated
 func (s *sdlSpeaker) Click(cycle uint64) {
-	select {
-	case s.clickChannel <- cycle:
-		// Sent
-	default:
-		fmt.Printf("Speaker click dropped in channel.\n")
-		// The channel is full, the click is lost.
-	}
-}
-
-func stateToLevel(state bool) C.Uint8 {
-	if state {
-		return 200
-	}
-	return 0
+	s.speaker.Click(cycle)
 }
 
 // SpeakerCallback is called to get more sound buffer data
@@ -72,88 +46,9 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 		return
 	}
 
-	// Adapt C buffer
-	buf := unsafe.Slice(stream, length)
-
-	//Read queued clicks
-	done := false
-	for !done {
-		select {
-		case cycle := <-s.clickChannel:
-			s.pendingClicks = append(s.pendingClicks, cycle)
-		default:
-			done = true
-		}
-	}
-
-	// Verify that we are not too long behind
-	var maxOutOfSyncCyclesFloat = 1000 * izapple2.CPUClockMhz * maxOutOfSyncMs
-	var maxOutOfSyncCycles = uint64(maxOutOfSyncCyclesFloat)
-	for _, pc := range s.pendingClicks {
-		if pc-s.lastCycle > maxOutOfSyncCycles {
-			// Fast forward
-			s.lastCycle = pc
-			fmt.Printf("Speaker fast forward.\n")
-		}
-	}
-
-	// Build wave
-	var i, r int
-	level := s.lastLevel
-	for p := 0; p < len(s.pendingClicks); p++ {
-		cycle := s.pendingClicks[p]
-		if cycle < s.lastCycle {
-			// Too old, ignore
-			continue
-		}
-
-		// Fill with samples
-		level = stateToLevel(s.lastState)
-		samplesNeeded := int(float64(cycle-s.lastCycle) / sampleDurationCycles)
-		if samplesNeeded+i > bufferSize {
-			// Partial fill, to be completed on the next callback
-			samplesNeeded = bufferSize - i
-			s.lastCycle = cycle - uint64(float64(samplesNeeded)*sampleDurationCycles)
-		} else {
-			s.lastCycle = cycle
-			s.lastState = !s.lastState
-			r++ // Remove this pending click
-		}
-
-		for j := 0; j < samplesNeeded; j++ {
-			buf[i] = level
-			i++
-		}
-
-		if i == bufferSize {
-			// Buffer is complete
-			break
-		}
-	}
-
-	// If the buffer is empty lets decay the signal
-	if i == 0 {
-		for level != decayLevel && i < bufferSize {
-			if i%100 == 0 {
-				if level > decayLevel {
-					level--
-				} else {
-					level++
-				}
-			}
-			buf[i] = level
-			i++
-		}
-	}
-
-	// Complete the buffer if needed
-	for b := i; b < bufferSize; b++ {
-		buf[b] = level
-	}
-	s.lastLevel = level
-
-	// Remove processed clicks, store the rest for later
-	s.pendingClicks = s.pendingClicks[r:]
+	// Adapt the C buffer to a slice of float32 samples
+	buf := unsafe.Slice((*float32)(unsafe.Pointer(stream)), int(length)/4)
+	s.speaker.ReadSamples(buf)
 }
 
 func (s *sdlSpeaker) start() {
@@ -164,10 +59,10 @@ func (s *sdlSpeaker) start() {
 	}
 
 	spec := &sdl.AudioSpec{
-		Freq:     samplingHz,
-		Format:   sdl.AUDIO_U8,
+		Freq:     audio.SampleRate,
+		Format:   sdl.AUDIO_F32SYS,
 		Channels: 1,
-		Samples:  bufferSize,
+		Samples:  bufferSamples,
 		Callback: sdl.AudioCallback(C.SpeakerCallback),
 	}
 
