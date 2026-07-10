@@ -49,9 +49,11 @@ func sdlRun(a *izapple2.Apple2) {
 
 	kp := newSDLKeyBoard(a)
 
-	s := newSDLSpeaker(a.GetClockMhz())
+	s := newSDLAudio(a.GetClockMhz())
+	for _, source := range a.GetAudioSources() {
+		source.SetAudioSink(s.mixer.NewSource())
+	}
 	s.start()
-	a.SetSpeakerProvider(s)
 
 	j := newSDLJoysticks(!a.UsesMouse())
 	a.SetJoysticksProvider(j)

@@ -11,7 +11,7 @@ type ioC0Page struct {
 	softSwitchesWName  [256]string
 	softSwitchesData   [128]uint8
 	keyboard           KeyboardProvider
-	speaker            SpeakerProvider
+	speaker            speakerAudioSource
 	paddlesStrobeCycle uint64
 	joysticks          JoysticksProvider
 	mouse              MouseProvider
@@ -23,12 +23,6 @@ type ioC0Page struct {
 
 type softSwitchR func() uint8
 type softSwitchW func(value uint8)
-
-// SpeakerProvider provides a speaker implementation
-type SpeakerProvider interface {
-	// Click receives a speaker click. The argument is the CPU cycle when it is generated
-	Click(cycle uint64)
-}
 
 // JoysticksProvider abstracts the joysticks
 type JoysticksProvider interface {
@@ -112,10 +106,6 @@ func (p *ioC0Page) isSoftSwitchActive(ioFlag uint8) bool {
 
 func (p *ioC0Page) setKeyboardProvider(kb KeyboardProvider) {
 	p.keyboard = kb
-}
-
-func (p *ioC0Page) setSpeakerProvider(s SpeakerProvider) {
-	p.speaker = s
 }
 
 func (p *ioC0Page) setJoysticksProvider(j JoysticksProvider) {

@@ -32,7 +32,7 @@ Usage:  izapple2 [file]
   -s3 string
     	slot 3 configuration. (default "fastchip")
   -s4 string
-    	slot 4 configuration. (default "empty")
+    	slot 4 configuration. (default "mockingboard")
   -s5 string
     	slot 5 configuration. (default "empty")
   -s6 string
@@ -74,6 +74,7 @@ The available cards are:
   fujinet: SmartPort interface card hosting the Fujinet
   language: Language card with 16 extra KB for the Apple ][ and ][+
   memexp: Memory expansion card
+  mockingboard: Mockingboard sound card with two AY-3-8913 sound generators
   mouse: Mouse card implementation, does not emulate a real card, only the firmware behaviour
   multirom: Multiple Image ROM card
   parallel: Card to dump to a file what would be printed to a parallel printer

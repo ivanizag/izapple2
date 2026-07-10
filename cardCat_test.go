@@ -80,6 +80,10 @@ func TestCardsDetected(t *testing.T) {
 		testCardDetectedInternal(t, "2enh", "4096", "ramworks", 55_000_000, "RAMWorks 4096K Card in Aux Slot")
 	})
 
+	t.Run("test Mockingboard card", func(t *testing.T) {
+		testCardDetectedInternal(t, "2enh", "mockingboard", "s4", 55_000_000, "4   MockingBoard Card")
+	})
+
 	// Swyftcard not compatible with Card Cat
 	// Unknonw cards: prodosromcard3
 }

@@ -51,6 +51,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory["language"] = newCardLanguageBuilder()
 	cardFactory["softswitchlogger"] = newCardLoggerBuilder()
 	cardFactory["memexp"] = newCardMemoryExpansionBuilder()
+	cardFactory["mockingboard"] = newCardMockingboardBuilder()
 	cardFactory["mouse"] = newCardMouseBuilder()
 	cardFactory["multirom"] = newMultiRomCardBuilder()
 	cardFactory["parallel"] = newCardParallelPrinterBuilder()

@@ -17,26 +17,23 @@ import (
 // Samples per SDL audio buffer, ~21 ms
 const bufferSamples = 1024
 
-// sdlSpeaker sends the audio from the shared synthesizer to the SDL audio
-// device. It implements izapple2.SpeakerProvider.
-type sdlSpeaker struct {
-	speaker *audio.Speaker
+// sdlAudio sends the mixed audio of the machine to the SDL audio device.
+// The audio sources of the machine attach to the mixer.
+type sdlAudio struct {
+	mixer *audio.Mixer
 }
 
 /*
-I have not found a way to encode the pointer to sdlSpeaker on the userdata of
+I have not found a way to encode the pointer to sdlAudio on the userdata of
 the call to SpeakerCallback(). I use a global as workaround... It is atomic
 because the callback runs on the SDL audio thread.
 */
-var theSDLSpeaker atomic.Pointer[sdlSpeaker]
+var theSDLAudio atomic.Pointer[sdlAudio]
 
-func newSDLSpeaker(clockMhz float64) *sdlSpeaker {
-	return &sdlSpeaker{speaker: audio.NewSpeaker(clockMhz)}
-}
-
-// Click receives a speaker click. The argument is the CPU cycle when it is generated
-func (s *sdlSpeaker) Click(cycle uint64) {
-	s.speaker.Click(cycle)
+func newSDLAudio(clockMhz float64) *sdlAudio {
+	return &sdlAudio{
+		mixer: audio.NewMixer(clockMhz),
+	}
 }
 
 // SpeakerCallback is called to get more sound buffer data
@@ -46,7 +43,7 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	// Adapt the C buffer to a slice of float32 samples
 	buf := unsafe.Slice((*float32)(unsafe.Pointer(stream)), int(length)/4)
 
-	s := theSDLSpeaker.Load()
+	s := theSDLAudio.Load()
 	if s == nil {
 		// SDL does not guarantee the buffer to be initialized
 		for i := range buf {
@@ -55,10 +52,10 @@ func SpeakerCallback(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 		return
 	}
 
-	s.speaker.ReadSamples(buf)
+	s.mixer.ReadSamples(buf)
 }
 
-func (s *sdlSpeaker) start() {
+func (s *sdlAudio) start() {
 	err := sdl.Init(sdl.INIT_AUDIO)
 	if err != nil {
 		fmt.Printf("Error starting SDL audio: %v.\n", err)
@@ -77,11 +74,11 @@ func (s *sdlSpeaker) start() {
 		fmt.Printf("Error opening the SDL audio channel: %v.\n", err)
 		return
 	}
-	theSDLSpeaker.Store(s)
+	theSDLAudio.Store(s)
 	sdl.PauseAudio(false)
 }
 
-func (s *sdlSpeaker) close() {
+func (s *sdlAudio) close() {
 	sdl.CloseAudio()
 	sdl.Quit()
 }

@@ -16,7 +16,7 @@ type Game struct {
 	a        *izapple2.Apple2
 	image    *ebiten.Image
 	keyboard *wasmKeyboard
-	speaker  *wasmSpeaker
+	speaker  *wasmAudio
 
 	updates    uint64
 	screenMode int
@@ -107,13 +107,15 @@ func ebitenRun(a *izapple2.Apple2) {
 
 	game := &Game{
 		a:          a,
-		speaker:    newWasmSpeaker(a.GetClockMhz()),
+		speaker:    newWasmAudio(a.GetClockMhz()),
 		keyboard:   newWasmKeyBoard(a),
 		screenMode: a_screen.ScreenModeNTSC,
 	}
 
 	// Set up providers
-	a.SetSpeakerProvider(game.speaker)
+	for _, source := range a.GetAudioSources() {
+		source.SetAudioSink(game.speaker.mixer.NewSource())
+	}
 
 	// Setup API exports for React
 	setupAPI(a, game)

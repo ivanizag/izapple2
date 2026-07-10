@@ -8,14 +8,32 @@ import (
 // The standard NTSC Apple II clock
 const testClockMhz = 14.318 / 14
 
-func TestSilenceBeforeFirstClick(t *testing.T) {
-	s := NewSpeaker(testClockMhz)
+// testToggler pushes speaker-like level toggles to a source
+type testToggler struct {
+	source *Source
+	high   bool
+}
+
+const testSpeakerLevel = 0.25
+
+func (tg *testToggler) click(cycle uint64) {
+	tg.high = !tg.high
+	if tg.high {
+		tg.source.PushLevel(cycle, testSpeakerLevel)
+	} else {
+		tg.source.PushLevel(cycle, -testSpeakerLevel)
+	}
+}
+
+func TestSilenceBeforeFirstEvent(t *testing.T) {
+	m := NewMixer(testClockMhz)
+	m.NewSource()
 	buf := make([]float32, 1024)
 	buf[10] = 42.0 // Ensure the buffer is overwritten
-	s.ReadSamples(buf)
+	m.ReadSamples(buf)
 	for i, v := range buf {
 		if v != 0 {
-			t.Fatalf("expected silence before the first click, got %v at sample %v", v, i)
+			t.Fatalf("expected silence before the first event, got %v at sample %v", v, i)
 		}
 	}
 }
@@ -24,35 +42,42 @@ func TestSilenceBeforeFirstClick(t *testing.T) {
 // parallel: on each step it queues the clicks of a square wave for the
 // next chunk of emulated time and reads the equivalent audio samples.
 type waveDriver struct {
-	s         *Speaker
+	m         *Mixer
+	togglers  []*testToggler
 	nextClick uint64
 	cycle     uint64
 }
 
 const driverChunkSamples = 480 // 10 ms
 
-func newWaveDriver(startCycle uint64) *waveDriver {
-	return &waveDriver{
-		s:         NewSpeaker(testClockMhz),
+func newWaveDriver(startCycle uint64, togglers int) *waveDriver {
+	d := &waveDriver{
+		m:         NewMixer(testClockMhz),
 		nextClick: startCycle,
 		cycle:     startCycle,
 	}
+	for range togglers {
+		d.togglers = append(d.togglers, &testToggler{source: d.m.NewSource()})
+	}
+	return d
 }
 
 // step advances 10 ms, toggling every halfPeriodCycles, 0 for silence
 func (d *waveDriver) step(halfPeriodCycles uint64) []float32 {
-	chunkCycles := float64(driverChunkSamples) * d.s.cyclesPerSample
+	chunkCycles := float64(driverChunkSamples) * d.m.cyclesPerSample
 	d.cycle += uint64(chunkCycles)
 	if halfPeriodCycles != 0 {
 		for d.nextClick < d.cycle {
-			d.s.Click(d.nextClick)
+			for _, tg := range d.togglers {
+				tg.click(d.nextClick)
+			}
 			d.nextClick += halfPeriodCycles
 		}
 	} else {
 		d.nextClick = d.cycle
 	}
 	buf := make([]float32, driverChunkSamples)
-	d.s.ReadSamples(buf)
+	d.m.ReadSamples(buf)
 	return buf
 }
 
@@ -66,7 +91,7 @@ func (d *waveDriver) run(halfPeriodCycles uint64, steps int) []float32 {
 
 func TestSquareWaveFrequency(t *testing.T) {
 	// A square wave toggling every 512 cycles, ~977 Hz, for 400 ms
-	d := newWaveDriver(1_000_000)
+	d := newWaveDriver(1_000_000, 1)
 	out := d.run(512, 40)
 
 	// Check the average period on the second half, once in steady state
@@ -82,14 +107,14 @@ func TestSquareWaveFrequency(t *testing.T) {
 	}
 
 	gotPeriod := float64(risings[len(risings)-1]-risings[0]) / float64(len(risings)-1)
-	wantPeriod := 2 * 512 / d.s.cyclesPerSample // ~48 samples
+	wantPeriod := 2 * 512 / d.m.cyclesPerSample // ~48 samples
 	if math.Abs(gotPeriod-wantPeriod) > 0.1 {
 		t.Errorf("expected a period of %.2f samples, got %.2f", wantPeriod, gotPeriod)
 	}
 }
 
 func TestAmplitudeAndDCRemoval(t *testing.T) {
-	d := newWaveDriver(1_000_000)
+	d := newWaveDriver(1_000_000, 1)
 	out := d.run(512, 40)
 
 	sum := 0.0
@@ -106,7 +131,7 @@ func TestAmplitudeAndDCRemoval(t *testing.T) {
 }
 
 func TestSilenceDecaysAfterSound(t *testing.T) {
-	d := newWaveDriver(1_000_000)
+	d := newWaveDriver(1_000_000, 1)
 	d.run(512, 20)
 
 	// A second of silence
@@ -121,7 +146,7 @@ func TestSilenceDecaysAfterSound(t *testing.T) {
 }
 
 func TestSoundResumesAfterPause(t *testing.T) {
-	d := newWaveDriver(1_000_000)
+	d := newWaveDriver(1_000_000, 1)
 	d.run(512, 20)
 	d.run(0, 100) // A second of silence
 
@@ -140,7 +165,7 @@ func TestSoundResumesAfterPause(t *testing.T) {
 }
 
 func TestResyncAfterFastForward(t *testing.T) {
-	d := newWaveDriver(1_000_000)
+	d := newWaveDriver(1_000_000, 1)
 	d.run(512, 20)
 
 	// The emulation fast-forwards ten seconds ahead of the audio clock

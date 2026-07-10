@@ -19,7 +19,7 @@ type Game struct {
 	a          *izapple2.Apple2
 	image      *ebiten.Image
 	keyboard   *ebitenKeyboard
-	speaker    *ebitenSpeaker
+	speaker    *ebitenAudio
 	fontSource *text.GoTextFaceSource
 
 	paused bool
@@ -132,9 +132,11 @@ func ebitenRun(a *izapple2.Apple2) {
 	game := &Game{
 		a:        a,
 		keyboard: newEbitenKeyBoard(a),
-		speaker:  newEbitenSpeaker(a.GetClockMhz()),
+		speaker:  newEbitenAudio(a.GetClockMhz()),
 	}
-	a.SetSpeakerProvider(game.speaker)
+	for _, source := range a.GetAudioSources() {
+		source.SetAudioSink(game.speaker.mixer.NewSource())
+	}
 
 	var err error
 	game.fontSource, err = text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))

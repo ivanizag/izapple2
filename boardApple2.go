@@ -123,9 +123,7 @@ func getSoftSwitch(io *ioC0Page, ioFlag uint8, isSet bool) softSwitchR {
 
 func buildSpeakerSoftSwitch(io *ioC0Page) softSwitchR {
 	return func() uint8 {
-		if io.speaker != nil {
-			io.speaker.Click(io.apple2.GetCycles())
-		}
+		io.speaker.click(io.apple2.GetCycles())
 		return 0
 	}
 }

@@ -17,8 +17,10 @@ type Apple2 struct {
 	io      *ioC0Page
 	video   screen.VideoSource
 	cg      *CharacterGenerator
-	cards   [8]Card
-	tracers []executionTracer
+	cards       [8]Card
+	tracers     []executionTracer
+	tickerCards []cardTicker
+	irqRequests uint8 // Bitmask of the slots asserting the IRQ line
 
 	softVideoSwitch softVideoSwitchProvider
 	board           string
@@ -50,15 +52,32 @@ func (a *Apple2) GetCards() [8]Card {
 	return a.cards
 }
 
+// A cardTicker is a card that needs to run logic on every instruction
+type cardTicker interface {
+	tick()
+}
+
+func (a *Apple2) registerTickerCard(c cardTicker) {
+	a.tickerCards = append(a.tickerCards, c)
+}
+
+// requestIRQ sets or clears the IRQ request of a slot. The CPU IRQ line
+// is asserted while any slot requests it. To be called only from the
+// emulation goroutine.
+func (a *Apple2) requestIRQ(slot int, asserted bool) {
+	if asserted {
+		a.irqRequests |= 1 << slot
+	} else {
+		a.irqRequests &^= 1 << slot
+	}
+	a.cpu.SetIRQ(a.irqRequests != 0)
+}
+
 // SetKeyboardProvider attaches an external keyboard provider
 func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
 	a.io.setKeyboardProvider(kb)
 }
 
-// SetSpeakerProvider attaches an external speaker provider
-func (a *Apple2) SetSpeakerProvider(s SpeakerProvider) {
-	a.io.setSpeakerProvider(s)
-}
 
 // SetJoysticksProvider attaches an external joysticks provider
 func (a *Apple2) SetJoysticksProvider(j JoysticksProvider) {

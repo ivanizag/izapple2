@@ -72,8 +72,8 @@ github.com/hajimehoshi/ebiten/v2 v2.8.8 h1:xyMxOAn52T1tQ+j3vdieZ7auDBOXmvjUprSrx
 github.com/hajimehoshi/ebiten/v2 v2.8.8/go.mod h1:durJ05+OYnio9b8q0sEtOgaNeBEQG7Yr7lRviAciYbs=
 github.com/ianlancetaylor/demangle v0.0.0-20210905161508-09a460cdf81d/go.mod h1:aYm2/VgdVmcIU8iMfdMvDMsRAQjcfZSKFby6HOFvi/w=
 github.com/ianlancetaylor/demangle v0.0.0-20230524184225-eabc099b10ab/go.mod h1:gx7rwoVhcfuVKG5uya9Hs3Sxj7EIvldVofAWIUtGouw=
-github.com/ivanizag/iz6502 v1.4.0 h1:7eYygUkCPwFRH0tf2JSg1k+Sy27wwPi3ActuVNVv1Uc=
-github.com/ivanizag/iz6502 v1.4.0/go.mod h1:h4gbw3IK6WCYawi00kBhQ4ACeQkGWgqbUeAgDaQpy6s=
+github.com/ivanizag/iz6502 v1.5.0 h1:hWNfjuZHbSjBZr1lzlFNgF6O1gCI/1NIHaQwa+W2+cQ=
+github.com/ivanizag/iz6502 v1.5.0/go.mod h1:h4gbw3IK6WCYawi00kBhQ4ACeQkGWgqbUeAgDaQpy6s=
 github.com/jeandeaual/go-locale v0.0.0-20250612000132-0ef82f21eade h1:FmusiCI1wHw+XQbvL9M+1r/C3SPqKrmBaIOYwVfQoDE=
 github.com/jeandeaual/go-locale v0.0.0-20250612000132-0ef82f21eade/go.mod h1:ZDXo8KHryOWSIqnsb/CiDq7hQUYryCgdVnxbj8tDG7o=
 github.com/jezek/xgb v1.1.1 h1:bE/r8ZZtSv7l9gk6nU0mYx51aXrvnyb44892TwSaqS4=

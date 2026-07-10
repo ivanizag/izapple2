@@ -48,6 +48,7 @@ func (a *Apple2) Start(paused bool) {
 					a.cpu.ExecuteInstruction()
 					a.cycles += a.cpu.GetCycles() - startCycles
 
+					a.tickCards()
 					a.executionTrace()
 				}
 			} else {
@@ -57,6 +58,7 @@ func (a *Apple2) Start(paused bool) {
 					card.runDMACycle()
 					a.cycles++
 
+					a.tickCards()
 					a.executionTrace()
 				}
 			}
@@ -134,6 +136,12 @@ func (a *Apple2) reset() {
 		if c != nil {
 			c.reset()
 		}
+	}
+}
+
+func (a *Apple2) tickCards() {
+	for _, c := range a.tickerCards {
+		c.tick()
 	}
 }
 
