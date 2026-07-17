@@ -20,9 +20,9 @@ jobs:
             libxcursor-dev libxinerama-dev libxi-dev libxrandr-dev \
             libxss-dev libxxf86vm-dev libasound2-dev
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
@@ -37,7 +37,7 @@ jobs:
       - name: Package
         run: tar -czf izapple2-linux-amd64.tar.gz -C frontend/a2sdl izapple2 -C ../.. README.md LICENSE
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: izapple2-linux-amd64
           path: izapple2-linux-amd64.tar.gz
@@ -46,9 +46,9 @@ jobs:
     name: Build Windows (amd64)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
@@ -67,7 +67,7 @@ jobs:
         run: |
           zip --junk-paths izapple2-windows-amd64.zip frontend/a2sdl/izapple2.exe README.md LICENSE
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: izapple2-windows-amd64
           path: izapple2-windows-amd64.zip
@@ -76,9 +76,9 @@ jobs:
     name: Build macOS (universal)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
@@ -101,7 +101,7 @@ jobs:
       - name: Package
         run: tar -czf izapple2-macos-universal.tar.gz -C frontend/a2sdl izapple2 -C ../.. README.md LICENSE
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: izapple2-macos-universal
           path: izapple2-macos-universal.tar.gz
@@ -114,11 +114,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           merge-multiple: true
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           draft: true
           generate_release_notes: true
