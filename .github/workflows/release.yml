@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+
+  build-linux:
+    name: Build Linux (amd64)
+    runs-on: ubuntu-latest
+    # Build on ubuntu 22.04 so the binary works on any distro with glibc 2.35+
+    container: ubuntu:22.04
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y build-essential git libx11-dev libxext-dev \
+            libxcursor-dev libxinerama-dev libxi-dev libxrandr-dev \
+            libxss-dev libxxf86vm-dev libasound2-dev
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        working-directory: frontend/a2sdl
+        run: CGO_ENABLED=1 go build -tags static -ldflags "-s -w" -o izapple2 .
+
+      - name: Package
+        run: tar -czf izapple2-linux-amd64.tar.gz -C frontend/a2sdl izapple2 -C ../.. README.md LICENSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: izapple2-linux-amd64
+          path: izapple2-linux-amd64.tar.gz
+
+  build-windows:
+    name: Build Windows (amd64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install mingw-w64
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Build
+        working-directory: frontend/a2sdl
+        run: |
+          CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc \
+            go build -tags static -ldflags "-s -w" -o izapple2.exe .
+
+      - name: Package
+        run: |
+          zip --junk-paths izapple2-windows-amd64.zip frontend/a2sdl/izapple2.exe README.md LICENSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: izapple2-windows-amd64
+          path: izapple2-windows-amd64.zip
+
+  build-macos:
+    name: Build macOS (universal)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build arm64
+        working-directory: frontend/a2sdl
+        run: CGO_ENABLED=1 GOARCH=arm64 go build -tags static -ldflags "-s -w" -o izapple2-arm64 .
+
+      - name: Build amd64
+        working-directory: frontend/a2sdl
+        run: |
+          CGO_ENABLED=1 GOARCH=amd64 CC="clang -arch x86_64" \
+            go build -tags static -ldflags "-s -w" -o izapple2-amd64 .
+
+      - name: Create universal binary
+        working-directory: frontend/a2sdl
+        run: |
+          lipo -create -output izapple2 izapple2-arm64 izapple2-amd64
+          lipo -info izapple2
+
+      - name: Package
+        run: tar -czf izapple2-macos-universal.tar.gz -C frontend/a2sdl izapple2 -C ../.. README.md LICENSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: izapple2-macos-universal
+          path: izapple2-macos-universal.tar.gz
+
+  release:
+    name: Create draft release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            izapple2-linux-amd64.tar.gz
+            izapple2-windows-amd64.zip
+            izapple2-macos-universal.tar.gz
