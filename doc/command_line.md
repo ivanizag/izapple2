@@ -128,14 +128,18 @@ izapple2 disk1.dsk disk2.dsk
 The emulator will automatically configure slots based on file types:
 - **Diskettes:** Configured in slots 6 and 5 (up to 4 diskettes total)
 - **Block devices:** Configured in slots 7 and 5 (up to 8 devices total)
+- **WAV files:** Connected to the cassette tape input (one tape maximum)
 
 #### How It Works
 
 The emulator automatically:
-1. Detects whether each file is a diskette (`.dsk`, `.do`, `.po` in diskette format) or block device
+1. Detects whether each file is a diskette (`.dsk`, `.do`, `.po` in diskette format), a tape recording (`.wav`) or block device
 2. Creates the appropriate card configuration:
    - **Diskettes** → `diskii` card in slot 6 (first two) and slot 5 (next two)
    - **Block devices** → `smartport` card in slot 7 (first) and slot 5 (remaining)
+   - **WAV files** → cassette tape input, as with the `-tape` flag
+
+If a tape is the only file provided, no disk card is configured so that the machine goes directly to the BASIC prompt, ready to `LOAD` from the tape.
 
 #### Examples
 
@@ -151,6 +155,9 @@ izapple2 disk1.dsk disk2.dsk disk3.dsk
 
 # Four diskettes → slot 6 (first two), slot 5 (last two)
 izapple2 disk1.dsk disk2.dsk disk3.dsk disk4.dsk
+
+# Tape recording → cassette input, no disk card, type LOAD to read it
+izapple2 game.wav
 ```
 
 ### Partial Slot Configuration
@@ -251,6 +258,8 @@ Usage:  izapple2 [file]
     	show the calculated configuration and exit
   -speed string
     	cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber (default "ntsc")
+  -tape string
+    	WAV file with a tape recording for the cassette input (default "none")
   -trace string
     	trace CPU execution with one or more comma separated tracers (default "none")
 

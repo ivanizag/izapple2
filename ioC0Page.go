@@ -12,6 +12,7 @@ type ioC0Page struct {
 	softSwitchesData   [128]uint8
 	keyboard           KeyboardProvider
 	speaker            speakerAudioSource
+	cassette           *cassette
 	paddlesStrobeCycle uint64
 	joysticks          JoysticksProvider
 	mouse              MouseProvider
@@ -106,6 +107,10 @@ func (p *ioC0Page) isSoftSwitchActive(ioFlag uint8) bool {
 
 func (p *ioC0Page) setKeyboardProvider(kb KeyboardProvider) {
 	p.keyboard = kb
+}
+
+func (p *ioC0Page) setCassette(c *cassette) {
+	p.cassette = c
 }
 
 func (p *ioC0Page) setJoysticksProvider(j JoysticksProvider) {

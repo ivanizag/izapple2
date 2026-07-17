@@ -21,6 +21,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
     - [WOZ 2.0](storage/WozSupportStatus.md) (read only)
   - 3.5 disks in PO or 2MG format
   - Hard disk in HDV or 2MG format with ProDOS and SmartPort support
+  - Cassette tape input from WAV recordings
 - Emulated extension cards:
   - DiskII controller (state machine based for WOZ files)
   - 16Kb Language Card
@@ -133,7 +134,7 @@ Download the excellent [Total Replay](https://archive.org/details/TotalReplay) c
 [a2-4am](https://github.com/a2-4am/4cade):
 
 ``` terminal
-casa@servidor:~$ ./izapple2sdl Total\ Replay\ v4.0.hdv
+casa@servidor:~$ ./izapple2sdl Total\ Replay\ v6.0.1.hdv
 ```
 
 Displays super hi-res box art as seen with the VidHD card.

@@ -266,6 +266,48 @@ func TestProcessPositionalFilenames(t *testing.T) {
 			t.Errorf("expected diskii configuration, got %s", s6)
 		}
 	})
+
+	t.Run("test tape only", func(t *testing.T) {
+		config := newConfiguration()
+		err := processPositionalFilenames(config, []string{"recording.wav"})
+		if err != nil {
+			t.Error(err)
+		}
+		tape := config.get(confTape)
+		if tape != "recording.wav" {
+			t.Errorf("expected tape=recording.wav, got %s", tape)
+		}
+		// Without disks there should be no disk card to boot from
+		s6 := config.get(confS6)
+		if s6 != "empty" {
+			t.Errorf("expected s6=empty, got %s", s6)
+		}
+	})
+
+	t.Run("test tape and diskette", func(t *testing.T) {
+		config := newConfiguration()
+		err := processPositionalFilenames(config, []string{"recording.wav", "resources/dos33.dsk"})
+		if err != nil {
+			t.Error(err)
+		}
+		tape := config.get(confTape)
+		if tape != "recording.wav" {
+			t.Errorf("expected tape=recording.wav, got %s", tape)
+		}
+		s6 := config.get(confS6)
+		expected := "diskii,disk1=\"resources/dos33.dsk\""
+		if s6 != expected {
+			t.Errorf("expected s6=%s, got %s", expected, s6)
+		}
+	})
+
+	t.Run("test too many tapes error", func(t *testing.T) {
+		config := newConfiguration()
+		err := processPositionalFilenames(config, []string{"side1.wav", "side2.wav"})
+		if err == nil {
+			t.Error("expected error for more than one tape")
+		}
+	})
 }
 
 func TestApplyDiskAliases(t *testing.T) {

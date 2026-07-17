@@ -117,6 +117,19 @@ func configure(configuration *configuration) (*Apple2, error) {
 		setupRGBCard(&a)
 	}
 
+	tape := configuration.get(confTape)
+	if tape != "" && tape != "none" {
+		data, _, err := LoadResource(tape)
+		if err != nil {
+			return nil, err
+		}
+		c, err := newCassette(&a, data)
+		if err != nil {
+			return nil, fmt.Errorf("could not load the tape %s: %w", tape, err)
+		}
+		a.io.setCassette(c)
+	}
+
 	nsc := configuration.get(confNsc)
 	if nsc != "none" && nsc != "" {
 		err = setupNoSlotClock(&a, nsc)

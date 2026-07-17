@@ -35,6 +35,7 @@ const (
 	confRgb        = "rgb"
 	confRomx       = "romx"
 	confMods       = "mods"
+	confTape       = "tape"
 
 	confS0 = "s0"
 	confS1 = "s1"
@@ -230,6 +231,7 @@ func setupFlags(models *configurationModels, configuration *configuration) error
 		confForceCaps:  "force all letters to be uppercased (no need for caps lock!)",
 		confRgb:        "emulate the RGB modes of the 80col RGB card for DHGR",
 		confRomx:       "emulate a RomX",
+		confTape:       "WAV file with a tape recording for the cassette input",
 		confS0:         "slot 0 configuration.",
 		confS1:         "slot 1 configuration.",
 		confS2:         "slot 2 configuration.",
@@ -309,7 +311,8 @@ func classifyFile(filename string) bool {
 }
 
 // processPositionalFilenames handles filenames passed as positional arguments
-// and configures slots s6, s5, s7 based on the file types
+// and configures slots s6, s5, s7 based on the file types. WAV files are
+// connected to the cassette input.
 func processPositionalFilenames(config *configuration, filenames []string) error {
 	if len(filenames) == 0 {
 		return nil
@@ -317,13 +320,28 @@ func processPositionalFilenames(config *configuration, filenames []string) error
 
 	diskettes := []string{}
 	blockDevices := []string{}
+	tapes := []string{}
 
 	for _, filename := range filenames {
 		filename = applyDiskAliases(filename)
-		if classifyFile(filename) {
+		if strings.HasSuffix(strings.ToLower(filename), ".wav") {
+			tapes = append(tapes, filename)
+		} else if classifyFile(filename) {
 			diskettes = append(diskettes, filename)
 		} else {
 			blockDevices = append(blockDevices, filename)
+		}
+	}
+
+	// Configure the cassette tape
+	if len(tapes) > 1 {
+		return fmt.Errorf("only one tape can be loaded, %v found", len(tapes))
+	}
+	if len(tapes) == 1 {
+		config.set(confTape, tapes[0])
+		if len(diskettes) == 0 && len(blockDevices) == 0 {
+			// Do not boot from disk, go to BASIC to LOAD from the tape
+			config.set(confS6, noCardName)
 		}
 	}
 
@@ -411,6 +429,10 @@ func expandSlotConfiguration(configString string) (string, error) {
 
 		// Apply disk aliases
 		filename = applyDiskAliases(filename)
+
+		if strings.HasSuffix(strings.ToLower(filename), ".wav") {
+			return "", fmt.Errorf("a tape recording cannot be assigned to a slot, use -tape")
+		}
 
 		// Try to load as diskette
 		_, err := LoadDiskette(filename)

@@ -43,6 +43,8 @@ Usage:  izapple2 [file]
     	show the calculated configuration and exit
   -speed string
     	cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber (default "ntsc")
+  -tape string
+    	WAV file with a tape recording for the cassette input (default "none")
   -trace string
     	trace CPU execution with one or more comma separated tracers (default "none")
 

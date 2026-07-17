@@ -59,7 +59,7 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	io.addSoftSwitchRW(0x5e, getSoftSwitch(io, ioFlagAnnunciator3, false), "ANN3OFF")
 	io.addSoftSwitchRW(0x5f, getSoftSwitch(io, ioFlagAnnunciator3, true), "ANN3ON")
 
-	io.addSoftSwitchR(0x60, buildNotImplementedSoftSwitchR(io), "CASSETTE") // Cassette Input
+	io.addSoftSwitchR(0x60, buildCassetteSoftSwitch(io), "CASSETTE") // Cassette Input
 	io.addSoftSwitchR(0x61, buildButtonSoftSwitch(io, 0), "PB0")
 	io.addSoftSwitchR(0x62, buildButtonSoftSwitch(io, 1), "PB1")
 	io.addSoftSwitchR(0x63, buildButtonSoftSwitch(io, 2), "PB2")
@@ -69,7 +69,7 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	io.addSoftSwitchR(0x67, buildPaddleSoftSwitch(io, 3), "PDL3")
 
 	// The previous 8 softswitches are repeated
-	io.addSoftSwitchR(0x68, buildNotImplementedSoftSwitchR(io), "CASSETTE") // Cassette Input
+	io.addSoftSwitchR(0x68, buildCassetteSoftSwitch(io), "CASSETTE") // Cassette Input
 	io.addSoftSwitchR(0x69, buildButtonSoftSwitch(io, 0), "PB0")
 	io.addSoftSwitchR(0x6A, buildButtonSoftSwitch(io, 1), "PB1")
 	io.addSoftSwitchR(0x6B, buildButtonSoftSwitch(io, 2), "PB2")
@@ -83,6 +83,16 @@ func addApple2SoftSwitches(io *ioC0Page) {
 	// For RGB screen modes. Default to NTSC artifacts
 	io.softSwitchesData[ioFlag1RGBCard] = ssOn
 	io.softSwitchesData[ioFlag2RGBCard] = ssOn
+}
+
+func buildCassetteSoftSwitch(io *ioC0Page) softSwitchR {
+	notImplemented := buildNotImplementedSoftSwitchR(io)
+	return func() uint8 {
+		if io.cassette == nil {
+			return notImplemented()
+		}
+		return io.cassette.read(io.apple2.GetCycles())
+	}
 }
 
 func buildNotImplementedSoftSwitchR(io *ioC0Page) softSwitchR {
