@@ -26,6 +26,10 @@ jobs:
         with:
           go-version-file: go.mod
 
+      # The workspace is owned by a different user than the container's root
+      - name: Allow git to read the workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Build
         working-directory: frontend/a2sdl
         run: CGO_ENABLED=1 go build -tags static -ldflags "-s -w" -o izapple2 .
