@@ -108,6 +108,12 @@ By default the following configuration is launched:
 
 No installation required. [Download](https://github.com/ivanizag/izapple2/releases) the single file executable `izapple2xxx_xxx` for linux or Mac, SDL2 graphics or console. Build from source to get the latest features.
 
+Optionally, it can be installed with homebrew using:
+
+``` terminal
+brew install ivanizag/izapple2/izapple2
+```
+
 ### Default mode
 
 Execute without parameters to have an emulated Apple //e Enhanced with 128kb booting DOS 3.3 ready to run Applesoft:
@@ -123,7 +129,7 @@ casa@servidor:~$ ./izapple2sdl
 Download a DSK or WOZ file or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source):
 
 ``` terminal
-casa@servidor:~$ ./izapple2sdl "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
+casa@servidor:~$ ./izapple2 "https://www.apple.asimov.net/images/games/action/karateka/karateka (includes intro).dsk"
 ```
 
 ![Karateka](doc/karateka.png)
@@ -134,7 +140,7 @@ Download the excellent [Total Replay](https://archive.org/details/TotalReplay) c
 [a2-4am](https://github.com/a2-4am/4cade):
 
 ``` terminal
-casa@servidor:~$ ./izapple2sdl Total\ Replay\ v6.0.1.hdv
+casa@servidor:~$ ./izapple2 Total\ Replay\ v6.0.1.hdv
 ```
 
 Displays super hi-res box art as seen with the VidHD card.
@@ -219,11 +225,3 @@ go build .
 
 To run in Windows, copy the file `SDL2.dll` on the same folder as `a2sdl.exe`. The latest `SDL2.dll` can be found in the [Runtime binary for Windows 64-bit](https://www.libsdl.org/download-2.0.php).
 
-### Use docker to cross compile for Linux and Windows
-
-To create executables for Linux and Windows without installing Go, SDL2 or the Windows cross compilation toosl, run:
-
-``` terminal
-cd docker
-./build.sh
-```
