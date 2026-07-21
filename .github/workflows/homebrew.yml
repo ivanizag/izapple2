@@ -8,6 +8,9 @@ jobs:
   update-formula:
     name: Update the formula
     runs-on: ubuntu-latest
+    # Checks out and pushes to a different repo using TAP_GITHUB_TOKEN,
+    # so the workflow's own GITHUB_TOKEN needs no scopes at all
+    permissions: {}
     steps:
       - uses: actions/checkout@v4
         with:

@@ -10,6 +10,8 @@ jobs:
   build-linux:
     name: Build Linux (amd64)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     # Build on ubuntu 22.04 so the binary works on any distro with glibc 2.35+
     container: ubuntu:22.04
     steps:
@@ -45,6 +47,8 @@ jobs:
   build-windows:
     name: Build Windows (amd64)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
 
@@ -75,6 +79,8 @@ jobs:
   build-macos:
     name: Build macOS (universal)
     runs-on: macos-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
 
