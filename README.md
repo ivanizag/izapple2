@@ -41,6 +41,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Dan ][ Controller card
   - ProDOS ROM card
   - Microsoft Z80 Softcard using the [Z80](https://github.com/koron-go/z80) emulation from Koron
+  - Mockinboard A sound card
 - Useful cards not emulating a real card
   - Bootable SmartPort / ProDOS card with the following smartport devices:
       - Block device (hard disks)
