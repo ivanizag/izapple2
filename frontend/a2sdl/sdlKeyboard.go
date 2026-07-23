@@ -100,8 +100,11 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	case sdl.K_F1:
 		k.showHelp = !k.showHelp
 	case sdl.K_F2:
-		if ctrl {
+		// While the help is shown, F2 alone triggers a reset. This is handy
+		// when the window manager (for example KDE) captures Ctrl-F2.
+		if ctrl || k.showHelp {
 			k.a.SendCommand(izapple2.CommandReset)
+			k.showHelp = false
 		}
 	case sdl.K_F4:
 		k.a.SendCommand(izapple2.CommandToggleCPUTrace)

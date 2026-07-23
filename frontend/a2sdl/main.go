@@ -154,9 +154,9 @@ func sdlRun(a *izapple2.Apple2) {
 }
 
 var helpMessage = `
-
           F1: Show/Hide help
      Ctrl-F2: Reset
+      F1, F2: Reset
           F4: Show/Hide CPU trace
           F5: Fast/Normal speed
      Ctrl-F5: Show speed

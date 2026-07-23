@@ -115,8 +115,11 @@ func (k *ebitenKeyboard) putKey(key ebiten.Key) {
 	case ebiten.KeyF1:
 		k.showHelp = !k.showHelp
 	case ebiten.KeyF2:
-		if ctrl {
+		// While the help is shown, F2 alone triggers a reset. This is handy
+		// when the window manager (for example KDE) captures Ctrl-F2.
+		if ctrl || k.showHelp {
 			k.a.SendCommand(izapple2.CommandReset)
+			k.showHelp = false
 		}
 	case ebiten.KeyF4:
 		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
