@@ -235,3 +235,19 @@ go build .
 
 To run in Windows, copy the file `SDL2.dll` on the same folder as `a2sdl.exe`. The latest `SDL2.dll` can be found in the [Runtime binary for Windows 64-bit](https://www.libsdl.org/download-2.0.php).
 
+### The experimental SDL3 frontend
+
+The `a2sdl3` frontend uses SDL3 through [go-sdl3](https://github.com/Zyko0/go-sdl3), which needs neither cgo nor a C compiler nor any SDL developer files. On Linux, MacOS and Windows alike, run:
+
+``` terminal
+git clone github.com/ivanizag/izapple2
+cd izapple2/frontend/a2sdl3
+go build .
+```
+
+As there is no cgo involved, it also cross compiles to any of the supported platforms, for example:
+
+``` terminal
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build .
+```
+

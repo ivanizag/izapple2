@@ -2,6 +2,7 @@
 SDL2.dll
 a2sdl.exe
 frontend/a2sdl/a2sdl
+frontend/a2sdl3/a2sdl3
 frontend/*/*.woz
 frontend/*/*.dsk
 frontend/*/*.DSK

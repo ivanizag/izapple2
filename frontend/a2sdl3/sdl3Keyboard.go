@@ -1,0 +1,177 @@
+//go:build !js
+
+package main
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/screen"
+
+	"github.com/Zyko0/go-sdl3/sdl"
+)
+
+type sdl3Keyboard struct {
+	a          *izapple2.Apple2
+	keyChannel *izapple2.KeyboardChannel
+
+	showHelp    bool
+	showPages   bool
+	showCharGen bool
+	showAltText bool
+	screenMode  int
+}
+
+func newSDL3Keyboard(a *izapple2.Apple2) *sdl3Keyboard {
+	var k sdl3Keyboard
+	k.a = a
+	k.keyChannel = izapple2.NewKeyboardChannel(a)
+
+	k.screenMode = screen.ScreenModeColorScanlines
+	return &k
+}
+
+func (k *sdl3Keyboard) putText(text string) {
+	k.keyChannel.PutText(text)
+}
+
+func (k *sdl3Keyboard) putKey(keyEvent *sdl.KeyboardEvent) {
+	/*
+		See "Apple II reference manual", page 5
+
+		To get keys as understood by the Apple2 hardware run:
+		10 A=PEEK(49152)
+		20 PRINT A, A - 128
+		30 GOTO 10
+	*/
+
+	if !keyEvent.Down {
+		// Process only key pushes
+		return
+	}
+
+	ctrl := keyEvent.Mod&sdl.KMOD_CTRL != 0
+	shift := keyEvent.Mod&sdl.KMOD_SHIFT != 0
+	command := keyEvent.Mod&sdl.KMOD_GUI != 0
+
+	if ctrl {
+		if keyEvent.Key >= 'a' && keyEvent.Key <= 'z' {
+			k.keyChannel.PutChar(uint8(keyEvent.Key) - 97 + 1)
+			return
+		}
+	}
+
+	result := uint8(0)
+
+	switch keyEvent.Key {
+	case sdl.K_ESCAPE:
+		result = 27
+	case sdl.K_BACKSPACE:
+		result = 8
+	case sdl.K_RETURN:
+		result = 13
+	case sdl.K_RETURN2:
+		result = 13
+	case sdl.K_LEFT:
+		if ctrl {
+			result = 31 // Base64A
+		} else {
+			result = 8
+		}
+	case sdl.K_RIGHT:
+		result = 21
+
+	// Apple //e
+	case sdl.K_UP:
+		result = 11 // 31 in the Base64A
+	case sdl.K_DOWN:
+		result = 10
+	case sdl.K_TAB:
+		result = 9
+	case sdl.K_DELETE:
+		result = 127 // 24 in the Base64A
+
+	// Base64A clone particularities
+	case sdl.K_F3:
+		result = 127 // Base64A
+
+	// Control of the emulator
+	case sdl.K_F1:
+		k.showHelp = !k.showHelp
+	case sdl.K_F2:
+		// While the help is shown, F2 alone triggers a reset. This is handy
+		// when the window manager (for example KDE) captures Ctrl-F2.
+		if ctrl || k.showHelp {
+			k.a.SendCommand(izapple2.CommandReset)
+			k.showHelp = false
+		}
+	case sdl.K_F4:
+		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
+	case sdl.K_F5:
+		if ctrl {
+			k.a.SendCommand(izapple2.CommandShowSpeed)
+		} else {
+			k.a.SendCommand(izapple2.CommandToggleSpeed)
+		}
+	case sdl.K_F6:
+		k.screenMode = screen.NextScreenMode(k.screenMode)
+	case sdl.K_F7:
+		k.showPages = !k.showPages
+	case sdl.K_F9:
+		k.a.SendCommand(izapple2.CommandDumpDebugInfo)
+	case sdl.K_F10:
+		if ctrl {
+			k.showCharGen = !k.showCharGen
+		} else if shift {
+			k.showAltText = !k.showAltText
+		} else {
+			k.a.SendCommand(izapple2.CommandNextCharGenPage)
+		}
+	case sdl.K_F12:
+		fallthrough
+	case sdl.K_PRINTSCREEN:
+		if ctrl {
+			screen.AddScenario(k.a.GetVideoSource(), "../../screen/test_resources/")
+		} else {
+			err := screen.SaveSnapshot(k.a.GetVideoSource(), screen.ScreenModeColorScanlines, "snapshot.png")
+			if err != nil {
+				fmt.Printf("Error saving snapshoot: %v.\n.", err)
+			} else {
+				fmt.Println("Saving snapshot 'snapshot.png'")
+			}
+		}
+	case sdl.K_PAUSE:
+		k.a.SendCommand(izapple2.CommandPauseUnpause)
+	case sdl.K_INSERT:
+		if shift {
+			text, _ := sdl.GetClipboardText()
+			go k.performPaste(text)
+		}
+	case 'v':
+		if command {
+			text, _ := sdl.GetClipboardText()
+			go k.performPaste(text)
+		}
+	}
+
+	// Missing values 91 to 95. Usually control for [\]^_
+	// On the Base64A it's control for \]./
+
+	if result != 0 {
+		k.keyChannel.PutChar(result)
+	}
+}
+
+func (k *sdl3Keyboard) performPaste(text string) {
+	// Note 1: Pasting is too fast, so we slow it down.
+	// Note 2: Need to translate CR/LF's
+	for _, ch := range text {
+		if ch == '\r' || ch == '\n' {
+			k.keyChannel.PutChar(13)
+		} else {
+			k.keyChannel.PutRune(ch)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}

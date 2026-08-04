@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	fyne.io/fyne/v2 v2.6.1
+	github.com/Zyko0/go-sdl3 v0.1.1
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728
 	github.com/ivanizag/iz6502 v1.5.0
 	github.com/koron-go/z80 v0.10.1
@@ -15,10 +16,11 @@ require (
 require (
 	fyne.io/systray v1.11.0 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
+	github.com/Zyko0/purego-gen v0.0.0-20250727121216-3bcd331a1e0c // indirect
 	github.com/ebitengine/gomobile v0.0.0-20250329061421-6d0a8e981e4c // indirect
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
 	github.com/ebitengine/oto/v3 v3.3.3 // indirect
-	github.com/ebitengine/purego v0.8.4 // indirect
+	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/fyne-io/gl-js v0.1.0 // indirect
 	github.com/fyne-io/glfw-js v0.2.0 // indirect
 	github.com/fyne-io/image v0.1.1 // indirect
