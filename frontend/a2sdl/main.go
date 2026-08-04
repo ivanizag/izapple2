@@ -47,6 +47,15 @@ func sdlRun(a *izapple2.Apple2) {
 
 	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "best")
 
+	// We only care about DROPFILE. Besides, sdl2-compat (the SDL2 API on top of
+	// SDL3, used by recent Linux distributions) leaves the file field of the
+	// DROPBEGIN and DROPCOMPLETE events with the window id instead of the NULL
+	// the SDL2 docs promise. go-sdl2 then reads a string from that bogus
+	// pointer and the emulator crashes when a disk is dropped. See
+	// https://github.com/ivanizag/izapple2/issues/39
+	sdl.EventState(sdl.DROPBEGIN, sdl.DISABLE)
+	sdl.EventState(sdl.DROPCOMPLETE, sdl.DISABLE)
+
 	kp := newSDLKeyBoard(a)
 
 	s := newSDLAudio(a.GetClockMhz())
