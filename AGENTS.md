@@ -21,6 +21,11 @@ go build .
 cd frontend/a2sdl
 go build .
 
+# Build the experimental SDL3 frontend. Needs no cgo and no SDL developer
+# files: SDL3 is embedded in the binary by github.com/Zyko0/go-sdl3
+cd frontend/a2sdl3
+go build .
+
 # Build WASM frontend
 cd frontend/a2wasm
 go build .
