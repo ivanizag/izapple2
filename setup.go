@@ -275,3 +275,48 @@ func CreateConfiguredApple() (*Apple2, error) {
 	}
 	return a, nil
 }
+
+// CreateAppleFromModel builds a machine without reading the command line, for
+// the frontends that get their settings elsewhere, like the libretro core.
+// The model is the name of a preconfigured model, as returned by
+// AvailableModels, or the path to a .cfg file. The overrides replace the
+// values of the model, keyed as the command line flags. The filenames are the
+// media to load, assigned to the slots as the positional arguments of the
+// command line. Video, keyboard and speaker won't be defined.
+func CreateAppleFromModel(model string, overrides map[string]string, filenames []string) (*Apple2, error) {
+	models, _, err := loadConfigurationModelsAndDefault()
+	if err != nil {
+		return nil, err
+	}
+
+	overrideValues := newConfiguration()
+	for key, value := range overrides {
+		overrideValues.set(key, value)
+	}
+
+	configuration, err := models.getWithOverrides(model, overrideValues)
+	if err != nil {
+		return nil, err
+	}
+
+	err = expandSlotConfigurations(configuration)
+	if err != nil {
+		return nil, err
+	}
+
+	err = processPositionalFilenames(configuration, filenames)
+	if err != nil {
+		return nil, err
+	}
+
+	return configure(configuration)
+}
+
+// AvailableModels returns the names of the preconfigured models
+func AvailableModels() ([]string, error) {
+	models, _, err := loadConfigurationModelsAndDefault()
+	if err != nil {
+		return nil, err
+	}
+	return models.availableModels(), nil
+}

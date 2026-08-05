@@ -28,6 +28,10 @@ go build .
 # Build console frontend
 cd frontend/a2console
 go build .
+
+# Build the libretro core, needs a C toolchain
+cd frontend/a2libretro
+make
 ```
 
 ### Install Dependencies

@@ -475,6 +475,25 @@ func expandSlotConfiguration(configString string) (string, error) {
 	return configString, nil
 }
 
+// expandSlotConfigurations expands the partial slot configurations of every
+// slot (e.g. "-s4 disk.dsk" -> "-s4 diskii,disk1=disk.dsk")
+func expandSlotConfigurations(c *configuration) error {
+	slotParams := []string{confS0, confS1, confS2, confS3, confS4, confS5, confS6, confS7}
+	for _, slotParam := range slotParams {
+		if c.has(slotParam) {
+			slotConfig := c.get(slotParam)
+			expandedConfig, err := expandSlotConfiguration(slotConfig)
+			if err != nil {
+				return fmt.Errorf("error expanding slot configuration for %s: %w", slotParam, err)
+			}
+			if expandedConfig != slotConfig {
+				c.set(slotParam, expandedConfig)
+			}
+		}
+	}
+	return nil
+}
+
 func getConfigurationFromCommandLine() (*configuration, error) {
 	models, configuration, err := loadConfigurationModelsAndDefault()
 	if err != nil {
@@ -498,19 +517,9 @@ func getConfigurationFromCommandLine() (*configuration, error) {
 		configuration.set(f.Name, f.Value.String())
 	})
 
-	// Expand partial slot configurations (e.g., "-s4 disk.dsk" -> "-s4 diskii,disk1=disk.dsk")
-	slotParams := []string{confS0, confS1, confS2, confS3, confS4, confS5, confS6, confS7}
-	for _, slotParam := range slotParams {
-		if configuration.has(slotParam) {
-			slotConfig := configuration.get(slotParam)
-			expandedConfig, err := expandSlotConfiguration(slotConfig)
-			if err != nil {
-				return nil, fmt.Errorf("error expanding slot configuration for %s: %w", slotParam, err)
-			}
-			if expandedConfig != slotConfig {
-				configuration.set(slotParam, expandedConfig)
-			}
-		}
+	err = expandSlotConfigurations(configuration)
+	if err != nil {
+		return nil, err
 	}
 
 	// Process positional filenames (e.g., "program disk.dsk")
