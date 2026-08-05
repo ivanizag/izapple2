@@ -14,24 +14,50 @@ References:
  - "More Colors for your Apple", https://archive.org/details/byte-magazine-1979-06/page/n61
 */
 
+/*
+A screen mode is the display the machine is watched on, and there are two
+things to choose: the phosphor, green or color, and whether the gaps between
+the scan lines are drawn.
+
+The two are independent, so the modes are built from a bit for each of them.
+The frontends that scale the image themselves, like the libretro core, take the
+modes without scan lines and leave the CRT look to their own filters. The
+phosphor is not something a filter can do: a green monitor shows half width
+pixels that a color television cannot.
+*/
 const (
-	// ScreenModeGreen to render as a green phosphor monitor
-	ScreenModeGreen = iota
-	// ScreenModePlain to render in color with filled areas
-	ScreenModePlain
-	// ScreenModeNTSC shows spaces between pixels
-	ScreenModeNTSC
+	screenModeColorBit     = 1
+	screenModeScanlinesBit = 2
+
+	screenModeCount = 4
 )
 
+const (
+	// ScreenModeGreen renders as a green phosphor monitor
+	ScreenModeGreen = 0
+	// ScreenModeColor renders as an NTSC color television
+	ScreenModeColor = screenModeColorBit
+	// ScreenModeGreenScanlines is a green monitor showing the gaps between the
+	// scan lines
+	ScreenModeGreenScanlines = screenModeScanlinesBit
+	// ScreenModeColorScanlines is a color television showing the gaps between
+	// the scan lines
+	ScreenModeColorScanlines = screenModeScanlinesBit | screenModeColorBit
+)
+
+// isColor returns whether the mode renders in color instead of green phosphor
+func isColor(screenMode int) bool {
+	return screenMode&screenModeColorBit != 0
+}
+
+// hasScanlines returns whether the mode draws the gaps between the scan lines
+func hasScanlines(screenMode int) bool {
+	return screenMode&screenModeScanlinesBit != 0
+}
+
+// NextScreenMode rotates through the four screen modes
 func NextScreenMode(screenMode int) int {
-	switch screenMode {
-	case ScreenModeGreen:
-		return ScreenModePlain
-	case ScreenModePlain:
-		return ScreenModeNTSC
-	default:
-		return ScreenModeGreen
-	}
+	return (screenMode + 1) % screenModeCount
 }
 
 // Snapshot the currently visible screen
@@ -39,8 +65,8 @@ func Snapshot(vs VideoSource, screenMode int) *image.RGBA {
 	videoMode := vs.GetCurrentVideoMode()
 	snap := snapshotByMode(vs, videoMode, screenMode)
 
-	if screenMode != ScreenModePlain && snap.Bounds().Dy() == hiResHeight {
-		// Apply the filter to regular CRT snapshots with 192 lines. Not to SHR
+	if hasScanlines(screenMode) && snap.Bounds().Dy() == hiResHeight {
+		// Only the regular CRT modes with 192 lines, not SHR
 		snap = linesSeparatedFilter(snap)
 	}
 
@@ -67,11 +93,11 @@ func snapshotByMode(vs VideoSource, videoMode uint32, screenMode int) *image.RGB
 	hasAltOrder := (videoMode & VideoText80AltOrder) != 0
 
 	var lightColor color.Color = color.White
-	if screenMode == ScreenModeGreen {
+	if !isColor(screenMode) {
 		lightColor = greenPhosphorColor
 	}
 
-	applyNTSCFilter := screenMode != ScreenModeGreen
+	applyNTSCFilter := isColor(screenMode)
 	var snap *image.RGBA
 	var ntscMask *image.Alpha
 	switch videoBase {
@@ -113,7 +139,7 @@ func snapshotByMode(vs VideoSource, videoMode uint32, screenMode int) *image.RGB
 
 	if mixMode != 0 {
 		var bottom *image.RGBA
-		applyNTSCFilter := screenMode != ScreenModeGreen && !isRGBCard
+		applyNTSCFilter := isColor(screenMode) && !isRGBCard
 		switch mixMode {
 		case VideoMixText40:
 			bottom = snapshotText40(vs, isSecondPage, isAltText, lightColor)

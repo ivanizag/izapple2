@@ -69,7 +69,7 @@ var rgbColorMap = [16]color.Color{
 func filterNTSCColor(in *image.RGBA, mask *image.Alpha, screenMode int) *image.RGBA {
 	colorMap := ntscColorMap // or rgbColorMap
 	colorMapLow := ntscColorMap
-	if screenMode == ScreenModeNTSC {
+	if hasScanlines(screenMode) {
 		colorMapLow = attenuatedColorMap
 	}
 

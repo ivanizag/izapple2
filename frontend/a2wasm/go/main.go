@@ -109,7 +109,7 @@ func ebitenRun(a *izapple2.Apple2) {
 		a:          a,
 		speaker:    newWasmAudio(a.GetClockMhz()),
 		keyboard:   newWasmKeyBoard(a),
-		screenMode: a_screen.ScreenModeNTSC,
+		screenMode: a_screen.ScreenModeColorScanlines,
 	}
 
 	// Set up providers
