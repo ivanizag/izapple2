@@ -18,8 +18,16 @@ func IsDiskette(data []byte) bool {
 	return isFileNib(data) || isFileDsk(data) || isFileWoz(data)
 }
 
-// MakeDiskette returns a Diskette by detecting the format
-func MakeDiskette(data []byte, filename string, writeable bool) (Diskette, error) {
+/*
+MakeDiskette returns a Diskette by detecting the format.
+
+With an overlayFilename, the changes the software writes are kept in that file
+and the image loaded is never modified. It also makes writable the diskettes
+that could not be written otherwise, the ones loaded from a compressed file, an
+URL or the embedded resources. An empty overlayFilename writes the changes back
+to the image, which only works for the DSK and PO files on disk.
+*/
+func MakeDiskette(data []byte, filename string, writeable bool, overlayFilename string) (Diskette, error) {
 	if isFileD13(data) {
 		return nil, errors.New("files with .d13 format are not supported for 13 sectors disk, use .nib or .woz")
 	}
@@ -31,9 +39,23 @@ func MakeDiskette(data []byte, filename string, writeable bool) (Diskette, error
 	}
 
 	if isFileDsk(data) {
+		// The checksum is of the image as it was loaded, before anything
+		// saved before is put back on top of it
+		overlay, err := openOverlay(overlayFilename, bytesPerTrack, numberOfTracks,
+			checksumOfBytes(data))
+		if err != nil {
+			return nil, err
+		}
+		if overlay != nil {
+			if err := overlay.applyTo(data); err != nil {
+				return nil, err
+			}
+		}
+
 		var d disketteNibWritable
 		d.nib = newFileDsk(data, filename)
-		d.nib.supportsWrite = d.nib.supportsWrite && writeable
+		d.nib.overlay = overlay
+		d.nib.supportsWrite = overlay != nil || (d.nib.supportsWrite && writeable)
 		return &d, nil
 	}
 

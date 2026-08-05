@@ -43,15 +43,17 @@ func newCardSmartPortStorageBuilder() *cardBuilder {
 			{"image8", "Disk image for unit 8", ""},
 			{"tracesp", "Trace SmartPort calls", "false"},
 			{"tracehd", "Trace image accesses", "false"},
+			saveDirParamSpec,
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardSmartPort
 			c.trace = paramsGetBool(params, "tracesp")
 			traceHD := paramsGetBool(params, "tracehd")
+			saveDirectory := paramsGetSaveDir(params)
 			for i := 1; i <= 8; i++ {
 				image := paramsGetPath(params, "image"+strconv.Itoa(i))
 				if image != "" {
-					err := c.LoadImage(image, traceHD)
+					err := c.LoadImage(image, traceHD, saveDirectory)
 					if err != nil {
 						return nil, err
 					}
@@ -70,14 +72,16 @@ func newCardProDOSBlockStorageBuilder() *cardBuilder {
 			{"image1", "Disk image for unit 1", ""},
 			{"image2", "Disk image for unit 2", ""},
 			{"tracehd", "Trace image accesses", "false"},
+			saveDirParamSpec,
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardSmartPort
 			traceHD := paramsGetBool(params, "tracehd")
+			saveDirectory := paramsGetSaveDir(params)
 			for i := 1; i <= 8; i++ {
 				image := paramsGetPath(params, "image"+strconv.Itoa(i))
 				if image != "" {
-					err := c.LoadImage(image, traceHD)
+					err := c.LoadImage(image, traceHD, saveDirectory)
 					if err != nil {
 						return nil, err
 					}
@@ -122,9 +126,10 @@ func (c *CardSmartPort) GetInfo() map[string]string {
 	return info
 }
 
-// LoadImage loads a disk image
-func (c *CardSmartPort) LoadImage(filename string, trace bool) error {
-	device, err := NewSmartPortHardDisk(c, filename)
+// LoadImage loads a disk image. An empty saveDirectory writes the changes back
+// to the image.
+func (c *CardSmartPort) LoadImage(filename string, trace bool, saveDirectory string) error {
+	device, err := NewSmartPortHardDisk(c, filename, saveDirectory)
 	if err == nil {
 		device.trace = trace
 		c.devices = append(c.devices, device)

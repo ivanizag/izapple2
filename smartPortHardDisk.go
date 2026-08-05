@@ -23,13 +23,14 @@ type SmartPortHardDisk struct {
 	disk     storage.BlockDisk
 }
 
-// NewSmartPortHardDisk creates a new hard disk with the smartPort interface
-func NewSmartPortHardDisk(host *CardSmartPort, filename string) (*SmartPortHardDisk, error) {
+// NewSmartPortHardDisk creates a new hard disk with the smartPort interface.
+// An empty saveDirectory writes the changes back to the image.
+func NewSmartPortHardDisk(host *CardSmartPort, filename string, saveDirectory string) (*SmartPortHardDisk, error) {
 	var d SmartPortHardDisk
 	d.host = host
 	d.filename = filename
 
-	hd, err := LoadBlockDisk(filename)
+	hd, err := LoadBlockDisk(filename, saveDirectory)
 	if err != nil {
 		return nil, err
 	}

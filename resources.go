@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/ivanizag/izapple2/storage"
@@ -129,23 +130,42 @@ func LoadResource(filename string) ([]uint8, bool, error) {
 	return data, writeable, nil
 }
 
-// LoadDiskette returns a Diskette by detecting the format
-func LoadDiskette(filename string) (storage.Diskette, error) {
+/*
+overlayFilename returns where to keep the changes a disk gets, or an empty
+string when they go back to the image.
+
+With a save directory, the changes the software writes go to an overlay file
+there instead of to the image, which is then never modified. It also makes
+writable the disks that could not be written at all, the ones loaded from a
+compressed file, an URL or the embedded resources.
+*/
+func overlayFilename(filename string, saveDirectory string) string {
+	if saveDirectory == "" {
+		return ""
+	}
+	return filepath.Join(saveDirectory, filepath.Base(filename)+".ovl")
+}
+
+// LoadDiskette returns a Diskette by detecting the format. An empty
+// saveDirectory writes the changes back to the image.
+func LoadDiskette(filename string, saveDirectory string) (storage.Diskette, error) {
 	data, writeable, err := LoadResource(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	return storage.MakeDiskette(data, filename, writeable)
+	return storage.MakeDiskette(data, filename, writeable,
+		overlayFilename(filename, saveDirectory))
 }
 
 // LoadDisketteFromBytes returns a Diskette from byte array (useful for WASM/browser file loading)
 func LoadDisketteFromBytes(data []byte, filename string, writeable bool) (storage.Diskette, error) {
-	return storage.MakeDiskette(data, filename, writeable)
+	return storage.MakeDiskette(data, filename, writeable, "")
 }
 
-// LoadBlockDisk returns a BlockDisk
-func LoadBlockDisk(filename string) (storage.BlockDisk, error) {
+// LoadBlockDisk returns a BlockDisk. An empty saveDirectory writes the changes
+// back to the image.
+func LoadBlockDisk(filename string, saveDirectory string) (storage.BlockDisk, error) {
 	filename = normalizeFilename(filename)
 
 	// Try to open as a file
@@ -156,15 +176,25 @@ func LoadBlockDisk(filename string) (storage.BlockDisk, error) {
 		readOnly = true
 		file, _ = os.OpenFile(filename, os.O_RDONLY, 0)
 	}
-	if file != nil {
-		return storage.NewBlockDiskFile(file, readOnly)
-	}
 
-	// Load as a resource
-	data, _, err := LoadResource(filename)
+	var blockDisk storage.BlockDisk
+	if file != nil {
+		blockDisk, err = storage.NewBlockDiskFile(file, readOnly)
+	} else {
+		// Load as a resource
+		var data []uint8
+		data, _, err = LoadResource(filename)
+		if err != nil {
+			return nil, err
+		}
+		blockDisk, err = storage.NewBlockDiskMemory(data)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	return storage.NewBlockDiskMemory(data)
+	// With a save directory, the changes go to an overlay and the image is
+	// left as it is, even the ones opened read only
+	return storage.NewBlockDiskOverlay(blockDisk,
+		overlayFilename(filename, saveDirectory))
 }

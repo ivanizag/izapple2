@@ -88,6 +88,7 @@ Portable emulator of an Apple II+ or //e. Written in Go.
   - Mouse support. No mouse capture needed
   - Adjustable speed
   - Fast disk mode to set max speed while using the disks
+  - Save directory with `-saveDir`: what the software writes goes to an overlay file per disk, keeping the images untouched and making writable the disks loaded from a compressed file, an URL or the embedded resources
   - Single file executable with embedded ROMs and DOS 3.3
   - Pause (thanks a2geek)
   - Passes the [A2AUDIT 1.06](https://github.com/zellyn/a2audit) tests as II+, //e, and //e Enhanced.

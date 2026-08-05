@@ -80,11 +80,18 @@ func configure(configuration *configuration) (*Apple2, error) {
 		return nil, err
 	}
 
+	// Where the cards that write to their disks keep the changes, unless they
+	// name a directory of their own
+	saveDir := configuration.get(confSaveDir)
+	if saveDir == "none" {
+		saveDir = ""
+	}
+
 	// Add cards on the slots
 	for i := range 8 {
 		cardConfig := configuration.get(fmt.Sprintf("s%v", i))
 		if cardConfig != "" {
-			_, err := setupCard(&a, i, cardConfig)
+			_, err := setupCard(&a, i, cardConfig, saveDir)
 			if err != nil {
 				return nil, err
 			}

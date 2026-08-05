@@ -33,6 +33,9 @@ type fileNib struct {
 	supportsWrite bool
 	filename      string
 	logicalOrder  *[16]int
+
+	// When set, the changes go to the overlay and the image is left alone
+	overlay *overlay
 }
 
 func isFileNib(data []uint8) bool {
@@ -78,26 +81,40 @@ func newFileDsk(data []uint8, filename string) *fileNib {
 }
 
 func (f *fileNib) saveTrack(track int) {
-	if f.supportsWrite {
-		file, err := os.OpenFile(f.filename, os.O_RDWR, 0)
-		if err != nil {
-			// We can't open the file for writing"
-			f.supportsWrite = false
-			fmt.Printf("Data can't be written for %v\n", f.filename)
-		}
+	if !f.supportsWrite {
+		return
+	}
 
-		data, err := nibDecodeTrack(f.track[track], f.logicalOrder)
-		if err != nil {
-			f.supportsWrite = false
-			fmt.Printf("Data written can't be decoded from nibbles\n")
-		}
+	data, err := nibDecodeTrack(f.track[track], f.logicalOrder)
+	if err != nil {
+		f.supportsWrite = false
+		fmt.Printf("Data written can't be decoded from nibbles\n")
+		return
+	}
 
-		offset := int64(track * bytesPerTrack)
-		_, err = file.WriteAt(data, offset)
-		if err != nil {
+	if f.overlay != nil {
+		// The changes are kept apart, the image loaded is not modified
+		if err := f.overlay.write(track, data); err != nil {
 			f.supportsWrite = false
-			fmt.Printf("Data can't be written\n")
+			fmt.Printf("Data can't be written to the overlay: %v\n", err)
 		}
+		return
+	}
+
+	file, err := os.OpenFile(f.filename, os.O_RDWR, 0)
+	if err != nil {
+		// We can't open the file for writing
+		f.supportsWrite = false
+		fmt.Printf("Data can't be written for %v\n", f.filename)
+		return
+	}
+	defer file.Close()
+
+	offset := int64(track * bytesPerTrack)
+	_, err = file.WriteAt(data, offset)
+	if err != nil {
+		f.supportsWrite = false
+		fmt.Printf("Data can't be written\n")
 	}
 }
 

@@ -7,6 +7,7 @@ This guide explains how to configure the izapple2 emulator using command line op
 - [Basic Usage](#basic-usage)
 - [Models](#models)
 - [Slot Configuration](#slot-configuration)
+- [Keeping the Disk Images Unmodified](#keeping-the-disk-images-unmodified)
 - [Simplified Filename Configuration](#simplified-filename-configuration)
 - [Reference](#reference)
 - [Examples](#examples)
@@ -114,6 +115,41 @@ The default model (`2enh`) configures slots as follows:
 - **Slot 5:** Empty
 - **Slot 6:** Disk II with DOS 3.3
 - **Slot 7:** Empty
+
+## Keeping the Disk Images Unmodified
+
+When the software saves, the emulator writes to the disk it was given, in the file
+it was loaded from. With `-saveDir` the changes go to an overlay file in that
+directory instead, and the image is only ever read:
+
+```bash
+izapple2 -saveDir ~/.izapple2/saves mygame.dsk
+```
+
+The overlay is named after the disk with `.ovl` added, and holds only the parts
+the software wrote, so it is small: a few kilobytes for a diskette, and for a
+32Mb hard disk only the blocks that were saved. Loading the same disk again puts
+them back on top of the image.
+
+Because the image is only read, this also makes writable the disks that could
+not be written at all: the ones inside a zip or a gzip, the ones loaded from an
+URL, and the ones embedded in the executable.
+
+An overlay carries a checksum of the image it was made from and is refused if it
+does not match, so it is never applied to a different disk that happens to have
+the same name.
+
+The cards that write to their disks, `diskii`, `smartport` and `prodos`, take a
+`savedir` parameter of their own. It defaults to the `-saveDir` of the machine,
+and `none` writes back to the image even when the machine has one:
+
+```bash
+# The hard disk keeps its saves apart, the diskette is written in place
+izapple2 -saveDir ~/saves -s7 smartport,image1=big.hdv -s6 diskii,disk1=work.dsk,savedir=none
+```
+
+WOZ and NIB diskettes are read only by nature and never write, with or without a
+save directory.
 
 ## Simplified Filename Configuration
 
@@ -254,6 +290,8 @@ Usage:  izapple2 [file]
     	slot 6 configuration. (default "diskii,disk1=<internal>/dos33.dsk")
   -s7 string
     	slot 7 configuration. (default "empty")
+  -saveDir string
+    	directory to keep what the software writes to the disks, leaving the images unmodified. 'none' to write back to the images (default "none")
   -showConfig
     	show the calculated configuration and exit
   -speed string
