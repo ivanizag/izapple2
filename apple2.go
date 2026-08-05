@@ -149,6 +149,14 @@ func (a *Apple2) ReleaseFastMode() {
 	atomic.AddInt32(&a.fastRequestsCounter, -1)
 }
 
+// IsFastModeRequested returns true while a device, like a disk drive reading a
+// track, asks to run faster than the configured speed. Start bypasses its
+// throttle when it is set; the frontends that pace the emulation themselves
+// with RunCycles have to give it more cycles per frame.
+func (a *Apple2) IsFastModeRequested() bool {
+	return atomic.LoadInt32(&a.fastRequestsCounter) > 0
+}
+
 func (a *Apple2) registerRemovableMediaDrive(d drive) {
 	a.removableMediaDrives = append(a.removableMediaDrives, d)
 }
