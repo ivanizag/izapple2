@@ -36,6 +36,7 @@ const (
 	confRomx       = "romx"
 	confMods       = "mods"
 	confTape       = "tape"
+	confSaveDir    = "saveDir"
 
 	confS0 = "s0"
 	confS1 = "s1"
@@ -232,6 +233,7 @@ func setupFlags(models *configurationModels, configuration *configuration) error
 		confRgb:        "emulate the RGB modes of the 80col RGB card for DHGR",
 		confRomx:       "emulate a RomX",
 		confTape:       "WAV file with a tape recording for the cassette input",
+		confSaveDir:    "directory to keep what the software writes to the disks, leaving the images unmodified. 'none' to write back to the images",
 		confS0:         "slot 0 configuration.",
 		confS1:         "slot 1 configuration.",
 		confS2:         "slot 2 configuration.",
@@ -306,7 +308,7 @@ func applyDiskAliases(filename string) string {
 // Returns true if the file is a diskette, false if it's a block device
 func classifyFile(filename string) bool {
 	filename = applyDiskAliases(filename)
-	_, err := LoadDiskette(filename)
+	_, err := LoadDiskette(filename, "")
 	return err == nil
 }
 
@@ -435,7 +437,7 @@ func expandSlotConfiguration(configString string) (string, error) {
 		}
 
 		// Try to load as diskette
-		_, err := LoadDiskette(filename)
+		_, err := LoadDiskette(filename, "")
 		if err == nil {
 			diskettes = append(diskettes, part) // Keep original part (may have quotes)
 		} else {

@@ -44,6 +44,11 @@ type drive interface {
 }
 
 type cardDisk2Drive struct {
+	// saveDirectory keeps the changes written to the diskette apart from the
+	// image, when it is not empty. It comes from the savedir parameter of the
+	// card and is kept here for the diskettes inserted later on.
+	saveDirectory string
+
 	name      string
 	diskette  storage.Diskette
 	phases    uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
@@ -60,10 +65,15 @@ func newCardDisk2Builder() *cardBuilder {
 			{"tracktracer", "Trace how the disk head moves between tracks", "false"},
 			{"fast", "Enable CPU burst when accessing the disk", "true"},
 			{"sectors13", "Use 13 sectors per track ROM", "false"},
+			saveDirParamSpec,
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardDisk2
 			c.sectors13 = paramsGetBool(params, "sectors13")
+
+			saveDirectory := paramsGetSaveDir(params)
+			c.drive[0].saveDirectory = saveDirectory
+			c.drive[1].saveDirectory = saveDirectory
 
 			disk1 := paramsGetPath(params, "disk1")
 			if disk1 != "" {
@@ -292,7 +302,7 @@ func (c *CardDisk2) processQ6Q7(in uint8) {
 }
 
 func (d *cardDisk2Drive) insertDiskette(name string) error {
-	diskette, err := LoadDiskette(name)
+	diskette, err := LoadDiskette(name, d.saveDirectory)
 	if err != nil {
 		return err
 	}

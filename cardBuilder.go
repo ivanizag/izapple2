@@ -26,6 +26,32 @@ type cardBuilder struct {
 
 const noCardName = "empty"
 
+const saveDirParamName = "savedir"
+
+/*
+saveDirParamSpec is declared by the cards that write to their disk images, so
+that the changes can be kept apart and the images left alone.
+
+Left empty, the card uses the save directory of the machine, the saveDir
+command line option. Set to 'none' it writes back to the image even when the
+machine has one.
+*/
+var saveDirParamSpec = paramSpec{
+	saveDirParamName,
+	"directory to keep what is written to the disks of this card, leaving the images unmodified. Defaults to the saveDir of the machine, 'none' to write back to the images",
+	"",
+}
+
+// paramsGetSaveDir returns the directory a card keeps the changes to its disks
+// in, empty when they go back to the images
+func paramsGetSaveDir(params map[string]string) string {
+	value := paramsGetPath(params, saveDirParamName)
+	if value == "none" {
+		return ""
+	}
+	return value
+}
+
 var commonParams = []paramSpec{
 	{"trace", "Enable debug messages", "false"},
 	{"tracess", "Trace softswitches", "false"},
@@ -91,7 +117,9 @@ func (cb *cardBuilder) fullDefaultParams() map[string]string {
 	return finalParams
 }
 
-func setupCard(a *Apple2, slot int, paramString string) (Card, error) {
+// setupCard builds the card of a slot. saveDir is the one of the machine, used
+// by the cards that write to their disk images and do not name one themselves.
+func setupCard(a *Apple2, slot int, paramString string, saveDir string) (Card, error) {
 	actualArgs := splitConfigurationString(paramString, ',')
 
 	cardName := actualArgs[0]
@@ -124,6 +152,12 @@ func setupCard(a *Apple2, slot int, paramString string) (Card, error) {
 		} else {
 			finalParams[actualArgName] = actualArgSides[1]
 		}
+	}
+
+	// A card that writes to its disks and does not name a save directory of its
+	// own uses the one of the machine
+	if value, ok := finalParams[saveDirParamName]; ok && value == "" {
+		finalParams[saveDirParamName] = saveDir
 	}
 
 	card, err := builder.buildFunc(finalParams)
