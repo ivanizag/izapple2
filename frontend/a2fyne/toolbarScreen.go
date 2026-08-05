@@ -28,7 +28,7 @@ func newToolbarScreen(s *state) *toolbarScreen {
 	tbs.ntsc = widget.NewButtonWithIcon("",
 		theme.NewThemedResource(resourceTelevisionClassicSvg),
 		func() {
-			tbs.setScreenMode(screen.ScreenModeNTSC)
+			tbs.setScreenMode(screen.ScreenModeColorScanlines)
 		})
 	tbs.ntscDisabled = widget.NewIcon(
 		theme.NewDisabledResource(resourceTelevisionClassicSvg))
@@ -36,7 +36,7 @@ func newToolbarScreen(s *state) *toolbarScreen {
 	tbs.plain = widget.NewButtonWithIcon("",
 		theme.NewThemedResource(resourceTelevisionSvg),
 		func() {
-			tbs.setScreenMode(screen.ScreenModePlain)
+			tbs.setScreenMode(screen.ScreenModeColor)
 		})
 	tbs.plainDisabled = widget.NewIcon(
 		theme.NewDisabledResource(resourceTelevisionSvg))
@@ -44,7 +44,7 @@ func newToolbarScreen(s *state) *toolbarScreen {
 	tbs.green = widget.NewButtonWithIcon("",
 		theme.NewThemedResource(resourceMonitorSvg),
 		func() {
-			tbs.setScreenMode(screen.ScreenModeGreen)
+			tbs.setScreenMode(screen.ScreenModeGreenScanlines)
 		})
 	tbs.greenDisabled = widget.NewIcon(
 		theme.NewDisabledResource(resourceMonitorSvg))
@@ -64,13 +64,13 @@ func newToolbarScreen(s *state) *toolbarScreen {
 
 func (tbs *toolbarScreen) setScreenMode(screenMode int) {
 	switch tbs.s.screenMode {
-	case screen.ScreenModeNTSC:
+	case screen.ScreenModeColorScanlines:
 		tbs.ntsc.Show()
 		tbs.ntscDisabled.Hide()
-	case screen.ScreenModePlain:
+	case screen.ScreenModeColor:
 		tbs.plain.Show()
 		tbs.plainDisabled.Hide()
-	case screen.ScreenModeGreen:
+	case screen.ScreenModeGreenScanlines:
 		tbs.green.Show()
 		tbs.greenDisabled.Hide()
 	}
@@ -78,13 +78,13 @@ func (tbs *toolbarScreen) setScreenMode(screenMode int) {
 	tbs.s.screenMode = screenMode
 
 	switch screenMode {
-	case screen.ScreenModeNTSC:
+	case screen.ScreenModeColorScanlines:
 		tbs.ntsc.Hide()
 		tbs.ntscDisabled.Show()
-	case screen.ScreenModePlain:
+	case screen.ScreenModeColor:
 		tbs.plain.Hide()
 		tbs.plainDisabled.Show()
-	case screen.ScreenModeGreen:
+	case screen.ScreenModeGreenScanlines:
 		tbs.green.Hide()
 		tbs.greenDisabled.Show()
 	}

@@ -97,7 +97,7 @@ func main() {
 
 		// Old:
 		case "png":
-			err := screen.SaveSnapshot(a.GetVideoSource(), screen.ScreenModeNTSC, "snapshot.png")
+			err := screen.SaveSnapshot(a.GetVideoSource(), screen.ScreenModeColorScanlines, "snapshot.png")
 			if err != nil {
 				fmt.Printf("Error saving screen: %v.\n.", err)
 			} else {
@@ -105,7 +105,7 @@ func main() {
 			}
 
 		case "pngm":
-			err := screen.SaveSnapshot(a.GetVideoSource(), screen.ScreenModePlain, "snapshot.png")
+			err := screen.SaveSnapshot(a.GetVideoSource(), screen.ScreenModeColor, "snapshot.png")
 			if err != nil {
 				fmt.Printf("Error saving screen: %v.\n.", err)
 			} else {
@@ -194,7 +194,7 @@ func SaveGif(a *izapple2.Apple2, filename string) error {
 		}
 
 		fmt.Printf("%v\n", time.Now())
-		img := screen.SnapshotPaletted(a.GetVideoSource(), screen.ScreenModeNTSC)
+		img := screen.SnapshotPaletted(a.GetVideoSource(), screen.ScreenModeColorScanlines)
 		animation.Image = append(animation.Image, img)
 		animation.Delay = append(animation.Delay, delayHundredsS)
 

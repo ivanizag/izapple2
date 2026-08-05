@@ -36,8 +36,9 @@ func grabTestScenario(vs VideoSource) *TestScenario {
 
 	knownModes := []int{
 		ScreenModeGreen,
-		ScreenModeNTSC,
-		ScreenModePlain,
+		ScreenModeColor,
+		ScreenModeGreenScanlines,
+		ScreenModeColorScanlines,
 	}
 
 	return &TestScenario{
@@ -144,10 +145,12 @@ func buildImageName(name string, screenMode int, altSet bool) string {
 	switch screenMode {
 	case ScreenModeGreen:
 		screenName = "green"
-	case ScreenModeNTSC:
-		screenName = "ntsc"
-	case ScreenModePlain:
-		screenName = "plain"
+	case ScreenModeColor:
+		screenName = "color"
+	case ScreenModeGreenScanlines:
+		screenName = "greenscanlines"
+	case ScreenModeColorScanlines:
+		screenName = "colorscanlines"
 	default:
 		screenName = "unknown"
 	}

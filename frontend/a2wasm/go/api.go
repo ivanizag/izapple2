@@ -84,11 +84,11 @@ func setupAPI(a *izapple2.Apple2, game *Game) {
 		mode := args[0].String()
 		switch mode {
 		case "ntsc":
-			game.screenMode = screen.ScreenModeNTSC
+			game.screenMode = screen.ScreenModeColorScanlines
 		case "plain":
-			game.screenMode = screen.ScreenModePlain
+			game.screenMode = screen.ScreenModeColor
 		case "green":
-			game.screenMode = screen.ScreenModeGreen
+			game.screenMode = screen.ScreenModeGreenScanlines
 		}
 		return nil
 	})
@@ -158,7 +158,7 @@ func loadDiskFromURLJS(this js.Value, args []js.Value) interface{} {
 
 	fmt.Printf("Loading disk %d from URL: %s\n", drive, url)
 
-	diskette, err := izapple2.LoadDiskette(url)
+	diskette, err := izapple2.LoadDiskette(url, "")
 	if err != nil {
 		return fmt.Sprintf("Error loading disk from URL: %v", err)
 	}

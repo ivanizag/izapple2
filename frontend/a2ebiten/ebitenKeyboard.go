@@ -29,7 +29,7 @@ func newEbitenKeyBoard(a *izapple2.Apple2) *ebitenKeyboard {
 	k.a = a
 	k.keyChannel = izapple2.NewKeyboardChannel(a)
 
-	k.screenMode = screen.ScreenModeNTSC
+	k.screenMode = screen.ScreenModeColorScanlines
 	return &k
 }
 
@@ -149,7 +149,7 @@ func (k *ebitenKeyboard) putKey(key ebiten.Key) {
 		if ctrl {
 			screen.AddScenario(k.a.GetVideoSource(), "../../screen/test_resources/")
 		} else {
-			err := screen.SaveSnapshot(k.a.GetVideoSource(), screen.ScreenModeNTSC, "snapshot.png")
+			err := screen.SaveSnapshot(k.a.GetVideoSource(), screen.ScreenModeColorScanlines, "snapshot.png")
 			if err != nil {
 				fmt.Printf("Error saving snapshoot: %v.\n.", err)
 			} else {
