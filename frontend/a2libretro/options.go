@@ -27,12 +27,9 @@ const (
 )
 
 // The strings handed to the frontend have to outlive the call, so they are
-// allocated once and never freed
+// allocated once and never freed. What the core is, its name and the extensions
+// it takes, is answered in C by shim.c.
 var (
-	cLibraryName     = C.CString("izapple2")
-	cLibraryVersion  = C.CString("2.0")
-	cValidExtensions = C.CString("dsk|do|po|nib|woz|2mg|hdv|wav|zip|gz|m3u")
-
 	cKeyModel  = C.CString("izapple2_model")
 	cKeyScreen = C.CString("izapple2_screen")
 )

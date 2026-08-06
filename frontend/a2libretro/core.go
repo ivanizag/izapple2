@@ -97,19 +97,11 @@ func (c *core) close() {
 	c.joysticks = nil
 }
 
-//export retro_api_version
-func retro_api_version() C.unsigned {
-	return C.RETRO_API_VERSION
-}
-
-//export retro_get_system_info
-func retro_get_system_info(info *C.struct_retro_system_info) {
-	info.library_name = cLibraryName
-	info.library_version = cLibraryVersion
-	info.valid_extensions = cValidExtensions
-	info.need_fullpath = true
-	info.block_extract = false
-}
+/*
+retro_api_version and retro_get_system_info are in shim.c, in C. The frontend
+asks them on its main thread while it is loading the core, and an exported Go
+function waits there for the Go runtime to finish starting, which deadlocks.
+*/
 
 //export retro_get_system_av_info
 func retro_get_system_av_info(info *C.struct_retro_system_av_info) {
