@@ -24,13 +24,29 @@ func newKeyboard(a *izapple2.Apple2) *keyboard {
 	}
 }
 
-// registerKeyboardCallback asks the frontend to report the key events. The
-// callback is a C function that forwards to izapple2KeyboardEvent.
+/*
+registerKeyboardCallback asks the frontend to report the key events. The
+callback is a C function that forwards to izapple2KeyboardEvent.
+
+It is given as soon as the environment is set, so that the frontend knows this
+is a machine with a keyboard before it loads anything, which is what it looks at
+to turn its game focus on by itself. The C side drops the keys until
+setKeyboardReady opens it, so nothing reaches Go before there is a machine.
+*/
 func registerKeyboardCallback() {
 	callback := C.struct_retro_keyboard_callback{
 		callback: C.retro_keyboard_event_t(C.shim_keyboard_callback),
 	}
 	C.shim_environment(C.RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, unsafe.Pointer(&callback))
+}
+
+// setKeyboardReady lets the key events reach the machine, or stops them
+func setKeyboardReady(ready bool) {
+	value := C.int(0)
+	if ready {
+		value = 1
+	}
+	C.shim_set_keyboard_ready(value)
 }
 
 //export izapple2KeyboardEvent
