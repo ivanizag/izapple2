@@ -39,14 +39,17 @@ func MakeDiskette(data []byte, filename string, writeable bool, overlayFilename 
 	}
 
 	if isFileDsk(data) {
-		// The checksum is of the image as it was loaded, before anything
-		// saved before is put back on top of it
-		overlay, err := openOverlay(overlayFilename, bytesPerTrack, numberOfTracks,
-			checksumOfBytes(data))
-		if err != nil {
-			return nil, err
-		}
-		if overlay != nil {
+		var overlay *overlay
+		if overlayFilename != "" {
+			// Only now is it worth identifying the image, which means reading
+			// all of it. The checksum is of the image as it was loaded, before
+			// anything saved before is put back on top of it.
+			var err error
+			overlay, err = openOverlay(overlayFilename, bytesPerTrack, numberOfTracks,
+				checksumOfBytes(data))
+			if err != nil {
+				return nil, err
+			}
 			if err := overlay.applyTo(data); err != nil {
 				return nil, err
 			}
