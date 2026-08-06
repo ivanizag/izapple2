@@ -12,6 +12,7 @@ how it is put together.
 
 ```bash
 make                 # izapple2_libretro.{so,dylib,dll} for the host
+make universal       # macOS, one dylib with both architectures inside
 ```
 
 Or directly:

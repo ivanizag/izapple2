@@ -12,6 +12,10 @@ If you just want to run Apple II software on your computer, the regular
 `izapple2sdl` executable is easier and does more. Use the core if you already
 live in RetroArch.
 
+On a Mac, [Trying it on a Mac from scratch](#trying-it-on-a-mac-from-scratch)
+is the whole thing end to end, from installing RetroArch to checking that it
+works.
+
 ## Building
 
 The core is a shared library built with cgo, so besides Go you need a C
@@ -32,10 +36,22 @@ This produces `izapple2_libretro.so`.
 ``` terminal
 git clone https://github.com/ivanizag/izapple2
 cd izapple2/frontend/a2libretro
-make
+make universal
 ```
 
-This produces `izapple2_libretro.dylib`.
+This produces `izapple2_libretro.dylib` for both architectures of the Mac.
+
+Use `make universal` and not plain `make` here. A frontend can only load a core
+of its own architecture, and the RetroArch that Homebrew installs is an Intel
+build: on an Apple Silicon Mac it runs under Rosetta and refuses a native arm64
+core, with no message that says why. A core with both inside works either way.
+
+To see what you have:
+
+``` terminal
+lipo -archs /Applications/RetroArch.app/Contents/MacOS/RetroArch
+lipo -archs izapple2_libretro.dylib
+```
 
 ### Windows
 
@@ -96,6 +112,59 @@ Anything that loads libretro cores works: Kodi's game add-ons, Emulation
 Station DE, Provenance, and the rest. Nothing in the core is specific to
 RetroArch.
 
+## Trying it on a Mac from scratch
+
+The whole thing end to end, to see the core running and check that it works.
+
+Install RetroArch. Either cask will do, `retroarch` is the OpenGL build and
+`retroarch-metal` the Metal one, and the core does not care: it hands over a
+finished picture and never touches the graphics API.
+
+``` terminal
+brew install --cask retroarch
+```
+
+Build the core for both architectures and put it where RetroArch looks, together
+with the file that names it:
+
+``` terminal
+git clone https://github.com/ivanizag/izapple2
+cd izapple2/frontend/a2libretro
+make universal
+
+mkdir -p ~/Library/Application\ Support/RetroArch/cores
+mkdir -p ~/Library/Application\ Support/RetroArch/info
+cp izapple2_libretro.dylib ~/Library/Application\ Support/RetroArch/cores/
+cp izapple2_libretro.info ~/Library/Application\ Support/RetroArch/info/
+```
+
+Open RetroArch and go through these. Each one checks something different:
+
+1. **Load Core**. "Apple II (izapple2)" is in the list, which means the info
+   file was found. Pick it.
+2. **Start Core**. The Apple //e boots DOS 3.3 and lands on the `]` prompt after
+   a couple of seconds. The picture, the disk emulation and the frame timing are
+   all working.
+3. Press Scroll Lock to turn on **Game Focus**, then type
+   `PRINT 2+2` and Return. It answers `4`. The keyboard is reaching the machine.
+4. *Settings > Video > Scaling*, set **Aspect Ratio** to `Core Provided`. The
+   picture is 4:3 and the text is not stretched.
+5. *Quick Menu > Core Options*, set **Monitor** to `green`. The screen turns
+   green phosphor at once, without a reset.
+6. Type `CATALOG` and Return. The files of the DOS 3.3 diskette are listed, so
+   the drive is being read. Press a key when it pauses to see the rest.
+7. Type `SAVE HELLO` and Return, then look in the save directory, which
+   *Settings > Directory > Saves* shows and is `~/Documents/RetroArch/saves` by
+   default on macOS. There is a `dos33.dsk.ovl` of a few kilobytes: the save
+   went to an overlay and the DOS 3.3 inside the core was not touched.
+8. **Load Content** and pick a `.dsk` or `.woz` game. It boots.
+9. For a game on several diskettes, load an `.m3u` listing them and look at
+   *Quick Menu > Disk Control*. The diskettes are there by name, and ejecting,
+   selecting another and inserting swaps it.
+
+If step 1 or 2 fails, the core is almost certainly the wrong architecture. See
+[Building on macOS](#macos) and check both with `lipo -archs`.
+
 ## Running software
 
 ### With no disk
@@ -148,8 +217,9 @@ games ask for.
 
 Games that save write to the disk, so the core keeps your collection out of it.
 The changes never reach the image you loaded: they go to an overlay file in the
-save directory of the frontend, shown in *Settings > Directory > Saves*, named
-after the disk with `.ovl` added.
+save directory of the frontend, shown in *Settings > Directory > Saves* and
+`~/Documents/RetroArch/saves` by default on macOS, named after the disk with
+`.ovl` added.
 
 An overlay only holds the parts the game actually wrote, not a copy of the
 disk, so it is small: a few kilobytes for a diskette, and for a 32 Mb hard disk
@@ -237,9 +307,14 @@ thing.
 | Right alt or option | Closed apple |
 
 Reset is the frontend's own Reset, in *Quick Menu > Restart*, or whatever you
-bound the reset hotkey to. Note that RetroArch grabs some keys for its own
-hotkeys, F1 by default for the menu; rebind them in
-*Settings > Input > Hotkeys* if they get in the way.
+bound the reset hotkey to.
+
+RetroArch keeps some keys for its own hotkeys, F1 for the menu among them, and
+they never reach the machine. That is a nuisance on a computer, so turn on
+**Game Focus**, Scroll Lock by default and bound in
+*Settings > Input > Hotkeys*: with it on every key goes to the Apple II and only
+the Game Focus key itself is left to the frontend. Rebinding the hotkeys one by
+one works too, but Game Focus is the switch made for this.
 
 ### Gamepad
 
