@@ -1,5 +1,37 @@
+#include <string.h>
+
 #include "shim.h"
 #include "_cgo_export.h"
+
+/*
+These two are answered in C, without entering Go.
+
+Every function exported from Go begins by waiting for the Go runtime to finish
+starting, and the frontend asks a core what it is on its main thread, on the way
+to loading it, which is the same thread the runtime needs to finish starting on.
+Answering from Go there deadlocks the frontend for good: RetroArch sits in
+_cgo_wait_runtime_init_done inside libretro_get_system_info and never returns.
+
+They are constants anyway, so there is nothing to ask Go for. Keep them in step
+with izapple2_libretro.info.
+*/
+
+unsigned retro_api_version(void)
+{
+   return RETRO_API_VERSION;
+}
+
+void retro_get_system_info(struct retro_system_info *info)
+{
+   memset(info, 0, sizeof(*info));
+   info->library_name     = "izapple2";
+   info->library_version  = "2.0";
+   info->valid_extensions = "dsk|do|po|nib|woz|2mg|hdv|wav|zip|gz|m3u";
+   /* The core opens the disks by name, it is not given their contents */
+   info->need_fullpath    = true;
+   /* The frontend unpacks the archives it knows, the core reads the rest */
+   info->block_extract    = false;
+}
 
 static retro_log_printf_t log_cb;
 
