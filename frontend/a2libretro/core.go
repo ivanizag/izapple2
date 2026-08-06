@@ -132,12 +132,6 @@ func retro_set_environment(cb C.retro_environment_t) {
 	noGame := C.bool(true)
 	C.shim_environment(C.RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, unsafe.Pointer(&noGame))
 
-	// Registered here and not when the content is loaded so that the frontend
-	// knows this is a machine with a keyboard before it starts anything. That
-	// is what RetroArch looks at to turn its game focus on by itself, which is
-	// what keeps its hotkeys from eating the keys meant for the Apple II.
-	registerKeyboardCallback()
-
 	setVariables()
 }
 
@@ -216,6 +210,19 @@ func izapple2LoadGame(info *C.struct_retro_game_info) C.bool {
 	if !theCore.build() {
 		return false
 	}
+
+	/*
+		The keyboard callback is given to the frontend only once there is a
+		machine to receive the keys, and not in retro_set_environment. Handing
+		it over earlier lets the frontend call into Go from its own threads
+		while the core is still being loaded, and the Go runtime does not
+		survive that: it dies with a morestack on g0, running on a stack it has
+		no record of.
+
+		The cost is that the game focus of RetroArch set to Detect does not see
+		the keyboard in time. Set it to On instead.
+	*/
+	registerKeyboardCallback()
 
 	registerDiskControl()
 	setInputDescriptors()
