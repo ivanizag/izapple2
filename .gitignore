@@ -12,10 +12,10 @@ frontend/*/*.zip
 frontend/*/images
 frontend/a2fyne/a2fyne
 frontend/headless/headless
-frontend/a2libretro/izapple2_libretro.so
-frontend/a2libretro/izapple2_libretro.dylib
-frontend/a2libretro/izapple2_libretro.dll
-frontend/a2libretro/izapple2_libretro.h
+frontend/a2libretro/izapple2_libretro*.so
+frontend/a2libretro/izapple2_libretro*.dylib
+frontend/a2libretro/izapple2_libretro*.dll
+frontend/a2libretro/izapple2_libretro*.h
 frontend/*/snapshot.gif
 frontend/*/snapshot.png
 izapple2headless
