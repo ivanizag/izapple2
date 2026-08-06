@@ -12,9 +12,9 @@ If you just want to run Apple II software on your computer, the regular
 `izapple2sdl` executable is easier and does more. Use the core if you already
 live in RetroArch.
 
-On a Mac, [Trying it on a Mac from scratch](#trying-it-on-a-mac-from-scratch)
-is the whole thing end to end, from installing RetroArch to checking that it
-works.
+On a Mac, [libretro_macos.md](libretro_macos.md) is the whole thing end to end,
+from installing RetroArch to checking that it works. Follow that instead, there
+are two traps on macOS that it walks you around.
 
 ## Building
 
@@ -39,19 +39,14 @@ cd izapple2/frontend/a2libretro
 make universal
 ```
 
-This produces `izapple2_libretro.dylib` for both architectures of the Mac.
+This produces `izapple2_libretro.dylib` for both architectures of the Mac, so
+that it loads in an Intel frontend and in an Apple Silicon one.
 
-Use `make universal` and not plain `make` here. A frontend can only load a core
-of its own architecture, and the RetroArch that Homebrew installs is an Intel
-build: on an Apple Silicon Mac it runs under Rosetta and refuses a native arm64
-core, with no message that says why. A core with both inside works either way.
-
-To see what you have:
-
-``` terminal
-lipo -archs /Applications/RetroArch.app/Contents/MacOS/RetroArch
-lipo -archs izapple2_libretro.dylib
-```
+A frontend can only load a core of its own architecture, and the frontend has to
+be running natively: a Go core cannot run inside a frontend translated by
+Rosetta, whichever slice it loads. On macOS that rules out the `retroarch` cask
+of Homebrew, which is an Intel build. See
+[libretro_macos.md](libretro_macos.md).
 
 ### Windows
 
@@ -111,59 +106,6 @@ the target, setting `CC`, `GOOS` and `GOARCH`.
 Anything that loads libretro cores works: Kodi's game add-ons, Emulation
 Station DE, Provenance, and the rest. Nothing in the core is specific to
 RetroArch.
-
-## Trying it on a Mac from scratch
-
-The whole thing end to end, to see the core running and check that it works.
-
-Install RetroArch. Either cask will do, `retroarch` is the OpenGL build and
-`retroarch-metal` the Metal one, and the core does not care: it hands over a
-finished picture and never touches the graphics API.
-
-``` terminal
-brew install --cask retroarch
-```
-
-Build the core for both architectures and put it where RetroArch looks, together
-with the file that names it:
-
-``` terminal
-git clone https://github.com/ivanizag/izapple2
-cd izapple2/frontend/a2libretro
-make universal
-
-mkdir -p ~/Library/Application\ Support/RetroArch/cores
-mkdir -p ~/Library/Application\ Support/RetroArch/info
-cp izapple2_libretro.dylib ~/Library/Application\ Support/RetroArch/cores/
-cp izapple2_libretro.info ~/Library/Application\ Support/RetroArch/info/
-```
-
-Open RetroArch and go through these. Each one checks something different:
-
-1. **Load Core**. "Apple II (izapple2)" is in the list, which means the info
-   file was found. Pick it.
-2. **Start Core**. The Apple //e boots DOS 3.3 and lands on the `]` prompt after
-   a couple of seconds. The picture, the disk emulation and the frame timing are
-   all working.
-3. Press Scroll Lock to turn on **Game Focus**, then type
-   `PRINT 2+2` and Return. It answers `4`. The keyboard is reaching the machine.
-4. *Settings > Video > Scaling*, set **Aspect Ratio** to `Core Provided`. The
-   picture is 4:3 and the text is not stretched.
-5. *Quick Menu > Core Options*, set **Monitor** to `green`. The screen turns
-   green phosphor at once, without a reset.
-6. Type `CATALOG` and Return. The files of the DOS 3.3 diskette are listed, so
-   the drive is being read. Press a key when it pauses to see the rest.
-7. Type `SAVE HELLO` and Return, then look in the save directory, which
-   *Settings > Directory > Saves* shows and is `~/Documents/RetroArch/saves` by
-   default on macOS. There is a `dos33.dsk.ovl` of a few kilobytes: the save
-   went to an overlay and the DOS 3.3 inside the core was not touched.
-8. **Load Content** and pick a `.dsk` or `.woz` game. It boots.
-9. For a game on several diskettes, load an `.m3u` listing them and look at
-   *Quick Menu > Disk Control*. The diskettes are there by name, and ejecting,
-   selecting another and inserting swaps it.
-
-If step 1 or 2 fails, the core is almost certainly the wrong architecture. See
-[Building on macOS](#macos) and check both with `lipo -archs`.
 
 ## Running software
 
@@ -309,12 +251,24 @@ thing.
 Reset is the frontend's own Reset, in *Quick Menu > Restart*, or whatever you
 bound the reset hotkey to.
 
-RetroArch keeps some keys for its own hotkeys, F1 for the menu among them, and
-they never reach the machine. That is a nuisance on a computer, so turn on
-**Game Focus**, Scroll Lock by default and bound in
-*Settings > Input > Hotkeys*: with it on every key goes to the Apple II and only
-the Game Focus key itself is left to the frontend. Rebinding the hotkeys one by
-one works too, but Game Focus is the switch made for this.
+RetroArch keeps a good number of keys for its own hotkeys, and they never reach
+the machine: `F1` opens the menu and `p` pauses the emulator instead of typing a
+P. **Game Focus** is the switch for that: with it on, every key goes to the
+Apple II and only the key that toggles it is left to the frontend.
+
+Set it up in this order, the second step is easy to regret on its own:
+
+1. *Settings > Input > Hotkeys > Game Focus (Toggle)* and bind it to a key you
+   have. It comes bound to Scroll Lock, which no Mac keyboard has, so on a Mac
+   you can turn Game Focus on and have nothing left that turns it off. Avoid the
+   alt and option keys, the core uses those for the open and closed apple.
+2. *Settings > Input > Auto Enable 'Game Focus' Mode* and set it to `Detect`.
+   The core tells the frontend that it has a keyboard, so Game Focus comes on by
+   itself while the emulator runs and stays off for the game cores.
+
+If you are stuck in Game Focus with no working toggle, quit the frontend the way
+the desktop does it, ⌘Q or the menu bar on macOS, which Game Focus does not
+swallow.
 
 ### Gamepad
 
@@ -378,6 +332,15 @@ file is not in the info directory.
 **The core fails to load.** Almost always an architecture mismatch, a core
 built for a different machine than the one running it. Rebuild on the target,
 or cross compile with the right `CC`, `GOOS` and `GOARCH`.
+
+**The frontend dies as soon as the core loads**, with a `SIGSEGV` in
+`runtime.(*mheap).allocNeedsZero`. The frontend is being translated, Rosetta on
+a Mac, and the Go runtime of the core cannot allocate in a process like that. A
+core for both architectures does not help, the frontend itself has to run
+natively. See [libretro_macos.md](libretro_macos.md).
+
+**Some keys do nothing, or `p` pauses the emulator.** Those are hotkeys of the
+frontend, turn on Game Focus, see [Keyboard](#keyboard).
 
 **No sound during loading.** Expected while the disk is being read at speed,
 see [Speed](#speed) above.

@@ -189,7 +189,9 @@ Line:
 ### RetroArch and other libretro frontends
 
 izapple2 can also be built as a libretro core, to run inside RetroArch, Lakka,
-Batocera, RetroPie and the rest. See [doc/libretro.md](doc/libretro.md) for how
+Batocera, RetroPie and the rest. On a Mac,
+[doc/libretro_macos.md](doc/libretro_macos.md) walks through the whole thing
+from installing RetroArch. See [doc/libretro.md](doc/libretro.md) for how
 to build it, install it and what it supports.
 
 ### Command line options
