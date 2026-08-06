@@ -106,8 +106,29 @@ Four entry points, `retro_load_game`, `retro_load_game_special`,
 `retro_unserialize` and `retro_cheat_set`, take a const pointer. cgo can not
 put const in the declarations it generates for exported Go functions, and they
 would clash with the ones in `libretro.h`, so those are exported under another
-name and wrapped in `shim.c`. The other twenty one are exported straight from
-`core.go`.
+name and wrapped in `shim.c`.
+
+Two more are in `shim.c` because they must not reach Go at all.
+`retro_api_version` and `retro_get_system_info` are asked on the main thread of
+the frontend on the way to loading the core, and every function exported from Go
+begins by waiting for the Go runtime to finish starting, which finishes on that
+same thread. Answering them from Go deadlocks the frontend for good. They are
+constants, so they are answered in C.
+
+### When the frontend may call into Go
+
+The rule that came out of the two deadlocks: **the frontend must not reach Go
+before there is a machine.** Everything it can call at any moment of its
+choosing is either pure C or gated in C.
+
+The keyboard callback is the interesting one. It is handed over in
+`retro_set_environment`, early, because that is what tells RetroArch this is a
+machine with a keyboard and lets its game focus come on by itself. But the
+frontend then holds a pointer it may call from any thread while the core is
+still loading, and going into Go there kills the process with a
+`morestack on g0`. So `shim_keyboard_callback` drops the keys until
+`shim_set_keyboard_ready` opens it, which `retro_load_game` does once the
+machine is built and `core.close` closes again.
 
 `libretro.h` is vendored from
 [libretro-common](https://github.com/libretro/libretro-common).

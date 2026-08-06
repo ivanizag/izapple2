@@ -1,3 +1,4 @@
+#include <stdatomic.h>
 #include <string.h>
 
 #include "shim.h"
@@ -89,8 +90,31 @@ int16_t shim_input_state(unsigned port, unsigned device, unsigned index, unsigne
    return input_state_cb(port, device, index, id);
 }
 
+/*
+The frontend holds this callback from the moment it sets the environment, so it
+can call it whenever it likes and from whichever thread it likes, including
+while the core is still being loaded. Going into Go at such a moment kills the
+process: the runtime ends up running on a stack it has no record of and dies
+with a morestack on g0.
+
+So nothing reaches Go until keyboard_ready is set, which happens once there is a
+machine to receive the keys. Up to then the keys are dropped, and there is
+nothing they could have been typed into anyway. The flag is read from whatever
+thread the frontend calls on and written from the one loading the content, so it
+is atomic.
+*/
+static atomic_int keyboard_ready;
+
+void shim_set_keyboard_ready(int ready)
+{
+   atomic_store_explicit(&keyboard_ready, ready, memory_order_release);
+}
+
 void shim_keyboard_callback(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers)
 {
+   if (!atomic_load_explicit(&keyboard_ready, memory_order_acquire))
+      return;
+
    /* izapple2KeyboardEvent is exported by keyboard.go */
    izapple2KeyboardEvent(down ? 1 : 0, keycode, character, key_modifiers);
 }

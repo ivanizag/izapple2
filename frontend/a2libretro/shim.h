@@ -26,8 +26,14 @@ size_t shim_audio_sample_batch(const int16_t *data, size_t frames);
 void shim_input_poll(void);
 int16_t shim_input_state(unsigned port, unsigned device, unsigned index, unsigned id);
 
-/* The keyboard callback the core registers with the frontend */
+/*
+The keyboard callback the core registers with the frontend, and the switch that
+lets it through to Go. The frontend is given the callback as soon as it sets the
+environment, but it must not reach Go until there is a machine to receive the
+keys, so it is opened when the content is loaded and closed when it is dropped.
+*/
 void shim_keyboard_callback(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
+void shim_set_keyboard_ready(int ready);
 
 /* Offer the disk control interface, extended if the frontend knows it */
 bool shim_set_disk_control_interface(void);
