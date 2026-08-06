@@ -262,9 +262,11 @@ Set it up in this order, the second step is easy to regret on its own:
    have. It comes bound to Scroll Lock, which no Mac keyboard has, so on a Mac
    you can turn Game Focus on and have nothing left that turns it off. Avoid the
    alt and option keys, the core uses those for the open and closed apple.
-2. *Settings > Input > Auto Enable 'Game Focus' Mode* and set it to `Detect`.
-   The core tells the frontend that it has a keyboard, so Game Focus comes on by
-   itself while the emulator runs and stays off for the game cores.
+2. *Settings > Input > Auto Enable 'Game Focus' Mode* and set it to `On`, so
+   that Game Focus comes on by itself and you do not have to remember. `Detect`
+   does not work with this core: it looks for the keyboard before the content is
+   loaded, and the core does not hand the frontend its keyboard callback until
+   there is a machine to receive the keys.
 
 If you are stuck in Game Focus with no working toggle, quit the frontend the way
 the desktop does it, ⌘Q or the menu bar on macOS, which Game Focus does not

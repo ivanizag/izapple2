@@ -81,9 +81,12 @@ turn it off again.
 1. *Settings > Input > Hotkeys > Game Focus (Toggle)*, press it and then press
    `F12`, or anything else free. Do not use the alt or option keys, the core
    uses those for the open and closed apple.
-2. *Settings > Input > Auto Enable 'Game Focus' Mode* and set it to `Detect`.
-   The core tells the frontend that it has a keyboard, so Game Focus comes on by
-   itself whenever the emulator is running, and stays off for your game cores.
+2. *Settings > Input > Auto Enable 'Game Focus' Mode* and set it to `On`, so
+   that Game Focus comes on by itself and you do not have to remember it. Note
+   that it then applies to your other cores too, where F12 turns it off.
+   `Detect` does not work with this core: it looks for the keyboard before the
+   content is loaded, and the core does not hand over its keyboard callback
+   until there is a machine to receive the keys.
 
 The menu search, the magnifier or `/`, finds both if you type `focus`.
 
