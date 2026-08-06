@@ -4,6 +4,7 @@ A [libretro](https://www.libretro.com/) core, to run izapple2 inside RetroArch
 and the other libretro frontends.
 
 **If you want to use the core, read [doc/libretro.md](../../doc/libretro.md)**,
+or [doc/libretro_macos.md](../../doc/libretro_macos.md) on a Mac,
 which covers building it for each platform, installing it in the frontends,
 loading disks, the controls and what it supports. What follows are the notes on
 how it is put together.

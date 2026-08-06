@@ -140,6 +140,12 @@ func retro_set_environment(cb C.retro_environment_t) {
 	noGame := C.bool(true)
 	C.shim_environment(C.RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, unsafe.Pointer(&noGame))
 
+	// Registered here and not when the content is loaded so that the frontend
+	// knows this is a machine with a keyboard before it starts anything. That
+	// is what RetroArch looks at to turn its game focus on by itself, which is
+	// what keeps its hotkeys from eating the keys meant for the Apple II.
+	registerKeyboardCallback()
+
 	setVariables()
 }
 
@@ -219,7 +225,6 @@ func izapple2LoadGame(info *C.struct_retro_game_info) C.bool {
 		return false
 	}
 
-	registerKeyboardCallback()
 	registerDiskControl()
 	setInputDescriptors()
 	return true
