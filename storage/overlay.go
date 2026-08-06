@@ -44,22 +44,19 @@ type overlay struct {
 
 	// present has a bit set for each unit stored in the overlay
 	present []byte
-
-	// file is kept open, opened on the first write. There is one overlay per
-	// disk in use, so the handles are few.
-	file *os.File
 }
 
 /*
 openOverlay returns the overlay kept in filename for a disk of the given shape
-and content. An empty filename means no overlay. The file is not created until
-something is written to it, and an overlay of another disk is refused.
+and content. The file is not created until something is written to it, and an
+overlay of another disk is refused.
+
+The name says open because the overlay is read here, but nothing is left open:
+each read and write opens the file and closes it. The callers only ask for an
+overlay when there is a filename for it, and identifying a disk costs a read of
+the whole image, so nothing of this happens without one.
 */
 func openOverlay(filename string, unitSize int, units int, checksum uint64) (*overlay, error) {
-	if filename == "" {
-		return nil, nil
-	}
-
 	o := &overlay{
 		filename: filename,
 		unitSize: unitSize,
@@ -113,58 +110,85 @@ func (o *overlay) has(unit int) bool {
 	return o.present[unit/8]&(1<<uint(unit%8)) != 0
 }
 
+// isEmpty returns whether nothing has been stored in the overlay yet, in which
+// case there is not even a file
+func (o *overlay) isEmpty() bool {
+	for _, b := range o.present {
+		if b != 0 {
+			return false
+		}
+	}
+	return true
+}
+
 // read fills the buffer with a unit stored in the overlay
 func (o *overlay) read(unit int, buffer []uint8) error {
-	file, err := o.open()
+	file, err := os.Open(o.filename)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
+
+	return o.readUnit(file, unit, buffer)
+}
+
+func (o *overlay) readUnit(file *os.File, unit int, buffer []uint8) error {
 	if _, err := file.ReadAt(buffer, o.unitOffset(unit)); err != nil {
-		return fmt.Errorf("can't read from the overlay %s: %w", o.filename, err)
+		return fmt.Errorf("can't read the unit %v of the overlay %s: %w",
+			unit, o.filename, err)
 	}
 	return nil
 }
 
 // write stores a unit, creating the overlay the first time
 func (o *overlay) write(unit int, data []uint8) error {
-	file, err := o.open()
+	file, err := o.openForWriting()
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	if _, err := file.WriteAt(data, o.unitOffset(unit)); err != nil {
 		return err
 	}
 
+	// Only the byte of the bitmap that changed goes back to the file
 	o.present[unit/8] |= 1 << uint(unit%8)
-	if _, err := file.WriteAt(o.present[unit/8:unit/8+1], overlayBitmapOffset+int64(unit/8)); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = file.WriteAt(o.present[unit/8:unit/8+1], overlayBitmapOffset+int64(unit/8))
+	return err
 }
 
 // applyTo replaces in the image the units kept in the overlay. It is for the
 // disks read whole into memory, the diskettes.
 func (o *overlay) applyTo(data []uint8) error {
+	if o.isEmpty() {
+		return nil
+	}
+
+	file, err := os.Open(o.filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
 	for unit := range o.units {
 		if !o.has(unit) {
 			continue
 		}
 		destination := data[unit*o.unitSize : (unit+1)*o.unitSize]
-		if err := o.read(unit, destination); err != nil {
+		if err := o.readUnit(file, unit, destination); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// open returns the overlay file, creating it with its header the first time
-func (o *overlay) open() (*os.File, error) {
-	if o.file != nil {
-		return o.file, nil
-	}
-
+/*
+openForWriting returns the overlay file for the caller to write to and close,
+writing the header the first time. The header identifies the disk the overlay
+belongs to, so openOverlay can refuse it for another one.
+*/
+func (o *overlay) openForWriting() (*os.File, error) {
 	_, err := os.Stat(o.filename)
 	isNew := os.IsNotExist(err)
 
@@ -189,7 +213,6 @@ func (o *overlay) open() (*os.File, error) {
 		}
 	}
 
-	o.file = file
 	return file, nil
 }
 
