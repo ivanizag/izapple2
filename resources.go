@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"embed"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -110,24 +111,53 @@ func LoadResource(filename string) ([]uint8, bool, error) {
 		if err != nil {
 			return nil, false, err
 		}
-		for _, zf := range z.File {
-			f, err := zf.Open()
-			if err != nil {
-				return nil, false, err
-			}
-			defer f.Close()
-			bytes, err := io.ReadAll(f)
-			if err != nil {
-				return nil, false, err
-			}
-			if storage.IsDiskette(bytes) {
-				data = bytes
-				break
-			}
+		data, err = pickFromZip(z)
+		if err != nil {
+			return nil, false, err
 		}
 	}
 
 	return data, writeable, nil
+}
+
+/*
+pickFromZip returns the disk image of a zip file.
+
+A diskette is taken as soon as it is recognised by its contents, which is what
+tells a disk image from the readme or the box scan that often travels with it.
+Nothing recognises a hard disk by its contents, they are plain blocks, so with
+no diskette inside the biggest file is taken: on the zips of a hard disk image
+that is the image.
+*/
+func pickFromZip(z *zip.Reader) ([]uint8, error) {
+	var biggest []uint8
+	for _, zf := range z.File {
+		if zf.FileInfo().IsDir() {
+			continue
+		}
+
+		f, err := zf.Open()
+		if err != nil {
+			return nil, err
+		}
+		content, err := io.ReadAll(f)
+		f.Close()
+		if err != nil {
+			return nil, err
+		}
+
+		if storage.IsDiskette(content) {
+			return content, nil
+		}
+		if len(content) > len(biggest) {
+			biggest = content
+		}
+	}
+
+	if biggest == nil {
+		return nil, errors.New("the zip file is empty")
+	}
+	return biggest, nil
 }
 
 /*
