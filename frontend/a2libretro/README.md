@@ -52,7 +52,8 @@ Kept out on purpose, to keep the core small:
   generated as 560x192, four pixels more with the NTSC color filter, so the
   framebuffer is a fixed 564x192 and the geometry never changes. The cards that
   generate the other modes are taken out of the slots, and the `ultraterm`
-  model is not offered.
+  model is not offered. The 80 columns of the Apple //e are not affected, they
+  are a mode of the machine and land in the same 560x192 as the rest.
 - **The RGB card**, that would widen the framebuffer to 644.
 - **The gaps between the scan lines.** The core only uses the two screen modes
   without them, `screen.ScreenModeColor` and `screen.ScreenModeGreen`, so the

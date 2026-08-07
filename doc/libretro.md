@@ -296,7 +296,9 @@ this, use `izapple2sdl`.
   collection does not show. Total Replay itself runs, it just looks like it does
   on a machine without a VidHD.
 - **Videx 80 column video**, so the `ultraterm` model is not offered and the
-  Videx cards are removed from the models that carry them.
+  Videx cards are removed from the models that carry them. The 80 columns of the
+  Apple //e are a different thing and do work, they are one of the modes of the
+  machine itself and not a card.
 - **The RGB card** and its extra graphic modes.
 - **Savestates**, and therefore no rewind, no run ahead and no netplay. The
   emulator has no way to save the state of the machine, so this is not something
@@ -305,8 +307,8 @@ this, use `izapple2sdl`.
 - **Cheats**, which do not apply to a computer.
 
 Everything else that izapple2 emulates works: the disk drives, the sound
-including the Mockingboard, the language card, the 80 column card, the
-accelerators and the rest.
+including the Mockingboard, the language card, the 80 column mode of the Apple
+//e, the accelerators and the rest.
 
 ## Video
 
