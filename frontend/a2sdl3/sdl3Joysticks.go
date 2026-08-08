@@ -132,16 +132,28 @@ func (j *sdl3Joysticks) putKey(keyEvent *sdl.KeyboardEvent) {
 		   Alt key - button 0 - Open apple
 		   AltGr key - button 1- Solid apple
 		   //Win key - button 2 (Not in the Apple //e keyboard)
+
+		The apple keys are a place on the keyboard, not a symbol, so we look at
+		the scancode. Unlike SDL2, SDL3 resolves the keycode through the current
+		keymap: on layouts where the left alt key is Meta_L instead of Alt_L the
+		keycode is not K_LALT and the open apple would never be pressed.
 	*/
-	switch keyEvent.Key {
-	case sdl.K_LALT:
+	switch keyEvent.Scancode {
+	case sdl.SCANCODE_LALT:
 		j.keys[0] = keyEvent.Down
-	case sdl.K_RALT:
+	case sdl.SCANCODE_RALT:
 		j.keys[1] = keyEvent.Down
-		// case sdl.K_LGUI:
+		// case sdl.SCANCODE_LGUI:
 		//   j.keys[2] = keyEvent.Down
 	}
 
+}
+
+// releaseKeys forgets the apple keys being pressed. The key up event of a key
+// held while the window loses the focus goes to whoever took it, leaving the
+// apple key pressed forever.
+func (j *sdl3Joysticks) releaseKeys() {
+	j.keys = [3]bool{}
 }
 
 func (j *sdl3Joysticks) ReadButton(i int) bool {

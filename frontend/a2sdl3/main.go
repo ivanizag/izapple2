@@ -109,6 +109,8 @@ func sdlRun(a *izapple2.Apple2) {
 				e := event.KeyboardEvent()
 				kp.putKey(e)
 				j.putKey(e)
+			case sdl.EVENT_WINDOW_FOCUS_LOST:
+				j.releaseKeys()
 			case sdl.EVENT_TEXT_INPUT:
 				kp.putText(event.TextInputEvent().Text)
 			case sdl.EVENT_JOYSTICK_AXIS_MOTION:
