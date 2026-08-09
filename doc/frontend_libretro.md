@@ -9,10 +9,10 @@ The core is not part of the [releases](https://github.com/ivanizag/izapple2/rele
 you have to build it from source. It is a small build, the instructions are below.
 
 If you just want to run Apple II software on your computer, the regular
-`izapple2sdl` executable is easier and does more. Use the core if you already
+`izapple2` executable is easier and does more. Use the core if you already
 live in RetroArch.
 
-On a Mac, [libretro_macos.md](libretro_macos.md) is the whole thing end to end,
+On a Mac, [frontend_libretro_macos.md](frontend_libretro_macos.md) is the whole thing end to end,
 from installing RetroArch to checking that it works. Follow that instead, there
 are two traps on macOS that it walks you around.
 
@@ -46,7 +46,7 @@ A frontend can only load a core of its own architecture, and the frontend has to
 be running natively: a Go core cannot run inside a frontend translated by
 Rosetta, whichever slice it loads. On macOS that rules out the `retroarch` cask
 of Homebrew, which is an Intel build. See
-[libretro_macos.md](libretro_macos.md).
+[frontend_libretro_macos.md](frontend_libretro_macos.md).
 
 ### Windows
 
@@ -289,7 +289,7 @@ centered.
 ## What is not supported
 
 The core is deliberately smaller than the other frontends. If you need any of
-this, use `izapple2sdl`.
+this, use `izapple2`.
 
 - **Super hi-res graphics.** The VidHD card is removed from the machine, so the
   box art of the [Total Replay](https://archive.org/details/TotalReplay)
@@ -340,7 +340,7 @@ or cross compile with the right `CC`, `GOOS` and `GOARCH`.
 `runtime.(*mheap).allocNeedsZero`. The frontend is being translated, Rosetta on
 a Mac, and the Go runtime of the core cannot allocate in a process like that. A
 core for both architectures does not help, the frontend itself has to run
-natively. See [libretro_macos.md](libretro_macos.md).
+natively. See [frontend_libretro_macos.md](frontend_libretro_macos.md).
 
 **Some keys do nothing, or `p` pauses the emulator.** Those are hotkeys of the
 frontend, turn on Game Focus, see [Keyboard](#keyboard).

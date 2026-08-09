@@ -23,7 +23,7 @@ The emulator can be started with various command line options to customize the h
 
 ## Models
 
-Models are pre-configured hardware setups that define the Apple II variant to emulate. Each model specifies the board type, CPU, ROM, default cards, and other hardware characteristics. It also load a default set of diskettes.
+Models are pre-configured hardware setups that define the Apple II variant to emulate. Each model specifies the board type, CPU, ROM, default cards, and other hardware characteristics. It also loads a default set of diskettes.
 
 ### Available Models
 
@@ -111,7 +111,7 @@ The default model (`2enh`) configures slots as follows:
 - **Slot 1:** Empty
 - **Slot 2:** VidHD
 - **Slot 3:** FastChip
-- **Slot 4:** Empty
+- **Slot 4:** Mockingboard
 - **Slot 5:** Empty
 - **Slot 6:** Disk II with DOS 3.3
 - **Slot 7:** Empty
@@ -435,7 +435,7 @@ izapple2 boot.dsk -s7 smartport,image1="harddisk.po"
 
 1. **Flags must come before positional arguments** in the command line
 2. **Use quotes** around filenames with spaces: `-s6 "my disk.dsk"`
-3. **Boolean flags** use `true`, `false` or nothing: `-showConfig=true` is the same as `-showConfig` 
+3. **Boolean flags** use `true`, `false` or nothing: `-showConfig=true` is the same as `-showConfig`
 4. **View all options** with `izapple2 -h`
 5. **Test configurations** with `-showConfig` to see the final setup without starting the emulator
 
