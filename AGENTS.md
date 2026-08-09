@@ -31,7 +31,7 @@ cd frontend/a2wasm
 go build .
 
 # Build console frontend
-cd frontend/a2console
+cd frontend/console
 go build .
 
 # Build the libretro core, needs a C toolchain
@@ -220,7 +220,9 @@ The project uses GitHub Actions (`.github/workflows/go.yml`) and CircleCI (`.cir
 
 ## Additional Resources
 
-- See `README.md` for user documentation and features
+- See `README.md` for user documentation
+- See `doc/features.md` for the complete feature list and the default configuration
 - See `doc/command_line.md` for command-line options
+- See `doc/frontend_*.md` for a page per frontend: how to build it, how to use it and what it does not do
 - See `storage/WozSupportStatus.md` for WOZ format support details
 - Reference implementation uses iz6502 CPU emulator: https://github.com/ivanizag/iz6502

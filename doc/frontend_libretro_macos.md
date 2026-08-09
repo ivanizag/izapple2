@@ -1,7 +1,7 @@
 # Running the libretro core on a Mac
 
 From nothing to the core running in RetroArch, with the checks worth doing on
-the way. See [libretro.md](libretro.md) for what the core is and what it
+the way. See [frontend_libretro.md](frontend_libretro.md) for what the core is and what it
 supports.
 
 ## 1. Install RetroArch

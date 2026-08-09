@@ -4,111 +4,12 @@ Portable emulator of an Apple II+ or //e. Written in Go.
 
 ## Features
 
-- Models:
-  - Apple ][+ with 48Kb of base RAM
-  - Apple //e with 128Kb of RAM
-  - Apple //e enhanced with 128Kb of RAM
-  - Base64A clone with 48Kb of base RAM and paged ROM
-  - Basis 108 clone (partial)
-- Storage
-  - 16 Sector 5 1/4 diskettes. Uncompressed or compressed witth gzip or zip. Supported formats:
-    - NIB (read only)
-    - DSK
-    - PO
-    - [WOZ 1.0 or 2.0](storage/WozSupportStatus.md) (read only)
-  - 13 Sector 5 1/4 diskettes. Uncompressed or compressed witth gzip or zip. Supported formats:
-    - NIB (read only)
-    - [WOZ 2.0](storage/WozSupportStatus.md) (read only)
-  - 3.5 disks in PO or 2MG format
-  - Hard disk in HDV or 2MG format with ProDOS and SmartPort support
-  - Cassette tape input from WAV recordings
-- Emulated extension cards:
-  - DiskII controller (state machine based for WOZ files)
-  - 16Kb Language Card
-  - 256Kb Saturn RAM
-  - Parallel Printer Interface card
-  - 1Mb Memory Expansion Card (slinky)
-  - RAMWorks style expansion Card (up to 16MB additional) (Apple //e only)
-  - ThunderClock Plus real time clock
-  - Apple //e 80 columns card with 64Kb extra RAM and optional RGB modes
-  - No Slot Clock based on the DS1216
-  - Videx Videoterm 80 column card with the Videx Soft Video Switch (Apple ][+ only)
-  - Videx Ultraterm 80 to 160 column card wuth integrated Video Switch
-  - SwyftCard (Apple //e only)
-  - Brain Board
-  - Brain Board II
-  - MultiROM card
-  - Dan ][ Controller card
-  - ProDOS ROM card
-  - Microsoft Z80 Softcard using the [Z80](https://github.com/koron-go/z80) emulation from Koron
-  - Mockinboard A sound card
-- Useful cards not emulating a real card
-  - Bootable SmartPort / ProDOS card with the following smartport devices:
-      - Block device (hard disks)
-      - Fujinet network device (supports only http(s) with GET and JSON)
-      - Fujinet clock (not in Fujinet upstream)
-  - VidHd, limited to the ROM signature and SHR as used by Total Replay, only for //e models with 128Kb
-  - FASTChip, limited to what Total Replay needs to set and clear fast mode
-  - Mouse Card, emulates the entry points, not the softswitches.
-  - Host console card. Maps the host STDIN and STDOUT to PR# and IN#
-  - ROMXe, limited to font switching
+izapple2 emulates the Apple ][+ and the Apple //e, enhanced or not, and the Base64A and Basis 108 clones.
+See [doc/features.md](doc/features.md) for the complete list of features and supported cards and graphic modes.
 
-- Graphic modes:
-  - Text 40 columns
-  - Text 80 columns Apple //e
-  - Text 80 columns Videx VideoTerm
-  - Text up to 160 columns and 48 lines Videx UltraTerm
-  - Low-Resolution graphics
-  - Double-Width Low-Resolution graphics (Apple //e only)
-  - High-Resolution graphics
-  - Double-Width High-Resolution graphics (Apple //e only)
-  - Super High Resolution (VidHD only)
-  - Mixed mode
-  - RGB card text 40 columns with 16 colors for foreground and background (mixable)
-  - RGB card mode 11, mono 560x192
-  - RGB card mode 12, ntsc 160*192
-  - RGB card mode 13, ntsc 140*192 (regular DHGR)
-  - RGB card mode 14, mix of modes 11 and 13 on the fly
-- Displays:
-  - Green monochrome monitor with half width pixel support
-  - NTSC Color TV (extracting the phase from the mono signal)
-  - RGB for Super High Resolution and RGB card
-  - ANSI Console, avoiding the SDL2 dependency
-  - Debug mode: shows four panels with actual screen, page1, page2 and extra info dependant of the video mode
-- Tracing capabilities:
-  - CPU execution disassembled
-  - Softswitch reads and writes
-  - ProDOS MLI calls
-  - Apple Pascal BIOS calls
-  - SmartPort commands
-  - BBC MOS calls when using [Applecorn](https://github.com/bobbimanners/)
-- Other features:
-  - Sound
-  - Joystick support. Up to two joysticks or four paddles
-  - Mouse support. No mouse capture needed
-  - Adjustable speed
-  - Fast disk mode to set max speed while using the disks
-  - Save directory with `-saveDir`: what the software writes goes to an overlay file per disk, keeping the images untouched and making writable the disks loaded from a compressed file, an URL or the embedded resources
-  - Single file executable with embedded ROMs and DOS 3.3
-  - Pause (thanks a2geek)
-  - Passes the [A2AUDIT 1.06](https://github.com/zellyn/a2audit) tests as II+, //e, and //e Enhanced.
-  - Partial pass ot the [ProcessorTests](https://github.com/TomHarte/ProcessorTests) for 6502 and 65c02. Failing test 6502/v1/20_55_13; flags N anv V issues with ADC; and missing some undocumented 6502 opcodes.
+## Installation
 
-By default the following configuration is launched:
-
-- Enhanced Apple //e with 65c02 processor
-- RAMWorks card with 80 column, RGB (with Video7 modes) and 8Gb RAM in aux slot
-- Parallel print inteface in slot 1
-- VidHD card (SHR support) in slot 2
-- FASTChip Accelerator card in slot 3
-- Mouse card in slot 4
-- SmartPort card with 1 device in slot 5 (if an image is provided with -disk35)
-- DiskII controller card in slot 6
-- SmartPort card with 1 device in slot 7 (if an image is provided with -hd)
-
-## Running the emulator
-
-No installation required. [Download](https://github.com/ivanizag/izapple2/releases) the single file executable `izapple2xxx_xxx` for linux or Mac, SDL2 graphics or console. Build from source to get the latest features.
+No installation required. [Download](https://github.com/ivanizag/izapple2/releases) the single file executable `izapple2` for Linux, Windows or Mac. It is the SDL2 frontend, see [Frontends](#frontends) for the others. Build from source to get the latest features.
 
 Optionally, it can be installed with homebrew using:
 
@@ -116,17 +17,17 @@ Optionally, it can be installed with homebrew using:
 brew install ivanizag/izapple2/izapple2
 ```
 
-### Default mode
+## Default mode
 
-Execute without parameters to have an emulated Apple //e Enhanced with 128kb booting DOS 3.3 ready to run Applesoft:
+Execute without parameters to have an emulated Apple //e Enhanced with 128kb booting DOS 3.3 ready to run Applesoft. The cards it comes with are in [the default configuration](doc/features.md#the-default-configuration):
 
 ``` terminal
-casa@servidor:~$ ./izapple2sdl
+casa@servidor:~$ ./izapple2
 ```
 
 ![DOS 3.3 started](doc/dos33.png)
 
-### Play games
+## Play games
 
 Download a DSK or WOZ file or use an URL ([Asimov](https://www.apple.asimov.net/images/) is an excellent source):
 
@@ -136,7 +37,7 @@ casa@servidor:~$ ./izapple2 "https://www.apple.asimov.net/images/games/action/ka
 
 ![Karateka](doc/karateka.png)
 
-### Play the Total Replay collection
+## Play the Total Replay collection
 
 Download the excellent [Total Replay](https://archive.org/details/TotalReplay) compilation by
 [a2-4am](https://github.com/a2-4am/4cade):
@@ -149,60 +50,33 @@ Displays super hi-res box art as seen with the VidHD card.
 
 ![Total Replay](doc/totalreplay.png)
 
-### Terminal mode
-
-To run text mode right on the terminal without the SDL2 dependency, use `izapple2console`. It runs on the console using ANSI escape codes. Input is sent to the emulated Apple II one line at a time:
-
-``` terminal
-casa@servidor:~$ ./izapple2console -model 2plus
-
-############################################
-#                                          #
-#                APPLE II                  #
-#                                          #
-#     DOS VERSION 3.3  SYSTEM MASTER       #
-#                                          #
-#                                          #
-#            JANUARY 1, 1983               #
-#                                          #
-#                                          #
-# COPYRIGHT APPLE COMPUTER,INC. 1980,1982  #
-#                                          #
-#                                          #
-# ]10 PRINT "HELLO WORLD"                  #
-#                                          #
-# ]LIST                                    #
-#                                          #
-# 10  PRINT "HELLO WORLD"                  #
-#                                          #
-# ]RUN                                     #
-# HELLO WORLD                              #
-#                                          #
-# ]_                                       #
-#                                          #
-#                                          #
-############################################
-Line:
-
-```
-
-### RetroArch and other libretro frontends
-
-izapple2 can also be built as a libretro core, to run inside RetroArch, Lakka,
-Batocera, RetroPie and the rest. On a Mac,
-[doc/libretro_macos.md](doc/libretro_macos.md) walks through the whole thing
-from installing RetroArch. See [doc/libretro.md](doc/libretro.md) for how
-to build it, install it and what it supports.
-
-### Command line options
+## Command line options
 
 See [doc/command_line.md](doc/command_line.md) for a complete guide on command line configuration.
 
+## Frontends
+
+The emulator itself is a Go library. What you run is one of the frontends in the `frontend` directory: they all build the same machine, take the same [command line options](doc/command_line.md) and load the same disks, but they differ in what they can show and in how you talk to them.
+
+Each one has a page with how to build it, how to use it and what it can not do:
+
+- [**a2sdl**](doc/frontend_sdl2.md): a window with SDL2. The complete one, and the one in the [releases](https://github.com/ivanizag/izapple2/releases) and in the Homebrew formula. Use this one unless you have a reason not to.
+- [**a2sdl3**](doc/frontend_sdl3.md): the same, on SDL3. It needs neither cgo, nor a C compiler, nor SDL developer files, and it cross compiles to every platform from any of them. Experimental, not in the releases.
+- [**console**](doc/frontend_console.md): text mode right on the terminal with ANSI escape codes, without the SDL2 dependency. Input goes in a line at a time.
+- [**a2libretro**](doc/frontend_libretro.md): a libretro core, to run inside RetroArch, Lakka, Batocera, RetroPie and the rest. On a Mac, [doc/frontend_libretro_macos.md](doc/frontend_libretro_macos.md) walks through the whole thing from installing RetroArch.
+- [**a2ebiten**](doc/frontend_ebiten.md): a window with [Ebitengine](https://ebitengine.org/). The same keys as a2sdl, no disks to drop and no joysticks. It is the desktop half of the WebAssembly frontend.
+- [**a2wasm**](doc/frontend_wasm.md): the emulator in the browser, compiled to WebAssembly with a React interface around it.
+- [**a2fyne**](doc/frontend_fyne.md): a window with [Fyne](https://fyne.io/), a toolbar and a panel listing the cards in the slots. No sound. Unfinished.
+- [**headless**](doc/frontend_headless.md): no window and no screen, a command prompt to drive the machine and take snapshots. For scripting and for tests.
+
+Additionally there is a derived project, [izapplebasic](https://github.com/ivanizag/izapplebasic), that adds a couple of frontends to a simplified Apple ][+ emulator with no cards and tape drive:
+
+- CLI: with getline like support and command history.
+- Telegram: Interactive use. Currently running at <https://t.me/a2basic_bot>
+
 ## Building from source
 
-### Linux
-
-Besides having a working Go installation, install the SDL2 developer files. Run:
+Every frontend is a Go main package in its own directory. With a working Go installation, the build is always:
 
 ``` terminal
 git clone github.com/ivanizag/izapple2
@@ -210,44 +84,7 @@ cd izapple2/frontend/a2sdl
 go build .
 ```
 
-### MacOS
+That builds `a2sdl`, the SDL2 frontend, which needs a C compiler and the SDL2 developer files: `libsdl2-dev` on Linux, `brew install SDL2` on MacOS, [mingw-w64](http://mingw-w64.org/doku.php/download/mingw-builds) and the [SDL2 developer files](https://www.libsdl.org/release/) on Windows. See [doc/frontend_sdl2.md](doc/frontend_sdl2.md) for the details.
 
-With a working Go installation, run:
-
-``` terminal
-brew install SDL2
-git clone github.com/ivanizag/izapple2
-cd izapple2/frontend/a2sdl
-go build .
-```
-
-### Windows 
-
-On Windows, CGO needs a gcc compiler. Install [mingw-w64](http://mingw-w64.org/doku.php/download/mingw-builds) and the [SDL2 developer files](https://www.libsdl.org/release/) for mingw-64.
-
-Run:
-
-``` terminal
-git clone github.com/ivanizag/izapple2
-cd izapple2\frontend\a2sdl
-go build .
-```
-
-To run in Windows, copy the file `SDL2.dll` on the same folder as `a2sdl.exe`. The latest `SDL2.dll` can be found in the [Runtime binary for Windows 64-bit](https://www.libsdl.org/download-2.0.php).
-
-### The experimental SDL3 frontend
-
-The `a2sdl3` frontend uses SDL3 through [go-sdl3](https://github.com/Zyko0/go-sdl3), which needs neither cgo nor a C compiler nor any SDL developer files. On Linux, MacOS and Windows alike, run:
-
-``` terminal
-git clone github.com/ivanizag/izapple2
-cd izapple2/frontend/a2sdl3
-go build .
-```
-
-As there is no cgo involved, it also cross compiles to any of the supported platforms, for example:
-
-``` terminal
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build .
-```
+The other frontends replace `a2sdl` with their own directory and need other things, or nothing at all. Each page in [Frontends](#frontends) has its own instructions.
 
