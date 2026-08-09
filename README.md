@@ -14,7 +14,7 @@ No installation required. [Download](https://github.com/ivanizag/izapple2/releas
 Optionally, it can be installed with homebrew using:
 
 ``` terminal
-brew install ivanizag/izapple2/izapple2
+brew install ivanizag/tap/izapple2
 ```
 
 ## Default mode
