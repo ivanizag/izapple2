@@ -160,21 +160,30 @@ func SnapshotCharacterGenerator(vs VideoSource, isAltText bool) *image.RGBA {
 	return snap
 }
 
-// SnapshotMessageGenerator shows a message on the screen
-func SnapshotMessageGenerator(vs VideoSource, message string) *image.RGBA {
+// SnapshotMessageGenerator shows a message on the screen, on 40 or 80 columns.
+// The character generator of the machine is used, but not its text memory, so
+// it works whatever the machine is displaying and whether or not it has 80
+// columns of its own.
+func SnapshotMessageGenerator(vs VideoSource, message string, is80Columns bool) *image.RGBA {
 	if !vs.SupportsLowercase() {
 		message = strings.ToUpper(message)
 	}
+
+	columns := text40Columns
+	if is80Columns {
+		columns = 2 * text40Columns
+	}
+
 	lines := strings.Split(message, "\n")
-	text := make([]uint8, textLines*text40Columns)
+	text := make([]uint8, textLines*columns)
 	for i := range text {
 		text[i] = 0x20 + 0x80 // Space
 	}
 
 	for l, line := range lines {
 		for c, char := range line {
-			if c < text40Columns && l < textLines {
-				text[text40Columns*l+c] = uint8(char) + 0x80
+			if c < columns && l < textLines {
+				text[columns*l+c] = uint8(char) + 0x80
 			}
 		}
 	}

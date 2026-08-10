@@ -1,9 +1,9 @@
 # The Ebitengine frontend
 
 `a2ebiten` opens a window with [Ebitengine](https://ebitengine.org/). It has
-the screen with all its modes, the sound and the same function keys as
-[a2sdl](frontend_sdl2.md), and it is missing the things around them: no
-diskettes dropped on the window, no joysticks and no mouse.
+the screen with all its modes, the sound, the diskettes dropped on the window
+and the same function keys as [a2sdl](frontend_sdl2.md), and it is missing the
+things around them: no joysticks and no mouse.
 
 ## Building
 
@@ -24,9 +24,8 @@ go build .
 casa@servidor:~$ ./a2ebiten
 ```
 
-The [command line options](command_line.md) are the same as everywhere else,
-and the diskettes have to go in the command line: this frontend has no way to
-insert one afterwards. Press F1 for the help.
+The [command line options](command_line.md) are the same as everywhere else.
+Press F1 for the help.
 
 ## Keys
 
@@ -37,12 +36,30 @@ The same as [a2sdl](frontend_sdl2.md#keys), with two differences:
   terminal.
 - There is no paste from the clipboard.
 
-The help screen that F1 shows is the one of a2sdl and mentions dropping a file
-on the window. That does not work here.
+## Diskettes
+
+Drop a file on the window to insert it. The window is divided in as many
+vertical areas as removable media drives the machine has, and the file goes to
+the drive of the area it is dropped on. F8 shows a screen with the areas, each
+one with the name of its drive and the image it has inserted, or `EMPTY`, and
+it is shown again for a moment after a drop with the drive that got the file
+marked.
+
+Ebitengine hands over the files dropped as a file system that hides their
+paths, but it opens the real files and the handle of a file tells its path
+back. The image is loaded from there like on any other frontend, compressed
+files included, and whatever the emulated software writes goes back to the file
+or to the `-saveDir` directory. In the browser the files dropped have no path
+and cannot be loaded.
+
+Ebitengine does not report where a file was dropped either, and the pointer
+position is not updated while another application drags a file over the window,
+so the area used is the one the pointer was last seen on. Check with F8 before
+dragging, or look at the areas shown after the drop to see where the file
+landed.
 
 ## What is missing
 
-- **Diskettes dropped on the window.** They go in the command line.
 - **Joysticks and paddles**, and the mouse as a joystick.
 - **The mouse**, so the models that use it, like `desktop`, are not much use.
 - **Pasting** from the clipboard.

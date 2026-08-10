@@ -54,9 +54,10 @@ and the Closed-Apple would never be pressed if it were looked up by keycode.
 
 Nothing that you use, and a few things underneath:
 
-- SDL3 reports where a file was dropped, so the drive it goes to is the one
-  under the pointer. In SDL2 it is worked out from the last known mouse
-  position.
+- SDL3 reports a file being dragged over the window, so the screen with the
+  areas of the drives it can be dropped on is shown while it moves, with the
+  one under the pointer marked. SDL2 only knows about the file once it is
+  dropped, and has to show the areas with F8 or after the drop.
 - Losing the window focus releases the joystick keys, so an Open-Apple held
   while switching windows does not stay pressed.
 - Ctrl-C on the terminal quits the same way as closing the window, releasing

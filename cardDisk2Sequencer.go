@@ -1,6 +1,8 @@
 package izapple2
 
 import (
+	"fmt"
+
 	"github.com/ivanizag/izapple2/component"
 )
 
@@ -46,7 +48,7 @@ type cardDisk2Shared interface {
 
 const (
 	disk2MotorOffDelay = uint64(2 * 1000 * 1000) // 2 Mhz cycles. Total 1 second.
-	disk2PulseCycles    = uint8(8)                // 8 cycles = 4ms * 2Mhz
+	disk2PulseCycles   = uint8(8)                // 8 cycles = 4ms * 2Mhz
 
 	/*
 	   We skip register calculations for long periods with the motor
@@ -135,8 +137,9 @@ func (c *CardDisk2Sequencer) setTrackTracer(tt trackTracer) {
 }
 
 func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
-	a.registerRemovableMediaDrive(&c.drive[0])
-	a.registerRemovableMediaDrive(&c.drive[1])
+	for i := range c.drive {
+		a.registerRemovableMediaDrive(&c.drive[i], fmt.Sprintf("S%vD%v", slot, i+1))
+	}
 
 	c.addCardSoftSwitches(func(address uint8, data uint8, _ bool) uint8 {
 		/*

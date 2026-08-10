@@ -70,9 +70,10 @@ func sdlRun(a *izapple2.Apple2) {
 	m := newSDLMouse()
 	a.SetMouseProvider(m)
 
+	d := newSDLDropTargets(a, window)
+
 	go a.Run()
 
-	var x int32
 	paused := false
 	running := true
 	for running {
@@ -94,17 +95,19 @@ func sdlRun(a *izapple2.Apple2) {
 				w, h := window.GetSize()
 				j.putMouseMotionEvent(t, w, h)
 				m.putMouseMotionEvent(t, w, h)
-				x = t.X
 			case *sdl.MouseButtonEvent:
 				j.putMouseButtonEvent(t)
 				m.putMouseButtonEvent(t)
 			case *sdl.DropEvent:
 				switch t.Type {
 				case sdl.DROPFILE:
-					w, _ := window.GetSize()
-					drive := int(2 * x / w)
-					fmt.Printf("Loading '%s' in drive %v\n", t.File, drive+1)
-					a.SendLoadDisk(drive, t.File)
+					drive := d.dropped()
+					if drive >= 0 {
+						fmt.Printf("Loading '%s' in drive %v\n", t.File, drive+1)
+						a.SendLoadDisk(drive, t.File)
+					} else {
+						fmt.Printf("There are no drives to load '%s' on\n", t.File)
+					}
 				}
 			}
 		}
@@ -122,7 +125,9 @@ func sdlRun(a *izapple2.Apple2) {
 			var img *image.RGBA
 			vs := a.GetVideoSource()
 			if kp.showHelp {
-				img = screen.SnapshotMessageGenerator(vs, helpMessage)
+				img = screen.SnapshotMessageGenerator(vs, helpMessage, false /*is80Columns*/)
+			} else if d.showing(kp.showDropTargets) {
+				img = d.snapshot()
 			} else if kp.showCharGen {
 				cgPage, cgPages := a.GetCgPageInfo()
 				img = screen.SnapshotCharacterGenerator(vs, kp.showAltText)
@@ -171,6 +176,7 @@ var helpMessage = `
      Ctrl-F5: Show speed
           F6: Next screen mode
           F7: Show/Hide pages
+          F8: Show/Hide drop targets
          F10: Next character set
     Ctrl-F10: Show/Hide character set
    Shift-F10: Show/Hide alternate text
@@ -180,8 +186,7 @@ var helpMessage = `
   Left alt or option key: Open-Apple
  Right alt or option key: Closed-Apple
 
-Drop a file on the left or right
-side of the window to load a disk
+Drop a file on a drive area to load it
 
  Run izapple2 -h for more options
    https://github.com/ivanizag/izapple2

@@ -92,6 +92,7 @@ Escape mapped to what the Apple II understands. The rest:
 | Ctrl-F5 | Print the current speed on the terminal |
 | F6 | Next screen mode: NTSC colour, plain, green, with or without scan lines |
 | F7 | Show or hide the four panels with the actual screen, page 1, page 2 and the extra info of the video mode |
+| F8 | Show or hide the areas where a diskette can be dropped |
 | F9 | Dump the state of the machine on the terminal |
 | F10 | Next character set |
 | Ctrl-F10 | Show or hide the character map |
@@ -110,9 +111,22 @@ being displayed instead.
 
 ## Diskettes
 
-Drop a file on the window to insert it: on the left half it goes to drive 1, on
-the right half to drive 2. It works with everything that goes on the command
-line, including compressed images.
+Drop a file on the window to insert it. The window is divided in as many
+vertical areas as removable media drives the machine has, and the file goes to
+the drive of the area it is dropped on. It works with everything that goes on
+the command line, including compressed images.
+
+F8 shows a screen with the areas, each one with the name of its drive and the
+image it has inserted, or `EMPTY`, and the one under the pointer marked. It
+takes over the picture the same way the help does, on 80 columns. The same
+screen is shown for a moment after a drop, with the drive that got the file
+marked.
+
+SDL2 does not report a file being dragged over the window, so the areas cannot
+be shown while the file moves; the position of the pointer is read when the
+file is dropped. The [SDL3 frontend](frontend_sdl3.md) does show them during
+the drag. The areas are the same on every frontend, they are built in
+`frontend/shared`.
 
 Whatever the emulated software writes goes back to the file it came from. To
 keep the images untouched use `-saveDir`, which puts the writes in an overlay

@@ -14,12 +14,13 @@ type ebitenKeyboard struct {
 	a          *izapple2.Apple2
 	keyChannel *izapple2.KeyboardChannel
 
-	showHelp    bool
-	showPages   bool
-	showCharGen bool
-	showAltText bool
-	showFreq    bool
-	screenMode  int
+	showHelp        bool
+	showPages       bool
+	showCharGen     bool
+	showAltText     bool
+	showFreq        bool
+	showDropTargets bool
+	screenMode      int
 
 	debug bool
 }
@@ -133,6 +134,12 @@ func (k *ebitenKeyboard) putKey(key ebiten.Key) {
 		k.screenMode = screen.NextScreenMode(k.screenMode)
 	case ebiten.KeyF7:
 		k.showPages = !k.showPages
+	case ebiten.KeyF8:
+		k.showDropTargets = !k.showDropTargets
+		if k.showDropTargets {
+			// The help is shown on top of the drop targets, get it out of the way
+			k.showHelp = false
+		}
 	case ebiten.KeyF9:
 		k.a.SendCommand(izapple2.CommandDumpDebugInfo)
 	case ebiten.KeyF10:

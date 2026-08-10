@@ -64,7 +64,7 @@ Each one has a page with how to build it, how to use it and what it can not do:
 - [**a2sdl3**](doc/frontend_sdl3.md): the same, on SDL3. It needs neither cgo, nor a C compiler, nor SDL developer files, and it cross compiles to every platform from any of them. Experimental, not in the releases.
 - [**console**](doc/frontend_console.md): text mode right on the terminal with ANSI escape codes, without the SDL2 dependency. Input goes in a line at a time.
 - [**a2libretro**](doc/frontend_libretro.md): a libretro core, to run inside RetroArch, Lakka, Batocera, RetroPie and the rest. On a Mac, [doc/frontend_libretro_macos.md](doc/frontend_libretro_macos.md) walks through the whole thing from installing RetroArch.
-- [**a2ebiten**](doc/frontend_ebiten.md): a window with [Ebitengine](https://ebitengine.org/). The same keys as a2sdl, no disks to drop and no joysticks. It is the desktop half of the WebAssembly frontend.
+- [**a2ebiten**](doc/frontend_ebiten.md): a window with [Ebitengine](https://ebitengine.org/). The same keys as a2sdl, the same disks dropped on the window and no joysticks. It is the desktop half of the WebAssembly frontend.
 - [**a2wasm**](doc/frontend_wasm.md): the emulator in the browser, compiled to WebAssembly with a React interface around it.
 - [**a2fyne**](doc/frontend_fyne.md): a window with [Fyne](https://fyne.io/), a toolbar and a panel listing the cards in the slots. No sound. Unfinished.
 - [**headless**](doc/frontend_headless.md): no window and no screen, a command prompt to drive the machine and take snapshots. For scripting and for tests.

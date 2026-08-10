@@ -41,6 +41,7 @@ type CardDisk2 struct {
 
 type drive interface {
 	insertDiskette(path string) error
+	getMediaName() string
 }
 
 type cardDisk2Drive struct {
@@ -49,7 +50,7 @@ type cardDisk2Drive struct {
 	// card and is kept here for the diskettes inserted later on.
 	saveDirectory string
 
-	name      string
+	name      mediaName
 	diskette  storage.Diskette
 	phases    uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
 	trackStep int   // Stepmotor for tracks position. 4 steps per track
@@ -124,10 +125,10 @@ func (c *CardDisk2) GetInfo() map[string]string {
 	}
 	info["power"] = strconv.FormatBool(c.power)
 
-	info["D1 name"] = c.drive[0].name
+	info["D1 name"] = c.drive[0].name.get()
 	info["D1 track"] = strconv.FormatFloat(float64(c.drive[0].trackStep)/4, 'f', 2, 64)
 
-	info["D2 name"] = c.drive[1].name
+	info["D2 name"] = c.drive[1].name.get()
 	info["D2 track"] = strconv.FormatFloat(float64(c.drive[1].trackStep)/4, 'f', 2, 64)
 	return info
 }
@@ -147,8 +148,9 @@ func (c *CardDisk2) setTrackTracer(tt trackTracer) {
 }
 
 func (c *CardDisk2) assign(a *Apple2, slot int) {
-	a.registerRemovableMediaDrive(&c.drive[0])
-	a.registerRemovableMediaDrive(&c.drive[1])
+	for i := range c.drive {
+		a.registerRemovableMediaDrive(&c.drive[i], fmt.Sprintf("S%vD%v", slot, i+1))
+	}
 
 	// Q1, Q2, Q3 and Q4 phase control soft switches,
 	for i := range uint8(4) {
@@ -307,7 +309,11 @@ func (d *cardDisk2Drive) insertDiskette(name string) error {
 		return err
 	}
 
-	d.name = name
+	d.name.set(name)
 	d.diskette = diskette
 	return nil
+}
+
+func (d *cardDisk2Drive) getMediaName() string {
+	return d.name.get()
 }

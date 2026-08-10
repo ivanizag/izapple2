@@ -9,6 +9,7 @@ import (
 )
 
 type cardDisk2SequencerDrive struct {
+	name                mediaName
 	data                *storage.FileWoz
 	enabled             bool
 	writeProtected      bool
@@ -35,10 +36,15 @@ func (d *cardDisk2SequencerDrive) insertDiskette(filename string) error {
 		return errors.New("only 5.25 disks are supported")
 	}
 
+	d.name.set(filename)
 	d.data = f
 	d.writeProtected = !writeable
 
 	return nil
+}
+
+func (d *cardDisk2SequencerDrive) getMediaName() string {
+	return d.name.get()
 }
 
 func (d *cardDisk2SequencerDrive) enable(enabled bool) {
