@@ -16,11 +16,12 @@ import (
 )
 
 type Game struct {
-	a          *izapple2.Apple2
-	image      *ebiten.Image
-	keyboard   *ebitenKeyboard
-	speaker    *ebitenAudio
-	fontSource *text.GoTextFaceSource
+	a           *izapple2.Apple2
+	image       *ebiten.Image
+	keyboard    *ebitenKeyboard
+	speaker     *ebitenAudio
+	dropTargets *ebitenDropTargets
+	fontSource  *text.GoTextFaceSource
 
 	paused bool
 	title  string
@@ -40,6 +41,7 @@ var hudColor = color.RGBA{208, 241, 141, 255} // Yellow
 func (g *Game) Update() error {
 	g.keyboard.update()
 	g.speaker.update()
+	g.dropTargets.update()
 
 	if g.paused != g.a.IsPaused() {
 		if g.a.IsPaused() {
@@ -54,7 +56,9 @@ func (g *Game) Update() error {
 		var img *image.RGBA
 		vs := g.a.GetVideoSource()
 		if g.keyboard.showHelp {
-			img = a_screen.SnapshotMessageGenerator(vs, helpMessage)
+			img = a_screen.SnapshotMessageGenerator(vs, helpMessage, false /*is80Columns*/)
+		} else if g.dropTargets.showing(g.keyboard.showDropTargets) {
+			img = g.dropTargets.snapshot()
 		} else if g.keyboard.showCharGen {
 			cgPage, cgPages := g.a.GetCgPageInfo()
 			img = a_screen.SnapshotCharacterGenerator(vs, g.keyboard.showAltText)
@@ -130,9 +134,10 @@ func ebitenRun(a *izapple2.Apple2) {
 	ebiten.SetWindowTitle(title)
 
 	game := &Game{
-		a:        a,
-		keyboard: newEbitenKeyBoard(a),
-		speaker:  newEbitenAudio(a.GetClockMhz()),
+		a:           a,
+		keyboard:    newEbitenKeyBoard(a),
+		speaker:     newEbitenAudio(a.GetClockMhz()),
+		dropTargets: newEbitenDropTargets(a),
 	}
 	for _, source := range a.GetAudioSources() {
 		source.SetAudioSink(game.speaker.mixer.NewSource())
@@ -159,6 +164,7 @@ var helpMessage = `
      Ctrl-F5: Show speed
           F6: Next screen mode
           F7: Show/Hide pages
+          F8: Show/Hide drop targets
          F10: Next character set
     Ctrl-F10: Show/Hide character set
    Shift-F10: Show/Hide alternate text
@@ -168,8 +174,7 @@ var helpMessage = `
   Left alt or option key: Open-Apple
  Right alt or option key: Closed-Apple
 
-Drop a file on the left or right
-side of the window to load a disk
+Drop a file on a drive area to load it
 
  Run izapple2 -h for more options
    https://github.com/ivanizag/izapple2

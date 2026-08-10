@@ -16,11 +16,12 @@ type sdl3Keyboard struct {
 	a          *izapple2.Apple2
 	keyChannel *izapple2.KeyboardChannel
 
-	showHelp    bool
-	showPages   bool
-	showCharGen bool
-	showAltText bool
-	screenMode  int
+	showHelp        bool
+	showPages       bool
+	showCharGen     bool
+	showAltText     bool
+	showDropTargets bool
+	screenMode      int
 }
 
 func newSDL3Keyboard(a *izapple2.Apple2) *sdl3Keyboard {
@@ -118,6 +119,12 @@ func (k *sdl3Keyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 		k.screenMode = screen.NextScreenMode(k.screenMode)
 	case sdl.K_F7:
 		k.showPages = !k.showPages
+	case sdl.K_F8:
+		k.showDropTargets = !k.showDropTargets
+		if k.showDropTargets {
+			// The help is shown on top of the drop targets, get it out of the way
+			k.showHelp = false
+		}
 	case sdl.K_F9:
 		k.a.SendCommand(izapple2.CommandDumpDebugInfo)
 	case sdl.K_F10:

@@ -100,8 +100,8 @@ func (a *Apple2) executeCommand(command command) {
 }
 
 func (a *Apple2) changeDisk(unit int, path string) error {
-	if unit < len(a.removableMediaDrives) {
-		return a.removableMediaDrives[unit].insertDiskette(path)
+	if unit >= 0 && unit < len(a.removableMediaDrives) {
+		return a.removableMediaDrives[unit].drive.insertDiskette(path)
 	}
 	return fmt.Errorf("unit %v not defined", unit)
 }

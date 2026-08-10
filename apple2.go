@@ -11,12 +11,13 @@ import (
 
 // Apple2 represents all the components and state of the emulated machine
 type Apple2 struct {
-	Name    string
-	cpu     *iz6502.State
-	mmu     *memoryManager
-	io      *ioC0Page
-	video   screen.VideoSource
-	cg      *CharacterGenerator
+	Name  string
+	cpu   *iz6502.State
+	mmu   *memoryManager
+	io    *ioC0Page
+	video screen.VideoSource
+	cg    *CharacterGenerator
+
 	cards       [8]Card
 	tracers     []executionTracer
 	tickerCards []cardTicker
@@ -42,7 +43,7 @@ type Apple2 struct {
 	paused               atomic.Bool
 	cpuTrace             bool
 	forceCaps            bool
-	removableMediaDrives []drive
+	removableMediaDrives []removableMediaDrive
 
 	currentFreqMHz float64
 }
@@ -77,7 +78,6 @@ func (a *Apple2) requestIRQ(slot int, asserted bool) {
 func (a *Apple2) SetKeyboardProvider(kb KeyboardProvider) {
 	a.io.setKeyboardProvider(kb)
 }
-
 
 // SetJoysticksProvider attaches an external joysticks provider
 func (a *Apple2) SetJoysticksProvider(j JoysticksProvider) {
@@ -157,10 +157,6 @@ func (a *Apple2) IsFastModeRequested() bool {
 	return atomic.LoadInt32(&a.fastRequestsCounter) > 0
 }
 
-func (a *Apple2) registerRemovableMediaDrive(d drive) {
-	a.removableMediaDrives = append(a.removableMediaDrives, d)
-}
-
 // InsertDiskette inserts a diskette into a drive (for WASM/in-memory loading)
 func (a *Apple2) InsertDiskette(unit int, diskette storage.Diskette, name string) error {
 	if unit < 0 || unit >= len(a.removableMediaDrives) {
@@ -168,9 +164,9 @@ func (a *Apple2) InsertDiskette(unit int, diskette storage.Diskette, name string
 	}
 
 	// Type assert to access the diskette field
-	switch d := a.removableMediaDrives[unit].(type) {
+	switch d := a.removableMediaDrives[unit].drive.(type) {
 	case *cardDisk2Drive:
-		d.name = name
+		d.name.set(name)
 		d.diskette = diskette
 		return nil
 	default:

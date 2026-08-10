@@ -79,6 +79,8 @@ func sdlRun(a *izapple2.Apple2) {
 	m := newSDL3Mouse()
 	a.SetMouseProvider(m)
 
+	d := newSDL3DropTargets(a, window)
+
 	// go-sdl3 asks for SIGINT and SIGTERM to remove the folder it extracted
 	// SDL3 to, but it does not end the process afterwards. Asking for them too
 	// puts them back to work: a Ctrl-C or a kill now quits the same way as
@@ -122,17 +124,29 @@ func sdlRun(a *izapple2.Apple2) {
 				e := event.MouseMotionEvent()
 				j.putMouseMotionEvent(e, w, h)
 				m.putMouseMotionEvent(e, w, h)
+				d.dragEnded()
 			case sdl.EVENT_MOUSE_BUTTON_DOWN, sdl.EVENT_MOUSE_BUTTON_UP:
 				e := event.MouseButtonEvent()
 				j.putMouseButtonEvent(e)
 				m.putMouseButtonEvent(e)
+			case sdl.EVENT_DROP_BEGIN:
+				// Unlike SDL2, SDL3 reports the file being dragged over the
+				// window, so the drop targets can be shown while it moves.
+				d.dragStarted()
+			case sdl.EVENT_DROP_POSITION:
+				d.dragMoved(event.DropEvent().X)
+			case sdl.EVENT_DROP_COMPLETE:
+				d.dragEnded()
 			case sdl.EVENT_DROP_FILE:
-				// Unlike SDL2, SDL3 reports where the file was dropped.
 				e := event.DropEvent()
-				w, _, _ := window.Size()
-				drive := int(2 * int32(e.X) / w)
-				fmt.Printf("Loading '%s' in drive %v\n", e.Data, drive+1)
-				a.SendLoadDisk(drive, e.Data)
+				d.dragEnded()
+				drive := d.dropped(e.X)
+				if drive >= 0 {
+					fmt.Printf("Loading '%s' in drive %v\n", e.Data, drive+1)
+					a.SendLoadDisk(drive, e.Data)
+				} else {
+					fmt.Printf("There are no drives to load '%s' on\n", e.Data)
+				}
 			}
 		}
 
@@ -149,7 +163,9 @@ func sdlRun(a *izapple2.Apple2) {
 			var img *image.RGBA
 			vs := a.GetVideoSource()
 			if kp.showHelp {
-				img = screen.SnapshotMessageGenerator(vs, helpMessage)
+				img = screen.SnapshotMessageGenerator(vs, helpMessage, false /*is80Columns*/)
+			} else if d.showing(kp.showDropTargets) {
+				img = d.snapshot()
 			} else if kp.showCharGen {
 				cgPage, cgPages := a.GetCgPageInfo()
 				img = screen.SnapshotCharacterGenerator(vs, kp.showAltText)
@@ -198,6 +214,7 @@ var helpMessage = `
      Ctrl-F5: Show speed
           F6: Next screen mode
           F7: Show/Hide pages
+          F8: Show/Hide drop targets
          F10: Next character set
     Ctrl-F10: Show/Hide character set
    Shift-F10: Show/Hide alternate text
@@ -207,8 +224,7 @@ var helpMessage = `
   Left alt or option key: Open-Apple
  Right alt or option key: Closed-Apple
 
-Drop a file on the left or right
-side of the window to load a disk
+Drop a file on a drive area to load it
 
  Run izapple2 -h for more options
    https://github.com/ivanizag/izapple2
