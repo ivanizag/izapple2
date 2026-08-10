@@ -3,11 +3,10 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"image"
 	"image/color"
 
 	"github.com/ivanizag/izapple2"
-	a_screen "github.com/ivanizag/izapple2/screen"
+	"github.com/ivanizag/izapple2/frontend/shared"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -18,6 +17,7 @@ import (
 type Game struct {
 	a           *izapple2.Apple2
 	image       *ebiten.Image
+	view        *shared.View
 	keyboard    *ebitenKeyboard
 	speaker     *ebitenAudio
 	dropTargets *ebitenDropTargets
@@ -53,21 +53,10 @@ func (g *Game) Update() error {
 	}
 
 	if g.updates%3 == 0 && !g.a.IsPaused() { // 20 times per second
-		var img *image.RGBA
-		vs := g.a.GetVideoSource()
-		if g.keyboard.showHelp {
-			img = a_screen.SnapshotMessageGenerator(vs, helpMessage, false /*is80Columns*/)
-		} else if g.dropTargets.showing(g.keyboard.showDropTargets) {
-			img = g.dropTargets.snapshot()
-		} else if g.keyboard.showCharGen {
-			cgPage, cgPages := g.a.GetCgPageInfo()
-			img = a_screen.SnapshotCharacterGenerator(vs, g.keyboard.showAltText)
-			ebiten.SetWindowTitle(fmt.Sprintf("%v character map, page %v/%v", g.a.Name, cgPage+1, cgPages))
-		} else if g.keyboard.showPages {
-			img = a_screen.SnapshotParts(vs, g.keyboard.screenMode)
-			ebiten.SetWindowTitle(fmt.Sprintf("%v %v %vx%v", g.a.Name, a_screen.VideoModeName(vs), img.Rect.Dx()/2, img.Rect.Dy()/2))
-		} else {
-			img = a_screen.Snapshot(vs, g.keyboard.screenMode)
+		img, viewTitle := g.view.Snapshot(g.a, g.dropTargets.targets,
+			g.dropTargets.pointedDrive())
+		if viewTitle != "" {
+			ebiten.SetWindowTitle(viewTitle)
 		}
 		if img != nil {
 			g.image = ebiten.NewImageFromImage(img)
@@ -133,14 +122,13 @@ func ebitenRun(a *izapple2.Apple2) {
 	title := "iz-" + a.Name + " (F1 for help)"
 	ebiten.SetWindowTitle(title)
 
+	view := shared.NewView()
 	game := &Game{
 		a:           a,
-		keyboard:    newEbitenKeyBoard(a),
-		speaker:     newEbitenAudio(a.GetClockMhz()),
+		view:        view,
+		keyboard:    newEbitenKeyBoard(a, view),
+		speaker:     newEbitenAudio(a),
 		dropTargets: newEbitenDropTargets(a),
-	}
-	for _, source := range a.GetAudioSources() {
-		source.SetAudioSink(game.speaker.mixer.NewSource())
 	}
 
 	var err error
@@ -154,31 +142,6 @@ func ebitenRun(a *izapple2.Apple2) {
 		fmt.Printf("Error: %v\n", err)
 	}
 }
-
-var helpMessage = `
-          F1: Show/Hide help
-     Ctrl-F2: Reset
-      F1, F2: Reset
-          F4: Show/Hide CPU trace
-          F5: Fast/Normal speed
-     Ctrl-F5: Show speed
-          F6: Next screen mode
-          F7: Show/Hide pages
-          F8: Show/Hide drop targets
-         F10: Next character set
-    Ctrl-F10: Show/Hide character set
-   Shift-F10: Show/Hide alternate text
-         F12: Save screen snapshot
-       Pause: Pause the emulation
-
-  Left alt or option key: Open-Apple
- Right alt or option key: Closed-Apple
-
-Drop a file on a drive area to load it
-
- Run izapple2 -h for more options
-   https://github.com/ivanizag/izapple2
-`
 
 /*
 To test the WebAssembly version, run:

@@ -97,7 +97,7 @@ The project includes E2E boot tests (`e2e_boot_test.go`, `e2e_woz_test.go`) that
 - Main emulator code is in the root package `izapple2`
 - Subpackages include: `storage`, `screen`, `fujinet`, `component`
 - Frontend implementations are in `frontend/` directory
-- `frontend/shared` has the code more than one frontend needs and the emulator library has no place for, like the drop targets screen
+- `frontend/shared` has the code more than one frontend needs and the emulator library has no place for, like the screen each frontend shows and the drop targets
 
 ### Naming Conventions
 

@@ -6,7 +6,9 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
 
+	"github.com/ivanizag/izapple2"
 	a2audio "github.com/ivanizag/izapple2/audio"
+	"github.com/ivanizag/izapple2/frontend/shared"
 )
 
 // ebitenAudio sends the mixed audio of the machine to the ebiten audio
@@ -19,9 +21,9 @@ type ebitenAudio struct {
 	samples      []float32
 }
 
-func newEbitenAudio(clockMhz float64) *ebitenAudio {
+func newEbitenAudio(a *izapple2.Apple2) *ebitenAudio {
 	return &ebitenAudio{
-		mixer: a2audio.NewMixer(clockMhz),
+		mixer: shared.NewMixer(a),
 	}
 }
 

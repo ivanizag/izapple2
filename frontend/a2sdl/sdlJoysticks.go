@@ -3,31 +3,17 @@
 package main
 
 import (
+	"github.com/ivanizag/izapple2/frontend/shared"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-/*
-  Apple 2 supports four paddles and 3 pushbuttons. The first two paddles are
-the X, Y axis of the first joystick. The second two correspond the the second
-joystick.
-  Button 0 is the primary button of joystick 0.
-  Button 1 is the secondary button of joystick 0 but also the primary button of
-joystick 1.
-  Button 2 is the secondary button of Joystick 1.
-*/
-
+// sdlJoysticks turns the joystick, mouse and apple key events of SDL2 into the
+// paddles and buttons the machine reads
 type sdlJoysticks struct {
-	paddle       [4]uint8
-	hasPaddle    [4]bool
-	button       [4]bool
-	keys         [3]bool
-	mousebuttons [3]bool
-	useMouse     bool
+	paddles *shared.Paddles
 }
 
 func newSDLJoysticks(useMouseAlt bool) *sdlJoysticks {
-	var j sdlJoysticks
-
 	err := sdl.InitSubSystem(sdl.INIT_JOYSTICK)
 	if err != nil {
 		panic(err)
@@ -35,82 +21,30 @@ func newSDLJoysticks(useMouseAlt bool) *sdlJoysticks {
 
 	// Init up to two joysticks
 	sdl.JoystickEventState(sdl.ENABLE)
-	joyCount := sdl.NumJoysticks()
-	for iJoy := 0; iJoy < joyCount && iJoy < 2; iJoy++ {
-		/*joystick := */ sdl.JoystickOpen(iJoy)
-		j.hasPaddle[iJoy*2] = true
-		j.hasPaddle[iJoy*2+1] = true
+	joyCount := min(sdl.NumJoysticks(), 2)
+	for iJoy := range joyCount {
+		sdl.JoystickOpen(iJoy)
 	}
 
-	// Initialize to max resistance if unplugged
-	j.paddle[0] = 255
-	j.paddle[1] = 255
-	j.paddle[2] = 255
-	j.paddle[3] = 255
-
-	if useMouseAlt && !j.hasPaddle[0] {
-		// Use the mouse as joystick
-		j.useMouse = true
-		j.hasPaddle[0] = true
-		j.hasPaddle[1] = true
-		j.paddle[0] = 127
-		j.paddle[1] = 127
-	}
-
-	// To enter Apple IIe on self test mode
-	// j.keys[1] = true
-
+	var j sdlJoysticks
+	j.paddles = shared.NewPaddles(joyCount, useMouseAlt)
 	return &j
 }
 
 func (j *sdlJoysticks) putAxisEvent(e *sdl.JoyAxisEvent) {
-	if e.Which >= 2 || e.Axis >= 2 {
-		// Process only the first two axis of the first two joysticks
-		return
-	}
-
-	j.paddle[uint8(e.Which)*2+e.Axis] = uint8((e.Value >> 8) + 128)
+	j.paddles.SetAxis(int(e.Which), int(e.Axis), e.Value)
 }
 
 func (j *sdlJoysticks) putButtonEvent(e *sdl.JoyButtonEvent) {
-	if e.Which >= 2 {
-		// Process only the buttons of the first two joysticks
-		return
-	}
-
-	j.button[uint8(e.Which)*2+(e.Button%2)] = (e.State != 0)
-}
-
-func mouseToJoyCentered(x int32, w int32) uint8 {
-	r := max(min(x-(w/2)+127, 255), 0)
-	return uint8(r)
-
+	j.paddles.SetButton(int(e.Which), int(e.Button), e.State != 0)
 }
 
 func (j *sdlJoysticks) putMouseMotionEvent(e *sdl.MouseMotionEvent, width int32, height int32) {
-	if j.useMouse {
-		// The mouse moves on all the window
-		// j.paddle[0] = mouseToJoyFull(e.X, width)
-		// j.paddle[1] = mouseToJoyFull(e.Y, height)
-
-		// The mouse moves around the center of the window
-		j.paddle[0] = mouseToJoyCentered(e.X, width)
-		j.paddle[1] = mouseToJoyCentered(e.Y, height)
-	}
+	j.paddles.SetMousePosition(int(e.X), int(e.Y), int(width), int(height))
 }
 
 func (j *sdlJoysticks) putMouseButtonEvent(e *sdl.MouseButtonEvent) {
-	if j.useMouse {
-		pressed := e.State == sdl.PRESSED
-		switch e.Button {
-		case 1: // BUTTON_LEFT
-			j.mousebuttons[0] = pressed
-		case 3: // BUTTON_RIGHT
-			j.mousebuttons[1] = pressed
-		case 2: // BUTTON_MIDDLE
-			j.mousebuttons[2] = pressed
-		}
-	}
+	j.paddles.SetMouseButton(sdlMouseButton(e.Button), e.State == sdl.PRESSED)
 }
 
 func (j *sdlJoysticks) putKey(keyEvent *sdl.KeyboardEvent) {
@@ -119,34 +53,31 @@ func (j *sdlJoysticks) putKey(keyEvent *sdl.KeyboardEvent) {
 		Actually the Apple//e does this with the open and solid apple keys.
 		   Alt key - button 0 - Open apple
 		   AltGr key - button 1- Solid apple
-		   //Win key - button 2 (Not in the Apple //e keyboard)
+
+		The apple keys are a place on the keyboard, not a symbol, so we look at
+		the scancode. The keycode is resolved through the current keymap: on
+		layouts where the left alt key is Meta_L instead of Alt_L it is not
+		K_LALT and the open apple would never be pressed.
 	*/
 	pressed := keyEvent.Type == sdl.KEYDOWN
-	switch keyEvent.Keysym.Sym {
-	case sdl.K_LALT:
-		j.keys[0] = pressed
-	case sdl.K_RALT:
-		j.keys[1] = pressed
-		// case sdl.K_LGUI:
-		//   j.keys[2] = pressed
+	switch keyEvent.Keysym.Scancode {
+	case sdl.SCANCODE_LALT:
+		j.paddles.SetOpenApple(pressed)
+	case sdl.SCANCODE_RALT:
+		j.paddles.SetClosedApple(pressed)
 	}
-
 }
 
-func (j *sdlJoysticks) ReadButton(i int) bool {
-	var value bool
-	switch i {
-	case 0:
-		value = j.button[0] || j.keys[0] || j.mousebuttons[0]
-	case 1:
-		// It can be secondary of first or primary of second
-		value = j.button[1] || j.button[2] || j.keys[1] || j.mousebuttons[1]
-	case 2:
-		value = j.button[3] || j.keys[2] || j.mousebuttons[2]
+// sdlMouseButton translates a button of the mouse of SDL2
+func sdlMouseButton(button uint8) int {
+	switch button {
+	case sdl.BUTTON_LEFT:
+		return shared.MouseButtonLeft
+	case sdl.BUTTON_RIGHT:
+		return shared.MouseButtonRight
+	case sdl.BUTTON_MIDDLE:
+		return shared.MouseButtonMiddle
 	}
-	return value
-}
 
-func (j *sdlJoysticks) ReadPaddle(i int) (uint8, bool) {
-	return j.paddle[i], j.hasPaddle[i]
+	return -1
 }

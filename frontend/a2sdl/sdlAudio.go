@@ -10,7 +10,9 @@ import (
 	"sync/atomic"
 	"unsafe"
 
+	"github.com/ivanizag/izapple2"
 	"github.com/ivanizag/izapple2/audio"
+	"github.com/ivanizag/izapple2/frontend/shared"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -30,9 +32,9 @@ because the callback runs on the SDL audio thread.
 */
 var theSDLAudio atomic.Pointer[sdlAudio]
 
-func newSDLAudio(clockMhz float64) *sdlAudio {
+func newSDLAudio(a *izapple2.Apple2) *sdlAudio {
 	return &sdlAudio{
-		mixer: audio.NewMixer(clockMhz),
+		mixer: shared.NewMixer(a),
 	}
 }
 

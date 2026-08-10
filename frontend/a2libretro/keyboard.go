@@ -10,6 +10,7 @@ import (
 	"unsafe"
 
 	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/frontend/shared"
 )
 
 // keyboard turns the key events of the frontend into the codes the Apple II
@@ -70,8 +71,17 @@ func izapple2KeyboardEvent(down C.int, keycode C.uint, character C.uint32_t, key
 		return
 	}
 
-	if key, ok := specialKey(uint32(keycode), uint16(keyModifiers)); ok {
-		theCore.keyboard.channel.PutChar(key)
+	ctrl := keyModifiers&C.RETROKMOD_CTRL != 0
+
+	if ctrl && keycode >= C.RETROK_a && keycode <= C.RETROK_z {
+		if char, ok := shared.CharForCtrlLetter('a' + rune(keycode-C.RETROK_a)); ok {
+			theCore.keyboard.channel.PutChar(char)
+			return
+		}
+	}
+
+	if char, ok := shared.CharForKey(retroKey(uint32(keycode)), ctrl); ok {
+		theCore.keyboard.channel.PutChar(char)
 		return
 	}
 
@@ -80,32 +90,30 @@ func izapple2KeyboardEvent(down C.int, keycode C.uint, character C.uint32_t, key
 	theCore.keyboard.channel.PutRune(rune(character))
 }
 
-// specialKey returns the code of the keys that do not come as a printable
-// character, and of the control combinations
-func specialKey(keycode uint32, modifiers uint16) (uint8, bool) {
+// retroKey translates a key of libretro. Only the ones that do not come as a
+// printable character are needed, the frontend keeps the rest of the keyboard
+// for itself.
+func retroKey(keycode uint32) shared.Key {
 	switch keycode {
 	case C.RETROK_RETURN, C.RETROK_KP_ENTER:
-		return 13, true
+		return shared.KeyReturn
 	case C.RETROK_TAB:
-		return 9, true
+		return shared.KeyTab
 	case C.RETROK_ESCAPE:
-		return 27, true
-	case C.RETROK_BACKSPACE, C.RETROK_LEFT:
-		return 8, true
+		return shared.KeyEscape
+	case C.RETROK_BACKSPACE:
+		return shared.KeyBackspace
+	case C.RETROK_LEFT:
+		return shared.KeyLeft
 	case C.RETROK_RIGHT:
-		return 21, true
+		return shared.KeyRight
 	case C.RETROK_UP:
-		return 11, true
+		return shared.KeyUp
 	case C.RETROK_DOWN:
-		return 10, true
+		return shared.KeyDown
 	case C.RETROK_DELETE:
-		return 127, true
+		return shared.KeyDelete
 	}
 
-	if modifiers&C.RETROKMOD_CTRL != 0 &&
-		keycode >= C.RETROK_a && keycode <= C.RETROK_z {
-		return uint8(keycode-C.RETROK_a) + 1, true
-	}
-
-	return 0, false
+	return shared.KeyNone
 }

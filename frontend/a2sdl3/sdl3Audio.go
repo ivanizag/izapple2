@@ -7,7 +7,9 @@ import (
 	"strconv"
 	"unsafe"
 
+	"github.com/ivanizag/izapple2"
 	"github.com/ivanizag/izapple2/audio"
+	"github.com/ivanizag/izapple2/frontend/shared"
 
 	"github.com/Zyko0/go-sdl3/sdl"
 )
@@ -23,9 +25,9 @@ type sdl3Audio struct {
 	buf    []float32
 }
 
-func newSDL3Audio(clockMhz float64) *sdl3Audio {
+func newSDL3Audio(a *izapple2.Apple2) *sdl3Audio {
 	return &sdl3Audio{
-		mixer: audio.NewMixer(clockMhz),
+		mixer: shared.NewMixer(a),
 		buf:   make([]float32, bufferSamples),
 	}
 }

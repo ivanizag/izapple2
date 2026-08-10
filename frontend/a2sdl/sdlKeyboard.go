@@ -3,49 +3,27 @@
 package main
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/ivanizag/izapple2"
-	"github.com/ivanizag/izapple2/screen"
+	"github.com/ivanizag/izapple2/frontend/shared"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+// sdlKeyboard turns the key events of SDL2 into the keys the frontends share
 type sdlKeyboard struct {
-	a          *izapple2.Apple2
-	keyChannel *izapple2.KeyboardChannel
-
-	showHelp        bool
-	showPages       bool
-	showCharGen     bool
-	showAltText     bool
-	showDropTargets bool
-	screenMode      int
+	keyboard *shared.Keyboard
 }
 
-func newSDLKeyBoard(a *izapple2.Apple2) *sdlKeyboard {
+func newSDLKeyBoard(a *izapple2.Apple2, view *shared.View) *sdlKeyboard {
 	var k sdlKeyboard
-	k.a = a
-	k.keyChannel = izapple2.NewKeyboardChannel(a)
-
-	k.screenMode = screen.ScreenModeColorScanlines
+	k.keyboard = shared.NewKeyboard(a, view)
 	return &k
 }
 
 func (k *sdlKeyboard) putText(text string) {
-	k.keyChannel.PutText(text)
+	k.keyboard.PutText(text)
 }
 
 func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
-	/*
-		See "Apple II reference manual", page 5
-
-		To get keys as understood by the Apple2 hardware run:
-		10 A=PEEK(49152)
-		20 PRINT A, A - 128
-		30 GOTO 10
-	*/
-
 	if keyEvent.Type != sdl.KEYDOWN {
 		// Process only key pushes
 		return
@@ -56,129 +34,69 @@ func (k *sdlKeyboard) putKey(keyEvent *sdl.KeyboardEvent) {
 	shift := key.Mod&sdl.KMOD_SHIFT != 0
 	command := key.Mod&sdl.KMOD_GUI != 0
 
-	if ctrl {
-		if key.Sym >= 'a' && key.Sym <= 'z' {
-			k.keyChannel.PutChar(uint8(key.Sym) - 97 + 1)
-			return
-		}
+	if ctrl && k.keyboard.PutCtrlLetter(rune(key.Sym)) {
+		return
 	}
 
-	result := uint8(0)
-
-	switch key.Sym {
-	case sdl.K_ESCAPE:
-		result = 27
-	case sdl.K_BACKSPACE:
-		result = 8
-	case sdl.K_RETURN:
-		result = 13
-	case sdl.K_RETURN2:
-		result = 13
-	case sdl.K_LEFT:
-		if ctrl {
-			result = 31 // Base64A
-		} else {
-			result = 8
-		}
-	case sdl.K_RIGHT:
-		result = 21
-
-	// Apple //e
-	case sdl.K_UP:
-		result = 11 // 31 in the Base64A
-	case sdl.K_DOWN:
-		result = 10
-	case sdl.K_TAB:
-		result = 9
-	case sdl.K_DELETE:
-		result = 127 // 24 in the Base64A
-
-	// Base64A clone particularities
-	case sdl.K_F3:
-		result = 127 // Base64A
-
-	// Control of the emulator
-	case sdl.K_F1:
-		k.showHelp = !k.showHelp
-	case sdl.K_F2:
-		// While the help is shown, F2 alone triggers a reset. This is handy
-		// when the window manager (for example KDE) captures Ctrl-F2.
-		if ctrl || k.showHelp {
-			k.a.SendCommand(izapple2.CommandReset)
-			k.showHelp = false
-		}
-	case sdl.K_F4:
-		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
-	case sdl.K_F5:
-		if ctrl {
-			k.a.SendCommand(izapple2.CommandShowSpeed)
-		} else {
-			k.a.SendCommand(izapple2.CommandToggleSpeed)
-		}
-	case sdl.K_F6:
-		k.screenMode = screen.NextScreenMode(k.screenMode)
-	case sdl.K_F7:
-		k.showPages = !k.showPages
-	case sdl.K_F8:
-		k.showDropTargets = !k.showDropTargets
-		if k.showDropTargets {
-			// The help is shown on top of the drop targets, get it out of the way
-			k.showHelp = false
-		}
-	case sdl.K_F9:
-		k.a.SendCommand(izapple2.CommandDumpDebugInfo)
-	case sdl.K_F10:
-		if ctrl {
-			k.showCharGen = !k.showCharGen
-		} else if shift {
-			k.showAltText = !k.showAltText
-		} else {
-			k.a.SendCommand(izapple2.CommandNextCharGenPage)
-		}
-	case sdl.K_F12:
-		fallthrough
-	case sdl.K_PRINTSCREEN:
-		if ctrl {
-			screen.AddScenario(k.a.GetVideoSource(), "../../screen/test_resources/")
-		} else {
-			err := screen.SaveSnapshot(k.a.GetVideoSource(), screen.ScreenModeColorScanlines, "snapshot.png")
-			if err != nil {
-				fmt.Printf("Error saving snapshoot: %v.\n.", err)
-			} else {
-				fmt.Println("Saving snapshot 'snapshot.png'")
-			}
-		}
-	case sdl.K_PAUSE:
-		k.a.SendCommand(izapple2.CommandPauseUnpause)
-	case sdl.K_INSERT:
-		if shift {
-			text, _ := sdl.GetClipboardText()
-			go k.performPaste(text)
-		}
-	case sdl.K_v:
-		if command {
-			text, _ := sdl.GetClipboardText()
-			go k.performPaste(text)
-		}
+	// Pasting reads the clipboard of SDL, it is not a shared command
+	if (key.Sym == sdl.K_INSERT && shift) || (key.Sym == sdl.K_v && command) {
+		text, _ := sdl.GetClipboardText()
+		k.keyboard.Paste(text)
+		return
 	}
 
-	// Missing values 91 to 95. Usually control for [\]^_
-	// On the Base64A it's control for \]./
-
-	if result != 0 {
-		k.keyChannel.PutChar(result)
-	}
+	k.keyboard.PutKey(sdlKey(key.Sym), ctrl, shift)
 }
 
-func (k *sdlKeyboard) performPaste(text string) {
-	// Note 1: Pasting is too fast, so we slow it down.
-	// Note 2: Need to translate CR/LF's
-	for _, ch := range text {
-		if ch == '\r' || ch == '\n' {
-			k.keyChannel.PutChar(13)
-		} else {
-			k.keyChannel.PutRune(ch)
-		}
-		time.Sleep(20 * time.Millisecond)
+// sdlKey translates a key of SDL2
+func sdlKey(sym sdl.Keycode) shared.Key {
+	switch sym {
+	case sdl.K_ESCAPE:
+		return shared.KeyEscape
+	case sdl.K_BACKSPACE:
+		return shared.KeyBackspace
+	case sdl.K_RETURN, sdl.K_RETURN2:
+		return shared.KeyReturn
+	case sdl.K_TAB:
+		return shared.KeyTab
+	case sdl.K_DELETE:
+		return shared.KeyDelete
+	case sdl.K_LEFT:
+		return shared.KeyLeft
+	case sdl.K_RIGHT:
+		return shared.KeyRight
+	case sdl.K_UP:
+		return shared.KeyUp
+	case sdl.K_DOWN:
+		return shared.KeyDown
+
+	case sdl.K_F1:
+		return shared.KeyF1
+	case sdl.K_F2:
+		return shared.KeyF2
+	case sdl.K_F3:
+		return shared.KeyF3
+	case sdl.K_F4:
+		return shared.KeyF4
+	case sdl.K_F5:
+		return shared.KeyF5
+	case sdl.K_F6:
+		return shared.KeyF6
+	case sdl.K_F7:
+		return shared.KeyF7
+	case sdl.K_F8:
+		return shared.KeyF8
+	case sdl.K_F9:
+		return shared.KeyF9
+	case sdl.K_F10:
+		return shared.KeyF10
+	case sdl.K_F12:
+		return shared.KeyF12
+	case sdl.K_PAUSE:
+		return shared.KeyPause
+	case sdl.K_PRINTSCREEN:
+		return shared.KeyPrintScreen
 	}
+
+	return shared.KeyNone
 }
