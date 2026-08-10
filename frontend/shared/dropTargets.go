@@ -51,17 +51,21 @@ type DropTargets struct {
 
 	flashUntil time.Time // The areas are shown for a while after a drop
 	flashDrive int
+
+	dragging  bool // A file is being dragged over the window
+	dragDrive int  // The drive under it, -1 while it is not known
 }
 
 func NewDropTargets(a *izapple2.Apple2) *DropTargets {
 	var d DropTargets
 	d.a = a
 	d.flashDrive = -1
+	d.dragDrive = -1
 	return &d
 }
 
-// Count returns how many drives a file can be dropped on
-func (d *DropTargets) Count() int {
+// count returns how many drives a file can be dropped on
+func (d *DropTargets) count() int {
 	return len(d.a.GetRemovableMediaDrives())
 }
 
@@ -69,7 +73,7 @@ func (d *DropTargets) Count() int {
 // a window of the given width. It returns -1 if there are no drives to drop a
 // file on.
 func (d *DropTargets) DriveAt(x int, width int) int {
-	return DropTargetIndex(x, width, d.Count())
+	return DropTargetIndex(x, width, d.count())
 }
 
 // Dropped notes the drive a file has just gone to, to show the areas for a
@@ -79,19 +83,64 @@ func (d *DropTargets) Dropped(drive int) {
 	d.flashUntil = time.Now().Add(DropTargetsFlashDuration)
 }
 
-// Flashing returns whether the areas are being shown after a drop
-func (d *DropTargets) Flashing() bool {
+// DragStarted is called when a file begins to be dragged over the window,
+// before knowing where it is
+func (d *DropTargets) DragStarted() {
+	d.dragging = true
+	d.dragDrive = -1
+}
+
+// DragMoved tracks the drive a file dragged over the window is on. Pass -1
+// while it is not known.
+func (d *DropTargets) DragMoved(drive int) {
+	d.dragging = true
+	d.dragDrive = drive
+}
+
+// DragEnded is called when the file is dropped or leaves the window
+func (d *DropTargets) DragEnded() {
+	d.dragging = false
+}
+
+// Showing returns whether the areas take over the screen: because a file is
+// being dragged over the window, because the user asked for them with F8, or
+// because a file has just been dropped
+func (d *DropTargets) Showing(requested bool) bool {
+	return d.dragging || requested || d.flashing()
+}
+
+/*
+SnapshotAt returns the screen with the areas of the drives, highlighting the
+drive under the file being dragged, or the one that got the last file while the
+flash lasts, or the one the pointer is on.
+
+Pass -1 as the drive pointed at where the pointer is outside the window or its
+position is not known.
+*/
+func (d *DropTargets) SnapshotAt(pointed int) *image.RGBA {
+	return d.snapshot(d.selected(pointed))
+}
+
+// selected returns the drive the areas highlight, -1 for none of them
+func (d *DropTargets) selected(pointed int) int {
+	switch {
+	case d.dragging:
+		return d.dragDrive
+	case d.flashing():
+		return d.flashDrive
+	}
+
+	return pointed
+}
+
+// flashing returns whether the areas are being shown after a drop
+func (d *DropTargets) flashing() bool {
 	return time.Now().Before(d.flashUntil)
 }
 
-// FlashDrive returns the drive the last file dropped went to
-func (d *DropTargets) FlashDrive() int {
-	return d.flashDrive
-}
-
-// Snapshot returns the screen with the areas of the drives, with the one
+// snapshot returns the screen with the areas of the drives, with the one
 // passed highlighted. Pass -1 to highlight none of them.
-func (d *DropTargets) Snapshot(selected int) *image.RGBA {
+func (d *DropTargets) snapshot(selected int) *image.RGBA {
 	drives := d.a.GetRemovableMediaDrives()
 	return screen.SnapshotMessageGenerator(d.a.GetVideoSource(),
 		dropTargetsMessage(drives, selected), true /*is80Columns*/)

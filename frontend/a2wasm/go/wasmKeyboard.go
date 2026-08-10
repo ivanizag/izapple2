@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ivanizag/izapple2"
+	"github.com/ivanizag/izapple2/frontend/shared"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -53,77 +54,58 @@ func (k *wasmKeyboard) putChar(ch uint8) {
 }
 
 func (k *wasmKeyboard) putKey(key ebiten.Key) {
-	/*
-		See "Apple II reference manual", page 5
-
-		To get keys as understood by the Apple2 hardware run:
-		10 A=PEEK(49152)
-		20 PRINT A, A - 128
-		30 GOTO 10
-	*/
-
 	ctrl := ebiten.IsKeyPressed(ebiten.KeyControl)
-	//#shift := ebiten.IsKeyPressed(ebiten.KeyShift)
 
-	if ctrl {
-		if key >= ebiten.KeyA && key <= ebiten.KeyZ {
+	if ctrl && key >= ebiten.KeyA && key <= ebiten.KeyZ {
+		if char, ok := shared.CharForCtrlLetter('a' + rune(key-ebiten.KeyA)); ok {
 			fmt.Println("Control Key: ", key.String())
-			k.keyChannel.PutChar(uint8(key-ebiten.KeyA) - 97 + 1)
-			return
+			k.keyChannel.PutChar(char)
 		}
+		return
 	}
 
-	result := uint8(0)
+	if char, ok := shared.CharForKey(wasmKey(key), ctrl); ok {
+		k.keyChannel.PutChar(char)
+		return
+	}
 
+	// Control of the emulator. The page has its own controls for the rest.
 	switch key {
-	case ebiten.KeyEscape:
-		result = 27
-	case ebiten.KeyBackspace:
-		result = 8
-	case ebiten.KeyEnter:
-		result = 13
-	case ebiten.KeyNumpadEnter:
-		result = 13
-	case ebiten.KeyLeft:
-		if ctrl {
-			result = 31 // Base64A
-		} else {
-			result = 8
-		}
-	case ebiten.KeyRight:
-		result = 21
-
-	// Apple //e
-	case ebiten.KeyUp:
-		result = 11 // 31 in the Base64A
-	case ebiten.KeyDown:
-		result = 10
-	case ebiten.KeyTab:
-		result = 9
-	case ebiten.KeyDelete:
-		result = 127 // 24 in the Base64A
-
-	// Base64A clone particularities
-	case ebiten.KeyF3:
-		result = 127 // Base64A
-
-	// Control of the emulator
 	case ebiten.KeyF2:
 		if ctrl {
 			k.a.SendCommand(izapple2.CommandReset)
 		}
 	case ebiten.KeyF9:
 		k.a.SendCommand(izapple2.CommandDumpDebugInfo)
-	case ebiten.KeyF12:
-		fallthrough
-	case ebiten.KeyPause:
+	case ebiten.KeyF12, ebiten.KeyPause:
 		k.a.SendCommand(izapple2.CommandPauseUnpause)
 	}
+}
 
-	// Missing values 91 to 95. Usually control for [\]^_
-	// On the Base64A it's control for \]./
-
-	if result != 0 {
-		k.keyChannel.PutChar(result)
+// wasmKey translates a key of Ebitengine
+func wasmKey(key ebiten.Key) shared.Key {
+	switch key {
+	case ebiten.KeyEscape:
+		return shared.KeyEscape
+	case ebiten.KeyBackspace:
+		return shared.KeyBackspace
+	case ebiten.KeyEnter, ebiten.KeyNumpadEnter:
+		return shared.KeyReturn
+	case ebiten.KeyTab:
+		return shared.KeyTab
+	case ebiten.KeyDelete:
+		return shared.KeyDelete
+	case ebiten.KeyLeft:
+		return shared.KeyLeft
+	case ebiten.KeyRight:
+		return shared.KeyRight
+	case ebiten.KeyUp:
+		return shared.KeyUp
+	case ebiten.KeyDown:
+		return shared.KeyDown
+	case ebiten.KeyF3:
+		return shared.KeyF3
 	}
+
+	return shared.KeyNone
 }

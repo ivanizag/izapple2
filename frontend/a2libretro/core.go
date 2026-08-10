@@ -75,13 +75,10 @@ func (c *core) build() bool {
 
 	c.a = a
 	c.video = newVideoOutput(options.screenMode)
-	c.audio = newAudioOutput(a.GetClockMhz())
+	c.audio = newAudioOutput(a)
 	c.keyboard = newKeyboard(a)
 	c.joysticks = newJoysticks()
 
-	for _, source := range a.GetAudioSources() {
-		source.SetAudioSink(c.audio.mixer.NewSource())
-	}
 	a.SetJoysticksProvider(c.joysticks)
 	a.SetMouseProvider(newMouse())
 

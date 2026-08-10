@@ -3,6 +3,7 @@ package shared
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ivanizag/izapple2"
 )
@@ -32,6 +33,44 @@ func TestDropTargetIndex(t *testing.T) {
 			t.Errorf("DropTargetIndex(%v, %v, %v) is %v, expected %v",
 				c.x, c.width, c.drives, actual, c.expected)
 		}
+	}
+}
+
+// TestDropTargetsDrag follows a file dragged over the window and dropped,
+// checking when the areas are shown and which drive they highlight
+func TestDropTargetsDrag(t *testing.T) {
+	d := NewDropTargets(nil)
+
+	steps := []struct {
+		name string
+		do   func()
+
+		showing  bool // With the areas not asked for
+		selected int  // With the pointer on drive 2
+	}{
+		{"at rest", func() {}, false, 2},
+		{"a file enters the window", d.DragStarted, true, -1},
+		{"the file moves over drive 1", func() { d.DragMoved(1) }, true, 1},
+		{"the file is dropped on drive 1", func() { d.Dropped(1); d.DragEnded() }, true, 1},
+		{"the flash is over", func() { d.flashUntil = time.Now() }, false, 2},
+	}
+
+	for _, step := range steps {
+		step.do()
+
+		if actual := d.Showing(false); actual != step.showing {
+			t.Errorf("%v: Showing(false) is %v, expected %v",
+				step.name, actual, step.showing)
+		}
+		if actual := d.selected(2); actual != step.selected {
+			t.Errorf("%v: selected(2) is %v, expected %v",
+				step.name, actual, step.selected)
+		}
+	}
+
+	// Nothing is going on by now, only the user asking shows the areas
+	if !d.Showing(true) {
+		t.Error("the areas asked for should be shown")
 	}
 }
 

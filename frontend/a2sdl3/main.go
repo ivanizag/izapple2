@@ -4,14 +4,13 @@ package main
 
 import (
 	"fmt"
-	"image"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 
 	"github.com/ivanizag/izapple2"
-	"github.com/ivanizag/izapple2/screen"
+	"github.com/ivanizag/izapple2/frontend/shared"
 
 	"github.com/Zyko0/go-sdl3/bin/binsdl"
 	"github.com/Zyko0/go-sdl3/sdl"
@@ -64,19 +63,17 @@ func sdlRun(a *izapple2.Apple2) {
 		fmt.Printf("Error starting text input: %v.\n", err)
 	}
 
-	kp := newSDL3Keyboard(a)
+	view := shared.NewView()
+	kp := newSDL3Keyboard(a, view)
 
-	s := newSDL3Audio(a.GetClockMhz())
-	for _, source := range a.GetAudioSources() {
-		source.SetAudioSink(s.mixer.NewSource())
-	}
+	s := newSDL3Audio(a)
 	s.start()
 	defer s.close()
 
 	j := newSDL3Joysticks(!a.UsesMouse())
-	a.SetJoysticksProvider(j)
+	a.SetJoysticksProvider(j.paddles)
 
-	m := newSDL3Mouse()
+	m := shared.NewMouse()
 	a.SetMouseProvider(m)
 
 	d := newSDL3DropTargets(a, window)
@@ -112,7 +109,7 @@ func sdlRun(a *izapple2.Apple2) {
 				kp.putKey(e)
 				j.putKey(e)
 			case sdl.EVENT_WINDOW_FOCUS_LOST:
-				j.releaseKeys()
+				j.paddles.ReleaseAppleKeys()
 			case sdl.EVENT_TEXT_INPUT:
 				kp.putText(event.TextInputEvent().Text)
 			case sdl.EVENT_JOYSTICK_AXIS_MOTION:
@@ -123,12 +120,14 @@ func sdlRun(a *izapple2.Apple2) {
 				w, h, _ := window.Size()
 				e := event.MouseMotionEvent()
 				j.putMouseMotionEvent(e, w, h)
-				m.putMouseMotionEvent(e, w, h)
+				m.SetPosition(int(e.X), int(e.Y), int(w), int(h))
 				d.dragEnded()
 			case sdl.EVENT_MOUSE_BUTTON_DOWN, sdl.EVENT_MOUSE_BUTTON_UP:
 				e := event.MouseButtonEvent()
 				j.putMouseButtonEvent(e)
-				m.putMouseButtonEvent(e)
+				if sdl3MouseButton(e.Button) == shared.MouseButtonLeft {
+					m.SetButton(e.Down)
+				}
 			case sdl.EVENT_DROP_BEGIN:
 				// Unlike SDL2, SDL3 reports the file being dragged over the
 				// window, so the drop targets can be shown while it moves.
@@ -160,21 +159,9 @@ func sdlRun(a *izapple2.Apple2) {
 		}
 
 		if !a.IsPaused() {
-			var img *image.RGBA
-			vs := a.GetVideoSource()
-			if kp.showHelp {
-				img = screen.SnapshotMessageGenerator(vs, helpMessage, false /*is80Columns*/)
-			} else if d.showing(kp.showDropTargets) {
-				img = d.snapshot()
-			} else if kp.showCharGen {
-				cgPage, cgPages := a.GetCgPageInfo()
-				img = screen.SnapshotCharacterGenerator(vs, kp.showAltText)
-				window.SetTitle(fmt.Sprintf("%v character map, page %v/%v", a.Name, cgPage+1, cgPages))
-			} else if kp.showPages {
-				img = screen.SnapshotParts(vs, kp.screenMode)
-				window.SetTitle(fmt.Sprintf("%v %v %vx%v", a.Name, screen.VideoModeName(vs), img.Rect.Dx()/2, img.Rect.Dy()/2))
-			} else {
-				img = screen.Snapshot(vs, kp.screenMode)
+			img, viewTitle := view.Snapshot(a, d.targets, d.pointedDrive())
+			if viewTitle != "" {
+				window.SetTitle(viewTitle)
 			}
 			if img != nil {
 				// image.RGBA stores the bytes as R, G, B, A. That is
@@ -204,30 +191,5 @@ func sdlRun(a *izapple2.Apple2) {
 		sdl.Delay(1000 / 30)
 	}
 }
-
-var helpMessage = `
-          F1: Show/Hide help
-     Ctrl-F2: Reset
-      F1, F2: Reset
-          F4: Show/Hide CPU trace
-          F5: Fast/Normal speed
-     Ctrl-F5: Show speed
-          F6: Next screen mode
-          F7: Show/Hide pages
-          F8: Show/Hide drop targets
-         F10: Next character set
-    Ctrl-F10: Show/Hide character set
-   Shift-F10: Show/Hide alternate text
-         F12: Save screen snapshot
-       Pause: Pause the emulation
-
-  Left alt or option key: Open-Apple
- Right alt or option key: Closed-Apple
-
-Drop a file on a drive area to load it
-
- Run izapple2 -h for more options
-   https://github.com/ivanizag/izapple2
-`
 
 ///////////////////////////////////////

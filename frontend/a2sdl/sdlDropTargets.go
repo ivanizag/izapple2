@@ -3,8 +3,6 @@
 package main
 
 import (
-	"image"
-
 	"github.com/ivanizag/izapple2"
 	"github.com/ivanizag/izapple2/frontend/shared"
 	"github.com/veandco/go-sdl2/sdl"
@@ -52,22 +50,6 @@ func (d *sdlDropTargets) dropped() int {
 		d.targets.Dropped(drive)
 	}
 	return drive
-}
-
-// showing returns whether the areas take over the screen, either because the
-// user asked for them with F8 or because a file has just been dropped
-func (d *sdlDropTargets) showing(requested bool) bool {
-	return requested || d.targets.Flashing()
-}
-
-// snapshot returns the screen with the areas, highlighting the drive that got
-// the last file while the flash lasts, or the one under the pointer
-func (d *sdlDropTargets) snapshot() *image.RGBA {
-	selected := d.targets.FlashDrive()
-	if !d.targets.Flashing() {
-		selected = d.pointedDrive()
-	}
-	return d.targets.Snapshot(selected)
 }
 
 // pointedDrive returns the drive the mouse pointer is on, -1 when it is

@@ -7,7 +7,9 @@ package main
 import "C"
 
 import (
+	"github.com/ivanizag/izapple2"
 	a2audio "github.com/ivanizag/izapple2/audio"
+	"github.com/ivanizag/izapple2/frontend/shared"
 )
 
 const sampleRate = a2audio.SampleRate
@@ -30,15 +32,15 @@ type audioOutput struct {
 	stereo []C.int16_t
 }
 
-func newAudioOutput(clockMhz float64) *audioOutput {
-	samplesPerFrame := sampleRate * cyclesPerFrame / (clockMhz * 1_000_000)
+func newAudioOutput(a *izapple2.Apple2) *audioOutput {
+	samplesPerFrame := sampleRate * cyclesPerFrame / (a.GetClockMhz() * 1_000_000)
 
 	// Room for a frame and a bit, the pending samples never add up to a full
 	// extra sample
 	size := int(samplesPerFrame) + 2
 
 	return &audioOutput{
-		mixer:           a2audio.NewMixer(clockMhz),
+		mixer:           shared.NewMixer(a),
 		samplesPerFrame: samplesPerFrame,
 		mono:            make([]float32, size),
 		stereo:          make([]C.int16_t, 2*size),

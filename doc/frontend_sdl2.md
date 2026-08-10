@@ -105,6 +105,11 @@ Escape mapped to what the Apple II understands. The rest:
 
 On the Base64A, F3 is the Delete key of that keyboard.
 
+The Apple keys are a place on the keyboard and are found by scancode, so they
+work on the layouts where the alt keys produce another symbol. Losing the
+window focus releases them, so one held while switching windows does not stay
+pressed.
+
 The title bar says which machine is running and shows `PAUSED!` while it is
 paused. With the four panels or the character map on screen it shows what is
 being displayed instead.

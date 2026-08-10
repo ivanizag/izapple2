@@ -44,11 +44,8 @@ The same command line as every other frontend, see
 
 The same as [a2sdl](frontend_sdl2.md#keys), including the paste with
 Shift-Insert or Cmd-V and the Open-Apple and Closed-Apple on the alt or option
-keys.
-
-The Apple keys are found by scancode instead of by keycode. On the keyboard
-layouts where the right alt is AltGr, SDL3 does not report it as an alt key,
-and the Closed-Apple would never be pressed if it were looked up by keycode.
+keys. Both frontends decide the keys with the same code, so they answer to the
+same ones.
 
 ## What is different from SDL2
 
@@ -58,8 +55,6 @@ Nothing that you use, and a few things underneath:
   areas of the drives it can be dropped on is shown while it moves, with the
   one under the pointer marked. SDL2 only knows about the file once it is
   dropped, and has to show the areas with F8 or after the drop.
-- Losing the window focus releases the joystick keys, so an Open-Apple held
-  while switching windows does not stay pressed.
 - Ctrl-C on the terminal quits the same way as closing the window, releasing
   everything on the way out.
 - The scaling of the picture is a property of the renderer instead of the
