@@ -20,6 +20,7 @@ type Game struct {
 	view        *shared.View
 	keyboard    *ebitenKeyboard
 	speaker     *ebitenAudio
+	mouse       *shared.Mouse
 	dropTargets *ebitenDropTargets
 	fontSource  *text.GoTextFaceSource
 
@@ -41,6 +42,7 @@ var hudColor = color.RGBA{208, 241, 141, 255} // Yellow
 func (g *Game) Update() error {
 	g.keyboard.update()
 	g.speaker.update()
+	g.updateMouse()
 	g.dropTargets.update()
 
 	if g.paused != g.a.IsPaused() {
@@ -69,6 +71,20 @@ func (g *Game) Update() error {
 
 	g.updates++
 	return nil
+}
+
+/*
+updateMouse reads where the pointer is and whether its button is pressed.
+Ebitengine has no mouse events, they are polled when the frame is updated.
+
+The positions are on the virtual screen the game is laid out on, not on the
+window, so the pointer lands on the same place of the picture whatever the size
+of the window is.
+*/
+func (g *Game) updateMouse() {
+	x, y := ebiten.CursorPosition()
+	g.mouse.SetPosition(x, y, virtualWidth, virtualHeight)
+	g.mouse.SetButton(ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft))
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -128,8 +144,10 @@ func ebitenRun(a *izapple2.Apple2) {
 		view:        view,
 		keyboard:    newEbitenKeyBoard(a, view),
 		speaker:     newEbitenAudio(a),
+		mouse:       shared.NewMouse(),
 		dropTargets: newEbitenDropTargets(a),
 	}
+	a.SetMouseProvider(game.mouse)
 
 	var err error
 	game.fontSource, err = text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))

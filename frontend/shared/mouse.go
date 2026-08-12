@@ -21,8 +21,8 @@ func (m *Mouse) SetPosition(x int, y int, width int, height int) {
 		return
 	}
 
-	m.x = uint16(65536 * x / width)
-	m.y = uint16(65536 * y / height)
+	m.x = mousePosition(x, width)
+	m.y = mousePosition(y, height)
 }
 
 // SetButton presses or releases the button of the mouse
@@ -30,10 +30,16 @@ func (m *Mouse) SetButton(pressed bool) {
 	m.pressed = pressed
 }
 
+// mousePosition turns a position on the window into the full range the machine
+// reads the mouse in, keeping what is outside the window on the edge
+func mousePosition(position int, size int) uint16 {
+	return uint16(max(min(65536*position/size, 65535), 0))
+}
+
+// izapple2.MouseProvider implementation
+
 // ReadMouse returns the position of the pointer on the window and whether its
 // button is pressed
 func (m *Mouse) ReadMouse() (x uint16, y uint16, pressed bool) {
 	return m.x, m.y, m.pressed
 }
-
-// TODO: SDL_WarpMouseInWindow

@@ -22,4 +22,10 @@ func TestMouse(t *testing.T) {
 	if x, y, _ := m.ReadMouse(); x != 32768 || y != 16384 {
 		t.Errorf("the mouse moved to (%v, %v) on a window without size", x, y)
 	}
+
+	// The pointer outside the window stays on the edge
+	m.SetPosition(-10, 999, 640, 480)
+	if x, y, _ := m.ReadMouse(); x != 0 || y != 65535 {
+		t.Errorf("the mouse is at (%v, %v), expected (0, 65535)", x, y)
+	}
 }

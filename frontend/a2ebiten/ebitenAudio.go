@@ -23,7 +23,7 @@ type ebitenAudio struct {
 
 func newEbitenAudio(a *izapple2.Apple2) *ebitenAudio {
 	return &ebitenAudio{
-		mixer: shared.NewMixer(a),
+		mixer: shared.NewFrontMixer(a),
 	}
 }
 

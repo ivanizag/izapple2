@@ -40,7 +40,7 @@ func newAudioOutput(a *izapple2.Apple2) *audioOutput {
 	size := int(samplesPerFrame) + 2
 
 	return &audioOutput{
-		mixer:           shared.NewMixer(a),
+		mixer:           shared.NewFrontMixer(a),
 		samplesPerFrame: samplesPerFrame,
 		mono:            make([]float32, size),
 		stereo:          make([]C.int16_t, 2*size),

@@ -27,7 +27,7 @@ type sdl3Audio struct {
 
 func newSDL3Audio(a *izapple2.Apple2) *sdl3Audio {
 	return &sdl3Audio{
-		mixer: shared.NewMixer(a),
+		mixer: shared.NewFrontMixer(a),
 		buf:   make([]float32, bufferSamples),
 	}
 }
