@@ -130,6 +130,14 @@ func (p *Paddles) SetMouseButton(button int, pressed bool) {
 	p.mouseButtons[button] = pressed
 }
 
+// mouseToPaddle turns a position on the window into the value of a paddle
+// centered on the center of the window
+func mouseToPaddle(x int, width int) uint8 {
+	return uint8(max(min(x-(width/2)+paddleCentered, 255), 0))
+}
+
+// izapple2.JoysticksProvider implementation
+
 // ReadButton returns whether a pushbutton is pressed, as the machine reads it
 func (p *Paddles) ReadButton(i int) bool {
 	switch i {
@@ -149,10 +157,4 @@ func (p *Paddles) ReadButton(i int) bool {
 // ReadPaddle returns the resistance of a paddle and whether it is plugged
 func (p *Paddles) ReadPaddle(i int) (uint8, bool) {
 	return p.paddle[i], p.hasPaddle[i]
-}
-
-// mouseToPaddle turns a position on the window into the value of a paddle
-// centered on the center of the window
-func mouseToPaddle(x int, width int) uint8 {
-	return uint8(max(min(x-(width/2)+paddleCentered, 255), 0))
 }

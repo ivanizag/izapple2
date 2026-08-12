@@ -1,9 +1,9 @@
 # The Ebitengine frontend
 
 `a2ebiten` opens a window with [Ebitengine](https://ebitengine.org/). It has
-the screen with all its modes, the sound, the diskettes dropped on the window
-and the same function keys as [a2sdl](frontend_sdl2.md), and it is missing the
-things around them: no joysticks and no mouse.
+the screen with all its modes, the sound, the mouse, the diskettes dropped on
+the window and the same function keys as [a2sdl](frontend_sdl2.md), and it is
+missing the things around them: no joysticks.
 
 ## Building
 
@@ -58,10 +58,16 @@ so the area used is the one the pointer was last seen on. Check with F8 before
 dragging, or look at the areas shown after the drop to see where the file
 landed.
 
+## The mouse
+
+The models that use a mouse, like `desktop`, work with the pointer on the
+window. Ebitengine has no mouse events, so the pointer is read on every frame,
+and its position is taken on the picture and not on the window: it lands on the
+same place whatever the size of the window is.
+
 ## What is missing
 
 - **Joysticks and paddles**, and the mouse as a joystick.
-- **The mouse**, so the models that use it, like `desktop`, are not much use.
 - **Pasting** from the clipboard.
 
 The window is 564x384 and can be resized. The picture is generated at a fixed

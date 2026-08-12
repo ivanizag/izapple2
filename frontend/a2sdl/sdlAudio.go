@@ -34,7 +34,7 @@ var theSDLAudio atomic.Pointer[sdlAudio]
 
 func newSDLAudio(a *izapple2.Apple2) *sdlAudio {
 	return &sdlAudio{
-		mixer: shared.NewMixer(a),
+		mixer: shared.NewFrontMixer(a),
 	}
 }
 

@@ -5,9 +5,9 @@ import (
 	"github.com/ivanizag/izapple2/audio"
 )
 
-// NewMixer creates the mixer of a machine with every sound source of it
+// NewFrontMixer creates the mixer of a machine with every sound source of it
 // attached, ready for the frontend to send the samples to its audio device
-func NewMixer(a *izapple2.Apple2) *audio.Mixer {
+func NewFrontMixer(a *izapple2.Apple2) *audio.Mixer {
 	mixer := audio.NewMixer(a.GetClockMhz())
 	for _, source := range a.GetAudioSources() {
 		source.SetAudioSink(mixer.NewSource())
