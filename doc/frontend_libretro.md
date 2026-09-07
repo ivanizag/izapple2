@@ -204,7 +204,7 @@ In *Quick Menu > Core Options*:
 
 | Option | Values | Meaning |
 | --- | --- | --- |
-| Machine model | `gaming` (default), `2`, `2e`, `2enh`, `2plus`, `base64a`, `basis108`, `cpm`, `cpm3`, `cpm65`, `desktop`, `dos32`, `pascal`, `prodos`, `swyft` | The machine to emulate, the same models as the `-model` command line flag |
+| Machine model | `gaming` (default), `2`, `2e`, `2enh`, `2plus`, `base64a`, `basis108`, `cpm`, `cpm3`, `cpm65`, `desktop`, `dos32`, `forth`, `pascal`, `prodos`, `swyft` | The machine to emulate, the same models as the `-model` command line flag |
 | Monitor | `color` (default), `green` | An NTSC colour television or a green phosphor monitor |
 
 Changing the model takes effect on the next **Reset**, which cold boots the
