@@ -35,6 +35,7 @@
   - Brain Board
   - Brain Board II
   - MultiROM card
+  - Forth ROM card by Offete Industries
   - Dan ][ Controller card
   - ProDOS ROM card
   - Microsoft Z80 Softcard using the [Z80](https://github.com/koron-go/z80) emulation from Koron

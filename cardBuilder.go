@@ -72,6 +72,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory["diskii"] = newCardDisk2Builder()
 	cardFactory["diskiiseq"] = newCardDisk2SequencerBuilder()
 	cardFactory["fastchip"] = newCardFastChipBuilder()
+	cardFactory["forthrom"] = newCardForthRomBuilder()
 	cardFactory["fujinet"] = newCardSmartPortFujinetBuilder()
 	cardFactory["inout"] = newCardInOutBuilder()
 	cardFactory["language"] = newCardLanguageBuilder()
