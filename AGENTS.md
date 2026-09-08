@@ -214,7 +214,7 @@ func NewCardDisk2(sectors13 bool) *CardDisk2 {
 
 ## Continuous Integration
 
-The project uses GitHub Actions (`.github/workflows/go.yml`) and CircleCI (`.circleci/config.yml`):
+The project uses GitHub Actions (`.github/workflows/go.yml`):
 - Builds are tested on Linux with SDL2
 - Must pass `go build` and `go test ./...`
 - Targets Go 1.26+ (currently using 1.26.0)
