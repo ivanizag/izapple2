@@ -67,21 +67,7 @@ func (at *apple2Tester) getText(textMode testTextModeFunc) string {
 }
 
 func (at *apple2Tester) getTextBest() string {
-	videxMaybe := at.a.cards[3]
-	if videxMaybe != nil {
-		if videx, ok := videxMaybe.(*CardVidexVideoterm); ok {
-			return videx.getText()
-		}
-		if videxUltraterm, ok := videxMaybe.(*CardVidexUltraterm); ok {
-			return videxUltraterm.getText()
-		}
-	}
-
-	videoMode := at.a.video.GetCurrentVideoMode()
-	if videoMode&screen.VideoBaseMask == screen.VideoText80 {
-		return at.getText(testTextMode80)
-	}
-	return at.getText(testTextMode40)
+	return at.a.ScreenText()
 }
 
 /*
