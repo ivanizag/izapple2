@@ -278,14 +278,20 @@ func nibEncodeTrack(data []byte, volume byte, track byte, logicalOrder *[16]int)
 	return b
 }
 
+/*
+findProlog looks for a prolog in a track, from a position and around the track
+once, and returns the position after it, -1 if there is none. The position is
+not wrapped to the length of the track: past the length, the prolog found was
+before the position the search started at.
+*/
 func findProlog(diskPrologByte3 uint8, data []byte, position int) int {
 	l := len(data)
-	for i := position; i < l; i++ {
-		if (data[i] == diskPrologByte1) &&
+	for i := position; i < position+l; i++ {
+		if (data[i%l] == diskPrologByte1) &&
 			(data[(i+1)%l] == diskPrologByte2) &&
 			(data[(i+2)%l] == diskPrologByte3) {
 
-			return (i + 3) % l
+			return i + 3
 		}
 	}
 
@@ -301,7 +307,8 @@ func nibDecodeTrack(data []byte, logicalOrder *[16]int) ([]byte, error) {
 	for {
 		// Find address field prolog
 		i = findProlog(diskPrologByte3Address, data, i)
-		if i == -1 {
+		if i == -1 || i-3 >= l {
+			// No more address fields before going around the track
 			break
 		}
 
@@ -311,8 +318,11 @@ func nibDecodeTrack(data []byte, logicalOrder *[16]int) ([]byte, error) {
 		dst := int(logicalSector) * bytesPerSector
 
 		// Find data prolog
-		i = (i + 8 + 3) % l // We skip the four two byte fields and the epilog
+		i += 8 + 3 // We skip the four two byte fields and the epilog
 		i = findProlog(diskPrologByte3Data, data, i)
+		if i == -1 {
+			return nil, errors.New("address field without data field in nib data")
+		}
 
 		// Read secondary buffer
 		prevV := byte(0)
