@@ -34,9 +34,8 @@ const (
 	/*
 		fastModeFactor is how many frames worth of cycles are run in a single
 		frame while a device asks for fast mode, which the disk drive does
-		while the motor is on. Without it a DOS 3.3 boot, that takes some 37
-		million cycles of mostly waiting for the drive, would need more than
-		half a minute. The other frontends let the emulation run free instead,
+		while the motor is on. Without it a DOS 3.3 boot, some five million
+		cycles, would take the five seconds it takes on the real machine. The other frontends let the emulation run free instead,
 		but a libretro core has to return in time for the next frame, so the
 		speed up is capped. Sound is choppy while it lasts, as it is on the
 		other frontends.

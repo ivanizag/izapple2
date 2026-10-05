@@ -10,6 +10,7 @@ type disketteNibWritable struct {
 	nib      *fileNib
 	position int
 	powered  bool
+	shifting bool // The next read is the latch shifting in a nibble
 
 	// Needed to write back
 	hasDirtyTrack bool
@@ -26,10 +27,17 @@ func (d *disketteNibWritable) PowerOff(_ uint64) {
 
 func (d *disketteNibWritable) Read(quarterTrack int, cycle uint64) uint8 {
 	track := d.nib.track[quarterTrack/4]
-	value := track[d.position]
-	if d.powered { // the position can't change if the drive is off
-		d.position = (d.position + 1) % nibBytesPerTrack
+	if !d.powered {
+		// The disk is still, the latch keeps what it has
+		return track[d.position]
 	}
+	if d.shifting {
+		d.shifting = false
+		return latchShifting(track[d.position])
+	}
+	value := track[d.position]
+	d.position = (d.position + 1) % nibBytesPerTrack
+	d.shifting = true
 	return value
 }
 
@@ -40,6 +48,7 @@ func (d *disketteNibWritable) Write(quarterTrack int, value uint8, _ uint64) {
 		d.commit()
 	}
 
+	d.shifting = false
 	d.nib.track[track][d.position] = value
 	if d.powered { // the position can't change if the drive is off
 		d.position = (d.position + 1) % nibBytesPerTrack

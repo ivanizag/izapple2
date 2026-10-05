@@ -19,7 +19,7 @@ go build .
 
 ``` terminal
 casa@servidor:~$ ./headless
-* run 40000
+* run 10000
 * text
 * type 10 PRINT "HELLO WORLD"
 * enter
@@ -58,8 +58,8 @@ running yet.
 
 `run` is the useful one for a script. It asks for full speed, sets a breakpoint
 that many cycles ahead and waits, so a DOS 3.3 boot is over in a moment and the
-prompt comes back exactly when it is done. A boot from a diskette spends some
-37 million cycles, mostly waiting for the drive, so `run 40000` covers it.
+prompt comes back exactly when it is done. A DOS 3.3 boot from a diskette
+spends some five million cycles, so `run 10000` covers it.
 
 The `help` the program prints is ahead of what it does in a few places: there
 is no `stop` (it is `pause`) and no `gifm`, and `png`, `pngm` and `gif` take no

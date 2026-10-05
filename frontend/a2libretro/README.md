@@ -40,8 +40,8 @@ A frame is 17030 cycles, 65 for each of the 262 lines of an NTSC frame.
 
 While a device asks for fast mode, which the Disk II does while the motor is
 on, the core runs 16 frames worth of cycles per frame. Without it a DOS 3.3
-boot, that spends some 37 million cycles mostly waiting for the drive, would
-take more than half a minute. Sound is choppy while it lasts, as it is on the
+boot, some five million cycles, would take the five seconds it takes on the
+real machine. Sound is choppy while it lasts, as it is on the
 other frontends when they run at full speed.
 
 ## What is not supported

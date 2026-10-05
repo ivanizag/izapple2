@@ -29,8 +29,11 @@ type CardDisk2 struct {
 
 	selected int  // q5, Only 0 and 1 supported
 	power    bool // q4
-	drive    [2]cardDisk2Drive
-	fastMode bool
+	// motorOffCycle is when the motor of the selected drive stops, after q4
+	// was turned off. 0 when it is not stopping.
+	motorOffCycle uint64
+	drive         [2]cardDisk2Drive
+	fastMode      bool
 
 	dataLatch uint8
 	q6        bool
@@ -143,6 +146,15 @@ func (c *CardDisk2) reset() {
 	c.q7 = false
 }
 
+/*
+disk2MotorOffCycles is how long the motor keeps turning after the drive is
+turned off, about a second: the 556 timer of the controller holds it on. DOS
+turns the drive off at the end of each access, and checks at the start of the
+next whether the disk is still turning to skip the wait for it to come up to
+speed. Without the delay, each sector DOS reads costs that wait.
+*/
+const disk2MotorOffCycles = uint64(1_020_484) // A second at 1.02 MHz
+
 func (c *CardDisk2) setTrackTracer(tt trackTracer) {
 	c.trackTracer = tt
 }
@@ -212,35 +224,56 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 		}, "Q6Q7")
 	}
 
+	a.registerTickerCard(c)
 	c.cardBase.assign(a, slot)
+}
+
+// tick stops the motor when the delay after turning the drive off is over
+func (c *CardDisk2) tick() {
+	if c.motorOffCycle != 0 && c.a.GetCycles() >= c.motorOffCycle {
+		c.stopMotor()
+	}
+}
+
+// isSpinning is whether the selected drive turns, on or still stopping
+func (c *CardDisk2) isSpinning() bool {
+	return c.power || c.motorOffCycle != 0
+}
+
+// stopMotor stops the selected drive
+func (c *CardDisk2) stopMotor() {
+	c.motorOffCycle = 0
+	drive := &c.drive[c.selected]
+	if drive.diskette != nil {
+		drive.diskette.PowerOff(c.a.GetCycles())
+	}
 }
 
 func (c *CardDisk2) softSwitchQ4(value bool) {
 	if !value && c.power {
-		// Turn off
+		// Turn off. The motor stops after the delay
 		c.power = false
 		if c.fastMode {
 			c.a.ReleaseFastMode()
 		}
-		drive := &c.drive[c.selected]
-		if drive.diskette != nil {
-			drive.diskette.PowerOff(c.a.GetCycles())
-		}
+		c.motorOffCycle = c.a.GetCycles() + disk2MotorOffCycles
 	} else if value && !c.power {
 		// Turn on
+		spinning := c.isSpinning()
 		c.power = true
+		c.motorOffCycle = 0
 		if c.fastMode {
 			c.a.RequestFastMode()
 		}
 		drive := &c.drive[c.selected]
-		if drive.diskette != nil {
+		if !spinning && drive.diskette != nil {
 			drive.diskette.PowerOn(c.a.GetCycles())
 		}
 	}
 }
 
 func (c *CardDisk2) softSwitchQ5(selected int) {
-	if c.power && c.selected != selected {
+	if c.isSpinning() && c.selected != selected {
 		// Selected changed with power on, power goes to the other disk
 		if c.drive[c.selected].diskette != nil {
 			c.drive[c.selected].diskette.PowerOff(c.a.GetCycles())
