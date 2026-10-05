@@ -12,14 +12,16 @@ that calls RunCycles, or while the machine is not running.
 */
 
 // ScreenText returns the text shown on the screen, in 40 or 80 columns or on
-// a Videx card in slot 3, with a line per row. Inverse and flashing
-// characters are returned as the normal ones.
+// a Videx card in slot 3 when it is the one shown, with a line per row.
+// Inverse and flashing characters are returned as the normal ones.
 func (a *Apple2) ScreenText() string {
-	switch videx := a.cards[3].(type) {
-	case *CardVidexVideoterm:
-		return videx.getText()
-	case *CardVidexUltraterm:
-		return videx.getText()
+	if a.video.GetCurrentVideoMode()&screen.VideoBaseMask == screen.VideoVidex {
+		switch videx := a.cards[3].(type) {
+		case *CardVidexVideoterm:
+			return videx.getText()
+		case *CardVidexUltraterm:
+			return videx.getText()
+		}
 	}
 
 	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
