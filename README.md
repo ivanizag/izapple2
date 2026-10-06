@@ -17,6 +17,8 @@ Optionally, it can be installed with homebrew using:
 brew install ivanizag/tap/izapple2
 ```
 
+In the [apple2-activities](https://github.com/ivanizag/apple2-activities) repository there are several tutorials on how to use izapple2 with popular Apple II software.
+
 ## Default mode
 
 Execute without parameters to have an emulated Apple //e Enhanced with 128kb booting DOS 3.3 ready to run Applesoft. The cards it comes with are in [the default configuration](doc/features.md#the-default-configuration):
