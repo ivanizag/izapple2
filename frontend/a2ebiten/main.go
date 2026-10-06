@@ -138,7 +138,7 @@ func ebitenRun(a *izapple2.Apple2) {
 	title := "iz-" + a.Name + " (F1 for help)"
 	ebiten.SetWindowTitle(title)
 
-	view := shared.NewView()
+	view := shared.NewView(a.GetScreenMode())
 	game := &Game{
 		a:           a,
 		view:        view,

@@ -63,7 +63,7 @@ func sdlRun(a *izapple2.Apple2) {
 		fmt.Printf("Error starting text input: %v.\n", err)
 	}
 
-	view := shared.NewView()
+	view := shared.NewView(a.GetScreenMode())
 	kp := newSDL3Keyboard(a, view)
 
 	s := newSDL3Audio(a)

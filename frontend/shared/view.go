@@ -26,10 +26,11 @@ type View struct {
 	ScreenMode      int
 }
 
-// NewView creates the view a frontend starts with
-func NewView() *View {
+// NewView creates the view a frontend starts with, in the screen mode of the
+// configuration
+func NewView(screenMode int) *View {
 	var v View
-	v.ScreenMode = screen.ScreenModeColorScanlines
+	v.ScreenMode = screenMode
 	return &v
 }
 

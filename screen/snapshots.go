@@ -1,10 +1,12 @@
 package screen
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"os"
+	"strings"
 )
 
 /*
@@ -53,6 +55,25 @@ func isColor(screenMode int) bool {
 // hasScanlines returns whether the mode draws the gaps between the scan lines
 func hasScanlines(screenMode int) bool {
 	return screenMode&screenModeScanlinesBit != 0
+}
+
+// screenModeNames are the names the screen modes are given in the
+// configuration
+var screenModeNames = map[string]int{
+	"green":          ScreenModeGreen,
+	"color":          ScreenModeColor,
+	"greenscanlines": ScreenModeGreenScanlines,
+	"colorscanlines": ScreenModeColorScanlines,
+}
+
+// ScreenModeByName returns the screen mode with the name it has in the
+// configuration
+func ScreenModeByName(name string) (int, error) {
+	screenMode, ok := screenModeNames[strings.ToLower(strings.TrimSpace(name))]
+	if !ok {
+		return 0, fmt.Errorf("screen %s not supported, it must be 'color', 'colorscanlines', 'green' or 'greenscanlines'", name)
+	}
+	return screenMode, nil
 }
 
 // NextScreenMode rotates through the four screen modes

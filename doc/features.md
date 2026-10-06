@@ -70,6 +70,7 @@
 - Displays:
   - Green monochrome monitor with half width pixel support
   - NTSC Color TV (extracting the phase from the mono signal)
+  - Both with or without the gaps between the scan lines, chosen with `-screen` to start with
   - RGB for Super High Resolution and RGB card
   - ANSI Console, avoiding the SDL2 dependency
   - Debug mode: shows four panels with actual screen, page1, page2 and extra info dependent on the video mode

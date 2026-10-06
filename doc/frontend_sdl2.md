@@ -90,7 +90,7 @@ Escape mapped to what the Apple II understands. The rest:
 | F4 | Show or hide the CPU trace on the terminal |
 | F5 | Full speed or normal speed |
 | Ctrl-F5 | Print the current speed on the terminal |
-| F6 | Next screen mode: NTSC colour, plain, green, with or without scan lines |
+| F6 | Next screen mode: NTSC colour, plain, green, with or without scan lines. `-screen` sets the one to start with |
 | F7 | Show or hide the four panels with the actual screen, page 1, page 2 and the extra info of the video mode |
 | F8 | Show or hide the areas where a diskette can be dropped |
 | F9 | Dump the state of the machine on the terminal |

@@ -16,6 +16,11 @@ import (
 const configSuffix = ".cfg"
 const defaultConfiguration = "2enh"
 
+// noModel selects the base configuration without a model on top, the board
+// and the roms have to be given as parameters
+const noModel = "none"
+const baseConfiguration = "_base"
+
 const (
 	confParent = "parent"
 	confModel  = "model"
@@ -37,6 +42,7 @@ const (
 	confMods       = "mods"
 	confTape       = "tape"
 	confSaveDir    = "saveDir"
+	confScreen     = "screen"
 
 	confS0 = "s0"
 	confS1 = "s1"
@@ -140,7 +146,7 @@ func parseConfiguration(content []byte, name string) (*configuration, error) {
 		}
 		key := strings.TrimSpace(before)
 		value := strings.TrimSpace(after)
-		config.data[key] = value
+		config.set(key, value)
 	}
 	return config, nil
 }
@@ -158,6 +164,9 @@ func mergeConfigs(base *configuration, addition *configuration) *configuration {
 
 func (c *configurationModels) get(name string) (*configuration, error) {
 	name = strings.TrimSpace(name)
+	if name == noModel {
+		name = baseConfiguration
+	}
 	config, ok := c.preconfiguredConfigs[name]
 	if !ok {
 		if filepath.Ext(strings.ToLower(name)) != ".cfg" {
@@ -218,7 +227,8 @@ func (c *configurationModels) getWithOverrides(model string, overrides *configur
 
 func setupFlags(models *configurationModels, configuration *configuration) error {
 	paramDescription := map[string]string{
-		confModel:      "set base model",
+		confModel:      "set base model, 'none' to give the board, rom and charrom as parameters",
+		confBoard:      "main board, can be '2plus', '2e', 'base64a' or 'basis108'",
 		confRom:        "main rom file",
 		confCharRom:    "rom file for the character generator",
 		confCpu:        "cpu type, can be '6502' or '65c02'",
@@ -233,6 +243,7 @@ func setupFlags(models *configurationModels, configuration *configuration) error
 		confRgb:        "emulate the RGB modes of the 80col RGB card for DHGR",
 		confRomx:       "emulate a RomX",
 		confTape:       "WAV file with a tape recording for the cassette input",
+		confScreen:     "monitor the screen is shown on, can be 'color', 'colorscanlines', 'green' or 'greenscanlines'",
 		confSaveDir:    "directory to keep what the software writes to the disks, leaving the images unmodified. 'none' to write back to the images",
 		confS0:         "slot 0 configuration.",
 		confS1:         "slot 1 configuration.",

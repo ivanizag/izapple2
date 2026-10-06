@@ -1,9 +1,13 @@
 package shared
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ivanizag/izapple2/screen"
+)
 
 func TestViewToggleDropTargets(t *testing.T) {
-	v := NewView()
+	v := NewView(screen.ScreenModeColorScanlines)
 	v.ToggleHelp()
 
 	v.ToggleDropTargets()

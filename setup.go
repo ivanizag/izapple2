@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/ivanizag/iz6502"
+
+	"github.com/ivanizag/izapple2/screen"
 )
 
 func configure(configuration *configuration) (*Apple2, error) {
@@ -14,6 +16,13 @@ func configure(configuration *configuration) (*Apple2, error) {
 	if configuration.getFlag(confShowConfig) {
 		configuration.dump()
 		os.Exit(0)
+	}
+
+	// The base configuration, used with the model 'none', does not have them
+	for _, key := range []string{confBoard, confRom, confCharRom} {
+		if !configuration.has(key) {
+			return nil, fmt.Errorf("%s is not configured, it is needed when the model is '%s'", key, noModel)
+		}
 	}
 
 	var a Apple2
@@ -74,6 +83,11 @@ func configure(configuration *configuration) (*Apple2, error) {
 
 	a.setProfiling(configuration.getFlag(confProfile))
 	a.SetForceCaps(configuration.getFlag(confForceCaps))
+
+	a.screenMode, err = screen.ScreenModeByName(configuration.get(confScreen))
+	if err != nil {
+		return nil, err
+	}
 
 	err = a.setClockSpeed(configuration.get(confSpeed))
 	if err != nil {

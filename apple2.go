@@ -43,9 +43,17 @@ type Apple2 struct {
 	paused               atomic.Bool
 	cpuTrace             bool
 	forceCaps            bool
+	screenMode           int
 	removableMediaDrives []removableMediaDrive
 
 	currentFreqMHz float64
+}
+
+// GetScreenMode returns the screen mode the frontends start with, as set in
+// the configuration. The machine does not use it, how it is watched is up to
+// the frontend.
+func (a *Apple2) GetScreenMode() int {
+	return a.screenMode
 }
 
 // GetCards returns the array of inserted cards

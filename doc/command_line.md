@@ -52,6 +52,12 @@ izapple2 -model=2enh
 - `swyft` - Swyft
 - `ultraterm` - Apple ][+ with Videx Ultraterm demo
 
+The model `none` starts from the settings shared by all the models, with no board, ROM or character generator ROM. They have to be given with `-board`, `-rom` and `-charrom`:
+
+```bash
+izapple2 -model=none -board=2plus -rom=myrom.rom -charrom=mycharrom.rom
+```
+
 For a complete list of available models, see the `configs/` directory or run:
 
 ```bash
@@ -253,6 +259,8 @@ Complete command line options reference:
 Usage:  izapple2 [file]
   file
     	path to image to use on the boot device
+  -board string
+    	main board, can be '2plus', '2e', 'base64a' or 'basis108' (default "2e")
   -charrom string
     	rom file for the character generator (default "<internal>/Apple IIe Video Enhanced.bin")
   -cpu string
@@ -260,7 +268,7 @@ Usage:  izapple2 [file]
   -forceCaps
     	force all letters to be uppercased (no need for caps lock!)
   -model string
-    	set base model (default "2enh")
+    	set base model, 'none' to give the board, rom and charrom as parameters (default "2enh")
   -mods string
     	comma separated list of mods applied to the board, available mods are 'shift', 'four-colors
   -nsc string
@@ -293,6 +301,8 @@ Usage:  izapple2 [file]
     	slot 7 configuration. (default "empty")
   -saveDir string
     	directory to keep what the software writes to the disks, leaving the images unmodified. 'none' to write back to the images (default "none")
+  -screen string
+    	monitor the screen is shown on, can be 'color', 'colorscanlines', 'green' or 'greenscanlines' (default "colorscanlines")
   -showConfig
     	show the calculated configuration and exit
   -speed string

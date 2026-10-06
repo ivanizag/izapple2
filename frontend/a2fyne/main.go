@@ -59,7 +59,7 @@ func main() {
 }
 
 func fyneRun(s *state) {
-	s.screenMode = screen.ScreenModeColorScanlines
+	s.screenMode = s.a.GetScreenMode()
 
 	s.app = app.New()
 	s.app.SetIcon(resourceApple2Png)
