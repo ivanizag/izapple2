@@ -55,7 +55,7 @@ func sdlRun(a *izapple2.Apple2) {
 	sdl.EventState(sdl.DROPBEGIN, sdl.DISABLE)
 	sdl.EventState(sdl.DROPCOMPLETE, sdl.DISABLE)
 
-	view := shared.NewView()
+	view := shared.NewView(a.GetScreenMode())
 	kp := newSDLKeyBoard(a, view)
 
 	s := newSDLAudio(a)
