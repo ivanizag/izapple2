@@ -10,6 +10,13 @@ Apple II Parallel Printer Interface card.
 See:
 	https://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project/Interface%20Cards/Parallel/Apple%20II%20Parallel%20Printer%20Interface%20Card/
 
+The card tells whether the printer is ready by the byte at $CnC1 of its ROM:
+the acknowledge of the printer drives the address line A6 of the PROM, so
+that while the printer is busy $CnC1 reads $90, a BCC on itself where the
+firmware waits, and once it is ready $10, a BPL out of the loop. Programs
+with drivers of their own, as The Print Shop, poll bit 7 of $CnC1. A file is
+always ready, so the ROM has $10 there.
+
 */
 
 // CardParallelPrinter represents a Parallel Printer Interface card
