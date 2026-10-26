@@ -66,6 +66,7 @@ func getCardFactory() map[string]*cardBuilder {
 		return cardFactory
 	}
 	cardFactory = make(map[string]*cardBuilder)
+	cardFactory["applicard"] = newCardApplicardBuilder()
 	cardFactory["brainboard"] = newCardBrainBoardBuilder()
 	cardFactory["brainboard2"] = newCardBrainBoardIIBuilder()
 	cardFactory["dan2sd"] = newCardDan2ControllerBuilder()

@@ -45,6 +45,7 @@ izapple2 -model=2enh
 - `cpm288` - Apple ][e with CP/M on a Softcard II
 - `cpm3` - Apple //e with CP/M 3.0
 - `cpm65` - Apple //e with CPM-65
+- `cpmapplicard` - Apple ][e with CP/M on a PCPI Applicard
 - `desktop` - Apple II DeskTop
 - `dos32` - Apple ][ with 13 sectors disk adapter and DOS 3.2x
 - `forth` - Apple ][+ with FORTH in ROM
@@ -324,6 +325,7 @@ The available pre-configured models are:
   cpm288: Apple ][e with CP/M on a Softcard II
   cpm3: Apple //e with CP/M 3.0
   cpm65: Apple //e with CPM-65
+  cpmapplicard: Apple ][e with CP/M on a PCPI Applicard
   desktop: Apple II DeskTop
   dos32: Apple ][ with 13 sectors disk adapter and DOS 3.2x
   forth: Apple ][+ with FORTH in ROM
@@ -335,6 +337,7 @@ The available pre-configured models are:
 Custom models may be specified by filename.  Use 'IZAPPLE2_CUSTOM_MODEL' to set default location.
 
 The available cards are:
+  applicard: PCPI Applicard Z80 card to run CP/M
   brainboard: Firmware card. It has two ROM banks
   brainboard2: Firmware card. It has up to four ROM banks
   dan2sd: Apple II Peripheral Card that Interfaces to a ATMEGA328P for SD card storage

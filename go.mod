@@ -7,7 +7,7 @@ require (
 	github.com/Zyko0/go-sdl3 v0.1.1
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728
 	github.com/ivanizag/iz6502 v1.5.0
-	github.com/koron-go/z80 v0.10.1
+	github.com/koron-go/z80 v0.10.3-0.20260914063009-9bb8326ec1f5
 	github.com/pkg/profile v1.7.0
 	github.com/veandco/go-sdl2 v0.4.40
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b

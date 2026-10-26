@@ -40,6 +40,7 @@
   - ProDOS ROM card
   - Microsoft Z80 Softcard using the [Z80](https://github.com/koron-go/z80) emulation from Koron
   - Microsoft Z80 SoftCard II, also using the Z80 emulation from Koron
+  - PCPI Applicard, also using the Z80 emulation from Koron
   - Mockingboard A sound card
 - Useful cards not emulating a real card
   - Bootable SmartPort / ProDOS card with the following smartport devices:
