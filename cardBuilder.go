@@ -95,6 +95,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory["videxultraterm"] = newCardVidexUltratermBuilder()
 	cardFactory["vidhd"] = newCardVidHDBuilder()
 	cardFactory["z80softcard"] = newCardZ80SoftCardBuilder()
+	cardFactory["z80softcard2"] = newCardZ80SoftCard2Builder()
 	return cardFactory
 }
 
