@@ -1,6 +1,17 @@
 
 # WOZ emulation status:
 
+## Writing
+- With the behavioral implementation (`diskii`), the software writes nibble by nibble with the
+  timing it uses. The track is saved when the motor stops or the head moves to another track: to
+  the overlay with a save directory, otherwise to the image when it is a WOZ file on disk.
+- The write protect flag of the image is respected, except with a save directory.
+- Only the tracks the image has are written, a quarter track missing from TMAP loses what is
+  written there. The adjacent quarter tracks are not erased.
+- With the sequencer (`diskiiseq`), each bit timing gets a one if the write signal changed on it.
+  The tracks are saved the same way, when the motor has stopped or the head moves to another
+  track.
+
 ## With the sequencer:
 - How to begin
     - DOS 3.3: Works

@@ -323,7 +323,10 @@ func (c *CardDisk2) processQ6Q7(in uint8) {
 	} else { // load
 		if !c.q7 { // Q6H-Q7L: Sense write protect / prewrite state
 			// Bit 7 of the control status register means write protected
-			c.dataLatch = 0 // Never write protected
+			c.dataLatch = 0
+			if d.diskette.IsWriteProtected() {
+				c.dataLatch = 0x80
+			}
 		} else { // Q6H-Q7H: Load data into the controller
 			c.dataLatch = in
 		}

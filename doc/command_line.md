@@ -148,17 +148,23 @@ An overlay carries a checksum of the image it was made from and is refused if it
 does not match, so it is never applied to a different disk that happens to have
 the same name.
 
-The cards that write to their disks, `diskii`, `smartport` and `prodos`, take a
-`savedir` parameter of their own. It defaults to the `-saveDir` of the machine,
-and `none` writes back to the image even when the machine has one:
+The cards that write to their disks, `diskii`, `diskiiseq`, `smartport` and
+`prodos`, take a `savedir` parameter of their own. It defaults to the `-saveDir`
+of the machine, and `none` writes back to the image even when the machine has
+one:
 
 ```bash
 # The hard disk keeps its saves apart, the diskette is written in place
 izapple2 -saveDir ~/saves -s7 smartport,image1=big.hdv -s6 diskii,disk1=work.dsk,savedir=none
 ```
 
-WOZ and NIB diskettes are read only by nature and never write, with or without a
-save directory.
+WOZ diskettes are written as well, on the tracks the image has. A WOZ image with
+its write protect tab on is write protected for the software, unless there is a
+save directory: the image is not modified then. Both `diskii` and `diskiiseq`
+save their WOZ diskettes.
+
+NIB diskettes are read only by nature and never write, with or without a save
+directory.
 
 ## Simplified Filename Configuration
 

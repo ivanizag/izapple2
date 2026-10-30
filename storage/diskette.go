@@ -11,6 +11,7 @@ type Diskette interface {
 	Read(quarterTrack int, cycle uint64) uint8
 	Write(quarterTrack int, value uint8, cycle uint64)
 	Is13Sectors() bool
+	IsWriteProtected() bool
 }
 
 // IsDiskette returns true if the files looks like a 5 1/4 diskette
@@ -25,7 +26,7 @@ With an overlayFilename, the changes the software writes are kept in that file
 and the image loaded is never modified. It also makes writable the diskettes
 that could not be written otherwise, the ones loaded from a compressed file, an
 URL or the embedded resources. An empty overlayFilename writes the changes back
-to the image, which only works for the DSK and PO files on disk.
+to the image, which only works for the DSK, PO and WOZ files on disk.
 */
 func MakeDiskette(data []byte, filename string, writeable bool, overlayFilename string) (Diskette, error) {
 	if isFileD13(data) {
@@ -65,6 +66,9 @@ func MakeDiskette(data []byte, filename string, writeable bool, overlayFilename 
 	if isFileWoz(data) {
 		f, err := NewFileWoz(data)
 		if err != nil {
+			return nil, err
+		}
+		if err := f.PrepareWrite(filename, writeable, overlayFilename); err != nil {
 			return nil, err
 		}
 

@@ -5,6 +5,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/crc32"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -19,6 +22,25 @@ type FileWoz struct {
 	trackMap []uint8
 	tracks   [wozMaxTrack]disketteTrackWoz
 	meta     map[string]string
+
+	// data is the whole file. The tracks are slices of it, the bits written
+	// to them are already in place to save the file.
+	data []uint8
+
+	// writeProtected is the write protect tab of the diskette, nothing is
+	// written to it
+	writeProtected bool
+
+	// Needed to write back
+	supportsWrite bool
+	filename      string
+	hasDirtyTrack bool
+	dirtyTrack    uint8
+
+	// When set, the changes go to the overlay and the image is left alone
+	overlay *overlay
+
+	missingTrackLogged bool
 }
 
 type disketteTrackWoz struct {
@@ -75,6 +97,7 @@ const (
 	woz2TrackBlockSize    = 512
 	woz2FirstTrackBlock   = 3 // The bits on the TRKS block start on 3*512
 	woz2TrackBitsOffset   = 1280
+	wozCrcOffset          = 8
 )
 
 var headerWoz1 = []uint8{0x57, 0x4f, 0x5A, 0x31, 0xFF, 0x0A, 0x0D, 0x0A}
@@ -107,15 +130,31 @@ func (f *FileWoz) GetNextBitAndPosition(position uint32, positionMax uint32, qua
 	return value, position, positionMax
 }
 
+// SetBit writes a bit on the track at the position, unless the diskette is
+// write protected. The position is not moved, GetNextBitAndPosition() would
+// have been called previously.
 func (f *FileWoz) SetBit(value bool, position uint32, positionMax uint32, quarterTrack int) {
-	// The position is not moved, GetNextBitAndPosition() would have been called previously.
+	if f.writeProtected {
+		return
+	}
 
 	trackIndex := f.trackMap[quarterTrack]
 	if trackIndex == 0xff {
 		// No track defined. Nothing is saved
+		if !f.missingTrackLogged {
+			fmt.Printf("Data written to the quarter track %v is lost, the WOZ image has no track there\n", quarterTrack)
+			f.missingTrackLogged = true
+		}
 		return
 	}
-	trackWoz := f.tracks[trackIndex]
+	trackWoz := &f.tracks[trackIndex]
+	if position >= trackWoz.bitCount {
+		return
+	}
+
+	if f.hasDirtyTrack && trackIndex != f.dirtyTrack {
+		f.SaveDirtyTrack()
+	}
 
 	mask := uint8(1) << (7 - position%8)
 	if value {
@@ -124,7 +163,112 @@ func (f *FileWoz) SetBit(value bool, position uint32, positionMax uint32, quarte
 		trackWoz.data[position/8] &= ^mask
 	}
 
-	fmt.Printf("Saving %v at %v\n", value, position)
+	f.hasDirtyTrack = true
+	f.dirtyTrack = trackIndex
+}
+
+/*
+PrepareWrite sets where the changes go, as MakeDiskette does for the DSK files.
+
+With an overlayFilename the changes go to the overlay, which is put back on top
+of the image now, and the image is never modified. Without one they go back to
+the file, when it is writeable. If neither, the changes are kept in memory only.
+
+The write protect flag of the image is respected, except with an overlay: the
+image is not going to be modified.
+*/
+func (f *FileWoz) PrepareWrite(filename string, writeable bool, overlayFilename string) error {
+	if overlayFilename != "" {
+		// The checksum is of the image as it was loaded, before anything
+		// saved before is put back on top of it.
+		unitSize := 0
+		for i := range f.tracks {
+			unitSize = max(unitSize, len(f.tracks[i].data))
+		}
+		overlay, err := openOverlay(overlayFilename, unitSize, wozMaxTrack,
+			checksumOfBytes(f.data))
+		if err != nil {
+			return err
+		}
+		for i := range f.tracks {
+			if overlay.has(i) {
+				if err := overlay.read(i, f.tracks[i].data); err != nil {
+					return err
+				}
+			}
+		}
+		f.overlay = overlay
+	}
+
+	f.filename = filename
+	f.writeProtected = f.overlay == nil && f.Info.WriteProtected != 0
+	f.supportsWrite = !f.writeProtected && (f.overlay != nil || writeable)
+	return nil
+}
+
+// IsWriteProtected returns whether the diskette has its write protect tab on.
+// The bits written to it are discarded.
+func (f *FileWoz) IsWriteProtected() bool {
+	return f.writeProtected
+}
+
+// SaveDirtyTrack saves the track written, to the overlay or to the file. It is
+// also done when a bit is written to another track.
+func (f *FileWoz) SaveDirtyTrack() {
+	if !f.hasDirtyTrack {
+		return
+	}
+	f.hasDirtyTrack = false
+	if !f.supportsWrite {
+		return
+	}
+
+	if f.overlay != nil {
+		// The changes are kept apart, the image loaded is not modified
+		if err := f.overlay.write(int(f.dirtyTrack), f.tracks[f.dirtyTrack].data); err != nil {
+			f.supportsWrite = false
+			fmt.Printf("Data can't be written to the overlay: %v\n", err)
+		}
+		return
+	}
+
+	if err := f.saveFile(); err != nil {
+		f.supportsWrite = false
+		fmt.Printf("Data can't be written for %v: %v\n", f.filename, err)
+	}
+}
+
+/*
+saveFile writes the whole image back to the file, with the CRC updated. It goes
+to a new file that then takes the place of the image, a failure halfway leaves
+the image as it was.
+*/
+func (f *FileWoz) saveFile() error {
+	binary.LittleEndian.PutUint32(f.data[wozCrcOffset:], crc32.ChecksumIEEE(f.data[wozFirstChunkPos:]))
+
+	info, err := os.Stat(f.filename)
+	if err != nil {
+		return err
+	}
+	file, err := os.CreateTemp(filepath.Dir(f.filename), filepath.Base(f.filename)+".*.tmp")
+	if err != nil {
+		return err
+	}
+	tempFilename := file.Name()
+	_, err = file.Write(f.data)
+	if err == nil {
+		err = file.Chmod(info.Mode().Perm())
+	}
+	if closeErr := file.Close(); err == nil {
+		err = closeErr
+	}
+	if err == nil {
+		err = os.Rename(tempFilename, f.filename)
+	}
+	if err != nil {
+		os.Remove(tempFilename)
+	}
+	return err
 }
 
 func isFileWoz(data []uint8) bool {
@@ -140,6 +284,7 @@ func isFileWoz(data []uint8) bool {
 
 func NewFileWoz(data []uint8) (*FileWoz, error) {
 	var f FileWoz
+	f.data = data
 
 	// Verify header. Note, the CRC is not verified
 	header := data[:len(headerWoz2)]

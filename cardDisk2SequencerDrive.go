@@ -9,16 +9,22 @@ import (
 )
 
 type cardDisk2SequencerDrive struct {
+	// saveDirectory keeps the changes written to the diskette apart from the
+	// image, when it is not empty. It comes from the savedir parameter of the
+	// card and is kept here for the diskettes inserted later on.
+	saveDirectory string
+
 	name                mediaName
 	data                *storage.FileWoz
 	enabled             bool
-	writeProtected      bool
 	currentQuarterTrack int
 
 	position    uint32 // Current position on the track
 	positionMax uint32 // As tracks may have different lengths position is related of positionMax of the las track
 
 	mc3470Buffer uint8 // Four bit buffer to detect weak bits and to add latency
+
+	fluxTransition bool // A flux transition was written on the current bit timing
 }
 
 func (d *cardDisk2SequencerDrive) insertDiskette(filename string) error {
@@ -36,9 +42,14 @@ func (d *cardDisk2SequencerDrive) insertDiskette(filename string) error {
 		return errors.New("only 5.25 disks are supported")
 	}
 
+	err = f.PrepareWrite(filename, writeable, overlayFilename(filename, d.saveDirectory))
+	if err != nil {
+		return err
+	}
+
+	d.save() // What was written to the diskette ejected
 	d.name.set(filename)
 	d.data = f
-	d.writeProtected = !writeable
 
 	return nil
 }
@@ -92,14 +103,40 @@ func (d *cardDisk2SequencerDrive) readPulse() bool {
 	return bit
 }
 
-func (d *cardDisk2SequencerDrive) writePulse(value bool) {
-	if d.writeProtected || !d.enabled || d.data == nil {
+// isWriteProtected is the write protect signal of the drive
+func (d *cardDisk2SequencerDrive) isWriteProtected() bool {
+	return d.data != nil && d.data.IsWriteProtected()
+}
+
+// writeFluxTransition is a change of the write signal, the write head reverses
+// the magnetic flux on the bit timing under it
+func (d *cardDisk2SequencerDrive) writeFluxTransition() {
+	d.fluxTransition = true
+}
+
+/*
+endBitTiming is called when the head is about to move to the next bit. When
+writing, the bit timing that is over gets a one if there was a flux transition
+on it and a zero otherwise, as the WOZ format stores them. However many steps
+of the sequencer it lasted, a bit timing is written once.
+*/
+func (d *cardDisk2SequencerDrive) endBitTiming(writing bool) {
+	fluxTransition := d.fluxTransition
+	d.fluxTransition = false
+	if !writing || !d.enabled || d.data == nil {
 		return
 	}
 
 	d.data.SetBit(
-		value,
+		fluxTransition,
 		d.position,
 		d.positionMax,
 		d.currentQuarterTrack)
+}
+
+// save saves the track written, if any
+func (d *cardDisk2SequencerDrive) save() {
+	if d.data != nil {
+		d.data.SaveDirtyTrack()
+	}
 }

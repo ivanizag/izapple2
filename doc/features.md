@@ -11,10 +11,10 @@
     - NIB (read only)
     - DSK
     - PO
-    - [WOZ 1.0 or 2.0](../storage/WozSupportStatus.md) (read only)
+    - [WOZ 1.0 or 2.0](../storage/WozSupportStatus.md)
   - 13 Sector 5 1/4 diskettes. Uncompressed or compressed with gzip or zip. Supported formats:
     - NIB (read only)
-    - [WOZ 2.0](../storage/WozSupportStatus.md) (read only)
+    - [WOZ 2.0](../storage/WozSupportStatus.md)
   - 3.5 disks in PO or 2MG format
   - Hard disk in HDV or 2MG format with ProDOS and SmartPort support
   - Cassette tape input from WAV recordings

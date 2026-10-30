@@ -56,3 +56,8 @@ func (d *disketteNib) Is13Sectors() bool {
 	// It may be 13 sectors but we don't know
 	return false
 }
+
+// IsWriteProtected returns false, the writes are kept in memory
+func (d *disketteNib) IsWriteProtected() bool {
+	return false
+}

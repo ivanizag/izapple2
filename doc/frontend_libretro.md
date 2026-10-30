@@ -183,7 +183,8 @@ error saying the overlay belongs to another image, delete the `.ovl` file.
 To start over from a clean disk, delete its `.ovl` file from the save
 directory.
 
-WOZ and NIB diskettes are read only by nature, and games on them cannot save.
+WOZ diskettes save to an overlay as well. NIB diskettes are read only by nature,
+and games on them cannot save.
 
 This is not specific to the core. Any izapple2 frontend gets the same with the
 `-saveDir` command line option, and each disk card can name a directory of its
@@ -366,5 +367,5 @@ a different image with the same name, so applying it would corrupt the disk and
 the core refuses. Delete the `.ovl` file, losing what was saved in it, or put
 back the image it was made from.
 
-**A game cannot save.** It is probably on a WOZ or NIB diskette, which are read
-only. Look for the same game as a DSK or PO.
+**A game cannot save.** It is probably on a NIB diskette, which is read only.
+Look for the same game as a DSK, PO or WOZ.

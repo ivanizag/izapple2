@@ -36,7 +36,13 @@ type CardDisk2Sequencer struct {
 	lastWriteValue  bool  // We write transitions to the WOZ file. We store the last value to send a pulse on change.
 	lastPulseCycles uint8 // There is a new pulse every 4ms, that's 8 cycles of 2Mhz
 
-	lastCycle uint64 // 2 Mhz cycles
+	lastCycle uint64 // 2 Mhz cycles, the next one to run
+	busData   uint8  // Last value written by the CPU to the card, the register loads it
+
+	// q4OffCycle is when q4 was turned off, the motor stops a second later.
+	// pendingSave is set until then, what was written is saved when it stops.
+	q4OffCycle  uint64
+	pendingSave bool
 
 	trackTracer trackTracer
 }
@@ -66,11 +72,16 @@ func newCardDisk2SequencerBuilder() *cardBuilder {
 			{"disk1", "Diskette image for drive 1", ""},
 			{"disk2", "Diskette image for drive 2", ""},
 			{"tracktracer", "Trace how the disk head moves between tracks", "false"},
+			saveDirParamSpec,
 		},
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardDisk2Sequencer
 
-			disk1 := paramsGetString(params, "disk1")
+			saveDirectory := paramsGetSaveDir(params)
+			c.drive[0].saveDirectory = saveDirectory
+			c.drive[1].saveDirectory = saveDirectory
+
+			disk1 := paramsGetPath(params, "disk1")
 			if disk1 != "" {
 				err := c.drive[0].insertDiskette(disk1)
 				if err != nil {
@@ -79,7 +90,7 @@ func newCardDisk2SequencerBuilder() *cardBuilder {
 				c.sectors13 = c.drive[0].data.Info.BootSectorFormat == 2 // Woz 13 sector disk
 			}
 
-			disk2 := paramsGetString(params, "disk2")
+			disk2 := paramsGetPath(params, "disk2")
 			if disk2 != "" {
 				err := c.drive[1].insertDiskette(disk2)
 				if err != nil {
@@ -129,7 +140,26 @@ func (c *CardDisk2Sequencer) GetInfo() map[string]string {
 
 func (c *CardDisk2Sequencer) reset() {
 	// UtA2e 9-12, all switches forced to off
+	c.setQ4(false)
 	c.q = [8]bool{}
+}
+
+// setQ4 sets the q4 latch, the motor on before the delay of the 556
+func (c *CardDisk2Sequencer) setQ4(value bool) {
+	if c.q[4] && !value {
+		c.q4OffCycle = c.a.GetCycles()
+		c.pendingSave = true
+	}
+	c.q[4] = value
+}
+
+// tick saves what was written once the motor has stopped
+func (c *CardDisk2Sequencer) tick() {
+	if c.pendingSave && !c.q[4] && c.a.GetCycles() >= c.q4OffCycle+disk2MotorOffCycles {
+		c.pendingSave = false
+		c.drive[0].save()
+		c.drive[1].save()
+	}
 }
 
 func (c *CardDisk2Sequencer) setTrackTracer(tt trackTracer) {
@@ -141,17 +171,30 @@ func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
 		a.registerRemovableMediaDrive(&c.drive[i], fmt.Sprintf("S%vD%v", slot, i+1))
 	}
 
-	c.addCardSoftSwitches(func(address uint8, data uint8, _ bool) uint8 {
+	c.addCardSoftSwitches(func(address uint8, data uint8, write bool) uint8 {
+		/*
+			Advance the Disk2 state machine since the last call to
+			softswitches, up to this one. The latch is as it was until now.
+		*/
+		c.catchUp()
+
 		/*
 			Slot card pins to SN74LS259 latch mapping:
 				slot_address[3,2,1] => latch_address[2,1,0]
 				slot_address[0] => latch_data
 				slot_dev_selct =>  latch_write_enable ;It will be true
 		*/
-		c.q[address>>1] = (address & 1) != 0
+		if address>>1 == 4 {
+			c.setQ4((address & 1) != 0)
+		} else {
+			c.q[address>>1] = (address & 1) != 0
+		}
+		if write {
+			c.busData = data
+		}
 
-		// Advance the Disk2 state machine since the last call to softswitches
-		c.catchUp(data)
+		// The step of the access, with the latch and the data just set
+		c.stepAccess()
 
 		/*
 			Slot card pins to SN74LS259 mapping:
@@ -165,25 +208,36 @@ func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
 		}
 	}, "DISK2SEQ")
 
+	a.registerTickerCard(c)
 	c.cardBase.assign(a, slot)
 }
 
-func (c *CardDisk2Sequencer) catchUp(data uint8) {
+// catchUp runs the state machine for the cycles before the current one
+func (c *CardDisk2Sequencer) catchUp() {
 	currentCycle := c.a.GetCycles() << 1 // Disk2 cycles are x2 cpu cycle
 
-	motorOn := c.step(data, true)
-	if motorOn && currentCycle > c.lastCycle+disk2CyclestoLoseSsync {
+	if currentCycle > c.lastCycle+disk2CyclestoLoseSsync {
 		// We have lost sync. We start the count.
 		// We do at least a couple 2 Mhz cycles
 		c.lastCycle = currentCycle - 2
 	}
-	c.lastCycle++
 
-	for motorOn && c.lastCycle <= currentCycle {
-		motorOn = c.step(data, false)
+	motorOn := true
+	for motorOn && c.lastCycle < currentCycle {
+		motorOn = c.step(c.busData, false)
 		c.lastCycle++
 	}
 
+	if !motorOn {
+		c.lastCycle = 0 // Sync lost
+	}
+}
+
+// stepAccess runs the state machine for the current cycle, the one of the
+// access to the softswitches
+func (c *CardDisk2Sequencer) stepAccess() {
+	motorOn := c.step(c.busData, true)
+	c.lastCycle = c.a.GetCycles()<<1 + 1
 	if !motorOn {
 		c.lastCycle = 0 // Sync lost
 	}
@@ -250,6 +304,11 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 	pulse := false
 	c.lastPulseCycles++
 	if c.lastPulseCycles == disk2PulseCycles {
+		// What was written on the bit timing goes to the disk before the
+		// head moves to the next one
+		c.drive[0].endBitTiming(c.q[7])
+		c.drive[1].endBitTiming(c.q[7])
+
 		// Read
 		pulse = c.drive[0].readPulse() ||
 			c.drive[1].readPulse()
@@ -260,8 +319,8 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 		The write protected signal comes directly from any of the
 		drives being enabled (motor on) and write protected.
 	*/
-	wProt := (c.drive[0].enabled && c.drive[0].writeProtected) ||
-		(c.drive[1].enabled && c.drive[1].writeProtected)
+	wProt := (c.drive[0].enabled && c.drive[0].isWriteProtected()) ||
+		(c.drive[1].enabled && c.drive[1].isWriteProtected())
 
 	/*
 		The next instruction for the sequencer is retrieved from
@@ -318,16 +377,20 @@ func (c *CardDisk2Sequencer) step(data uint8, firstStep bool) bool {
 			// Load
 			c.register = data
 		}
-
-		if c.q[7] && (inst&0x3) != 0 {
-			currentWriteValue := next >= 0x8
-			writePulse := currentWriteValue != c.lastWriteValue
-			c.drive[0].writePulse(writePulse)
-			c.drive[1].writePulse(writePulse)
-			c.lastWriteValue = currentWriteValue
-
-		}
 	}
+
+	/*
+		The write signal to the drives is the MSB of the sequence. With q7
+		on, the drive enabled writes, and each change of the signal is a
+		flux transition. It is followed on every step, the transitions can
+		happen on any of them.
+	*/
+	writeValue := next >= 0x8
+	if c.q[7] && writeValue != c.lastWriteValue {
+		c.drive[0].writeFluxTransition()
+		c.drive[1].writeFluxTransition()
+	}
+	c.lastWriteValue = writeValue
 
 	// fmt.Printf("[D2SEQ] Step. seq:%x inst:%x next:%x reg:%02x\n",
 	//	c.sequence, inst, next, c.register)

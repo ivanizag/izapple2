@@ -68,3 +68,13 @@ func (d *disketteNibWritable) Is13Sectors() bool {
 	// It amy be 13 sectors but we don't know
 	return false
 }
+
+/*
+IsWriteProtected returns false. The writes always land in memory and the
+software reads them back, they are saved when the image or an overlay can be
+written. Refusing them would break the software that saves to a diskette that
+could not be saved, an embedded, compressed or downloaded one.
+*/
+func (d *disketteNibWritable) IsWriteProtected() bool {
+	return false
+}
