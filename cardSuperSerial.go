@@ -83,7 +83,7 @@ func newCardSuperSerialBuilder() *cardBuilder {
 	params = append(params, serialDeviceParams...)
 	return &cardBuilder{
 		name:          "Super Serial Card",
-		description:   "Serial port with a 6551 ACIA connected to the console, a file or a TCP port",
+		description:   "Serial port with a 6551 ACIA connected to the console, a file, a TCP port or a modem to the internet",
 		defaultParams: &params,
 		buildFunc: func(params map[string]string) (Card, error) {
 			var c CardSuperSerial

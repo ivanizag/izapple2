@@ -36,7 +36,7 @@ func newCardSerialIIcBuilder() *cardBuilder {
 	params := append([]paramSpec{}, serialDeviceParams...)
 	return &cardBuilder{
 		name:          "Apple IIc serial ports",
-		description:   "Serial port of the Apple IIc, connected to the console, a file or a TCP port",
+		description:   "Serial port of the Apple IIc, connected to the console, a file, a TCP port or a modem to the internet",
 		defaultParams: &params,
 		requiresIIc:   true,
 		hide:          true,
