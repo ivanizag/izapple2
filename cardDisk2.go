@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 
 	"github.com/ivanizag/izapple2/storage"
@@ -55,8 +56,9 @@ type cardDisk2Drive struct {
 
 	name      mediaName
 	diskette  storage.Diskette
-	phases    uint8 // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
-	trackStep int   // Stepmotor for tracks position. 4 steps per track
+	random    *rand.Rand // Given to the diskettes, the global source if nil
+	phases    uint8      // q3, q2, q1 and q0 with q0 on the LSB. Magnets that are active on the stepper motor
+	trackStep int        // Stepmotor for tracks position. 4 steps per track
 }
 
 func newCardDisk2Builder() *cardBuilder {
@@ -161,6 +163,11 @@ func (c *CardDisk2) setTrackTracer(tt trackTracer) {
 
 func (c *CardDisk2) assign(a *Apple2, slot int) {
 	for i := range c.drive {
+		// The diskettes of the parameters are inserted before
+		c.drive[i].random = a.random
+		if c.drive[i].diskette != nil {
+			storage.SetRandomSource(c.drive[i].diskette, a.random)
+		}
 		a.registerRemovableMediaDrive(&c.drive[i], fmt.Sprintf("S%vD%v", slot, i+1))
 	}
 
@@ -345,6 +352,7 @@ func (d *cardDisk2Drive) insertDiskette(name string) error {
 		return err
 	}
 
+	storage.SetRandomSource(diskette, d.random)
 	d.name.set(name)
 	d.diskette = diskette
 	return nil

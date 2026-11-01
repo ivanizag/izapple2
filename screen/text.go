@@ -3,7 +3,6 @@ package screen
 import (
 	"image"
 	"image/color"
-	"time"
 )
 
 const (
@@ -83,8 +82,7 @@ func getRGBTextColor(pixel bool, colorKey uint8) color.Color {
 }
 
 func renderText(vs VideoSource, text []uint8, isAltText bool, colorMap []uint8, light color.Color) *image.RGBA {
-	// Flash mode is 2Hz (host time)
-	isFlashedFrame := time.Now().Nanosecond() > (1 * 1000 * 1000 * 1000 / 2)
+	isFlashedFrame := vs.IsFlashedFrame()
 
 	columns := len(text) / textLines
 	if text == nil {

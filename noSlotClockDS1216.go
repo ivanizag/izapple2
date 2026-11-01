@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
 )
 
 /*
@@ -30,6 +29,7 @@ Actually software looks like it uses: 0xCs00, 0xCs01 and 0xCs04, usually slot 3
 */
 
 type noSlotClockDS1216 struct {
+	a           *Apple2
 	memory      memoryHandler
 	state       uint8
 	index       uint8
@@ -53,8 +53,9 @@ const (
 	nscStateEnabled  = uint8(2)
 )
 
-func newNoSlotClockDS1216(_ *Apple2, memory memoryHandler) *noSlotClockDS1216 {
+func newNoSlotClockDS1216(a *Apple2, memory memoryHandler) *noSlotClockDS1216 {
 	var nsc noSlotClockDS1216
+	nsc.a = a
 	nsc.memory = memory
 	nsc.state = nscStateDisabled
 	nsc.index = 0
@@ -142,7 +143,7 @@ func (nsc *noSlotClockDS1216) poke(address uint16, value uint8) {
 }
 
 func (nsc *noSlotClockDS1216) loadTime() {
-	now := time.Now()
+	now := nsc.a.Now()
 
 	var register uint64
 

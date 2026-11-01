@@ -2,7 +2,9 @@ package izapple2
 
 import (
 	"fmt"
+	"math/rand"
 	"sync/atomic"
+	"time"
 
 	"github.com/ivanizag/iz6502"
 	"github.com/ivanizag/izapple2/screen"
@@ -48,6 +50,11 @@ type Apple2 struct {
 	removableMediaDrives []removableMediaDrive
 
 	currentFreqMHz float64
+
+	// With a start time, the machine runs on its own time and random
+	// source, see apple2Time.go. Zero and nil to use the ones of the host.
+	startTime time.Time
+	random    *rand.Rand
 }
 
 // GetScreenMode returns the screen mode the frontends start with, as set in
@@ -177,6 +184,7 @@ func (a *Apple2) InsertDiskette(unit int, diskette storage.Diskette, name string
 	// Type assert to access the diskette field
 	switch d := a.removableMediaDrives[unit].drive.(type) {
 	case *cardDisk2Drive:
+		storage.SetRandomSource(diskette, a.random)
 		d.name.set(name)
 		d.diskette = diskette
 		return nil

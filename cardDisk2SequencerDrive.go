@@ -25,6 +25,8 @@ type cardDisk2SequencerDrive struct {
 	mc3470Buffer uint8 // Four bit buffer to detect weak bits and to add latency
 
 	fluxTransition bool // A flux transition was written on the current bit timing
+
+	random *rand.Rand // Source of the random bits, the global one if nil
 }
 
 func (d *cardDisk2SequencerDrive) insertDiskette(filename string) error {
@@ -94,7 +96,7 @@ func (d *cardDisk2SequencerDrive) readPulse() bool {
 		d.mc3470Buffer++
 	}
 	bit := ((d.mc3470Buffer >> 1) & 0x1) != 0 // Use the previous to last bit to add latency
-	if d.mc3470Buffer == 0 && rand.Intn(100) < 30 {
+	if d.mc3470Buffer == 0 && d.randomIntn(100) < 30 {
 		// Four consecutive zeros. It'a a fake bit.
 		// Output a random value. 70% zero, 30% one
 		bit = true
@@ -139,4 +141,11 @@ func (d *cardDisk2SequencerDrive) save() {
 	if d.data != nil {
 		d.data.SaveDirtyTrack()
 	}
+}
+
+func (d *cardDisk2SequencerDrive) randomIntn(n int) int {
+	if d.random == nil {
+		return rand.Intn(n)
+	}
+	return d.random.Intn(n)
 }

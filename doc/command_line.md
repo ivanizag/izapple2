@@ -8,6 +8,7 @@ This guide explains how to configure the izapple2 emulator using command line op
 - [Models](#models)
 - [Slot Configuration](#slot-configuration)
 - [Keeping the Disk Images Unmodified](#keeping-the-disk-images-unmodified)
+- [Reproducible Runs](#reproducible-runs)
 - [Simplified Filename Configuration](#simplified-filename-configuration)
 - [Reference](#reference)
 - [Examples](#examples)
@@ -167,6 +168,36 @@ save their WOZ diskettes.
 NIB diskettes are read only by nature and never write, with or without a save
 directory.
 
+## Reproducible Runs
+
+By default the machine takes the time of the host: the clocks, the No-Slot
+Clock, the ThunderClock Plus and the FujiNet clock, give the date and time of
+the host, and the cursor and the flashing characters blink with the host clock,
+so they look right when the emulation runs faster than the real machine. The
+random bits a drive reads where a WOZ diskette has no flux change on every run
+too.
+
+With `-startTime` the machine runs on a time of its own, that starts at the given
+date and time and advances with the cycles run at the nominal clock, however fast
+the emulation goes:
+
+```bash
+izapple2 -startTime 1985-03-15T10:30:00 -speed full mygame.woz
+```
+
+- The clocks give that time.
+- The cursor and the flashing characters blink with the frames of the emulated
+  machine, so they blink faster when the emulation runs faster.
+- The random bits of the WOZ diskettes come from a source seeded with the start
+  time.
+
+The same steps on the same start time make the same results on every run. A
+different start time gives different random bits.
+
+The start time can be `2006-01-02T15:04:05`, `2006-01-02T15:04` or
+`2006-01-02`, taken as UTC, or a time in RFC 3339 with its zone, like
+`1985-03-15T10:30:00+01:00`.
+
 ## Simplified Filename Configuration
 
 ### Positional Filename Arguments
@@ -316,6 +347,8 @@ Usage:  izapple2 [file]
     	show the calculated configuration and exit
   -speed string
     	cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber (default "ntsc")
+  -startTime string
+    	date and time the machine starts at, like 1985-03-15T10:30:00, to run on the time of the machine instead of the host's and get the same results on every run. 'none' to use the time of the host (default "none")
   -tape string
     	WAV file with a tape recording for the cassette input (default "none")
   -trace string

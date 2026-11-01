@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"math/rand"
 )
 
 // Diskette represents a diskette and it's RW mechanism
@@ -12,6 +13,23 @@ type Diskette interface {
 	Write(quarterTrack int, value uint8, cycle uint64)
 	Is13Sectors() bool
 	IsWriteProtected() bool
+}
+
+// SetRandomSource sets the source of the random bits a drive reads where a
+// diskette has no flux, for the formats that have them. With nil, the global
+// source of math/rand is used.
+func SetRandomSource(d Diskette, random *rand.Rand) {
+	if r, ok := d.(interface{ setRandomSource(*rand.Rand) }); ok {
+		r.setRandomSource(random)
+	}
+}
+
+// randomIntn returns rand.Intn(n) from random, or from the global source if nil
+func randomIntn(random *rand.Rand, n int) int {
+	if random == nil {
+		return rand.Intn(n)
+	}
+	return random.Intn(n)
 }
 
 // IsDiskette returns true if the files looks like a 5 1/4 diskette

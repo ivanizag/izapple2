@@ -32,11 +32,17 @@ func configure(configuration *configuration) (*Apple2, error) {
 	a.io = newIoC0Page(&a)
 	a.commandChannel = make(chan command, 100)
 
+	// Before the cards, that take the random source when built
+	err := a.setStartTime(configuration.get(confStartTime))
+	if err != nil {
+		return nil, err
+	}
+
 	// Configure the board
 	board := configuration.get(confBoard)
 	a.board = board
 
-	err := setupCharactedGenerator(&a, board, configuration.get(confCharRom))
+	err = setupCharactedGenerator(&a, board, configuration.get(confCharRom))
 	if err != nil {
 		return nil, err
 	}

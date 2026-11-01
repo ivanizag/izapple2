@@ -2,7 +2,6 @@ package izapple2
 
 import (
 	"fmt"
-	"time"
 )
 
 /*
@@ -75,7 +74,7 @@ func (d *SmartPortFujinetClock) status(code uint8, dest uint16) uint8 {
 
 	case 'T':
 		// Get time and send it in easy to use format
-		now := time.Now()
+		now := d.host.a.Now()
 		d.host.a.mmu.pokeRange(dest, []uint8{
 			uint8(now.Year() / 100),
 			uint8(now.Year() % 100),
@@ -89,7 +88,7 @@ func (d *SmartPortFujinetClock) status(code uint8, dest uint16) uint8 {
 	case 'P':
 		// Get time and send it in ProDOS format
 		// See 6.1 in https://prodos8.com/docs/techref/adding-routines-to-prodos/
-		now := time.Now()
+		now := d.host.a.Now()
 
 		datelo := uint8(now.Day()) + uint8(now.Month())<<5
 		datehi := uint8(now.Year()%100)<<1 + uint8(now.Month())>>3

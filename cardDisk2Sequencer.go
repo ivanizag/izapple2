@@ -168,6 +168,7 @@ func (c *CardDisk2Sequencer) setTrackTracer(tt trackTracer) {
 
 func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
 	for i := range c.drive {
+		c.drive[i].random = a.random
 		a.registerRemovableMediaDrive(&c.drive[i], fmt.Sprintf("S%vD%v", slot, i+1))
 	}
 

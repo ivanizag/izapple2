@@ -56,4 +56,6 @@ type VideoSource interface {
 	GetCardImage(light color.Color) *image.RGBA
 	// SupportsLowercase returns true if the video source supports lowercase
 	SupportsLowercase() bool
+	// IsFlashedFrame returns true when the flashing characters are shown inverse
+	IsFlashedFrame() bool
 }

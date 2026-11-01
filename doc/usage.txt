@@ -49,6 +49,8 @@ Usage:  izapple2 [file]
     	show the calculated configuration and exit
   -speed string
     	cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber (default "ntsc")
+  -startTime string
+    	date and time the machine starts at, like 1985-03-15T10:30:00, to run on the time of the machine instead of the host's and get the same results on every run. 'none' to use the time of the host (default "none")
   -tape string
     	WAV file with a tape recording for the cassette input (default "none")
   -trace string

@@ -43,6 +43,7 @@ const (
 	confTape       = "tape"
 	confSaveDir    = "saveDir"
 	confScreen     = "screen"
+	confStartTime  = "startTime"
 
 	confS0 = "s0"
 	confS1 = "s1"
@@ -244,6 +245,7 @@ func setupFlags(models *configurationModels, configuration *configuration) error
 		confRomx:       "emulate a RomX",
 		confTape:       "WAV file with a tape recording for the cassette input",
 		confScreen:     "monitor the screen is shown on, can be 'color', 'colorscanlines', 'green' or 'greenscanlines'",
+		confStartTime:  "date and time the machine starts at, like 1985-03-15T10:30:00, to run on the time of the machine instead of the host's and get the same results on every run. 'none' to use the time of the host",
 		confSaveDir:    "directory to keep what the software writes to the disks, leaving the images unmodified. 'none' to write back to the images",
 		confS0:         "slot 0 configuration.",
 		confS1:         "slot 1 configuration.",

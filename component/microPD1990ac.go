@@ -27,6 +27,9 @@ type MicroPD1990ac struct {
 	strobe   bool   // STB state
 	command  uint8  // C0, C1, C2 command. From 0 to 7
 	register uint64 // 40 bit shift register
+
+	// Now gives the time loaded in the register, the time of the host if nil
+	Now func() time.Time
 }
 
 const (
@@ -86,6 +89,9 @@ func (m *MicroPD1990ac) Out() bool {
 
 func (m *MicroPD1990ac) loadTime() {
 	now := time.Now()
+	if m.Now != nil {
+		now = m.Now()
+	}
 
 	var register uint64
 

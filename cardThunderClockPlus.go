@@ -43,6 +43,7 @@ func newCardThunderClockPlusBuilder() *cardBuilder {
 }
 
 func (c *CardThunderClockPlus) assign(a *Apple2, slot int) {
+	c.upd1990.Now = a.Now
 	c.addCardSoftSwitchR(0, func() uint8 {
 		bit := c.upd1990.Out()
 		// Get the next data bit from uPD1990AC on the MSB

@@ -135,6 +135,11 @@ func (v *video) GetSuperVideoMemory() []uint8 {
 	return mem.subRange(shResPageAddress, shResPageAddress+shResPageSize)
 }
 
+// IsFlashedFrame returns true when the flashing characters are shown inverse
+func (v *video) IsFlashedFrame() bool {
+	return v.a.IsFlashedFrame()
+}
+
 // GetCharacterPixel returns the pixel as output by the character generator
 func (v *video) GetCharacterPixel(char uint8, rowInChar int, colInChar int, isAltText bool, isFlashedFrame bool) bool {
 	var pixel bool

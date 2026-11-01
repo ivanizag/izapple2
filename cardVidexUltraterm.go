@@ -259,7 +259,8 @@ func (c *CardVidexUltraterm) buildImage(light color.Color) *image.RGBA {
 		img.Set(1, 1, color.White)
 		return img
 	}
-	ms := time.Now().Nanosecond() / (1000 * 1000) // Host time, used for the cursor blink
+	cursorSlowOn := c.a.isBlinkOn(32, time.Second)
+	cursorFastOn := c.a.isBlinkOn(16, time.Second/2)
 
 	size := image.Rect(0, 0, width, height)
 	img := image.NewRGBA(size)
@@ -303,13 +304,11 @@ func (c *CardVidexUltraterm) buildImage(light color.Color) *image.RGBA {
 		case component.MC6845CursorFixed:
 			isCursor = true
 		case component.MC6845CursorSlow:
-			// It should be 533ms (32/60, 32 screen refreshes)
-			// Let's make a 2 blinks per second
-			isCursor = ms/2 > 1000/4
+			// 32 screen refreshes, 533ms. One blink per second with host time
+			isCursor = cursorSlowOn
 		case component.MC6845CursorFast:
-			// It should be 266ms (32/60, 16 screen refreshes)
-			// Let's make a 4 blinks per second
-			isCursor = ms/4 > 1000/8
+			// 16 screen refreshes, 266ms. Two blinks per second with host time
+			isCursor = cursorFastOn
 		}
 		if isCursor {
 			bits = ^bits

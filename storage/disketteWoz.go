@@ -26,6 +26,12 @@ type disketteWoz struct {
 	visibleLatchCountDown int8 // The visible latch stores a valid latch reading for 2 bit timings
 
 	writing bool // The last access was a write, the next one goes on after it
+
+	random *rand.Rand // Source of the random bits, the global one if nil
+}
+
+func (d *disketteWoz) setRandomSource(random *rand.Rand) {
+	d.random = random
 }
 
 func newDisquetteWoz(f *FileWoz) (*disketteWoz, error) {
@@ -72,7 +78,7 @@ func (d *disketteWoz) Read(quarterTrack int, cycle uint64) uint8 {
 			d.mc3470Buffer++
 		}
 		bit := (d.mc3470Buffer >> 1) & 0x1 // Use the previous to last bit to add latency
-		if d.mc3470Buffer == 0 && rand.Intn(100) < 3 {
+		if d.mc3470Buffer == 0 && randomIntn(d.random, 100) < 3 {
 			// Four consecutive zeros. It'a a fake bit.
 			// Output a random value. 70% zero, 30% one
 			bit = 1
