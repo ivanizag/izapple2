@@ -3,11 +3,13 @@ package izapple2
 import "fmt"
 
 /*
-	A smartPort device
+A smartPort device runs the commands and returns their result and the data
+they give: the status list, the block read. It doesn't access the memory of
+the Apple, the commands come the same from the firmware calls of a card or
+from the packets of a SmartPort bus.
 */
-
 type smartPortDevice interface {
-	exec(call *smartPortCall) uint8
+	exec(call *smartPortCall) (result uint8, data []uint8)
 }
 
 const (
@@ -49,30 +51,23 @@ const (
 	smartPortErrorWriteProtected = uint8(0x2b)
 )
 
+/*
+smartPortCall is a command for a device: its parameter list, as on the
+SmartPort calls, with the count, the unit and the rest of the parameters,
+and the data it carries: the block to write, the control list.
+*/
 type smartPortCall struct {
-	host    *CardSmartPort
 	command uint8
-
-	address uint16  // When the params are on the Apple memory
-	params  []uint8 // When the params are built externally as on a ProDOS to SP translation
+	params  []uint8
+	data    []uint8
 }
 
-func newSmartPortCall(host *CardSmartPort, command uint8, address uint16) *smartPortCall {
-	var spc smartPortCall
-	spc.host = host
-	spc.command = command
-	spc.address = address
-	spc.params = nil
-	return &spc
-}
-
-func newSmartPortCallSynthetic(host *CardSmartPort, command uint8, params []uint8) *smartPortCall {
-	var spc smartPortCall
-	spc.host = host
-	spc.command = command
-	spc.address = 0xffff
-	spc.params = params
-	return &spc
+func newSmartPortCall(command uint8, params []uint8, data []uint8) *smartPortCall {
+	return &smartPortCall{
+		command: command,
+		params:  params,
+		data:    data,
+	}
 }
 
 func (spc *smartPortCall) unit() uint8 {
@@ -87,14 +82,9 @@ func (spc *smartPortCall) statusCode() uint8 {
 }
 
 func (spc *smartPortCall) param8(offset uint8) uint8 {
-	if spc.params == nil {
-		return spc.host.a.mmu.Peek(spc.address + uint16(offset))
-	}
-
 	if int(offset) >= len(spc.params) {
-		panic("Synthetised smartpot call out of range")
+		return 0
 	}
-
 	return spc.params[offset]
 }
 
@@ -107,20 +97,6 @@ func (spc *smartPortCall) param24(offset uint8) uint32 {
 	return uint32(spc.param8(offset)) +
 		uint32(spc.param8(offset+1))<<8 +
 		uint32(spc.param8(offset+2))<<16
-}
-
-func (spc *smartPortCall) paramData(offset uint8) []uint8 {
-	address := uint16(spc.param8(offset)) +
-		uint16(spc.param8(offset+1))<<8
-
-	size := spc.host.a.mmu.peekWord(address)
-
-	data := make([]uint8, size)
-	for i := 0; i < int(size); i++ {
-		data[i] = spc.host.a.mmu.Peek(address + 2 + uint16(i))
-	}
-
-	return data
 }
 
 func (spc *smartPortCall) String() string {

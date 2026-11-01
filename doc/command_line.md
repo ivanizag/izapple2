@@ -101,6 +101,7 @@ Common cards include:
 
 - `diskii` - Disk II floppy drive controller
 - `smartport` - SmartPort hard disk controller
+- `liron` - UniDisk 3.5 interface card, a SmartPort with the original firmware
 - `mouse` - Mouse card
 - `parallel` - Parallel printer card
 - `ssc` - Super Serial Card
@@ -410,6 +411,7 @@ The available cards are:
   forthrom: Firmware card with Forth. It replaces the Basic ROM
   fujinet: SmartPort interface card hosting the Fujinet
   language: Language card with 16 extra KB for the Apple ][ and ][+
+  liron: Apple UniDisk 3.5 interface card, Liron, a SmartPort on an IWM
   memexp: Memory expansion card
   mockingboard: Mockingboard sound card with two AY-3-8913 sound generators
   mouse: Mouse card implementation, does not emulate a real card, only the firmware behaviour

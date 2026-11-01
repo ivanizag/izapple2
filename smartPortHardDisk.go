@@ -17,7 +17,6 @@ See:
 
 // SmartPortHardDisk represents a hard disk
 type SmartPortHardDisk struct {
-	host     *CardSmartPort // For DMA
 	filename string
 	trace    bool
 	disk     storage.BlockDisk
@@ -25,9 +24,8 @@ type SmartPortHardDisk struct {
 
 // NewSmartPortHardDisk creates a new hard disk with the smartPort interface.
 // An empty saveDirectory writes the changes back to the image.
-func NewSmartPortHardDisk(host *CardSmartPort, filename string, saveDirectory string) (*SmartPortHardDisk, error) {
+func NewSmartPortHardDisk(filename string, saveDirectory string) (*SmartPortHardDisk, error) {
 	var d SmartPortHardDisk
-	d.host = host
 	d.filename = filename
 
 	hd, err := LoadBlockDisk(filename, saveDirectory)
@@ -39,23 +37,25 @@ func NewSmartPortHardDisk(host *CardSmartPort, filename string, saveDirectory st
 	return &d, nil
 }
 
-func (d *SmartPortHardDisk) exec(call *smartPortCall) uint8 {
+func (d *SmartPortHardDisk) exec(call *smartPortCall) (uint8, []uint8) {
 	var result uint8
+	var data []uint8
 
 	switch call.command {
 	case smartPortCommandStatus:
-		address := call.param16(2)
-		result = d.status(address)
+		if call.statusCode() == smartPortStatusCodeDevice {
+			result, data = d.deviceStatus()
+		} else {
+			result, data = d.status()
+		}
 
 	case smartPortCommandReadBlock:
-		address := call.param16(2)
 		block := call.param24(4)
-		result = d.readBlock(block, address)
+		result, data = d.readBlock(block)
 
 	case smartPortCommandWriteBlock:
-		address := call.param16(2)
 		block := call.param24(4)
-		result = d.writeBlock(block, address)
+		result = d.writeBlock(block, call.data)
 
 	default:
 		// Prodos device command not supported
@@ -67,43 +67,34 @@ func (d *SmartPortHardDisk) exec(call *smartPortCall) uint8 {
 			call, smartPortErrorMessage(result))
 	}
 
-	return result
+	return result, data
 }
 
-func (d *SmartPortHardDisk) readBlock(block uint32, dest uint16) uint8 {
+func (d *SmartPortHardDisk) readBlock(block uint32) (uint8, []uint8) {
 	if d.trace {
-		fmt.Printf("[SmartPortHardDisk] Read block %v into $%x.\n", block, dest)
+		fmt.Printf("[SmartPortHardDisk] Read block %v.\n", block)
 	}
 
 	data, err := d.disk.Read(block)
 	if err != nil {
-		return smartPortErrorIO
+		return smartPortErrorIO, nil
 	}
-
-	// Byte by byte transfer to memory using the full Poke code path
-	for i := uint16(0); i < uint16(len(data)); i++ {
-		d.host.a.mmu.Poke(dest+i, data[i])
-	}
-
-	return smartPortNoError
+	return smartPortNoError, data
 }
 
-func (d *SmartPortHardDisk) writeBlock(block uint32, source uint16) uint8 {
+func (d *SmartPortHardDisk) writeBlock(block uint32, data []uint8) uint8 {
 	if d.trace {
-		fmt.Printf("[SmartPortHardDisk] Write block %v from $%x.\n", block, source)
+		fmt.Printf("[SmartPortHardDisk] Write block %v.\n", block)
 	}
 
 	if d.disk.IsReadOnly() {
 		return smartPortErrorWriteProtected
 	}
-
-	// Byte by byte transfer from memory using the full Peek code path
-	buf := make([]uint8, storage.ProDosBlockSize)
-	for i := uint16(0); i < uint16(len(buf)); i++ {
-		buf[i] = d.host.a.mmu.Peek(source + i)
+	if len(data) != int(storage.ProDosBlockSize) {
+		return smartPortErrorIO
 	}
 
-	err := d.disk.Write(block, buf)
+	err := d.disk.Write(block, data)
 	if err != nil {
 		return smartPortErrorIO
 	}
@@ -111,20 +102,37 @@ func (d *SmartPortHardDisk) writeBlock(block uint32, source uint16) uint8 {
 	return smartPortNoError
 }
 
-func (d *SmartPortHardDisk) status(dest uint16) uint8 {
+/*
+deviceStatus is the status list of the STATUS with code 0: the status byte
+and the size in blocks. The SmartPort card answers it with the status of
+the host for all the units, it comes from the SmartPort bus.
+*/
+func (d *SmartPortHardDisk) deviceStatus() (uint8, []uint8) {
+	status := smartPortStatusCodeTypeBlock | smartPortStatusCodeTypeRead |
+		smartPortStatusCodeTypeOnline | smartPortStatusCodeTypeFormat
+	if d.disk.IsReadOnly() {
+		status |= smartPortStatusCodeTypeProtected
+	} else {
+		status |= smartPortStatusCodeTypeWrite
+	}
+	blocks := d.disk.GetSizeInBlocks()
+	return smartPortNoError, []uint8{status, uint8(blocks), uint8(blocks >> 8), uint8(blocks >> 16)}
+}
+
+func (d *SmartPortHardDisk) status() (uint8, []uint8) {
 	if d.trace {
-		fmt.Printf("[SmartPortHardDisk] Status into $%x.\n", dest)
+		fmt.Printf("[SmartPortHardDisk] Status.\n")
 	}
 
 	// See http://www.1000bit.it/support/manuali/apple/technotes/smpt/tn.smpt.2.html
-	d.host.a.mmu.Poke(dest+0, 0x01) // One device
-	d.host.a.mmu.Poke(dest+1, 0xff) // No interrupt
-	d.host.a.mmu.Poke(dest+2, 0x00)
-	d.host.a.mmu.Poke(dest+3, 0x00) // Unknown manufacturer
-	d.host.a.mmu.Poke(dest+4, 0x01)
-	d.host.a.mmu.Poke(dest+5, 0x00) // Version 1.0 final
-	d.host.a.mmu.Poke(dest+6, 0x00)
-	d.host.a.mmu.Poke(dest+7, 0x00) // Reserved
-
-	return smartPortNoError
+	return smartPortNoError, []uint8{
+		0x01, // One device
+		0xff, // No interrupt
+		0x00,
+		0x00, // Unknown manufacturer
+		0x01,
+		0x00, // Version 1.0 final
+		0x00,
+		0x00, // Reserved
+	}
 }

@@ -22,6 +22,7 @@
 
 - Emulated extension cards:
   - DiskII controller (state machine based for WOZ files)
+  - UniDisk 3.5 interface card (Liron), with its original firmware on an emulated IWM and SmartPort bus. The drives are block devices with the images given, as 800Kb disks or hard disks
   - 16Kb Language Card
   - 256Kb Saturn RAM
   - Parallel Printer Interface card

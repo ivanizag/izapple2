@@ -3,6 +3,9 @@ package izapple2
 import (
 	"fmt"
 	"strconv"
+	"time"
+
+	"github.com/ivanizag/izapple2/storage"
 )
 
 /*
@@ -106,11 +109,11 @@ func newCardSmartPortFujinetBuilder() *cardBuilder {
 			var c CardSmartPort
 			c.trace = paramsGetBool(params, "tracesp")
 
-			net := NewSmartPortFujinetNetwork(&c)
+			net := NewSmartPortFujinetNetwork()
 			net.trace = paramsGetBool(params, "tracenet")
 			c.AddDevice(net)
 
-			clock := NewSmartPortFujinetClock(&c)
+			clock := NewSmartPortFujinetClock(func() time.Time { return c.a.Now() })
 			clock.trace = paramsGetBool(params, "traceclock")
 			c.AddDevice(clock)
 
@@ -129,7 +132,7 @@ func (c *CardSmartPort) GetInfo() map[string]string {
 // LoadImage loads a disk image. An empty saveDirectory writes the changes back
 // to the image.
 func (c *CardSmartPort) LoadImage(filename string, trace bool, saveDirectory string) error {
-	device, err := NewSmartPortHardDisk(c, filename, saveDirectory)
+	device, err := NewSmartPortHardDisk(filename, saveDirectory)
 	if err == nil {
 		device.trace = trace
 		c.devices = append(c.devices, device)
@@ -153,26 +156,26 @@ func (c *CardSmartPort) assign(a *Apple2, slot int) {
 		unit := a.mmu.Peek(0x43) & 0x0f
 
 		// Generate Smarport compatible params
-		var call *smartPortCall
+		var params []uint8
 		if command == smartPortCommandStatus {
-			call = newSmartPortCallSynthetic(c, command, []uint8{
+			params = []uint8{
 				3, // 3 args
 				unit,
 				a.mmu.Peek(0x44), a.mmu.Peek(0x45), // data address
 				0,
-			})
+			}
 		} else if command == smartPortCommandReadBlock || command == smartPortCommandWriteBlock {
-			call = newSmartPortCallSynthetic(c, command, []uint8{
+			params = []uint8{
 				3, // 3args
 				unit,
 				a.mmu.Peek(0x44), a.mmu.Peek(0x45), // data address
 				a.mmu.Peek(0x46), a.mmu.Peek(0x47), 0, // block number
-			})
+			}
 		} else {
 			return smartPortBadCommand
 		}
 
-		return c.exec(call)
+		return c.execFromMemory(command, params)
 	}, "SMARTPORTPRODOSCOMMAND")
 
 	c.addCardSoftSwitchR(1, func() uint8 {
@@ -189,8 +192,11 @@ func (c *CardSmartPort) assign(a *Apple2, slot int) {
 		command := c.a.mmu.Peek(c.mliParams + 1)
 		paramsAddress := uint16(c.a.mmu.Peek(c.mliParams+2)) + uint16(c.a.mmu.Peek(c.mliParams+3))<<8
 
-		call := newSmartPortCall(c, command, paramsAddress)
-		return c.exec(call)
+		params := make([]uint8, smartPortParamsMaxLength)
+		for i := range params {
+			params[i] = c.a.mmu.Peek(paramsAddress + uint16(i))
+		}
+		return c.execFromMemory(command, params)
 	}, "SMARTPORTEXEC")
 
 	c.addCardSoftSwitchW(4, func(value uint8) {
@@ -203,15 +209,56 @@ func (c *CardSmartPort) assign(a *Apple2, slot int) {
 	c.cardBase.assign(a, slot)
 }
 
-func (c *CardSmartPort) exec(call *smartPortCall) uint8 {
+// The longest parameter list, the one of READ and WRITE
+const smartPortParamsMaxLength = 9
+
+/*
+execFromMemory runs a call made through the firmware of the card. The data
+the call carries is taken from the memory of the Apple, and the data it
+gives is stored there, on the buffer address of the parameter list.
+*/
+func (c *CardSmartPort) execFromMemory(command uint8, params []uint8) uint8 {
+	call := newSmartPortCall(command, params, nil)
+	buffer := call.param16(2)
+
+	switch command {
+	case smartPortCommandWriteBlock:
+		call.data = c.peekData(buffer, int(storage.ProDosBlockSize))
+	case smartPortCommandControl:
+		// The control list has its length in the first two bytes
+		call.data = c.peekData(buffer+2, int(c.a.mmu.peekWord(buffer)))
+	case smartPortCommandWrite:
+		call.data = c.peekData(buffer, int(call.param16(4)))
+	}
+
+	result, data := c.exec(call)
+
+	// Byte by byte transfer to memory using the full Poke code path
+	for i := range data {
+		c.a.mmu.Poke(buffer+uint16(i), data[i])
+	}
+	return result
+}
+
+// peekData reads data from memory using the full Peek code path
+func (c *CardSmartPort) peekData(address uint16, length int) []uint8 {
+	data := make([]uint8, length)
+	for i := range data {
+		data[i] = c.a.mmu.Peek(address + uint16(i))
+	}
+	return data
+}
+
+func (c *CardSmartPort) exec(call *smartPortCall) (uint8, []uint8) {
 	var result uint8
+	var data []uint8
 	unit := int(call.unit())
 
 	if call.command == smartPortCommandStatus &&
 		// Call to the host
 		call.statusCode() == smartPortStatusCodeDevice {
 
-		result = c.hostStatus(call)
+		result, data = c.hostStatus()
 	} else {
 		if unit == 0 {
 			unit = 1 // For unit 0(host) use the first device
@@ -220,7 +267,7 @@ func (c *CardSmartPort) exec(call *smartPortCall) uint8 {
 		if unit > len(c.devices) {
 			result = smartPortErrorNoDevice
 		} else {
-			result = c.devices[unit-1].exec(call)
+			result, data = c.devices[unit-1].exec(call)
 		}
 	}
 
@@ -228,26 +275,25 @@ func (c *CardSmartPort) exec(call *smartPortCall) uint8 {
 		fmt.Printf("[CardSmartPort] Command %v on slot %v => result %s.\n",
 			call, c.slot, smartPortErrorMessage(result))
 	}
-	return result
+	return result, data
 }
 
-func (c *CardSmartPort) hostStatus(call *smartPortCall) uint8 {
-	dest := call.param16(2)
+func (c *CardSmartPort) hostStatus() (uint8, []uint8) {
 	if c.trace {
-		fmt.Printf("[CardSmartPort] Host status into $%x.\n", dest)
+		fmt.Printf("[CardSmartPort] Host status.\n")
 	}
 
 	// See http://www.1000bit.it/support/manuali/apple/technotes/smpt/tn.smpt.2.html
-	c.a.mmu.Poke(dest+0, uint8(len(c.devices)))
-	c.a.mmu.Poke(dest+1, 0xff) // No interrupt
-	c.a.mmu.Poke(dest+2, 0x00)
-	c.a.mmu.Poke(dest+3, 0x00) // Unknown manufacturer
-	c.a.mmu.Poke(dest+4, 0x01)
-	c.a.mmu.Poke(dest+5, 0x00) // Version 1.0 final
-	c.a.mmu.Poke(dest+6, 0x00)
-	c.a.mmu.Poke(dest+7, 0x00) // Reserved
-
-	return smartPortNoError
+	return smartPortNoError, []uint8{
+		uint8(len(c.devices)),
+		0xff, // No interrupt
+		0x00,
+		0x00, // Unknown manufacturer
+		0x01,
+		0x00, // Version 1.0 final
+		0x00,
+		0x00, // Reserved
+	}
 }
 
 func buildHardDiskRom(slot int, proDOSBlockDeviceType uint8) []uint8 {

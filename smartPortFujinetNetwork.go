@@ -19,7 +19,6 @@ See:
 
 // SmartPortFujinetNetwork represents a Fujinet device
 type SmartPortFujinetNetwork struct {
-	host  *CardSmartPort // For DMA
 	trace bool
 
 	protocol        fujinet.Protocol
@@ -33,16 +32,16 @@ type SmartPortFujinetNetwork struct {
 }
 
 // NewSmartPortFujinetNetwork creates a new fujinet device
-func NewSmartPortFujinetNetwork(host *CardSmartPort) *SmartPortFujinetNetwork {
+func NewSmartPortFujinetNetwork() *SmartPortFujinetNetwork {
 	var d SmartPortFujinetNetwork
-	d.host = host
 	d.errorCode = fujinet.NoError
 
 	return &d
 }
 
-func (d *SmartPortFujinetNetwork) exec(call *smartPortCall) uint8 {
+func (d *SmartPortFujinetNetwork) exec(call *smartPortCall) (uint8, []uint8) {
 	var result uint8
+	var data []uint8
 
 	switch call.command {
 
@@ -53,19 +52,16 @@ func (d *SmartPortFujinetNetwork) exec(call *smartPortCall) uint8 {
 		result = smartPortNoError
 
 	case smartPortCommandStatus:
-		address := call.param16(2)
-		result = d.status(call.statusCode(), address)
+		result, data = d.status(call.statusCode())
 
 	case smartPortCommandControl:
-		data := call.paramData(2)
 		controlCode := call.param8(4)
-		result = d.control(data, controlCode)
+		result = d.control(call.data, controlCode)
 
 	case smartPortCommandRead:
-		address := call.param16(2)
 		len := call.param16(4)
 		pos := call.param24(6)
-		result = d.read(pos, len, address)
+		result, data = d.read(pos, len)
 
 	default:
 		// Prodos device command not supported
@@ -77,21 +73,16 @@ func (d *SmartPortFujinetNetwork) exec(call *smartPortCall) uint8 {
 			call, smartPortErrorMessage(result))
 	}
 
-	return result
+	return result, data
 }
 
-func (d *SmartPortFujinetNetwork) read(pos uint32, length uint16, dest uint16) uint8 {
+func (d *SmartPortFujinetNetwork) read(pos uint32, length uint16) (uint8, []uint8) {
 	if d.trace {
-		fmt.Printf("[SmartPortFujinetNetwork] Read %v bytes from pos %v into $%x.\n",
-			length, pos, dest)
+		fmt.Printf("[SmartPortFujinetNetwork] Read %v bytes from pos %v.\n",
+			length, pos)
 	}
 
-	// Byte by byte transfer to memory using the full Poke code path
-	for i := uint16(0); i < uint16(len(d.data)) && i < length; i++ {
-		d.host.a.mmu.Poke(dest+i, d.data[i])
-	}
-
-	return smartPortNoError
+	return smartPortNoError, d.data[:min(len(d.data), int(length))]
 }
 
 func (d *SmartPortFujinetNetwork) control(data []uint8, code uint8) uint8 {
@@ -193,26 +184,27 @@ func (d *SmartPortFujinetNetwork) controlOpen(method uint8, translation uint8, r
 	d.jsonChannelMode = false
 }
 
-func (d *SmartPortFujinetNetwork) status(code uint8, dest uint16) uint8 {
+func (d *SmartPortFujinetNetwork) status(code uint8) (uint8, []uint8) {
+	var data []uint8
 
 	switch code {
 	case smartPortStatusCodeDevice:
 		// See iwmNetwork::encode_status_reply_packet()
-		d.host.a.mmu.pokeRange(dest, []uint8{
+		data = []uint8{
 			smartPortStatusCodeTypeRead & smartPortStatusCodeTypeOnline,
 			0, 0, 0, // Block size is 0
-		})
+		}
 
 	case smartPortStatusCodeDeviceInfo:
 		// See iwmNetwork::encode_status_reply_packet()
-		d.host.a.mmu.pokeRange(dest, []uint8{
+		data = []uint8{
 			smartPortStatusCodeTypeRead & smartPortStatusCodeTypeOnline,
 			0, 0, 0, // Block size is 0
 			7, 'N', 'E', 'T', 'W', 'O', 'R', 'K', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
 			0x02,       // Type hard disk
 			0x00,       // Subtype network (comment in network.cpp has 0x0a)
 			0x00, 0x01, // Firmware version
-		})
+		}
 
 	case 'R':
 		// Net read, do nothing
@@ -226,22 +218,22 @@ func (d *SmartPortFujinetNetwork) status(code uint8, dest uint16) uint8 {
 			if len == 0 {
 				errorCode = int(fujinet.NetworkErrorEndOfFile)
 			}
-			d.host.a.mmu.pokeRange(dest, []uint8{
+			data = []uint8{
 				uint8(len & 0xff),
 				uint8((len >> 8) & 0xff),
 				1, /*True*/
 				uint8(errorCode),
-			})
+			}
 		} else {
 			// TODO
-			d.host.a.mmu.pokeRange(dest, []uint8{
+			data = []uint8{
 				uint8(len & 0xff),
 				uint8((len >> 8) & 0xff),
 				1, // ?? d.connected,
 				uint8(d.errorCode),
-			})
+			}
 		}
 	}
 
-	return smartPortNoError // The return code is always success
+	return smartPortNoError, data // The return code is always success
 }
