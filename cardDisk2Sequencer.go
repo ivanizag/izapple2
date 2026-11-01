@@ -208,7 +208,7 @@ func (c *CardDisk2Sequencer) assign(a *Apple2, slot int) {
 		}
 	}, "DISK2SEQ")
 
-	a.registerTickerCard(c)
+	a.registerTicker(c)
 	c.cardBase.assign(a, slot)
 }
 

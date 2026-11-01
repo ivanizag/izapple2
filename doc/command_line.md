@@ -36,6 +36,7 @@ izapple2 -model=2enh
 **Available models:**
 
 - `2` - Apple ][
+- `2c` - Apple IIc, with the original ROM 255
 - `2e` - Apple IIe
 - `2enh` - Apple //e (default, enhanced version)
 - `2plus` - Apple ][+
@@ -268,7 +269,7 @@ Usage:  izapple2 [file]
   file
     	path to image to use on the boot device
   -board string
-    	main board, can be '2plus', '2e', 'base64a' or 'basis108' (default "2e")
+    	main board, can be '2plus', '2e', '2c', 'base64a' or 'basis108' (default "2e")
   -charrom string
     	rom file for the character generator (default "<internal>/Apple IIe Video Enhanced.bin")
   -cpu string
@@ -322,6 +323,7 @@ Usage:  izapple2 [file]
 
 The available pre-configured models are:
   2: Apple ][
+  2c: Apple IIc
   2e: Apple IIe
   2enh: Apple //e
   2plus: Apple ][+

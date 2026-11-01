@@ -356,14 +356,14 @@ func (mmu *memoryManager) hasExtendedRAM() bool {
 }
 
 func (mmu *memoryManager) reset() {
-	if mmu.apple2.isApple2e {
+	if mmu.apple2.isApple2e || mmu.apple2.isApple2c {
 		// MMU UtA2e 4-14, 5-22
 		mmu.altZeroPage = false
 		mmu.altMainRAMActiveRead = false
 		mmu.altMainRAMActiveWrite = false
 		mmu.store80Active = false
 		mmu.slotC3ROMActive = false
-		mmu.intCxROMActive = false
+		mmu.intCxROMActive = mmu.apple2.isApple2c // Always the ROM on the IIc
 		mmu.intC8ROMActive = false
 
 		// IOU UtaA2e 7-3

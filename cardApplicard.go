@@ -130,7 +130,7 @@ func (c *CardApplicard) assign(a *Apple2, slot int) {
 		return 0xff
 	}, "APPLICARDNMI")
 
-	a.registerTickerCard(c)
+	a.registerTicker(c)
 	c.cardBase.assign(a, slot)
 }
 

@@ -90,7 +90,7 @@ func (c *CardZ80SoftCard2) assign(a *Apple2, slot int) {
 		c.reset()
 	}, "SOFTCARD2RESET")
 
-	a.registerTickerCard(c)
+	a.registerTicker(c)
 	c.cardBase.assign(a, slot)
 }
 

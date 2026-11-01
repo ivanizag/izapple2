@@ -97,14 +97,14 @@ func setupCharactedGenerator(a *Apple2, board string, charRomFile string) error 
 		charGenMap = charGenColumnsMap2Plus
 		pageSize = charGenPageSizeBasis108
 		initialCharGenPage = 2
-	case "2e":
+	case "2e", "2c":
 		charGenMap = charGenColumnsMap2e
 		pageSize = charGenPageSize2E
 	case "base64a":
 		charGenMap = charGenColumnsMapBase64a
 		initialCharGenPage = 1
 	default:
-		return fmt.Errorf("board %s not supported it must be '2plus', '2e', 'base64a', 'basis108", board)
+		return fmt.Errorf("board %s not supported it must be '2plus', '2e', '2c', 'base64a', 'basis108", board)
 	}
 
 	cg, err := newCharacterGenerator(charRomFile, charGenMap, pageSize)

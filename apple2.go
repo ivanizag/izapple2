@@ -20,12 +20,13 @@ type Apple2 struct {
 
 	cards       [8]Card
 	tracers     []executionTracer
-	tickerCards []cardTicker
-	irqRequests uint8 // Bitmask of the slots asserting the IRQ line
+	tickers     []ticker
+	irqRequests uint16 // Bitmask of the sources asserting the IRQ line
 
 	softVideoSwitch softVideoSwitchProvider
 	board           string
 	isApple2e       bool
+	isApple2c       bool
 	hasLowerCase    bool
 	isFourColors    bool // An Apple II without the 6 color mod
 	usesMouse       bool
@@ -61,23 +62,25 @@ func (a *Apple2) GetCards() [8]Card {
 	return a.cards
 }
 
-// A cardTicker is a card that needs to run logic on every instruction
-type cardTicker interface {
+// A ticker is a part of the machine, a card or a device of the board, that
+// needs to run logic on every instruction
+type ticker interface {
 	tick()
 }
 
-func (a *Apple2) registerTickerCard(c cardTicker) {
-	a.tickerCards = append(a.tickerCards, c)
+func (a *Apple2) registerTicker(t ticker) {
+	a.tickers = append(a.tickers, t)
 }
 
-// requestIRQ sets or clears the IRQ request of a slot. The CPU IRQ line
-// is asserted while any slot requests it. To be called only from the
-// emulation goroutine.
-func (a *Apple2) requestIRQ(slot int, asserted bool) {
+// requestIRQ sets or clears the IRQ request of a source, a slot or a device
+// of the board. The sources 0 to 7 are the slots, the devices of the boards
+// take the numbers from 8. The CPU IRQ line is asserted while any source
+// requests it. To be called only from the emulation goroutine.
+func (a *Apple2) requestIRQ(source int, asserted bool) {
 	if asserted {
-		a.irqRequests |= 1 << slot
+		a.irqRequests |= 1 << source
 	} else {
-		a.irqRequests &^= 1 << slot
+		a.irqRequests &^= 1 << source
 	}
 	a.cpu.SetIRQ(a.irqRequests != 0)
 }

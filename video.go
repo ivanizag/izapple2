@@ -138,7 +138,7 @@ func (v *video) GetSuperVideoMemory() []uint8 {
 // GetCharacterPixel returns the pixel as output by the character generator
 func (v *video) GetCharacterPixel(char uint8, rowInChar int, colInChar int, isAltText bool, isFlashedFrame bool) bool {
 	var pixel bool
-	if v.a.isApple2e {
+	if v.a.isApple2e || v.a.isApple2c {
 		vid6 := (char & 0x40) != 0
 		vid7 := (char & 0x80) != 0
 		char := char & 0x3f

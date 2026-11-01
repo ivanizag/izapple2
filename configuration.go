@@ -228,7 +228,7 @@ func (c *configurationModels) getWithOverrides(model string, overrides *configur
 func setupFlags(models *configurationModels, configuration *configuration) error {
 	paramDescription := map[string]string{
 		confModel:      "set base model, 'none' to give the board, rom and charrom as parameters",
-		confBoard:      "main board, can be '2plus', '2e', 'base64a' or 'basis108'",
+		confBoard:      "main board, can be '2plus', '2e', '2c', 'base64a' or 'basis108'",
 		confRom:        "main rom file",
 		confCharRom:    "rom file for the character generator",
 		confCpu:        "cpu type, can be '6502' or '65c02'",

@@ -137,7 +137,7 @@ func (a *Apple2) stepInstruction() {
 		a.cycles += a.cpu.GetCycles() - startCycles
 	}
 
-	a.tickCards()
+	a.runTickers()
 	a.executionTrace()
 }
 
@@ -181,9 +181,9 @@ func (a *Apple2) reset() {
 	}
 }
 
-func (a *Apple2) tickCards() {
-	for _, c := range a.tickerCards {
-		c.tick()
+func (a *Apple2) runTickers() {
+	for _, t := range a.tickers {
+		t.tick()
 	}
 }
 

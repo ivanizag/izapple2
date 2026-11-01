@@ -4,6 +4,7 @@
   - Apple ][+ with 48Kb of base RAM
   - Apple //e with 128Kb of RAM
   - Apple //e enhanced with 128Kb of RAM
+  - Apple IIc with the original ROM 255 (the serial ports are not emulated yet)
   - Base64A clone with 48Kb of base RAM and paged ROM
   - Basis 108 clone (partial)
 - Storage

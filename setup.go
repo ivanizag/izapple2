@@ -51,6 +51,17 @@ func configure(configuration *configuration) (*Apple2, error) {
 		a.mmu.initExtendedRAM(1)
 		a.hasLowerCase = true
 		addApple2ESoftSwitches(a.io)
+	case "2c":
+		err := checkApple2cConfiguration(configuration)
+		if err != nil {
+			return nil, err
+		}
+		a.isApple2c = true
+		a.mmu.initMainRAM()
+		a.mmu.initExtendedRAM(1)
+		a.hasLowerCase = true
+		addApple2ESoftSwitches(a.io)
+		addApple2cSoftSwitches(a.io)
 	case "base64a":
 		a.mmu.initMainRAM()
 		a.hasLowerCase = true
@@ -63,7 +74,7 @@ func configure(configuration *configuration) (*Apple2, error) {
 		a.hasLowerCase = true
 		addBasis108SoftSwitches(a.io, memBasis108, videoBasis108, a.cg)
 	default:
-		return nil, fmt.Errorf("board %s not supported it must be '2plus', '2e', 'base64a', 'basis108", board)
+		return nil, fmt.Errorf("board %s not supported it must be '2plus', '2e', '2c', 'base64a', 'basis108", board)
 	}
 
 	cpu := configuration.get(confCpu)

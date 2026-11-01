@@ -52,7 +52,7 @@ func newCassette(a *Apple2, data []uint8) (*cassette, error) {
 	c.a = a
 	c.transitions = transitions
 
-	a.registerTickerCard(&c)
+	a.registerTicker(&c)
 	return &c, nil
 }
 

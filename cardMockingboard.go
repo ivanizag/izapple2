@@ -67,7 +67,7 @@ func (c *CardMockingboard) assign(a *Apple2, slot int) {
 	if slot != 0 {
 		a.mmu.setCardROM(slot, traceMemory(c, c.name, c.traceMemory))
 	}
-	a.registerTickerCard(c)
+	a.registerTicker(c)
 	c.lastCycle = a.GetCycles()
 	c.psgCycle = c.lastCycle
 	c.psg[0].Reset()

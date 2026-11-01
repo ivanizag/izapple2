@@ -224,7 +224,7 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 		}, "Q6Q7")
 	}
 
-	a.registerTickerCard(c)
+	a.registerTicker(c)
 	c.cardBase.assign(a, slot)
 }
 

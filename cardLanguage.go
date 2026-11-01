@@ -53,7 +53,7 @@ const (
 )
 
 func (c *CardLanguage) reset() {
-	if c.a.isApple2e {
+	if c.a.isApple2e || c.a.isApple2c {
 		// UtA2e 1-3, 5-23
 		c.readState = false
 		c.writeState = lcWriteEnabled
