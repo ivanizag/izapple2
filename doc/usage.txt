@@ -101,6 +101,7 @@ The available cards are:
   saturn: RAM card with 128Kb, it's like 8 language cards
   smartport: SmartPort interface card
   softswitchlogger: Card to log softswitch accesses
+  ssc: Serial port with a 6551 ACIA connected to the console, a file or a TCP port
   swyftcard: Card with the ROM needed to run the Swyftcard word processing system
   thunderclock: Clock card
   videx: Videx Videoterm compatible 80 columns card

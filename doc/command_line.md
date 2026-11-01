@@ -103,6 +103,7 @@ Common cards include:
 - `smartport` - SmartPort hard disk controller
 - `mouse` - Mouse card
 - `parallel` - Parallel printer card
+- `ssc` - Super Serial Card
 - `vidhd` - VidHD graphics card
 - `fastchip` - Accelerator card
 - `language` - Language card (16KB RAM expansion)
@@ -200,6 +201,24 @@ different start time gives different random bits.
 The start time can be `2006-01-02T15:04:05`, `2006-01-02T15:04` or
 `2006-01-02`, taken as UTC, or a time in RFC 3339 with its zone, like
 `1985-03-15T10:30:00+01:00`.
+
+## Serial Ports
+
+The Super Serial Card, `ssc`, and the two serial ports of the Apple IIc,
+`iicserial` on `-s1` and `-s2`, are connected to a device of the host with the
+`device` parameter: `none`, `console`, `file`, `tcp` or `netmodem`, a modem that
+dials to the internet with `ATDT host:port`:
+
+```bash
+# A Super Serial Card on slot 2, to connect with "nc -c localhost 1978"
+izapple2 -s2 ssc,device=tcp
+
+# The printer port of the IIc to a file
+izapple2 -model 2c -s1 iicserial,device=file,file=printer.txt
+```
+
+See [serial.md](serial.md) for the devices, the switches of the card, the
+commands of the firmware and how to try it.
 
 ## Simplified Filename Configuration
 
@@ -402,6 +421,7 @@ The available cards are:
   saturn: RAM card with 128Kb, it's like 8 language cards
   smartport: SmartPort interface card
   softswitchlogger: Card to log softswitch accesses
+  ssc: Serial port with a 6551 ACIA connected to the console, a file or a TCP port
   swyftcard: Card with the ROM needed to run the Swyftcard word processing system
   thunderclock: Clock card
   videx: Videx Videoterm compatible 80 columns card

@@ -331,6 +331,8 @@ firmware expects. They are the only ones allowed, the IIc has no slots.
 */
 var apple2cBuiltInCards = map[int][]string{
 	0: {"language"},
+	1: {"iicserial"},
+	2: {"iicserial"},
 	6: {"diskii", "diskiiseq"},
 }
 
@@ -342,6 +344,9 @@ func checkApple2cConfiguration(configuration *configuration) error {
 		if cardName == "" || cardName == noCardName {
 			if slot == 0 {
 				return fmt.Errorf("the language card is built in the Apple IIc, s0 must be 'language'")
+			}
+			if slot == 1 || slot == 2 {
+				return fmt.Errorf("the serial ports are built in the Apple IIc, s%v must be 'iicserial'", slot)
 			}
 			continue
 		}

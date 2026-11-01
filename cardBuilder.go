@@ -20,6 +20,7 @@ type cardBuilder struct {
 	description   string
 	defaultParams *[]paramSpec
 	requiresIIe   bool
+	requiresIIc   bool
 	hide          bool
 	buildFunc     func(params map[string]string) (Card, error)
 }
@@ -52,6 +53,22 @@ func paramsGetSaveDir(params map[string]string) string {
 	return value
 }
 
+/*
+slotParamName is added by setupCard to the parameters given to buildFunc,
+for the cards that need to know the slot they are built for. It can't be set
+in the configuration.
+*/
+const slotParamName = "slot"
+
+// paramsGetSlot returns the slot the card is built for, 0 if not known
+func paramsGetSlot(params map[string]string) int {
+	slot, err := paramsGetInt(params, slotParamName)
+	if err != nil {
+		return 0
+	}
+	return slot
+}
+
 var commonParams = []paramSpec{
 	{"trace", "Enable debug messages", "false"},
 	{"tracess", "Trace softswitches", "false"},
@@ -75,6 +92,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory["fastchip"] = newCardFastChipBuilder()
 	cardFactory["forthrom"] = newCardForthRomBuilder()
 	cardFactory["fujinet"] = newCardSmartPortFujinetBuilder()
+	cardFactory["iicserial"] = newCardSerialIIcBuilder()
 	cardFactory["inout"] = newCardInOutBuilder()
 	cardFactory["language"] = newCardLanguageBuilder()
 	cardFactory["softswitchlogger"] = newCardLoggerBuilder()
@@ -90,6 +108,7 @@ func getCardFactory() map[string]*cardBuilder {
 	cardFactory["profile"] = newCardProfileBuilder()
 	cardFactory["saturn"] = newCardSaturnBuilder()
 	cardFactory["smartport"] = newCardSmartPortStorageBuilder()
+	cardFactory["ssc"] = newCardSuperSerialBuilder()
 	cardFactory["swyftcard"] = newCardSwyftBuilder()
 	cardFactory["thunderclock"] = newCardThunderClockPlusBuilder()
 	cardFactory["videx"] = newCardVidexVideotermBuilder()
@@ -138,6 +157,9 @@ func setupCard(a *Apple2, slot int, paramString string, saveDir string) (Card, e
 	if builder.requiresIIe && !a.isApple2e {
 		return nil, fmt.Errorf("card %s requires an Apple IIe", builder.name)
 	}
+	if builder.requiresIIc && !a.isApple2c {
+		return nil, fmt.Errorf("%s are built in the Apple IIc, they can't be added to other models", builder.name)
+	}
 
 	finalParams := builder.fullDefaultParams()
 	for i := 1; i < len(actualArgs); i++ {
@@ -162,6 +184,7 @@ func setupCard(a *Apple2, slot int, paramString string, saveDir string) (Card, e
 	if value, ok := finalParams[saveDirParamName]; ok && value == "" {
 		finalParams[saveDirParamName] = saveDir
 	}
+	finalParams[slotParamName] = strconv.Itoa(slot)
 
 	card, err := builder.buildFunc(finalParams)
 	if err != nil {

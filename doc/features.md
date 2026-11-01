@@ -4,7 +4,7 @@
   - Apple ][+ with 48Kb of base RAM
   - Apple //e with 128Kb of RAM
   - Apple //e enhanced with 128Kb of RAM
-  - Apple IIc with the original ROM 255 (the serial ports are not emulated yet)
+  - Apple IIc with the original ROM 255
   - Base64A clone with 48Kb of base RAM and paged ROM
   - Basis 108 clone (partial)
 - Storage
@@ -25,6 +25,7 @@
   - 16Kb Language Card
   - 256Kb Saturn RAM
   - Parallel Printer Interface card
+  - Super Serial Card
   - 1Mb Memory Expansion Card (slinky)
   - RAMWorks style expansion Card (up to 16MB additional) (Apple //e only)
   - ThunderClock Plus real time clock
@@ -86,6 +87,7 @@
   - BBC MOS calls when using [Applecorn](https://github.com/bobbimanners/)
 - Other features:
   - Sound
+  - [Serial ports](serial.md), of the Super Serial Card and the Apple IIc, connected to the console, a file, a TCP port or a modem that dials to the internet
   - Joystick support. Up to two joysticks or four paddles
   - Mouse support. No mouse capture needed
   - Adjustable speed

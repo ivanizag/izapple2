@@ -225,5 +225,6 @@ The project uses GitHub Actions (`.github/workflows/go.yml`):
 - See `doc/features.md` for the complete feature list and the default configuration
 - See `doc/command_line.md` for command-line options
 - See `doc/frontend_*.md` for a page per frontend: how to build it, how to use it and what it does not do
+- See `doc/serial.md` for the serial ports, their devices and how to try them
 - See `storage/WozSupportStatus.md` for WOZ format support details
 - Reference implementation uses iz6502 CPU emulator: https://github.com/ivanizag/iz6502
