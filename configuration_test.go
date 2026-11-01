@@ -335,3 +335,29 @@ func TestApplyDiskAliases(t *testing.T) {
 		}
 	})
 }
+
+func TestApple2eAndApple2cNeedLanguageCard(t *testing.T) {
+	cases := []struct {
+		model string
+		s0    string
+		ok    bool
+	}{
+		{"2enh", "empty", false},
+		{"2enh", "language", true},
+		{"2enh", "saturn", false},
+		{"2e", "empty", false},
+		{"2c", "empty", false},
+		{"2c", "language", true},
+	}
+	for _, c := range cases {
+		overrides := newConfiguration()
+		overrides.set(confS0, c.s0)
+		_, err := makeApple2Tester(c.model, overrides)
+		if c.ok && err != nil {
+			t.Errorf("%s with %s in slot 0 fails: %v", c.model, c.s0, err)
+		}
+		if !c.ok && err == nil {
+			t.Errorf("%s with %s in slot 0 is accepted", c.model, c.s0)
+		}
+	}
+}

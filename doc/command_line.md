@@ -127,6 +127,9 @@ The default model (`2enh`) configures slots as follows:
 - **Slot 6:** Disk II with DOS 3.3
 - **Slot 7:** Empty
 
+The Apple IIe and the Apple IIc have the language card built in, on their
+boards. With the boards `2e` and `2c`, slot 0 must be `language`.
+
 ## Keeping the Disk Images Unmodified
 
 When the software saves, the emulator writes to the disk it was given, in the file

@@ -52,6 +52,12 @@ func configure(configuration *configuration) (*Apple2, error) {
 	case "2plus":
 		a.mmu.initMainRAM()
 	case "2e":
+		// The Apple IIe has the RAM of a language card on its board, a IIe
+		// without it doesn't exist and the software that expects it fails
+		s0 := splitConfigurationString(configuration.get(confS0), ',')[0]
+		if s0 != "language" {
+			return nil, fmt.Errorf("the language card is built in the Apple IIe, s0 must be 'language'")
+		}
 		a.isApple2e = true
 		a.mmu.initMainRAM()
 		a.mmu.initExtendedRAM(1)
