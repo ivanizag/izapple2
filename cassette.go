@@ -64,6 +64,7 @@ func (c *cassette) read(cycle uint64) uint8 {
 			c.playing = true
 			c.startCycle = cycle - c.position
 			c.a.RequestFastMode()
+			c.a.requestTickAt(cycle + cassetteAutoPauseCycles + 1)
 		}
 		c.lastRead = cycle
 
@@ -82,13 +83,16 @@ func (c *cassette) read(cycle uint64) uint8 {
 
 // tick pauses the tape when the program stops polling the cassette
 // input, keeping the position and releasing fast mode
-func (c *cassette) tick() {
-	if c.playing {
-		cycle := c.a.GetCycles()
-		if cycle-c.lastRead > cassetteAutoPauseCycles {
-			c.pause(cycle)
-		}
+func (c *cassette) tick() uint64 {
+	if !c.playing {
+		return tickNever
 	}
+	cycle := c.a.GetCycles()
+	if cycle-c.lastRead > cassetteAutoPauseCycles {
+		c.pause(cycle)
+		return tickNever
+	}
+	return c.lastRead + cassetteAutoPauseCycles + 1
 }
 
 func (c *cassette) pause(cycle uint64) {

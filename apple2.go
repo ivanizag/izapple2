@@ -2,6 +2,7 @@ package izapple2
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sync/atomic"
 	"time"
@@ -23,6 +24,7 @@ type Apple2 struct {
 	cards       [8]Card
 	tracers     []executionTracer
 	tickers     []ticker
+	nextTick    uint64 // Cycle when the tickers run again
 	irqRequests uint16 // Bitmask of the sources asserting the IRQ line
 
 	softVideoSwitch softVideoSwitchProvider
@@ -69,14 +71,34 @@ func (a *Apple2) GetCards() [8]Card {
 	return a.cards
 }
 
-// A ticker is a part of the machine, a card or a device of the board, that
-// needs to run logic on every instruction
+/*
+A ticker is a part of the machine, a card or a device of the board, that
+runs logic as the time goes. tick runs what is due and returns the cycle
+when it has to run again, a cycle already reached is the next instruction.
+
+The tickers run together, when the earliest of those cycles comes: tick can
+be called before it is due, and does nothing then. An access to a register
+that makes something due sooner calls requestTickAt. Asking for the cycle
+of the next event, instead of running on every instruction, keeps the
+emulation fast when it runs at full speed.
+*/
 type ticker interface {
-	tick()
+	tick() uint64
 }
+
+// tickNever is returned by the tickers with nothing to wait for
+const tickNever = math.MaxUint64
 
 func (a *Apple2) registerTicker(t ticker) {
 	a.tickers = append(a.tickers, t)
+	a.nextTick = 0
+}
+
+// requestTickAt makes the tickers run no later than the cycle
+func (a *Apple2) requestTickAt(cycle uint64) {
+	if cycle < a.nextTick {
+		a.nextTick = cycle
+	}
 }
 
 // requestIRQ sets or clears the IRQ request of a source, a slot or a device

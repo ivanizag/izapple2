@@ -143,10 +143,12 @@ func (c *CardApplicard) reset() {
 	c.fromZ80Full = false
 }
 
-func (c *CardApplicard) tick() {
+// tick runs the Z80 along with the 6502, on every instruction
+func (c *CardApplicard) tick() uint64 {
 	for i := 0; i < applicardZ80InstructionsPerTick; i++ {
 		c.cpu.Step()
 	}
+	return 0
 }
 
 // Get is the z80.Memory read

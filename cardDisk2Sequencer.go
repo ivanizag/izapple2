@@ -149,17 +149,25 @@ func (c *CardDisk2Sequencer) setQ4(value bool) {
 	if c.q[4] && !value {
 		c.q4OffCycle = c.a.GetCycles()
 		c.pendingSave = true
+		c.a.requestTickAt(c.q4OffCycle + disk2MotorOffCycles)
 	}
 	c.q[4] = value
 }
 
-// tick saves what was written once the motor has stopped
-func (c *CardDisk2Sequencer) tick() {
-	if c.pendingSave && !c.q[4] && c.a.GetCycles() >= c.q4OffCycle+disk2MotorOffCycles {
-		c.pendingSave = false
-		c.drive[0].save()
-		c.drive[1].save()
+// tick saves what was written once the motor has stopped. While the motor
+// is on, turning it off asks for the tick.
+func (c *CardDisk2Sequencer) tick() uint64 {
+	if !c.pendingSave || c.q[4] {
+		return tickNever
 	}
+	stopped := c.q4OffCycle + disk2MotorOffCycles
+	if c.a.GetCycles() < stopped {
+		return stopped
+	}
+	c.pendingSave = false
+	c.drive[0].save()
+	c.drive[1].save()
+	return tickNever
 }
 
 func (c *CardDisk2Sequencer) setTrackTracer(tt trackTracer) {

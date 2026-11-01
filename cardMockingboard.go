@@ -25,8 +25,9 @@ Each VIA drives one AY-3-8913:
 	Port B bit 2: /RESET, active low
 
 The IRQ outputs of both VIAs are wired to the 6502 IRQ line. The VIA
-timers are caught up on every access and on every instruction, so the
-timer reads used by the Mockingboard detection routines are cycle exact.
+timers are caught up on every access and on the cycle a timer interrupts, so
+the timer reads used by the Mockingboard detection routines are cycle exact,
+and so are the interrupts.
 
 The mixed output level of both PSGs is reported to the frontend as an
 AudioSource, stepping the chips every 8 CPU cycles.
@@ -49,6 +50,10 @@ const (
 	mockingboardBusLatch uint8 = 3
 
 	mockingboardPsgStepCycles = 8
+
+	// Cycles between the batches of sound when there is no timer interrupt
+	// before, about a millisecond
+	mockingboardSoundTickCycles = 1024
 )
 
 func newCardMockingboardBuilder() *cardBuilder {
@@ -104,6 +109,8 @@ func (c *CardMockingboard) poke(address uint16, value uint8) {
 		c.updatePsgBus(n)
 	}
 	c.updateIRQ()
+	// The timers or the interrupts enabled may have changed
+	c.a.requestTickAt(c.nextTick())
 }
 
 // updatePsgBus runs the AY-3-8913 bus protocol wired to the VIA port B
@@ -131,10 +138,27 @@ func (c *CardMockingboard) updatePsgBus(n int) {
 	}
 }
 
-// tick is called on every instruction to keep the timers, the interrupt
-// line and the sound synthesis up to date
-func (c *CardMockingboard) tick() {
+// tick keeps the timers, the interrupt line and the sound synthesis up to
+// date. It runs when a timer interrupts, and with a sink, often enough for
+// the sound to flow.
+func (c *CardMockingboard) tick() uint64 {
 	c.catchUp()
+	return c.nextTick()
+}
+
+// nextTick is the cycle of the next interrupt of the timers, or of the next
+// batch of sound
+func (c *CardMockingboard) nextTick() uint64 {
+	next := uint64(tickNever)
+	if c.sink != nil {
+		next = c.lastCycle + mockingboardSoundTickCycles
+	}
+	for i := range c.via {
+		if cycles, ok := c.via[i].CyclesToInterrupt(); ok {
+			next = min(next, c.lastCycle+cycles)
+		}
+	}
+	return next
 }
 
 func (c *CardMockingboard) catchUp() {

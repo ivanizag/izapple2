@@ -148,3 +148,34 @@ func TestCardMockingboardGeneratesSound(t *testing.T) {
 		t.Errorf("The sink should receive the tone level changes, got %v", sink.events)
 	}
 }
+
+func TestCardMockingboardTimerIRQOnTime(t *testing.T) {
+	// Running instructions, without the tracer of the tester
+	a, err := CreateAppleFromModel("2plus", map[string]string{"s4": "mockingboard", "s6": "empty"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.Init()
+
+	// A loop with the interrupts disabled, the IRQ stays requested
+	a.mmu.pokeRange(0x0300, []uint8{0x78, 0x4c, 0x01, 0x03}) // SEI, JMP $0301
+	a.cpu.SetPC(0x0300)
+	a.stepInstruction()
+
+	// T1 one shot with interrupts, started by the program
+	a.mmu.Poke(0xc40e, 0xc0) // IER: enable T1
+	a.mmu.Poke(0xc404, 0x00)
+	a.mmu.Poke(0xc405, 0x10)
+	start := a.GetCycles()
+
+	for a.irqRequests == 0 {
+		if a.GetCycles()-start > 0x2000 {
+			t.Fatal("expected the IRQ of the timer")
+		}
+		a.stepInstruction()
+	}
+	// No later than the instruction where the timer underflows
+	if late := a.GetCycles() - (start + 0x1001); late > 3 {
+		t.Errorf("expected the IRQ when the timer underflows, it came %v cycles late", late)
+	}
+}

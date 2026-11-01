@@ -106,6 +106,14 @@ func (m *mouseAxis) moveTo(position uint16) {
 	}
 }
 
+// nextStep returns the cycle of the next step, if there is one pending
+func (m *mouseAxis) nextStep() (uint64, bool) {
+	if m.pending == 0 {
+		return 0, false
+	}
+	return m.lastStep + mouseStepCycles, true
+}
+
 // step returns whether there is a step to do now, and its direction. The
 // step waits while the last one is busy.
 func (m *mouseAxis) step(cycles uint64, busy bool) (stepped bool, positive bool) {
@@ -132,8 +140,9 @@ func newIouApple2c(a *Apple2) *iouApple2c {
 }
 
 // tick fires the VBL interrupt when the vertical blank starts and moves the
-// mouse
-func (iou *iouApple2c) tick() {
+// mouse. It runs on each frame, and for the steps of the mouse. A step that
+// waits for its interrupt to be served asks for the tick when it is.
+func (iou *iouApple2c) tick() uint64 {
 	cycles := iou.a.GetCycles()
 	frame := cycles / screenDrawCycles
 	if frame != iou.frame {
@@ -153,6 +162,15 @@ func (iou *iouApple2c) tick() {
 		iou.y1 = !down
 		iou.mouseStepped(&iou.yInterrupt)
 	}
+
+	next := (frame + 1) * screenDrawCycles
+	if at, ok := iou.mouseX.nextStep(); ok && !iou.xInterrupt {
+		next = min(next, at)
+	}
+	if at, ok := iou.mouseY.nextStep(); ok && !iou.yInterrupt {
+		next = min(next, at)
+	}
+	return next
 }
 
 // readMouse gets the moves of the host pointer, once a frame
@@ -189,6 +207,8 @@ func (iou *iouApple2c) clearXYInterrupts() {
 	iou.yInterrupt = false
 	iou.xyIRQ = false
 	iou.updateIRQ()
+	// The steps waiting for the interrupts can go on
+	iou.a.requestTickAt(iou.a.GetCycles())
 }
 
 // lowerXYIRQ releases the IRQ line of the mouse movement, the flags stay

@@ -137,7 +137,9 @@ func (a *Apple2) stepInstruction() {
 		a.cycles += a.cpu.GetCycles() - startCycles
 	}
 
-	a.runTickers()
+	if a.cycles >= a.nextTick {
+		a.runTickers()
+	}
 	a.executionTrace()
 }
 
@@ -181,9 +183,12 @@ func (a *Apple2) reset() {
 	}
 }
 
+// runTickers runs all the tickers and keeps the earliest cycle they ask for,
+// or a requestTickAt made while they run
 func (a *Apple2) runTickers() {
+	a.nextTick = tickNever
 	for _, t := range a.tickers {
-		t.tick()
+		a.requestTickAt(t.tick())
 	}
 }
 

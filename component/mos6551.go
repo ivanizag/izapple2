@@ -192,6 +192,28 @@ func (a *MOS6551) receive() {
 	}
 }
 
+// CyclesToEvent returns the cycles until the next byte is done sending or
+// the line is looked at for a byte, false if neither will happen
+func (a *MOS6551) CyclesToEvent() (uint64, bool) {
+	cycles, ok := uint64(0), false
+	consider := func(at uint64) {
+		next := uint64(0)
+		if at > a.cycles {
+			next = at - a.cycles
+		}
+		if !ok || next < cycles {
+			cycles, ok = next, true
+		}
+	}
+	if a.shifting {
+		consider(a.shiftDone)
+	}
+	if a.command&mos6551CommandDTR != 0 && a.status&mos6551StatusRDRF == 0 {
+		consider(a.rxNext)
+	}
+	return cycles, ok
+}
+
 // InterruptAsserted returns whether the IRQ output is active
 func (a *MOS6551) InterruptAsserted() bool {
 	return a.status&mos6551StatusIRQ != 0

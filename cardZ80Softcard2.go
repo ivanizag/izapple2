@@ -107,7 +107,8 @@ func (c *CardZ80SoftCard2) reset() {
 // To emulate the Z80 running at 8MHz and the 6502 at 1.023MHz, the Z80 runs around3 instructions per tick
 const z80to6502InstructionsPerTick = 3
 
-func (c *CardZ80SoftCard2) tick() {
+// tick runs the Z80 along with the 6502, on every instruction
+func (c *CardZ80SoftCard2) tick() uint64 {
 	for i := 0; i < z80to6502InstructionsPerTick; i++ {
 		saved := c.cpu.States
 		c.stalled = false
@@ -116,10 +117,11 @@ func (c *CardZ80SoftCard2) tick() {
 		if c.stalled {
 			// Waiting for the 6502. Undo and retry the same instruction next tick
 			c.cpu.States = saved
-			return
+			return 0
 		}
 		c.fetched = c.fetched[:0]
 	}
+	return 0
 }
 
 // Get is the z80.Memory read

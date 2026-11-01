@@ -167,6 +167,25 @@ func (v *MOS6522) Tick(elapsedCycles uint64) {
 	}
 }
 
+// CyclesToInterrupt returns the cycles until a timer sets an interrupt flag
+// that is enabled, false if no timer will
+func (v *MOS6522) CyclesToInterrupt() (uint64, bool) {
+	cycles, ok := uint64(0), false
+	consider := func(counter int64) {
+		next := uint64(counter + 1)
+		if !ok || next < cycles {
+			cycles, ok = next, true
+		}
+	}
+	if v.ier&mos6522IntT1 != 0 && (v.acr&mos6522AcrT1FreeRunning != 0 || !v.t1fired) {
+		consider(v.t1counter)
+	}
+	if v.ier&mos6522IntT2 != 0 && !v.t2fired {
+		consider(v.t2counter)
+	}
+	return cycles, ok
+}
+
 // InterruptAsserted returns the state of the IRQ output line
 func (v *MOS6522) InterruptAsserted() bool {
 	return v.ifr&v.ier&0x7f != 0

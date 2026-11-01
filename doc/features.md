@@ -104,14 +104,14 @@ By default the following configuration is launched:
 
 - Enhanced Apple //e with 65c02 processor
 - RAMWorks card with 80 columns and 8Mb of RAM in the aux slot
-- No Slot Clock on the main ROM
 - Language card in slot 0
+- ThunderClock Plus in slot 1, the clock ProDOS finds on its own
 - VidHD card (SHR support) in slot 2
 - FASTChip accelerator card in slot 3
 - Mockingboard sound card in slot 4
 - DiskII controller card with DOS 3.3 in slot 6
 
-Slots 1, 5 and 7 are empty, and the RGB modes of the 80 columns card are added
+Slots 5 and 7 are empty, and the RGB modes of the 80 columns card are added
 with `-rgb`. Diskettes and hard disks named in the command line take the slots
 they need: diskettes go to slot 6 and then slot 5, block devices to a SmartPort
 card in slot 7 and then slot 5.

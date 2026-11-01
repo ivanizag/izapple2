@@ -21,19 +21,16 @@ type serialPort struct {
 	dsrHigh   func() bool
 
 	lastCycle  uint64 // The ACIA is caught up to this cycle
-	nextTick   uint64 // Cycle for the ticker to catch up again
-	nextLevels uint64 // Cycle to look again at the device readiness
+	nextLevels uint64 // Cycle to look again at the inputs
 	ready      bool
 }
 
 const (
-	serialPortRegisters  = 0x08
-	serialPortReadyCheck = 1000 // Cycles between looks at the device readiness
+	serialPortRegisters = 0x08
 
-	// Cycles between catch ups of the ticker. The accesses to the registers
-	// catch up on their own, this is for the bytes received, the inputs and
-	// the interrupts. A byte is more than 500 cycles at 19200 baud.
-	serialPortTickCycles = 64
+	// Cycles between looks at the inputs of the ACIA: the device readiness
+	// on DCD, and DSR, that on the IIc is the keyboard
+	serialPortLinesCheck = 1000
 )
 
 func newSerialPort(device serialDevice) *serialPort {
@@ -65,6 +62,8 @@ func (p *serialPort) assign(a *Apple2, c *cardBase, irqSource int, irqWired bool
 			p.advance()
 			p.acia.Write(reg, value)
 			p.updateIRQ()
+			// A byte to send or the receiver turned on
+			a.requestTickAt(p.nextTick())
 		}, names[reg]+"W")
 	}
 }
@@ -74,11 +73,19 @@ func (p *serialPort) reset() {
 	p.updateIRQ()
 }
 
-func (p *serialPort) tick() {
-	if p.a.GetCycles() >= p.nextTick {
-		p.catchUp()
-		p.nextTick = p.lastCycle + serialPortTickCycles
+// tick catches up when the ACIA has something to do: a byte that is done
+// sending, a look at the line for a byte, or at the inputs
+func (p *serialPort) tick() uint64 {
+	p.catchUp()
+	return p.nextTick()
+}
+
+func (p *serialPort) nextTick() uint64 {
+	next := p.nextLevels
+	if cycles, ok := p.acia.CyclesToEvent(); ok {
+		next = min(next, p.lastCycle+cycles)
 	}
+	return next
 }
 
 /*
@@ -107,7 +114,7 @@ func (p *serialPort) catchUp() {
 	p.lastCycle = current
 	if current >= p.nextLevels {
 		p.ready = p.device.isReady()
-		p.nextLevels = current + serialPortReadyCheck
+		p.nextLevels = current + serialPortLinesCheck
 	}
 	p.acia.SetDCD(!p.ready)
 	p.acia.SetDSR(p.dsrHigh())

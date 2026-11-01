@@ -120,7 +120,7 @@ izapple2 -h
 The default model (`2enh`) configures slots as follows:
 
 - **Slot 0:** Language card
-- **Slot 1:** Empty
+- **Slot 1:** ThunderClock Plus
 - **Slot 2:** VidHD
 - **Slot 3:** FastChip
 - **Slot 4:** Mockingboard
@@ -334,7 +334,7 @@ Usage:  izapple2 [file]
   -mods string
     	comma separated list of mods applied to the board, available mods are 'shift', 'four-colors
   -nsc string
-    	add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM (default "main")
+    	add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM (default "none")
   -profile
     	generate profile trace to analyse with pprof
   -ramworks string
@@ -348,7 +348,7 @@ Usage:  izapple2 [file]
   -s0 string
     	slot 0 configuration. (default "language")
   -s1 string
-    	slot 1 configuration. (default "empty")
+    	slot 1 configuration. (default "thunderclock")
   -s2 string
     	slot 2 configuration. (default "vidhd")
   -s3 string

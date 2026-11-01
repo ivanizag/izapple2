@@ -236,10 +236,15 @@ func (c *CardDisk2) assign(a *Apple2, slot int) {
 }
 
 // tick stops the motor when the delay after turning the drive off is over
-func (c *CardDisk2) tick() {
-	if c.motorOffCycle != 0 && c.a.GetCycles() >= c.motorOffCycle {
-		c.stopMotor()
+func (c *CardDisk2) tick() uint64 {
+	if c.motorOffCycle == 0 {
+		return tickNever
 	}
+	if c.a.GetCycles() < c.motorOffCycle {
+		return c.motorOffCycle
+	}
+	c.stopMotor()
+	return tickNever
 }
 
 // isSpinning is whether the selected drive turns, on or still stopping
@@ -264,6 +269,7 @@ func (c *CardDisk2) softSwitchQ4(value bool) {
 			c.a.ReleaseFastMode()
 		}
 		c.motorOffCycle = c.a.GetCycles() + disk2MotorOffCycles
+		c.a.requestTickAt(c.motorOffCycle)
 	} else if value && !c.power {
 		// Turn on
 		spinning := c.isSpinning()

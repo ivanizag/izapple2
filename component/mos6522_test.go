@@ -165,3 +165,31 @@ func TestMOS6522Reset(t *testing.T) {
 		t.Error("Reset should clear the data direction registers")
 	}
 }
+
+func TestMOS6522CyclesToInterrupt(t *testing.T) {
+	var v MOS6522
+	v.Write(5, 0x10) // T1 one shot with 0x1000
+	if _, ok := v.CyclesToInterrupt(); ok {
+		t.Error("expected no interrupt with the interrupts disabled")
+	}
+
+	v.Write(14, 0x80|mos6522IntT1)
+	if cycles, ok := v.CyclesToInterrupt(); !ok || cycles != 0x1001 {
+		t.Errorf("expected the T1 interrupt in 0x1001 cycles, got %v %v", cycles, ok)
+	}
+	v.Tick(0x1001)
+	if v.ifr&mos6522IntT1 == 0 {
+		t.Error("expected the T1 flag set at that cycle")
+	}
+	if _, ok := v.CyclesToInterrupt(); ok {
+		t.Error("expected no more interrupts from a one shot that fired")
+	}
+
+	// T2 is sooner
+	v.Write(14, 0x80|mos6522IntT2)
+	v.Write(8, 0x20)
+	v.Write(9, 0x00)
+	if cycles, ok := v.CyclesToInterrupt(); !ok || cycles != 0x21 {
+		t.Errorf("expected the T2 interrupt in 0x21 cycles, got %v %v", cycles, ok)
+	}
+}
