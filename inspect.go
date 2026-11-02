@@ -24,10 +24,14 @@ func (a *Apple2) ScreenText() string {
 		}
 	}
 
-	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col)
+	// The Basis 108 has its own 80 columns, with the columns in its own order
+	mode := a.video.GetCurrentVideoMode()
+	hasAltOrder := mode&screen.VideoText80AltOrder != 0
+	is80Columns := a.io.isSoftSwitchActive(ioFlag80Col) || mode&screen.VideoBaseMask == screen.VideoText80
+
 	isSecondPage := a.io.isSoftSwitchActive(ioFlagSecondPage) && !a.mmu.store80Active
 	isAltText := a.io.isSoftSwitchActive(ioFlagAltChar)
-	return screen.RenderTextModeString(a.video, is80Columns, isSecondPage, isAltText, a.hasLowerCase, false)
+	return screen.RenderTextModeString(a.video, is80Columns, isSecondPage, isAltText, a.hasLowerCase, hasAltOrder)
 }
 
 // Peek returns the byte the processor would read at an address, with the
