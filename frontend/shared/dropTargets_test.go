@@ -163,3 +163,16 @@ func TestDropTargetsMessageWithoutDrives(t *testing.T) {
 		t.Errorf("the screen without drives should say so, it is %q", message)
 	}
 }
+
+func TestIsTapeFile(t *testing.T) {
+	for path, expected := range map[string]bool{
+		"game.wav":      true,
+		"/tmp/GAME.WAV": true,
+		"game.dsk":      false,
+		"wav.po":        false,
+	} {
+		if IsTapeFile(path) != expected {
+			t.Errorf("expected %v for %q", expected, path)
+		}
+	}
+}

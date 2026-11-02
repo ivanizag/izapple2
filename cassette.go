@@ -1,6 +1,9 @@
 package izapple2
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/ivanizag/izapple2/storage"
 )
 
@@ -18,6 +21,9 @@ from the start of the tape, at which the signal crosses zero.
 The tape starts playing on the first read of $C060 and pauses when
 the program stops polling, so no play or rewind controls are needed.
 Fast mode is requested while the tape is playing.
+
+LoadTape puts another tape in the recorder, from its start, while the
+machine runs.
 
 See:
   - "Apple II Reference Manual", cassette interface
@@ -54,6 +60,47 @@ func newCassette(a *Apple2, data []uint8) (*cassette, error) {
 
 	a.registerTicker(&c)
 	return &c, nil
+}
+
+// insert replaces the tape with another one, stopped at its start
+func (c *cassette) insert(transitions []uint64) {
+	if c.playing {
+		c.playing = false
+		c.a.ReleaseFastMode()
+	}
+	c.transitions = transitions
+	c.cursor = 0
+	c.position = 0
+}
+
+/*
+LoadTape puts a tape in the cassette recorder, a WAV recording from a file,
+an URL or inside a zip, as with -tape. It replaces the tape there was,
+and starts at its beginning. The Apple IIc has no cassette input.
+*/
+func (a *Apple2) LoadTape(path string) error {
+	if a.isApple2c {
+		return errors.New("the Apple IIc has no cassette input")
+	}
+	data, _, err := LoadResource(path)
+	if err != nil {
+		return err
+	}
+	if a.io.cassette == nil {
+		c, err := newCassette(a, data)
+		if err != nil {
+			return fmt.Errorf("could not load the tape %s: %w", path, err)
+		}
+		a.io.setCassette(c)
+		return nil
+	}
+
+	transitions, err := storage.MakeTape(data, CPUClockMhz*1_000_000)
+	if err != nil {
+		return fmt.Errorf("could not load the tape %s: %w", path, err)
+	}
+	a.io.cassette.insert(transitions)
+	return nil
 }
 
 // read returns the comparator output on bit 7 for a read of $C060

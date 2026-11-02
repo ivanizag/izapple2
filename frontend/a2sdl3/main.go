@@ -139,13 +139,7 @@ func sdlRun(a *izapple2.Apple2) {
 			case sdl.EVENT_DROP_FILE:
 				e := event.DropEvent()
 				d.dragEnded()
-				drive := d.dropped(e.X)
-				if drive >= 0 {
-					fmt.Printf("Loading '%s' in drive %v\n", e.Data, drive+1)
-					a.SendLoadDisk(drive, e.Data)
-				} else {
-					fmt.Printf("There are no drives to load '%s' on\n", e.Data)
-				}
+				shared.LoadDropped(a, e.Data, d.dropped(e.X))
 			}
 		}
 

@@ -43,7 +43,8 @@ vertical areas as removable media drives the machine has, and the file goes to
 the drive of the area it is dropped on. F8 shows a screen with the areas, each
 one with the name of its drive and the image it has inserted, or `EMPTY`, and
 it is shown again for a moment after a drop with the drive that got the file
-marked.
+marked. A WAV file is a cassette tape and goes to the cassette recorder,
+wherever it is dropped.
 
 Ebitengine hands over the files dropped as a file system that hides their
 paths, but it opens the real files and the handle of a file tells its path

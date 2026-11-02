@@ -74,12 +74,6 @@ func (d *ebitenDropTargets) load(files fs.FS, name string) bool {
 	}
 	defer file.Close()
 
-	drive := d.dropped()
-	if drive < 0 {
-		fmt.Printf("There are no drives to load '%v' on\n", name)
-		return true
-	}
-
 	// The file dropped is a real file that Ebitengine has just opened. Its
 	// handle knows the path it came from, and the path is what the emulator
 	// wants: it takes the compressed images too, and the changes go back to
@@ -90,9 +84,7 @@ func (d *ebitenDropTargets) load(files fs.FS, name string) bool {
 		return false
 	}
 
-	path := realFile.Name()
-	fmt.Printf("Loading '%s' in drive %v\n", path, drive+1)
-	d.a.SendLoadDisk(drive, path)
+	shared.LoadDropped(d.a, realFile.Name(), d.dropped())
 	return true
 }
 

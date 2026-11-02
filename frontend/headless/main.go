@@ -70,6 +70,12 @@ func main() {
 			fmt.Printf("%v\n", a.GetCycles())
 		case "reset":
 			a.SendCommand(izapple2.CommandReset)
+		case "tape":
+			if len(parts) < 2 {
+				fmt.Println("Usage: tape <filename>")
+			} else {
+				a.SendLoadTape(strings.Join(parts[1:], " "))
+			}
 		case "iic80columnswitch":
 			// Moves the 80/40 switch of the Apple IIc, only on the docs
 			a.SendCommand(izapple2.CommandToggleIIc80ColumnSwitch)
@@ -144,6 +150,8 @@ Emulation control commands:
 		Prints the current cycle count
 	reset
 		Sends a reset to the emulator
+	tape <filename>
+		Puts a tape, a WAV file, in the cassette recorder. It starts at its beginning.
 
 Keyboard related commands:
 	key <key>

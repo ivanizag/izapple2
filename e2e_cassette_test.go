@@ -1,6 +1,7 @@
 package izapple2
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -99,5 +100,62 @@ func TestCassetteMonitorLoad(t *testing.T) {
 	}
 	if strings.Contains(at.getText(testTextMode40), "ERR") {
 		t.Errorf("The Monitor reported a checksum error:\n%v", at.getText(testTextMode40))
+	}
+}
+
+// TestCassetteChangeTape puts two tapes, one after the other, in a machine
+// that started without one, and reads both with the Monitor
+func TestCassetteChangeTape(t *testing.T) {
+	tapes := make([][]uint8, 2)
+	paths := make([]string, 2)
+	for n := range tapes {
+		tapes[n] = make([]uint8, 16)
+		for i := range tapes[n] {
+			tapes[n][i] = uint8(i*13 + 7 + n*50)
+		}
+		var recorder tapeRecorder
+		recorder.record(tapes[n])
+		paths[n] = filepath.Join(t.TempDir(), "tape.wav")
+		err := os.WriteFile(paths[n], wavBytes8BitMono(recorder.samples), 0o644)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	a, err := CreateAppleFromModel("2plus", map[string]string{"s6": "empty"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys := &strobedKeys{}
+	a.SetKeyboardProvider(keys)
+	a.Init()
+	cyclesToText(t, a, "\n]", 5_000_000)
+	typeLines(t, a, keys, "CALL -151")
+
+	for n, address := range []uint16{0x0800, 0x0900} {
+		if err := a.LoadTape(paths[n]); err != nil {
+			t.Fatal(err)
+		}
+		end := address + uint16(len(tapes[n])) - 1
+		typeLines(t, a, keys, fmt.Sprintf("%X.%XR", address, end))
+		a.RunCycles(30_000_000)
+		for i, value := range tapes[n] {
+			if got := a.mmu.Peek(address + uint16(i)); got != value {
+				t.Fatalf("tape %v: expected $%02x at $%04x, got $%02x", n+1, value, address+uint16(i), got)
+			}
+		}
+	}
+	if strings.Contains(a.ScreenText(), "ERR") {
+		t.Errorf("the Monitor reported a checksum error:\n%v", a.ScreenText())
+	}
+}
+
+func TestCassetteNoTapeOnTheIIc(t *testing.T) {
+	a, err := CreateAppleFromModel("2c", map[string]string{"s6": "iicdisk"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := a.LoadTape("<internal>/dos33.dsk"); err == nil {
+		t.Error("expected the IIc to refuse a tape")
 	}
 }

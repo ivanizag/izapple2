@@ -282,6 +282,11 @@ The emulator automatically:
 
 If a tape is the only file provided, no disk card is configured so that the machine goes directly to the BASIC prompt, ready to `LOAD` from the tape.
 
+Another tape can be put in the recorder while the machine runs, replacing the
+one there was: drop the WAV file on the window of a2sdl, a2sdl3 or a2ebiten,
+or use the `tape` command of the headless frontend. Programs using izapple2 as
+a library call `LoadTape`.
+
 #### Examples
 
 ```bash

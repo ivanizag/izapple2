@@ -4,6 +4,7 @@
 package shared
 
 import (
+	"fmt"
 	"image"
 	"strings"
 	"time"
@@ -256,4 +257,29 @@ func ellipsize(text string, columns int) string {
 		return text[:columns-3] + "..."
 	}
 	return text[:columns]
+}
+
+// IsTapeFile returns whether a file is a cassette tape, a WAV recording, as
+// the command line tells them from the disks
+func IsTapeFile(path string) bool {
+	return strings.HasSuffix(strings.ToLower(path), ".wav")
+}
+
+/*
+LoadDropped loads a file dropped on the window: a tape goes to the cassette
+recorder, wherever it is dropped, and a disk to the drive it was dropped on,
+-1 when there is none.
+*/
+func LoadDropped(a *izapple2.Apple2, path string, drive int) {
+	if IsTapeFile(path) {
+		fmt.Printf("Loading the tape '%s'\n", path)
+		a.SendLoadTape(path)
+		return
+	}
+	if drive < 0 {
+		fmt.Printf("There are no drives to load '%s' on\n", path)
+		return
+	}
+	fmt.Printf("Loading '%s' in drive %v\n", path, drive+1)
+	a.SendLoadDisk(drive, path)
 }

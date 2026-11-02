@@ -122,6 +122,9 @@ vertical areas as removable media drives the machine has, and the file goes to
 the drive of the area it is dropped on. It works with everything that goes on
 the command line, including compressed images.
 
+A WAV file is a cassette tape: it goes to the cassette recorder wherever it is
+dropped, replacing the tape there was, from its beginning.
+
 F8 shows a screen with the areas, each one with the name of its drive and the
 image it has inserted, or `EMPTY`, and the one under the pointer marked. It
 takes over the picture the same way the help does, on 80 columns. The same

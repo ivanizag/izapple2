@@ -18,7 +18,7 @@
     - [WOZ 2.0](../storage/WozSupportStatus.md)
   - 3.5 disks in PO or 2MG format
   - Hard disk in HDV or 2MG format with ProDOS and SmartPort support
-  - Cassette tape input from WAV recordings
+  - Cassette tape input from WAV recordings, the tape can be changed while the machine runs
 
 - Emulated extension cards:
   - DiskII controller (state machine based for WOZ files)

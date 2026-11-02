@@ -42,11 +42,19 @@ type commandLoadDisk struct {
 	path  string
 }
 
+type commandLoadTape struct {
+	path string
+}
+
 func (c *commandSimple) getId() int {
 	return c.id
 }
 
 func (c *commandLoadDisk) getId() int {
+	return CommandComplex
+}
+
+func (c *commandLoadTape) getId() int {
 	return CommandComplex
 }
 
@@ -66,6 +74,12 @@ func (a *Apple2) SendLoadDisk(drive int, path string) {
 	c.drive = drive
 	c.path = path
 	a.queueCommand(&c)
+}
+
+// SendLoadTape puts a tape in the cassette recorder from another goroutine,
+// as LoadTape, reporting the errors on the console
+func (a *Apple2) SendLoadTape(path string) {
+	a.queueCommand(&commandLoadTape{path: path})
 }
 
 func (a *Apple2) executeCommand(command command) {
@@ -107,6 +121,11 @@ func (a *Apple2) executeCommand(command command) {
 			err := a.changeDisk(t.drive, t.path)
 			if err != nil {
 				fmt.Printf("Could no load file %v\n%v\n", t.path, err)
+			}
+		case *commandLoadTape:
+			err := a.LoadTape(t.path)
+			if err != nil {
+				fmt.Printf("Could no load the tape %v\n%v\n", t.path, err)
 			}
 		}
 	}
