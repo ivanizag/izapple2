@@ -353,7 +353,7 @@ func (c *CardVidexUltraterm) getText() string {
 	for line := uint8(0); line < params.Lines; line++ {
 		for column := uint8(0); column < params.Columns; column++ {
 			char := c.sram[address&sramMask]
-			text += string(char)
+			text += videxCharText(char)
 			address++
 		}
 		text = strings.TrimRight(text, " ")

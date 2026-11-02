@@ -203,6 +203,20 @@ func (c *CardVidexVideoterm) buildImage(light color.Color) *image.RGBA {
 	return img
 }
 
+/*
+videxCharText is the text of a character of the Videx cards: bit 7 chooses
+the second character set, the inverse or highlighted characters on the
+Videoterm and the Ultraterm, and the codes below $20 are the graphic glyphs
+of the Ultraterm. They are spaces in the text.
+*/
+func videxCharText(char uint8) string {
+	char &= 0x7f
+	if char < 0x20 {
+		return " "
+	}
+	return string(rune(char))
+}
+
 func (c *CardVidexVideoterm) getText() string {
 	text := ""
 	params := c.mc6845.ImageData()
@@ -210,7 +224,7 @@ func (c *CardVidexVideoterm) getText() string {
 	for line := uint8(0); line < params.Lines; line++ {
 		for column := uint8(0); column < params.Columns; column++ {
 			char := c.sram[address&0x7ff]
-			text += string(char)
+			text += videxCharText(char)
 			address++
 		}
 		text = strings.TrimRight(text, " ")
