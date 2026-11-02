@@ -62,6 +62,9 @@ func (p *serialPort) assign(a *Apple2, c *cardBase, irqSource int, irqWired bool
 			p.advance()
 			p.acia.Write(reg, value)
 			p.updateIRQ()
+			if reg == 3 {
+				p.updateBaudRate()
+			}
 			// A byte to send or the receiver turned on
 			a.requestTickAt(p.nextTick())
 		}, names[reg]+"W")
@@ -71,6 +74,14 @@ func (p *serialPort) assign(a *Apple2, c *cardBase, irqSource int, irqWired bool
 func (p *serialPort) reset() {
 	p.acia.Reset()
 	p.updateIRQ()
+	p.updateBaudRate()
+}
+
+// updateBaudRate tells the device the baud rate of the control register
+func (p *serialPort) updateBaudRate() {
+	if device, ok := p.device.(serialBaudRateDevice); ok {
+		device.setBaudRate(p.acia.BaudRate())
+	}
 }
 
 // tick catches up when the ACIA has something to do: a byte that is done

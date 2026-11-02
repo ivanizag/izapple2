@@ -265,8 +265,8 @@ func Test2cNetModemDialsFromTerminalMode(t *testing.T) {
 			conn.Write([]byte("WELCOME TO THE BBS\r\n"))
 			time.Sleep(100 * time.Millisecond)
 			cyclesToText(t, a, "WELCOME TO THE BBS", a.GetCycles()+20_000_000)
-			if !strings.Contains(a.ScreenText(), "CONNECT") {
-				t.Errorf("expected CONNECT on the screen:\n%v", a.ScreenText())
+			if !strings.Contains(a.ScreenText(), "CONNECT 9600") {
+				t.Errorf("expected CONNECT 9600 on the screen:\n%v", a.ScreenText())
 			}
 
 			typeLines(t, a, keys, "HELLO")

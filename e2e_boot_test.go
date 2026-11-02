@@ -82,3 +82,18 @@ func TestProdDOSBoots(t *testing.T) {
 func TestCPM65Boots(t *testing.T) {
 	testBoots(t, "2enh", "<internal>/cpm65.po", nil, 5_000_000, "CP/M-65 for the Apple II", "\nA>", testTextMode80)
 }
+
+func TestBasis108ScreenTextIn80Columns(t *testing.T) {
+	a, err := CreateAppleFromModel("basis108", map[string]string{"s6": "empty"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys := &strobedKeys{}
+	a.SetKeyboardProvider(keys)
+	a.Init()
+	cyclesToText(t, a, "B a s i s   1 0 8", 5_000_000)
+
+	// Its 80 columns keep the columns in an order of their own
+	typeLines(t, a, keys, `PRINT "HELLO FROM THE BASIS"`)
+	cyclesToText(t, a, "\nHELLO FROM THE BASIS", a.GetCycles()+5_000_000)
+}

@@ -214,6 +214,11 @@ func (a *MOS6551) CyclesToEvent() (uint64, bool) {
 	return cycles, ok
 }
 
+// BaudRate returns the baud rate of the control register, rounded
+func (a *MOS6551) BaudRate() int {
+	return int(mos6551BaudRates[a.control&mos6551ControlRate] + 0.5)
+}
+
 // InterruptAsserted returns whether the IRQ output is active
 func (a *MOS6551) InterruptAsserted() bool {
 	return a.status&mos6551StatusIRQ != 0

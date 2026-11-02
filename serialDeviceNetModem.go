@@ -33,10 +33,14 @@ The other commands:
 	In       Information
 	Qn       Quiet, no results with 1
 	Vn       Results in words with 1, as numbers with 0
+	Xn       CONNECT with the speed from 1, alone with 0. 4 by default
 	Z, &F    Hangs up and goes back to the defaults
 	Sn=v     Sets a register, Sn? shows it
-	Ln, Mn, Xn, Bn, Nn, Wn, &Cn, &Dn, &Kn, &W and the rest of &: accepted
-	         and ignored
+	Ln, Mn, Bn, Nn, Wn, &Cn, &Dn, &Kn, &W and the rest of &: accepted and
+	         ignored
+
+The speed of the connection is the baud rate of the serial port, the one
+the terminal programs set it to: they read it from the CONNECT.
 
 The registers used are S2, the escape character, S3, S4 and S5, the
 carriage return, line feed and backspace, S7, the seconds to wait for the
@@ -62,7 +66,9 @@ type serialDeviceNetModem struct {
 	echo      bool
 	verbose   bool
 	quiet     bool
+	results   int // The result codes chosen with X, from 1 with the speed
 	registers [netModemRegisters]uint8
+	baud      int // Of the serial port, the speed of the connection
 
 	conn        net.Conn
 	telnet      bool
@@ -128,6 +134,7 @@ func newSerialDeviceNetModem() *serialDeviceNetModem {
 }
 
 func (m *serialDeviceNetModem) setDefaults() {
+	m.results = 4
 	m.echo = true
 	m.verbose = true
 	m.quiet = false
@@ -272,7 +279,7 @@ func (m *serialDeviceNetModem) execute(commands string) {
 			}
 			m.state = netModemOnline
 			m.escapeCount = 0
-			m.result(netModemConnect)
+			m.resultConnect()
 			return
 		case 'H':
 			if number() == 0 {
@@ -317,7 +324,9 @@ func (m *serialDeviceNetModem) execute(commands string) {
 			}
 			i++
 			number()
-		case 'B', 'C', 'L', 'M', 'N', 'P', 'T', 'W', 'X', 'Y':
+		case 'X':
+			m.results = number()
+		case 'B', 'C', 'L', 'M', 'N', 'P', 'T', 'W', 'Y':
 			number()
 		default:
 			m.result(netModemError)
@@ -372,7 +381,7 @@ func (m *serialDeviceNetModem) dial(target string) {
 		m.state = netModemOnline
 		m.escapeCount = 0
 		m.lastSend = time.Now()
-		m.result(netModemConnect)
+		m.resultConnect()
 		go m.readConnection(conn, telnet)
 	}()
 }
@@ -422,6 +431,41 @@ func (m *serialDeviceNetModem) hangUp() {
 		m.dialAborted = true
 	}
 	m.state = netModemCommand
+}
+
+func (m *serialDeviceNetModem) setBaudRate(baud int) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	m.baud = baud
+}
+
+/*
+resultConnect sends CONNECT with the speed of the connection, the one of
+the serial port, as the terminal programs set the port to it. As the Hayes
+modems, it is CONNECT alone at 300 baud or with X0. The numbers with V0 are
+the ones of the Hayes Smartmodem 2400, 5 for 1200 and 10 for 2400, the
+faster speeds had a number for each maker, they are 1.
+*/
+func (m *serialDeviceNetModem) resultConnect() {
+	if m.results == 0 || m.baud <= 300 {
+		m.result(netModemConnect)
+		return
+	}
+	if m.quiet {
+		return
+	}
+	if m.verbose {
+		m.replyLine(fmt.Sprintf("%s %v", netModemResults[netModemConnect], m.baud))
+		return
+	}
+	code := "1"
+	switch m.baud {
+	case 1200:
+		code = "5"
+	case 2400:
+		code = "10"
+	}
+	m.reply(append([]uint8(code), m.registers[3]))
 }
 
 // result sends a result code, in words or as a number

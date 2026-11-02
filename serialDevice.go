@@ -23,6 +23,12 @@ type serialDevice interface {
 	isReady() bool
 }
 
+// serialBaudRateDevice is a device that wants to know the baud rate of the
+// port, as the modem that tells it when it connects
+type serialBaudRateDevice interface {
+	setBaudRate(baud int)
+}
+
 var serialDeviceParams = []paramSpec{
 	{"device", "Device on the serial port: none, console, file, tcp or netmodem", "none"},
 	{"file", "File to append what is sent with device=file. Defaults to 'serial<slot>.out'", ""},

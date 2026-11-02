@@ -222,3 +222,31 @@ func TestNetModemRawDial(t *testing.T) {
 	conn.Write([]uint8{telnetIAC, telnetDO, 24})
 	modemExpect(t, m, "\xff\xfd\x18")
 }
+
+func TestNetModemConnectsAtTheSpeedOfThePort(t *testing.T) {
+	for _, c := range []struct {
+		baud     int
+		commands string
+		expected string
+	}{
+		{9600, "ATE0\r", "\r\nCONNECT 9600\r\n"},
+		{300, "ATE0\r", "\r\nCONNECT\r\n"},    // As the Hayes modems at 300 baud
+		{9600, "ATE0X0\r", "\r\nCONNECT\r\n"}, // The results of the Smartmodem 300
+		{2400, "ATE0V0\r", "10\r"},            // The number of CONNECT 2400
+	} {
+		address, conns := testServer(t)
+		m := newSerialDeviceNetModem()
+		m.setBaudRate(c.baud)
+		modemType(m, c.commands)
+		modemExpect(t, m, "0") // OK, as word or number
+		for _, ok := m.Receive(); ok; _, ok = m.Receive() {
+		}
+		modemType(m, "ATD"+address+"\r")
+		conn := <-conns
+		got := modemExpect(t, m, c.expected)
+		if got != c.expected {
+			t.Errorf("at %v baud with %q, expected %q, got %q", c.baud, c.commands, c.expected, got)
+		}
+		conn.Close()
+	}
+}

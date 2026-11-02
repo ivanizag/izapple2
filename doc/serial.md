@@ -293,9 +293,16 @@ line: `ATE0V1`.
 
 The host and port can also go between quotes, `ATDT"cqbbs.ddns.net:6502"`, as
 on Zimodem. The results are `OK` (0), `CONNECT` (1), `NO CARRIER` (3) and
-`ERROR` (4). Any key while dialing cancels the call. The commands of the speaker,
-the result sets and the flow control, `L`, `M`, `X`, `&C`, `&D`, `&K` and the
-like, are accepted and do nothing.
+`ERROR` (4). Any key while dialing cancels the call. The commands of the speaker
+and the flow control, `L`, `M`, `&C`, `&D`, `&K` and the like, are accepted and
+do nothing.
+
+`CONNECT` comes with the speed of the connection, the baud rate the port is
+set to, as `CONNECT 9600`: the terminal programs set the port to it, ProTERM
+goes down to 300 baud with `CONNECT` alone. As on the Hayes modems, it is
+alone at 300 baud, or with `ATX0`. As numbers, with `ATV0`, `CONNECT 1200` is
+5 and `CONNECT 2400` is 10, as on the Hayes Smartmodem 2400, and the faster
+speeds are 1.
 
 The registers used are `S2`, the escape character, `+`; `S3`, `S4` and `S5`, the
 carriage return, line feed and backspace; `S7`, the seconds to wait for the
