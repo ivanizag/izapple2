@@ -46,7 +46,9 @@ jobs:
 
   build-windows:
     name: Build Windows (amd64)
-    runs-on: ubuntu-latest
+    # The SDL2 library prebuilt in go-sdl2 needs __ms_vsscanf, that the
+    # mingw-w64 of ubuntu 26.04 no longer has
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
