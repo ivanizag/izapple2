@@ -71,6 +71,10 @@ The keyboard buffering of the IIc works too. The firmware takes the keys with
 an interrupt from the ACIA of port 2, as described in Appendix E of the Apple
 IIc Technical Reference Manual. The firmware turns it on in the terminal mode.
 
+The terminal mode of the modem port does not work with ROM 3, the keys typed
+come out repeated. ROM 4 fixed "a problem when using the serial modem port in
+terminal mode", use the model `2c`.
+
 ## The Super Serial Card
 
 ```bash

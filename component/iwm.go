@@ -177,6 +177,12 @@ func (i *IWM) Mode() uint8 {
 	return i.mode
 }
 
+// State returns the state register: the phases, LMotor-On, Drive-Sel, L6
+// and L7
+func (i *IWM) State() uint8 {
+	return i.state
+}
+
 func (i *IWM) byteCycles() uint64 {
 	if i.mode&iwmModeFast != 0 {
 		return 16

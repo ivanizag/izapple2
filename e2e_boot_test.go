@@ -14,9 +14,17 @@ func testBoots(t *testing.T, model string, disk string, overrides *configuration
 		if overrides.has(confS6) {
 			t.Fatal("Do not set custom slot 6 configuration and custom disk")
 		}
-		overrides.set(confS6, "diskii,disk1=\""+disk+"\"")
+		card := "diskii"
+		if strings.HasPrefix(model, "2c") {
+			card = "iicdisk" // The disk port of the IIc
+		}
+		overrides.set(confS6, card+",disk1=\""+disk+"\"")
 	} else if !overrides.has(confS6) {
-		overrides.set(confS6, "empty")
+		if strings.HasPrefix(model, "2c") {
+			overrides.set(confS6, "iicdisk") // The disk port without diskettes
+		} else {
+			overrides.set(confS6, "empty")
+		}
 	}
 
 	at, err := makeApple2Tester(model, overrides)

@@ -48,6 +48,7 @@ type Apple2 struct {
 	paused               atomic.Bool
 	cpuTrace             bool
 	forceCaps            bool
+	iic80ColumnSwitch    bool // The 80/40 switch of the Apple IIc is up, on 80 columns
 	screenMode           int
 	removableMediaDrives []removableMediaDrive
 
@@ -174,6 +175,22 @@ func (a *Apple2) IsProfiling() bool {
 // IsForceCaps returns true when all letters are forced to upper case
 func (a *Apple2) IsForceCaps() bool {
 	return a.forceCaps
+}
+
+/*
+SetIIc80ColumnSwitch puts the 80/40 switch of the Apple IIc up, on 80 columns,
+or down, on 40 columns. The programs read it, usually when they start, to
+choose the width of the text. The firmware does not use it. The other models
+have no such switch.
+*/
+func (a *Apple2) SetIIc80ColumnSwitch(up bool) {
+	a.iic80ColumnSwitch = up
+}
+
+// IsIIc80ColumnSwitchUp returns whether the 80/40 switch of the Apple IIc is up,
+// on 80 columns
+func (a *Apple2) IsIIc80ColumnSwitchUp() bool {
+	return a.iic80ColumnSwitch
 }
 
 func (a *Apple2) GetCgPageInfo() (int, int) {

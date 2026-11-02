@@ -76,7 +76,9 @@ func CharForKey(key Key, ctrl bool) (uint8, bool) {
 
 	// Base64A clone particularities
 	case KeyF3:
-		return 127, true // Base64A
+		if !ctrl {
+			return 127, true // Base64A, Ctrl-F3 is the 80/40 switch of the IIc
+		}
 	}
 
 	// Missing values 91 to 95. Usually control for [\]^_

@@ -37,7 +37,10 @@ izapple2 -model=2enh
 **Available models:**
 
 - `2` - Apple ][
-- `2c` - Apple IIc, with the original ROM 255
+- `2c` - Apple IIc, with ROM 4 and a 1Mb memory expansion card
+- `2c_rom0` - Apple IIc, with ROM 0, the one with UniDisk 3.5 support
+- `2c_rom255` - Apple IIc, with the original ROM 255
+- `2c_rom3` - Apple IIc, with ROM 3 and a 1Mb memory expansion card
 - `2e` - Apple IIe
 - `2enh` - Apple //e (default, enhanced version)
 - `2plus` - Apple ][+
@@ -131,6 +134,38 @@ The default model (`2enh`) configures slots as follows:
 
 The Apple IIe and the Apple IIc have the language card built in, on their
 boards. With the boards `2e` and `2c`, slot 0 must be `language`.
+
+The Apple IIc has no slots, what it has built in is on the slots its firmware
+uses:
+
+- Slot 0: the language card, `language`.
+- Slots 1 and 2: the serial ports, `iicserial`, see [serial.md](serial.md).
+- Slot 4: the memory expansion card, `iicmemory,size=1024`, for the ROMs 3 and
+  4. Sizes of 256, 512, 768 or 1024 Kb. The ROMs 3 and 4 need it, without it
+  they hang when ProDOS starts, the empty bus is not emulated.
+- Slot 6: the disk port, `iicdisk`. `disk1` is the internal 5.25 drive and
+  `disk2` the external one. From ROM 0, `image1` to `image4` are SmartPort
+  devices on the external port, UniDisk 3.5 drives or hard disks, booted with
+  `PR#5`. `sequencer` emulates the 5.25 drives as `diskiiseq`.
+
+```bash
+# A IIc with a hard disk on the SmartPort
+izapple2 -model 2c -s6 iicdisk,disk1=dos33.dsk,image1=harddisk.po
+```
+
+The disks named in the command line go to the disk port: the diskettes to the
+5.25 drives, and the block devices to the SmartPort.
+
+The 80/40 switch of the IIc is down, on 40 columns, unless the machine starts
+with `-iic80ColumnSwitch`. The programs read it, usually when they start, to
+choose between 40 and 80 columns, the firmware does not use it. The windowed
+frontends move it with Ctrl-F3, the libretro core with its options and the
+headless frontend with `iic80columnswitch`.
+
+```bash
+# A IIc for the programs that start on 80 columns
+izapple2 -model 2c -iic80ColumnSwitch
+```
 
 ## Keeping the Disk Images Unmodified
 
@@ -330,6 +365,8 @@ Usage:  izapple2 [file]
     	cpu type, can be '6502' or '65c02' (default "65c02")
   -forceCaps
     	force all letters to be uppercased (no need for caps lock!)
+  -iic80ColumnSwitch
+    	start with the 80/40 switch of the Apple IIc up, on 80 columns
   -model string
     	set base model, 'none' to give the board, rom and charrom as parameters (default "2enh")
   -mods string
@@ -380,6 +417,9 @@ Usage:  izapple2 [file]
 The available pre-configured models are:
   2: Apple ][
   2c: Apple IIc
+  2c_rom0: Apple IIc, ROM 0 with UniDisk 3.5 support
+  2c_rom255: Apple IIc, ROM 255
+  2c_rom3: Apple IIc, ROM 3 with memory expansion
   2e: Apple IIe
   2enh: Apple //e
   2plus: Apple ][+

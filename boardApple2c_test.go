@@ -6,11 +6,19 @@ import (
 )
 
 func Test2cBootsDOS33(t *testing.T) {
-	testBoots(t, "2c", "<internal>/dos33.dsk", nil, 100_000_000, "DOS VERSION 3.3", "\n]", testTextMode40)
+	for _, model := range iicModels {
+		t.Run(model, func(t *testing.T) {
+			testBoots(t, model, "<internal>/dos33.dsk", nil, 100_000_000, "DOS VERSION 3.3", "\n]", testTextMode40)
+		})
+	}
 }
 
 func Test2cBootsProDOS(t *testing.T) {
-	testBoots(t, "2c", "<internal>/ProDOS_2_4_3.po", nil, 100_000_000, "BITSY  BYE", "NEW VOL", testTextMode40)
+	for _, model := range iicModels {
+		t.Run(model, func(t *testing.T) {
+			testBoots(t, model, "<internal>/ProDOS_2_4_3.po", nil, 100_000_000, "BITSY  BYE", "NEW VOL", testTextMode40)
+		})
+	}
 }
 
 func Test2cRefusesCards(t *testing.T) {
@@ -30,12 +38,49 @@ func Test2cRefusesCards(t *testing.T) {
 	}
 }
 
-func Test2cRefusesPositionalBlockDevices(t *testing.T) {
-	// They would go to a smartport card on slot 7
-	_, err := CreateAppleFromModel("2c", nil, []string{"<internal>/ProDOS_2_4_3.po", "<internal>/A2DeskTop-1.4-en_800k.2mg"})
-	if err == nil || !strings.Contains(err.Error(), "no slots") {
-		t.Errorf("expected the IIc to refuse the block devices, got %v", err)
+func Test2cPlacesTheNamedDisks(t *testing.T) {
+	// The diskette on the internal drive, the block device on the SmartPort
+	a, err := CreateAppleFromModel("2c", nil, []string{"<internal>/dos33.dsk", "<internal>/A2DeskTop-1.4-en_800k.2mg"})
+	if err != nil {
+		t.Fatal(err)
 	}
+	port, ok := a.cards[6].(*CardDiskIIc)
+	if !ok {
+		t.Fatalf("expected the disk port on slot 6, got %T", a.cards[6])
+	}
+	if len(port.bus.devices) != 1 {
+		t.Errorf("expected one SmartPort device, got %v", len(port.bus.devices))
+	}
+	if port.disk2.(*CardDisk2).drive[0].diskette == nil {
+		t.Error("expected the diskette on the internal drive")
+	}
+
+	_, err = CreateAppleFromModel("2c", nil, []string{"<internal>/dos33.dsk", "<internal>/dos33.dsk", "<internal>/dos33.dsk"})
+	if err == nil {
+		t.Error("expected three diskettes refused")
+	}
+}
+
+// iicModels are the IIc models, one for each version of the ROM
+var iicModels = []string{"2c_rom255", "2c_rom0", "2c_rom3", "2c"}
+
+// newIIc creates a IIc without diskettes, the firmware waits for one
+func newIIc(t *testing.T, model string) *Apple2 {
+	t.Helper()
+	a, err := CreateAppleFromModel(model, map[string]string{"s6": "iicdisk"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return a
+}
+
+// iicMouseSlot is the port of the mouse, 7 from the ROM 3 and 4 before
+func iicMouseSlot(a *Apple2) uint8 {
+	version := a.mmu.Peek(0xfbbf)
+	if version == 3 || version == 4 {
+		return 7
+	}
+	return 4
 }
 
 /*
@@ -43,16 +88,13 @@ runInterruptProgram runs a program on a IIc once its firmware is ready. The
 handler is at $0380 and counts in $0350 the interrupts it gets. A JSR $0340
 calls the firmware entry point stored in $0360.
 */
-func runInterruptProgram(t *testing.T, program []uint8, handler []uint8, frames uint64) *Apple2 {
+func runInterruptProgram(t *testing.T, model string, program func(a *Apple2) []uint8, handler []uint8, frames uint64) *Apple2 {
 	t.Helper()
-	a, err := CreateAppleFromModel("2c", map[string]string{"s6": "empty"}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	a := newIIc(t, model)
 	a.Init()
 	a.RunCycles(2_000_000)
 
-	a.mmu.pokeRange(0x0300, program)
+	a.mmu.pokeRange(0x0300, program(a))
 	a.mmu.pokeRange(0x0340, []uint8{0x6c, 0x60, 0x03}) // JMP ($0360)
 	a.mmu.pokeRange(0x0380, handler)
 	a.cpu.SetPC(0x0300)
@@ -62,28 +104,30 @@ func runInterruptProgram(t *testing.T, program []uint8, handler []uint8, frames 
 
 // vblHardwareProgram takes the IRQ vector on the language card RAM, away
 // from the firmware, and turns on the VBL interrupts if asked to
-func vblHardwareProgram(enable bool) []uint8 {
-	enableVBL := []uint8{0xea, 0xea, 0xea} // NOP
-	if enable {
-		enableVBL = []uint8{0x8d, 0x5b, 0xc0} // STA $C05B, ENVBL
+func vblHardwareProgram(enable bool) func(*Apple2) []uint8 {
+	return func(*Apple2) []uint8 {
+		enableVBL := []uint8{0xea, 0xea, 0xea} // NOP
+		if enable {
+			enableVBL = []uint8{0x8d, 0x5b, 0xc0} // STA $C05B, ENVBL
+		}
+		program := []uint8{
+			0x78,             // SEI
+			0xad, 0x8b, 0xc0, // LDA $C08B, LC RAM read and write
+			0xad, 0x8b, 0xc0, // LDA $C08B
+			0xa9, 0x80, // LDA #$80
+			0x8d, 0xfe, 0xff, // STA $FFFE
+			0xa9, 0x03, // LDA #$03
+			0x8d, 0xff, 0xff, // STA $FFFF
+			0x9c, 0x50, 0x03, // STZ $0350
+			0x8d, 0x79, 0xc0, // STA $C079, IOUDIS off
+		}
+		program = append(program, enableVBL...)
+		return append(program,
+			0x8d, 0x78, 0xc0, // STA $C078, IOUDIS on
+			0x58,       // CLI
+			0x80, 0xfe, // BRA *
+		)
 	}
-	program := []uint8{
-		0x78,             // SEI
-		0xad, 0x8b, 0xc0, // LDA $C08B, LC RAM read and write
-		0xad, 0x8b, 0xc0, // LDA $C08B
-		0xa9, 0x80, // LDA #$80
-		0x8d, 0xfe, 0xff, // STA $FFFE
-		0xa9, 0x03, // LDA #$03
-		0x8d, 0xff, 0xff, // STA $FFFF
-		0x9c, 0x50, 0x03, // STZ $0350
-		0x8d, 0x79, 0xc0, // STA $C079, IOUDIS off
-	}
-	program = append(program, enableVBL...)
-	return append(program,
-		0x8d, 0x78, 0xc0, // STA $C078, IOUDIS on
-		0x58,       // CLI
-		0x80, 0xfe, // BRA *
-	)
 }
 
 var vblHardwareHandler = []uint8{
@@ -97,77 +141,93 @@ var vblHardwareHandler = []uint8{
 }
 
 func Test2cVBLInterrupts(t *testing.T) {
-	a := runInterruptProgram(t, vblHardwareProgram(true), vblHardwareHandler, 10)
-	if count := a.mmu.Peek(0x0350); count < 9 || count > 11 {
-		t.Errorf("expected an interrupt per frame, 10, got %v", count)
-	}
-	if flag := a.mmu.Peek(0x0351); flag != ssOn {
-		t.Errorf("expected $C019 to show the VBL interrupt, got $%02x", flag)
-	}
-	if flag := a.mmu.Peek(0x0352); flag != ssOff {
-		t.Errorf("expected $C070 to reset the VBL interrupt, got $%02x", flag)
+	for _, model := range iicModels {
+		t.Run(model, func(t *testing.T) {
+			a := runInterruptProgram(t, model, vblHardwareProgram(true), vblHardwareHandler, 10)
+			if count := a.mmu.Peek(0x0350); count < 9 || count > 11 {
+				t.Errorf("expected an interrupt per frame, 10, got %v", count)
+			}
+			if flag := a.mmu.Peek(0x0351); flag != ssOn {
+				t.Errorf("expected $C019 to show the VBL interrupt, got $%02x", flag)
+			}
+			if flag := a.mmu.Peek(0x0352); flag != ssOff {
+				t.Errorf("expected $C070 to reset the VBL interrupt, got $%02x", flag)
+			}
+		})
 	}
 }
 
 func Test2cNoVBLInterruptsWhenDisabled(t *testing.T) {
-	a := runInterruptProgram(t, vblHardwareProgram(false), vblHardwareHandler, 10)
-	if count := a.mmu.Peek(0x0350); count != 0 {
-		t.Errorf("expected no interrupts with VBL disabled, got %v", count)
+	for _, model := range iicModels {
+		t.Run(model, func(t *testing.T) {
+			a := runInterruptProgram(t, model, vblHardwareProgram(false), vblHardwareHandler, 10)
+			if count := a.mmu.Peek(0x0350); count != 0 {
+				t.Errorf("expected no interrupts with VBL disabled, got %v", count)
+			}
+		})
 	}
 }
 
 func Test2cVBLInterruptsFromTheMouseFirmware(t *testing.T) {
 	// The firmware owns the VBL interrupt, SetMouse turns it on and the
 	// firmware passes it to the handler on $03FE
-	program := []uint8{
-		0x78,       // SEI
-		0xa9, 0x80, // LDA #$80
-		0x8d, 0xfe, 0x03, // STA $03FE
-		0xa9, 0x03, // LDA #$03
-		0x8d, 0xff, 0x03, // STA $03FF
-		0x9c, 0x50, 0x03, // STZ $0350
-		0xad, 0x12, 0xc4, // LDA $C412, the SetMouse entry
-		0x8d, 0x60, 0x03, // STA $0360
-		0xa9, 0xc4, // LDA #$C4
-		0x8d, 0x61, 0x03, // STA $0361
-		0xa9, 0x08, // LDA #$08, VBL interrupts with the mouse off
-		0xa2, 0xc4, // LDX #$C4
-		0xa0, 0x40, // LDY #$40
-		0x20, 0x40, 0x03, // JSR $0340
-		0x58,       // CLI
-		0x80, 0xfe, // BRA *
+	program := func(a *Apple2) []uint8 {
+		page := 0xc0 | iicMouseSlot(a)
+		return []uint8{
+			0x78,       // SEI
+			0xa9, 0x80, // LDA #$80
+			0x8d, 0xfe, 0x03, // STA $03FE
+			0xa9, 0x03, // LDA #$03
+			0x8d, 0xff, 0x03, // STA $03FF
+			0x9c, 0x50, 0x03, // STZ $0350
+			0xad, 0x12, page, // LDA $Cn12, the SetMouse entry
+			0x8d, 0x60, 0x03, // STA $0360
+			0xa9, page, // LDA #$Cn
+			0x8d, 0x61, 0x03, // STA $0361
+			0xa9, 0x08, // LDA #$08, VBL interrupts with the mouse off
+			0xa2, page, // LDX #$Cn
+			0xa0, page << 4, // LDY #$n0
+			0x20, 0x40, 0x03, // JSR $0340
+			0x58,       // CLI
+			0x80, 0xfe, // BRA *
+		}
 	}
 	handler := []uint8{
 		0xee, 0x50, 0x03, // INC $0350
 		0x40, // RTI
 	}
-	a := runInterruptProgram(t, program, handler, 10)
-	if count := a.mmu.Peek(0x0350); count < 9 || count > 11 {
-		t.Errorf("expected an interrupt per frame, 10, got %v", count)
+	for _, model := range iicModels {
+		t.Run(model, func(t *testing.T) {
+			a := runInterruptProgram(t, model, program, handler, 10)
+			if count := a.mmu.Peek(0x0350); count < 9 || count > 11 {
+				t.Errorf("expected an interrupt per frame, 10, got %v", count)
+			}
+		})
 	}
 }
 
 func Test2c80Columns(t *testing.T) {
-	a, err := CreateAppleFromModel("2c", map[string]string{"s6": "empty"}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	keys := &strobedKeys{}
-	a.SetKeyboardProvider(keys)
-	a.Init()
-	a.RunCycles(2_000_000)
+	for _, model := range iicModels {
+		t.Run(model, func(t *testing.T) {
+			a := newIIc(t, model)
+			keys := &strobedKeys{}
+			a.SetKeyboardProvider(keys)
+			a.Init()
+			a.RunCycles(2_000_000)
 
-	// Without a disk the firmware waits for one, Ctrl-Reset goes to BASIC
-	a.reset()
-	a.RunCycles(1_000_000)
-	typeLines(t, a, keys, "PR#3", `PRINT "ON 80 COLUMNS"`)
-	a.RunCycles(1_000_000)
+			// Without a disk the firmware waits for one, Ctrl-Reset goes to BASIC
+			a.reset()
+			a.RunCycles(1_000_000)
+			typeLines(t, a, keys, "PR#3", `PRINT "ON 80 COLUMNS"`)
+			a.RunCycles(1_000_000)
 
-	if !a.io.isSoftSwitchActive(ioFlag80Col) {
-		t.Error("expected the 80 column mode to be on")
-	}
-	if !strings.Contains(a.ScreenText(), "ON 80 COLUMNS") {
-		t.Errorf("expected the text on the screen, got:\n%v", a.ScreenText())
+			if !a.io.isSoftSwitchActive(ioFlag80Col) {
+				t.Error("expected the 80 column mode to be on")
+			}
+			if !strings.Contains(a.ScreenText(), "ON 80 COLUMNS") {
+				t.Errorf("expected the text on the screen, got:\n%v", a.ScreenText())
+			}
+		})
 	}
 }
 
@@ -185,89 +245,222 @@ func (m *testMouse) ReadMouse() (uint16, uint16, bool) {
 mouseFirmwareProgram calls InitMouse, turns the mouse on with SetMouse and
 calls ReadMouse in a loop, for the position to be on the screen holes.
 */
-var mouseFirmwareProgram = []uint8{
-	0x78,       // SEI
-	0xa9, 0xc4, // LDA #$C4
-	0x8d, 0x61, 0x03, // STA $0361
-	0xad, 0x19, 0xc4, // LDA $C419, InitMouse
-	0x8d, 0x60, 0x03, // STA $0360
-	0xa2, 0xc4, // LDX #$C4
-	0xa0, 0x40, // LDY #$40
-	0x20, 0x40, 0x03, // JSR $0340
-	0xad, 0x12, 0xc4, // LDA $C412, SetMouse
-	0x8d, 0x60, 0x03, // STA $0360
-	0xa9, 0x01, // LDA #$01, the mouse on, no interrupts for the program
-	0xa2, 0xc4, // LDX #$C4
-	0xa0, 0x40, // LDY #$40
-	0x20, 0x40, 0x03, // JSR $0340
-	0xad, 0x14, 0xc4, // LDA $C414, ReadMouse
-	0x8d, 0x60, 0x03, // STA $0360
-	0xa2, 0xc4, // LDX #$C4
-	0xa0, 0x40, // LDY #$40
-	0x20, 0x40, 0x03, // JSR $0340
-	0x80, 0xf1, // BRA to ReadMouse
+func mouseFirmwareProgram(slot uint8) []uint8 {
+	page := 0xc0 | slot
+	return []uint8{
+		0x78,       // SEI
+		0xa9, page, // LDA #$Cn
+		0x8d, 0x61, 0x03, // STA $0361
+		0xad, 0x19, page, // LDA $Cn19, InitMouse
+		0x8d, 0x60, 0x03, // STA $0360
+		0xa2, page, // LDX #$Cn
+		0xa0, slot << 4, // LDY #$n0
+		0x20, 0x40, 0x03, // JSR $0340
+		0xad, 0x12, page, // LDA $Cn12, SetMouse
+		0x8d, 0x60, 0x03, // STA $0360
+		0xa9, 0x01, // LDA #$01, the mouse on, no interrupts for the program
+		0xa2, page, // LDX #$Cn
+		0xa0, slot << 4, // LDY #$n0
+		0x20, 0x40, 0x03, // JSR $0340
+		0xad, 0x14, page, // LDA $Cn14, ReadMouse
+		0x8d, 0x60, 0x03, // STA $0360
+		0xa2, page, // LDX #$Cn
+		0xa0, slot << 4, // LDY #$n0
+		0x20, 0x40, 0x03, // JSR $0340
+		0x80, 0xf1, // BRA to ReadMouse
+	}
 }
 
-// mousePosition is the position ReadMouse left on the screen holes
-func mousePosition(a *Apple2) (int, int) {
-	x := int(a.mmu.Peek(0x047c)) + int(a.mmu.Peek(0x057c))<<8
-	y := int(a.mmu.Peek(0x04fc)) + int(a.mmu.Peek(0x05fc))<<8
+// mousePosition is the position ReadMouse left on the screen holes of the
+// slot
+func mousePosition(a *Apple2, slot uint8) (int, int) {
+	n := uint16(slot)
+	x := int(a.mmu.Peek(0x0478+n)) + int(a.mmu.Peek(0x0578+n))<<8
+	y := int(a.mmu.Peek(0x04f8+n)) + int(a.mmu.Peek(0x05f8+n))<<8
 	return x, y
 }
 
-func Test2cMouseMoves(t *testing.T) {
-	a, err := CreateAppleFromModel("2c", map[string]string{"s6": "empty"}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	mouse := &testMouse{}
+// startMouseProgram runs the mouse program on a IIc with a host pointer
+func startMouseProgram(t *testing.T, model string, mouse *testMouse) (*Apple2, uint8) {
+	t.Helper()
+	a := newIIc(t, model)
 	a.SetMouseProvider(mouse)
 	a.Init()
 	a.RunCycles(2_000_000)
-	a.mmu.pokeRange(0x0300, mouseFirmwareProgram)
+	slot := iicMouseSlot(a)
+	a.mmu.pokeRange(0x0300, mouseFirmwareProgram(slot))
 	a.mmu.pokeRange(0x0340, []uint8{0x6c, 0x60, 0x03}) // JMP ($0360)
 	a.cpu.SetPC(0x0300)
-	a.RunCycles(5 * screenDrawCycles)
+	return a, slot
+}
 
-	// The middle of the window, half of the screen of steps
-	mouse.x, mouse.y = 32768, 32768
-	a.RunCycles(60 * screenDrawCycles)
-	if x, y := mousePosition(a); x != mouseStepsX/2 || y != mouseStepsY/2 {
-		t.Errorf("expected the mouse on %v,%v, got %v,%v", mouseStepsX/2, mouseStepsY/2, x, y)
-	}
+func Test2cMouseMoves(t *testing.T) {
+	for _, model := range iicModels {
+		t.Run(model, func(t *testing.T) {
+			mouse := &testMouse{}
+			a, slot := startMouseProgram(t, model, mouse)
+			a.RunCycles(5 * screenDrawCycles)
 
-	// Back to the corner
-	mouse.x, mouse.y = 0, 0
-	a.RunCycles(60 * screenDrawCycles)
-	if x, y := mousePosition(a); x != 0 || y != 0 {
-		t.Errorf("expected the mouse back on 0,0, got %v,%v", x, y)
+			// The middle of the window, half of the screen of steps
+			mouse.x, mouse.y = 32768, 32768
+			a.RunCycles(60 * screenDrawCycles)
+			if x, y := mousePosition(a, slot); x != mouseStepsX/2 || y != mouseStepsY/2 {
+				t.Errorf("expected the mouse on %v,%v, got %v,%v", mouseStepsX/2, mouseStepsY/2, x, y)
+			}
+
+			// Back to the corner
+			mouse.x, mouse.y = 0, 0
+			a.RunCycles(60 * screenDrawCycles)
+			if x, y := mousePosition(a, slot); x != 0 || y != 0 {
+				t.Errorf("expected the mouse back on 0,0, got %v,%v", x, y)
+			}
+		})
 	}
 }
 
 func Test2cMouseMeetsOnTheEdges(t *testing.T) {
-	a, err := CreateAppleFromModel("2c", map[string]string{"s6": "empty"}, nil)
+	for _, model := range iicModels {
+		t.Run(model, func(t *testing.T) {
+			// The moves before the mouse is on are lost, the pointers start apart
+			mouse := &testMouse{x: 65535, y: 65535}
+			a, slot := startMouseProgram(t, model, mouse)
+			a.RunCycles(60 * screenDrawCycles)
+
+			// Pushing on the edge moves the mouse of the IIc
+			if x, y := mousePosition(a, slot); x <= mouseStepsX/2 || y <= mouseStepsY/2 {
+				t.Errorf("expected the mouse pushed towards the edge, got %v,%v", x, y)
+			}
+
+			// Beyond the screen, up to the clamp of the firmware, and back to 0,0
+			mouse.x, mouse.y = 0, 0
+			a.RunCycles(120 * screenDrawCycles)
+			if x, y := mousePosition(a, slot); x != 0 || y != 0 {
+				t.Errorf("expected the mouse back on 0,0, got %v,%v", x, y)
+			}
+		})
+	}
+}
+
+func Test2cBootsProDOSFromTheSmartPort(t *testing.T) {
+	// From ROM 0, the external disk port is a SmartPort on $C500
+	for _, model := range []string{"2c_rom0", "2c_rom3", "2c"} {
+		t.Run(model, func(t *testing.T) {
+			image := writableCopy(t, "<internal>/ProDOS_2_4_3.po")
+			a, err := CreateAppleFromModel(model, map[string]string{"s6": "iicdisk,image1=\"" + image + "\""}, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			keys := &strobedKeys{}
+			a.SetKeyboardProvider(keys)
+			a.Init()
+			a.RunCycles(3_000_000)
+
+			// No diskette on the internal drive, boot the SmartPort from BASIC
+			a.reset()
+			a.RunCycles(2_000_000)
+			typeLines(t, a, keys, "PR#5")
+			cyclesToText(t, a, "S5,D1:/PRODOS.2.4.3", a.GetCycles()+100_000_000)
+		})
+	}
+}
+
+func Test2cMemoryCard(t *testing.T) {
+	// From ROM 3, the firmware of the memory card is a SmartPort on $C400
+	for _, c := range []struct {
+		model  string
+		size   string
+		blocks int
+	}{
+		{"2c_rom3", "1024", 2048},
+		{"2c", "1024", 2048},
+		{"2c", "256", 512},
+	} {
+		t.Run(c.model+"_"+c.size, func(t *testing.T) {
+			a, err := CreateAppleFromModel(c.model, map[string]string{"s6": "iicdisk", "s4": "iicmemory,size=" + c.size}, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a.Init()
+			a.RunCycles(3_000_000)
+			a.reset()
+			a.RunCycles(2_000_000)
+
+			result := callSmartPort(a, 4, smartPortCommandStatus, []uint8{3, 1, lo(spTestBuffer), hi(spTestBuffer), 0})
+			status := peekRange(a, spTestBuffer, 4)
+			blocks := int(status[1]) + int(status[2])<<8 + int(status[3])<<16
+			if result != smartPortNoError || status[0] != 0xf8 || blocks != c.blocks {
+				t.Errorf("expected a block device of %v blocks, got $%02x and % x", c.blocks, result, status)
+			}
+		})
+	}
+}
+
+func Test2cWritesTheInternalDrive(t *testing.T) {
+	for _, model := range []string{"2c_rom255", "2c"} {
+		for _, sequencer := range []string{"false", "true"} {
+			t.Run(model+"_sequencer_"+sequencer, func(t *testing.T) {
+				// The sequencer reads only WOZ diskettes
+				image := writableCopy(t, "<internal>/dos33.dsk")
+				if sequencer == "true" {
+					image = wozCopy(t, false)
+				}
+				card := "iicdisk,sequencer=" + sequencer + ",disk1=\"" + image + "\""
+				a, err := CreateAppleFromModel(model, map[string]string{"s6": card}, nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				keys := &strobedKeys{}
+				a.SetKeyboardProvider(keys)
+				a.Init()
+				cyclesToText(t, a, "DOS VERSION 3.3", 100_000_000)
+				a.RunCycles(5_000_000)
+				typeLines(t, a, keys, "NEW", `10 PRINT "SAVED ON THE IIC"`, "SAVE IICTEST")
+				a.RunCycles(20_000_000)
+
+				// Started again, the program is on the diskette
+				again, err := CreateAppleFromModel(model, map[string]string{"s6": card}, nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				keys = &strobedKeys{}
+				again.SetKeyboardProvider(keys)
+				again.Init()
+				cyclesToText(t, again, "DOS VERSION 3.3", 100_000_000)
+				again.RunCycles(5_000_000)
+				typeLines(t, again, keys, "RUN IICTEST")
+				cyclesToText(t, again, "SAVED ON THE IIC", again.GetCycles()+50_000_000)
+			})
+		}
+	}
+}
+
+func Test2c80ColumnSwitch(t *testing.T) {
+	// Down, on 40 columns, unless started up
+	a := newIIc(t, "2c")
+	if value := a.mmu.Peek(0xc060); value&0x80 == 0 {
+		t.Errorf("expected the switch down by default, got $%02x", value)
+	}
+	up, err := CreateAppleFromModel("2c", map[string]string{"s6": "iicdisk", "iic80ColumnSwitch": "true"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The moves before the mouse is on are lost, the pointers start apart
-	mouse := &testMouse{x: 65535, y: 65535}
-	a.SetMouseProvider(mouse)
-	a.Init()
-	a.RunCycles(2_000_000)
-	a.mmu.pokeRange(0x0300, mouseFirmwareProgram)
-	a.mmu.pokeRange(0x0340, []uint8{0x6c, 0x60, 0x03}) // JMP ($0360)
-	a.cpu.SetPC(0x0300)
-	a.RunCycles(60 * screenDrawCycles)
-
-	// Pushing on the edge moves the mouse of the IIc
-	if x, y := mousePosition(a); x <= mouseStepsX/2 || y <= mouseStepsY/2 {
-		t.Errorf("expected the mouse pushed towards the edge, got %v,%v", x, y)
+	if value := up.mmu.Peek(0xc060); value&0x80 != 0 {
+		t.Errorf("expected the switch up with iic80ColumnSwitch, got $%02x", value)
 	}
 
-	// Beyond the screen, up to the clamp of the firmware, and back to 0,0
-	mouse.x, mouse.y = 0, 0
-	a.RunCycles(120 * screenDrawCycles)
-	if x, y := mousePosition(a); x != 0 || y != 0 {
-		t.Errorf("expected the mouse back on 0,0, got %v,%v", x, y)
+	// The command moves it
+	up.executeCommand(&commandSimple{CommandToggleIIc80ColumnSwitch})
+	if up.IsIIc80ColumnSwitchUp() || up.mmu.Peek(0xc060)&0x80 == 0 {
+		t.Error("expected the switch down after the command")
+	}
+
+	// The other models have no switch
+	e, err := CreateAppleFromModel("2enh", nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.executeCommand(&commandSimple{CommandToggleIIc80ColumnSwitch})
+	if e.IsIIc80ColumnSwitchUp() {
+		t.Error("expected no switch on the IIe")
 	}
 }

@@ -4,7 +4,7 @@
   - Apple ][+ with 48Kb of base RAM
   - Apple //e with 128Kb of RAM
   - Apple //e enhanced with 128Kb of RAM
-  - Apple IIc with the original ROM 255
+  - Apple IIc with the ROMs 255, 0, 3 and 4: the disk port with the SmartPort for the UniDisk 3.5 and the hard disks, and the memory expansion card
   - Base64A clone with 48Kb of base RAM and paged ROM
   - Basis 108 clone (partial)
 - Storage

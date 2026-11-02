@@ -52,32 +52,61 @@ type CardMemoryExpansion struct {
 	index int
 }
 
+var memoryExpansionParams = []paramSpec{
+	{"size", "RAM of the card, can be 256, 512, 768 or 1024", "1024"},
+}
+
 func newCardMemoryExpansionBuilder() *cardBuilder {
 	return &cardBuilder{
-		name:        "Memory Expansion Card",
-		description: "Memory expansion card",
-		defaultParams: &[]paramSpec{
-			{"size", "RAM of the card, can be 256, 512, 768 or 1024", "1024"},
-		},
+		name:          "Memory Expansion Card",
+		description:   "Memory expansion card",
+		defaultParams: &memoryExpansionParams,
 		buildFunc: func(params map[string]string) (Card, error) {
-			size, err := paramsGetInt(params, "size")
+			c, err := newCardMemoryExpansion(params)
 			if err != nil {
 				return nil, err
 			}
-			if size != 256 && size != 512 && size != 768 && size != 1024 {
-				return nil, fmt.Errorf("invalid RAM size %v. It must be 256, 512, 768 or 1024", size)
-			}
-
-			var c CardMemoryExpansion
-			c.ram = make([]uint8, size*1024)
 			err = c.loadRomFromResource("<internal>/MemoryExpansionCard-341-0344a.bin", cardRomFull)
 			if err != nil {
 				return nil, err
 			}
 
-			return &c, nil
+			return c, nil
 		},
 	}
+}
+
+/*
+newCardMemoryExpansionIIcBuilder is the memory expansion card of the Apple
+IIc, on the connector of the memory expansion IIc. It has the registers of
+the card for the other models on the slot 4, the firmware is on the ROM of
+the IIc from the version 3.
+*/
+func newCardMemoryExpansionIIcBuilder() *cardBuilder {
+	return &cardBuilder{
+		name:          "Apple IIc Memory Expansion Card",
+		description:   "Memory expansion card of the Apple IIc",
+		defaultParams: &memoryExpansionParams,
+		requiresIIc:   true,
+		hide:          true,
+		buildFunc: func(params map[string]string) (Card, error) {
+			return newCardMemoryExpansion(params)
+		},
+	}
+}
+
+func newCardMemoryExpansion(params map[string]string) (*CardMemoryExpansion, error) {
+	size, err := paramsGetInt(params, "size")
+	if err != nil {
+		return nil, err
+	}
+	if size != 256 && size != 512 && size != 768 && size != 1024 {
+		return nil, fmt.Errorf("invalid RAM size %v. It must be 256, 512, 768 or 1024", size)
+	}
+
+	var c CardMemoryExpansion
+	c.ram = make([]uint8, size*1024)
+	return &c, nil
 }
 
 // GetInfo returns card info

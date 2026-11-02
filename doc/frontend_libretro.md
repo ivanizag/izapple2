@@ -205,11 +205,12 @@ In *Quick Menu > Core Options*:
 
 | Option | Values | Meaning |
 | --- | --- | --- |
-| Machine model | `gaming` (default), `2`, `2c`, `2e`, `2enh`, `2plus`, `base64a`, `basis108`, `cpm`, `cpm288`, `cpm3`, `cpm65`, `cpmapplicard`, `desktop`, `dos32`, `forth`, `pascal`, `prodos`, `swyft` | The machine to emulate, the same models as the `-model` command line flag |
+| Machine model | `gaming` (default), `2`, `2c`, `2c_rom0`, `2c_rom255`, `2c_rom3`, `2e`, `2enh`, `2plus`, `base64a`, `basis108`, `cpm`, `cpm288`, `cpm3`, `cpm65`, `cpmapplicard`, `desktop`, `dos32`, `forth`, `pascal`, `prodos`, `swyft` | The machine to emulate, the same models as the `-model` command line flag |
 | Monitor | `color` (default), `green` | An NTSC colour television or a green phosphor monitor |
+| Apple IIc 80/40 switch | `40 columns` (default), `80 columns` | The position of the 80/40 switch on the IIc models |
 
 Changing the model takes effect on the next **Reset**, which cold boots the
-machine. The monitor applies immediately.
+machine. The monitor and the 80/40 switch apply immediately.
 
 ### The default machine
 

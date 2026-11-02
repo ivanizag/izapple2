@@ -24,6 +24,9 @@ See:
 // irqSourceIOU is the source of the IRQ requests of the IOU, after the slots
 const irqSourceIOU = 8
 
+// The ROMs 0, 3 and 4 have 32 KB, in two banks
+const apple2cBankedRomSize = 0x8000
+
 // iouApple2c is the state of the IOU of the IIc not shared with the IIe
 type iouApple2c struct {
 	a *Apple2
@@ -223,6 +226,15 @@ func addApple2cSoftSwitches(io *ioC0Page) {
 	a.registerTicker(iou)
 	a.usesMouse = true
 
+	// The ROMs of 32 KB have two banks, any access to $C028 switches them.
+	// The firmware only writes it, the switch on reads is not verified.
+	io.addSoftSwitchRW(0x28, func() uint8 {
+		if rom, ok := a.mmu.physicalROM.(*memoryRangeROM); ok {
+			rom.setPage(rom.getPage() + 1)
+		}
+		return 0
+	}, "ROMBANK")
+
 	// The ROM is always on $C100 to $CFFF, INTCXROM can't be changed
 	a.mmu.intCxROMActive = true
 	io.addSoftSwitchW(0x06, buildNotImplementedSoftSwitchW(io), "INTCXROMOFF-NONE")
@@ -286,8 +298,13 @@ func addApple2cSoftSwitches(io *ioC0Page) {
 		}, name)
 	}
 
-	// The 80/40 switch, up for 80 columns. It is down.
-	io.addSoftSwitchR(0x60, func() uint8 { return ssOn }, "RD80SW")
+	// The 80/40 switch, bit 7 is 1 when it is down, on 40 columns
+	io.addSoftSwitchR(0x60, func() uint8 {
+		if a.iic80ColumnSwitch {
+			return ssOff
+		}
+		return ssOn
+	}, "RD80SW")
 
 	// The mouse button replaces PB2, pressed when bit 7 is zero
 	mouseButton := func() uint8 {
@@ -353,7 +370,8 @@ var apple2cBuiltInCards = map[int][]string{
 	0: {"language"},
 	1: {"iicserial"},
 	2: {"iicserial"},
-	6: {"diskii", "diskiiseq"},
+	4: {"iicmemory"},
+	6: {"iicdisk"},
 }
 
 // checkApple2cConfiguration refuses what can't be added to a IIc
@@ -367,6 +385,9 @@ func checkApple2cConfiguration(configuration *configuration) error {
 			}
 			if slot == 1 || slot == 2 {
 				return fmt.Errorf("the serial ports are built in the Apple IIc, s%v must be 'iicserial'", slot)
+			}
+			if slot == 6 {
+				return fmt.Errorf("the disk port is built in the Apple IIc, s6 must be 'iicdisk'")
 			}
 			continue
 		}

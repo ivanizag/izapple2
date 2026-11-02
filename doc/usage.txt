@@ -9,6 +9,8 @@ Usage:  izapple2 [file]
     	cpu type, can be '6502' or '65c02' (default "65c02")
   -forceCaps
     	force all letters to be uppercased (no need for caps lock!)
+  -iic80ColumnSwitch
+    	start with the 80/40 switch of the Apple IIc up, on 80 columns
   -model string
     	set base model, 'none' to give the board, rom and charrom as parameters (default "2enh")
   -mods string
@@ -59,6 +61,9 @@ Usage:  izapple2 [file]
 The available pre-configured models are:
   2: Apple ][
   2c: Apple IIc
+  2c_rom0: Apple IIc, ROM 0 with UniDisk 3.5 support
+  2c_rom255: Apple IIc, ROM 255
+  2c_rom3: Apple IIc, ROM 3 with memory expansion
   2e: Apple IIe
   2enh: Apple //e
   2plus: Apple ][+

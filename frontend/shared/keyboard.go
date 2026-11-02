@@ -95,6 +95,11 @@ func (k *Keyboard) command(key Key, ctrl bool, shift bool) {
 			k.a.SendCommand(izapple2.CommandReset)
 			k.view.ShowHelp = false
 		}
+	case KeyF3:
+		if ctrl {
+			// Not on the help, it is only for the Apple IIc
+			k.a.SendCommand(izapple2.CommandToggleIIc80ColumnSwitch)
+		}
 	case KeyF4:
 		k.a.SendCommand(izapple2.CommandToggleCPUTrace)
 	case KeyF5:

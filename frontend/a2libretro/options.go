@@ -30,20 +30,23 @@ const (
 // allocated once and never freed. What the core is, its name and the extensions
 // it takes, is answered in C by shim.c.
 var (
-	cKeyModel  = C.CString("izapple2_model")
-	cKeyScreen = C.CString("izapple2_screen")
+	cKeyModel             = C.CString("izapple2_model")
+	cKeyScreen            = C.CString("izapple2_screen")
+	cKeyIIc80ColumnSwitch = C.CString("izapple2_iic_80column_switch")
 )
 
 type options struct {
-	model      string
-	screenMode int
+	model             string
+	screenMode        int
+	iic80ColumnSwitch bool // The 80/40 switch of the Apple IIc up, on 80 columns
 }
 
 // readOptions returns the settings currently chosen in the frontend
 func readOptions() options {
 	return options{
-		model:      readVariable(cKeyModel, defaultModel),
-		screenMode: screenModeByName(readVariable(cKeyScreen, "color")),
+		model:             readVariable(cKeyModel, defaultModel),
+		screenMode:        screenModeByName(readVariable(cKeyScreen, "color")),
+		iic80ColumnSwitch: readVariable(cKeyIIc80ColumnSwitch, "40 columns") == "80 columns",
 	}
 }
 
@@ -59,10 +62,14 @@ func screenModeByName(name string) int {
 /*
 videoOverrides takes out the cards that generate the video this core does not
 render. The VidHD card, that adds super hi-res, is always in slot 2. The Videx
-80 column card is in slot 3 of the two models that carry it.
+80 column card is in slot 3 of the two models that carry it. The Apple IIc
+has neither, its slot 2 is the serial port that can't be removed.
 */
 func videoOverrides(model string) map[string]string {
-	overrides := map[string]string{"s2": "empty"}
+	overrides := map[string]string{}
+	if !strings.HasPrefix(model, "2c") {
+		overrides["s2"] = "empty"
+	}
 	switch model {
 	case "2plus", "basis108":
 		overrides["s3"] = "empty"
@@ -98,6 +105,7 @@ func setVariables() {
 	variables := []struct{ key, value string }{
 		{"izapple2_model", "Machine model; " + modelChoices()},
 		{"izapple2_screen", "Monitor; color|green"},
+		{"izapple2_iic_80column_switch", "Apple IIc 80/40 switch; 40 columns|80 columns"},
 	}
 
 	// One extra entry, the array is terminated by a pair of null pointers

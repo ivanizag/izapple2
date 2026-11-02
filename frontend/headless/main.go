@@ -68,6 +68,9 @@ func main() {
 			fmt.Printf("%v\n", a.GetCycles())
 		case "reset":
 			a.SendCommand(izapple2.CommandReset)
+		case "iic80columnswitch":
+			// Moves the 80/40 switch of the Apple IIc, only on the docs
+			a.SendCommand(izapple2.CommandToggleIIc80ColumnSwitch)
 
 		// Keyboard related commands
 		case "key":

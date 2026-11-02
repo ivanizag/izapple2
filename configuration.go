@@ -27,23 +27,24 @@ const (
 	confName   = "name"
 	confBoard  = "board"
 
-	confRom        = "rom"
-	confCharRom    = "charrom"
-	confCpu        = "cpu"
-	confSpeed      = "speed"
-	confRamworks   = "ramworks"
-	confNsc        = "nsc"
-	confTrace      = "trace"
-	confProfile    = "profile"
-	confShowConfig = "showConfig"
-	confForceCaps  = "forceCaps"
-	confRgb        = "rgb"
-	confRomx       = "romx"
-	confMods       = "mods"
-	confTape       = "tape"
-	confSaveDir    = "saveDir"
-	confScreen     = "screen"
-	confStartTime  = "startTime"
+	confRom               = "rom"
+	confCharRom           = "charrom"
+	confCpu               = "cpu"
+	confSpeed             = "speed"
+	confRamworks          = "ramworks"
+	confNsc               = "nsc"
+	confTrace             = "trace"
+	confProfile           = "profile"
+	confShowConfig        = "showConfig"
+	confForceCaps         = "forceCaps"
+	confRgb               = "rgb"
+	confRomx              = "romx"
+	confMods              = "mods"
+	confTape              = "tape"
+	confSaveDir           = "saveDir"
+	confScreen            = "screen"
+	confStartTime         = "startTime"
+	confIIc80ColumnSwitch = "iic80ColumnSwitch"
 
 	confS0 = "s0"
 	confS1 = "s1"
@@ -228,36 +229,37 @@ func (c *configurationModels) getWithOverrides(model string, overrides *configur
 
 func setupFlags(models *configurationModels, configuration *configuration) error {
 	paramDescription := map[string]string{
-		confModel:      "set base model, 'none' to give the board, rom and charrom as parameters",
-		confBoard:      "main board, can be '2plus', '2e', '2c', 'base64a' or 'basis108'",
-		confRom:        "main rom file",
-		confCharRom:    "rom file for the character generator",
-		confCpu:        "cpu type, can be '6502' or '65c02'",
-		confSpeed:      "cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber",
-		confMods:       "comma separated list of mods applied to the board, available mods are 'shift', 'four-colors",
-		confRamworks:   "memory to use with RAMWorks card, max is 16384",
-		confNsc:        "add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM",
-		confTrace:      "trace CPU execution with one or more comma separated tracers",
-		confProfile:    "generate profile trace to analyse with pprof",
-		confShowConfig: "show the calculated configuration and exit",
-		confForceCaps:  "force all letters to be uppercased (no need for caps lock!)",
-		confRgb:        "emulate the RGB modes of the 80col RGB card for DHGR",
-		confRomx:       "emulate a RomX",
-		confTape:       "WAV file with a tape recording for the cassette input",
-		confScreen:     "monitor the screen is shown on, can be 'color', 'colorscanlines', 'green' or 'greenscanlines'",
-		confStartTime:  "date and time the machine starts at, like 1985-03-15T10:30:00, to run on the time of the machine instead of the host's and get the same results on every run. 'none' to use the time of the host",
-		confSaveDir:    "directory to keep what the software writes to the disks, leaving the images unmodified. 'none' to write back to the images",
-		confS0:         "slot 0 configuration.",
-		confS1:         "slot 1 configuration.",
-		confS2:         "slot 2 configuration.",
-		confS3:         "slot 3 configuration.",
-		confS4:         "slot 4 configuration.",
-		confS5:         "slot 5 configuration.",
-		confS6:         "slot 6 configuration.",
-		confS7:         "slot 7 configuration.",
+		confModel:             "set base model, 'none' to give the board, rom and charrom as parameters",
+		confBoard:             "main board, can be '2plus', '2e', '2c', 'base64a' or 'basis108'",
+		confRom:               "main rom file",
+		confCharRom:           "rom file for the character generator",
+		confCpu:               "cpu type, can be '6502' or '65c02'",
+		confSpeed:             "cpu speed in Mhz, can be 'ntsc', 'pal', 'full' or a decimal nunmber",
+		confMods:              "comma separated list of mods applied to the board, available mods are 'shift', 'four-colors",
+		confRamworks:          "memory to use with RAMWorks card, max is 16384",
+		confNsc:               "add a DS1216 No-Slot-Clock on the main ROM (use 'main') or a slot ROM",
+		confTrace:             "trace CPU execution with one or more comma separated tracers",
+		confProfile:           "generate profile trace to analyse with pprof",
+		confShowConfig:        "show the calculated configuration and exit",
+		confForceCaps:         "force all letters to be uppercased (no need for caps lock!)",
+		confRgb:               "emulate the RGB modes of the 80col RGB card for DHGR",
+		confRomx:              "emulate a RomX",
+		confTape:              "WAV file with a tape recording for the cassette input",
+		confScreen:            "monitor the screen is shown on, can be 'color', 'colorscanlines', 'green' or 'greenscanlines'",
+		confStartTime:         "date and time the machine starts at, like 1985-03-15T10:30:00, to run on the time of the machine instead of the host's and get the same results on every run. 'none' to use the time of the host",
+		confSaveDir:           "directory to keep what the software writes to the disks, leaving the images unmodified. 'none' to write back to the images",
+		confIIc80ColumnSwitch: "start with the 80/40 switch of the Apple IIc up, on 80 columns",
+		confS0:                "slot 0 configuration.",
+		confS1:                "slot 1 configuration.",
+		confS2:                "slot 2 configuration.",
+		confS3:                "slot 3 configuration.",
+		confS4:                "slot 4 configuration.",
+		confS5:                "slot 5 configuration.",
+		confS6:                "slot 6 configuration.",
+		confS7:                "slot 7 configuration.",
 	}
 
-	boolParams := []string{confProfile, confShowConfig, confForceCaps, confRgb, confRomx}
+	boolParams := []string{confProfile, confShowConfig, confForceCaps, confRgb, confRomx, confIIc80ColumnSwitch}
 
 	for name, description := range paramDescription {
 		defaultValue, ok := configuration.getHas(name)
@@ -360,6 +362,10 @@ func processPositionalFilenames(config *configuration, filenames []string) error
 		}
 	}
 
+	if config.has(confBoard) && config.get(confBoard) == "2c" {
+		return placeApple2cFilenames(config, diskettes, blockDevices)
+	}
+
 	// Configure diskette slots (s6 and s5)
 	if len(diskettes) == 1 {
 		config.set(confS6, fmt.Sprintf("diskii,disk1=\"%s\"", diskettes[0]))
@@ -394,6 +400,34 @@ func processPositionalFilenames(config *configuration, filenames []string) error
 		}
 	}
 
+	return nil
+}
+
+/*
+placeApple2cFilenames puts the disks on the disk port of the Apple IIc: up
+to two diskettes on the internal and the external 5.25 drives, and up to
+four block devices on the SmartPort of the external port.
+*/
+func placeApple2cFilenames(config *configuration, diskettes []string, blockDevices []string) error {
+	if len(diskettes) > 2 {
+		return fmt.Errorf("the Apple IIc has two 5.25 drives, %v diskettes found", len(diskettes))
+	}
+	if len(blockDevices) > iicDiskMaxUnits {
+		return fmt.Errorf("up to %v block devices can be loaded on the Apple IIc, %v found", iicDiskMaxUnits, len(blockDevices))
+	}
+	if len(diskettes) == 0 && len(blockDevices) == 0 {
+		return nil
+	}
+
+	var disks strings.Builder
+	disks.WriteString("iicdisk")
+	for i, filename := range diskettes {
+		disks.WriteString(fmt.Sprintf(",disk%v=\"%s\"", i+1, filename))
+	}
+	for i, filename := range blockDevices {
+		disks.WriteString(fmt.Sprintf(",image%v=\"%s\"", i+1, filename))
+	}
+	config.set(confS6, disks.String())
 	return nil
 }
 

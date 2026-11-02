@@ -87,6 +87,7 @@ Escape mapped to what the Apple II understands. The rest:
 | --- | --- |
 | F1 | Show or hide the help |
 | Ctrl-F2 | Reset. F2 alone also resets while the help is shown, for the window managers that eat Ctrl-F2 |
+| Ctrl-F3 | Move the 80/40 switch of the Apple IIc, it is not on the help |
 | F4 | Show or hide the CPU trace on the terminal |
 | F5 | Full speed or normal speed |
 | Ctrl-F5 | Print the current speed on the terminal |

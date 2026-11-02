@@ -43,6 +43,7 @@ everywhere else, and starts paused. Nothing happens until you say `start` or
 | `run <cycles>` | Runs `<cycles>` thousand cycles at full speed and waits until they are done. Only while paused |
 | `cycle` | Prints the cycle count |
 | `reset` | Resets the machine |
+| `iic80columnswitch` | Moves the 80/40 switch of the Apple IIc. It is not on the help |
 | `key <number>` | Queues a key, as a decimal number from 0 to 127 |
 | `type <text>` | Queues the characters of `<text>`. No quotes, it can have spaces |
 | `enter` | Queues the Return key. The same as `key 13` |

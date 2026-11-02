@@ -80,6 +80,7 @@ func (c *core) build() bool {
 
 	a.SetJoysticksProvider(c.joysticks)
 	a.SetMouseProvider(newMouse())
+	a.SetIIc80ColumnSwitch(options.iic80ColumnSwitch)
 
 	a.Init()
 	return true
@@ -249,7 +250,10 @@ func retro_run() {
 	}
 
 	C.shim_input_poll()
-	theCore.video.setScreenMode(readOptions().screenMode)
+	options := readOptions()
+	theCore.video.setScreenMode(options.screenMode)
+	// The option moves the switch, as on the machine, while it runs
+	theCore.a.SetIIc80ColumnSwitch(options.iic80ColumnSwitch)
 
 	cycles := uint64(cyclesPerFrame)
 	if theCore.a.IsFastModeRequested() {

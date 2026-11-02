@@ -23,6 +23,8 @@ const (
 	CommandPause
 	// CommandStart restarts the emulator
 	CommandStart
+	// CommandToggleIIc80ColumnSwitch moves the 80/40 switch of the Apple IIc
+	CommandToggleIIc80ColumnSwitch
 	// CommandComplex for commands that use a struct with parameters
 	CommandComplex
 )
@@ -88,6 +90,17 @@ func (a *Apple2) executeCommand(command command) {
 		a.cpu.SetTrace(a.cpuTrace)
 	case CommandReset:
 		a.reset()
+	case CommandToggleIIc80ColumnSwitch:
+		if !a.isApple2c {
+			fmt.Println("Only the Apple IIc has the 80/40 switch")
+		} else {
+			a.SetIIc80ColumnSwitch(!a.iic80ColumnSwitch)
+			if a.iic80ColumnSwitch {
+				fmt.Println("80/40 switch up, on 80 columns")
+			} else {
+				fmt.Println("80/40 switch down, on 40 columns")
+			}
+		}
 	case CommandComplex:
 		switch t := command.(type) {
 		case *commandLoadDisk:

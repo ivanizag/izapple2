@@ -106,6 +106,7 @@ func configure(configuration *configuration) (*Apple2, error) {
 
 	a.setProfiling(configuration.getFlag(confProfile))
 	a.SetForceCaps(configuration.getFlag(confForceCaps))
+	a.SetIIc80ColumnSwitch(configuration.getFlag(confIIc80ColumnSwitch))
 
 	a.screenMode, err = screen.ScreenModeByName(configuration.get(confScreen))
 	if err != nil {
@@ -241,6 +242,12 @@ func (a *Apple2) loadRom(filename string) error {
 	}
 
 	size := len(data)
+
+	if a.isApple2c && size == apple2cBankedRomSize {
+		// Two banks of 16 KB switched by $C028
+		a.mmu.physicalROM = newMemoryRangePagedROM(0xc000, data, "Main ROM", 2)
+		return nil
+	}
 
 	romBase := 0x10000 - size
 	a.mmu.physicalROM = newMemoryRangeROM(uint16(romBase), data, "Main ROM")

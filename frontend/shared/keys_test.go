@@ -20,6 +20,7 @@ func TestCharForKey(t *testing.T) {
 		{KeyUp, false, 11, true},
 		{KeyDown, false, 10, true},
 		{KeyF3, false, 127, true}, // Base64A
+		{KeyF3, true, 0, false},   // The 80/40 switch of the IIc
 		{KeyF1, false, 0, false},  // A command of the emulator, not a character
 		{KeyF12, true, 0, false},
 		{KeyNone, false, 0, false},
