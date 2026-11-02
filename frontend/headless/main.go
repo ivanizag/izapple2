@@ -16,7 +16,9 @@ import (
 func main() {
 	a, err := izapple2.CreateConfiguredApple()
 	if err != nil {
+		// Nothing to run without a machine
 		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 	fe := &headLessFrontend{}
 	fe.keyChannel = make(chan uint8, 200)

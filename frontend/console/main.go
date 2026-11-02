@@ -13,7 +13,9 @@ import (
 func main() {
 	a, err := apple2.CreateConfiguredApple()
 	if err != nil {
+		// Nothing to run without a machine
 		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 
 	fe := &ansiConsoleFrontend{}
