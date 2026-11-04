@@ -309,7 +309,12 @@ func (m *serialDeviceNetModem) execute(commands string) {
 				m.replyLine(fmt.Sprintf("%03d", m.registers[register]))
 			} else if commands[i] == '=' {
 				i++
-				m.registers[register] = uint8(number())
+				value := number()
+				if value < 0 || value > 255 {
+					m.result(netModemError)
+					return
+				}
+				m.registers[register] = uint8(value)
 			} else {
 				m.result(netModemError)
 				return
